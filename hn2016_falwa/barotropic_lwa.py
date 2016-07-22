@@ -1,12 +1,11 @@
 ''' HN2015_LWA is a python module developed for readers to implement local finite-amplitude wave activity
-    analysis proposed in Huang & Nakamura (2015, JAS) (http://dx.doi.org/10.1175/JAS-D-15-0194.1) on cli-
+    analysis proposed in Huang & Nakamura (2016, JAS) (http://dx.doi.org/10.1175/JAS-D-15-0194.1) on cli-
 	mate datasets. See/Run Example_plotting_script.py for example usage of this module to reproduce figures 
-	in HN2015.
+	in HN2016.
 	
 	Current modules included (Last update: Oct 4, 2015)
-	Eqlat_LWA: computes equivalent-latitude profile Q(y) and the corresponding LWA from a 2D-vorticity map on a spherical surface.
-	EqvLat: a function used by Eqlat_LWA to obtain Q(y) from a 2D-vorticity map.
-	LWA: a function which compute line integral in the definition of LWA, given Q(y)
+	barotropic_Eqlat_LWA: computes equivalent-latitude profile Q(y) and the corresponding LWA from a 2D-vorticity map on a spherical surface.
+	barotropic_EqvLat: a function used by Eqlat_LWA to obtain Q(y) from a 2D-vorticity map.
 	
 	Please email Clare S. Y. Huang if you have any inquiries/suggestions: clare1068@gmail.com
 '''
