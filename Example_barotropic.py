@@ -1,8 +1,9 @@
-''' The python package "hn2016_falwa" contains a function "barotropic_Eqlat_LWA" 
-that computes the finite-amplitude local wave activity (LWA) in a barotropic model 
-with spherical geometry according to the definition in Huang & Nakamura (2016,JAS) 
-equation (13). This sample code demonstrates how the function in this package can 
-be used to reproduce LWA plots (Fig.4 in HN15) from an absolute vorticity map.
+''' This sample code demonstrate how the function "barotropic_Eqlat_LWA" in the
+python package "hn2016_falwa" computes the finite-amplitude local wave activity 
+(LWA) from absolute vorticity fields in a barotropic model with spherical geometry 
+according to the definition in Huang & Nakamura (2016,JAS) equation (13). This 
+sample code reproduces the LWA plots (Fig.4 in HN15) computed based on an absolute 
+vorticity map.
 
 Please email Clare S. Y. Huang if you have any inquiries/suggestions: clare1068@gmail.com
 '''
@@ -13,7 +14,6 @@ from math import *
 from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy import dtype
 
 # --- Parameters --- #
 a = 6.378e+6 # Earth's radius
@@ -37,22 +37,6 @@ absVorticity = readFile.variables['absolute_vorticity'][:]
 
 # --- Obtain equivalent-latitude relationship and also the LWA from the absolute vorticity snapshot ---
 Q_ref,LWA = hn2016_falwa.barotropic_Eqlat_LWA(ylat,absVorticity,area,a*dphi) # Full domain included
-''' def Eqlat_LWA(ylat,vort,area,dphi):
-    Assume area element = a**2 cos(lat)d(lat)d(lon)
-    dx = a * cos(lat) * d(lon)
-    dy = a * d(lat)
-    dphi = d(lat) = pi/float(nlat-1)
-    
-    Input variables:
-        ylat: 1-d numpy array with equal spacing in ascending order; dimension = nlat
-        vort: 2-d numpy array of vorticity values; dimension = (nlat,nlon)
-        area: 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat,nlon)
-        dphi: scalar specifying differential length element in meridional direction. 
-              dphi = pi/float(nlat-1) if assuming equally-spaced y-grid of range [-90:90],                 
-    Output variables:
-        Qref: Equivalent latitude relationship Q(y), where y is given by ylat. Values of Q in excluded domain is zero.
-        LWA_result: 2-d numpy array of Local Wave Activity (LWA); dimension = (nlat,nlon)                                
-    '''
 
 # --- Color axis for plotting LWA --- #
 LWA_caxis = np.linspace(0,LWA.max(),31,endpoint=True)
