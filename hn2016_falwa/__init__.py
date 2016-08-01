@@ -7,3 +7,4 @@
 from barotropic_lwa import barotropic_Eqlat_LWA
 from qgpv_lwa import qgpv_Eqlat_LWA
 from lwa import LWA
+from eqv_lat import EqvLat, EqvLat_hemispheric
