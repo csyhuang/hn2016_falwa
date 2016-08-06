@@ -31,4 +31,4 @@ vertical_integral | To compute density-weighted vertical average of local wave a
 Compute_QGPV | To compute QGPV from velocity and temperature fields.
 Solve_Uref| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) from wave activity and zonal wind fields.
 
-If you have any inquiries/suggestions, please email Clare S. Y. Huang: clare1068@gmail.com
+Feel free to email Clare S. Y. Huang: clare1068@gmail.com if you have any inquiries/suggestions.
