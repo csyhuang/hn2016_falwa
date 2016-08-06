@@ -4,7 +4,9 @@ The current version of the library handles calculation of FALWA in a barotropic 
 
 The functions in this library can compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-You can start using the package by running the two examples provided:
+<h1> Examples
+
+You can start using the package by running the two examples provided (with the command $ python sample_script.py).
 
 Sample Script | Description
 ------------ | -------------
