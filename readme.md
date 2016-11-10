@@ -9,7 +9,7 @@ You can start using the package by running the two examples provided with the co
 
 Sample Script | Description
 ------------ | -------------
-Example_barotropic.ipynb <br> [HTML version](http://htmlpreview.github.com/?Example_barotropic.html) | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
+Example_barotropic.ipynb <br> [HTML version](http://htmlpreview.github.com/?https://github.com/csyhuang/hn2016_falwa/blob/master/Example_barotropic.html) | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 Example_qgpv.ipynb <br> [HTML version](http://htmlpreview.github.com/?Example_qgpv.html) | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
 
 ## List of functions (to be updated)
