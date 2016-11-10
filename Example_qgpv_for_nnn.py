@@ -26,12 +26,11 @@ import datetime as dt
 a = 6.378e+6 # Earth's radius
 
 # --- Load the zonal wind and QGPV at 240hPa --- #
-u_QGPV_File = Dataset('u_QGPV_240hPa_2012Oct28to31.nc', mode='r')
+u_QGPV_File = Dataset('u_QGPV_240hPa_2012_SON.nc', mode='r')
 
 # --- Read in longitude and latitude arrays --- #
 xlon = u_QGPV_File.variables['longitude'][:]
 ylat = u_QGPV_File.variables['latitude'][:]
-clat = np.abs(np.cos(ylat*pi/180.)) # cosine latitude
 nlon = xlon.size
 nlat = ylat.size
 
@@ -41,28 +40,28 @@ area = 2.*pi*a*a*(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones
 area = np.abs(area) # To make sure area element is always positive (given floating point errors). 
 
 # --- Datestamp ---
-Start_date = dt.datetime(2012, 10, 28, 0, 0)
-delta_t = dt.timedelta(hours=24)
-Datestamp = [Start_date + delta_t*tt for tt in range(4)]
+Start_date = dt.datetime(2012, 9, 1, 0, 0)
+delta_t = dt.timedelta(hours=6)
+Datestamp = [Start_date + delta_t*tt for tt in range(364)]
 
 # --- Read in the absolute vorticity field from the netCDF file --- #
 u = u_QGPV_File.variables['U'][:]
 QGPV = u_QGPV_File.variables['QGPV'][:]
 
 # --- Obtain equivalent-latitude relationship and also the LWA from the absolute vorticity snapshot ---
-for tt in range(4):
-    Qref, LWA = hn2016_falwa.qgpv_Eqlat_LWA(ylat,QGPV[tt,0,:,:],area,a*clat*dphi)
+for tt in range(228,228+13,4):
+    Qref, LWA = hn2016_falwa.qgpv_Eqlat_LWA(ylat,QGPV[tt,0,:,:],area,a*dphi)
     
     # --- Plot LWA ---
-    fig,ax = plt.subplots(figsize=(6,9))
+    fig = plt.subplots(figsize=(6,9))
     plt.subplot(311)
     plt.contourf(xlon,ylat,u[tt,0,:,:],41)
-    plt.ylabel('Latitude [deg]')
+    plt.ylabel('latitude [deg]')
     plt.colorbar()
     plt.title('zonal wind at 240hPa | '+Datestamp[tt].strftime("%y/%m/%d %H:%M"))
     plt.subplot(312)
     c = plt.contourf(xlon,ylat,QGPV[tt,0,:,:],41)
-    plt.ylabel('Latitude [deg]')
+    plt.ylabel('latitude [deg]')
     cb = plt.colorbar(c)
     cb.formatter.set_powerlimits((0, 0))
     cb.ax.yaxis.set_offset_position('right')                         
@@ -70,11 +69,10 @@ for tt in range(4):
     plt.title('QGPV at 240hPa')
     plt.subplot(313)
     plt.contourf(xlon,ylat,LWA,41)
-    plt.ylabel('Latitude [deg]')
+    plt.ylabel('latitude [deg]')
     plt.colorbar()
     plt.title('LWA at 240hPa')
-    plt.xlabel('Longitude [deg]')
-    fig.subplots_adjust(hspace=.3)
+    plt.xlabel('longitude [deg]')
     plt.show()
     plt.savefig('u_LWA_QGPV_240hPa_'+Datestamp[tt].strftime("%y_%m_%d_%H")+'.png')
 

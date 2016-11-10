@@ -10,7 +10,7 @@ from lwa import LWA
 from eqv_lat import EqvLat
 import numpy as np
 
-def qgpv_Eqlat_LWA(ylat,vort,area,dy,nlat_S=61):
+def qgpv_Eqlat_LWA(ylat,vort,area,dmu,nlat_S=61):
     '''
     Input variables:
         ylat: 1-d numpy array of latitude (in degree) with equal spacing in 
@@ -33,18 +33,18 @@ def qgpv_Eqlat_LWA(ylat,vort,area,dy,nlat_S=61):
     Qref = np.zeros(nlat)
     LWA_result = np.zeros((nlat,nlon))
     NL = np.zeros((nlat,nlon))
-
+    
     # --- Southern Hemisphere ---
     Qref1 = EqvLat(ylat[:nlat_S],vort[:nlat_S,:],area[:nlat_S,:],nlat_S)
     Qref[:nlat_S] = Qref1
-    LWA_South = LWA(nlon,nlat_S,nlat_S,vort[:nlat_S,:],Qref1,dy)
+    LWA_South = LWA(nlon,nlat_S,nlat_S,vort[:nlat_S,:],Qref1,dmu[:nlat_S])
     LWA_result[:nlat_S,:] = LWA_South
 
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1,:] # Added the minus sign, but gotta see if NL_North is affected
     Qref2 = EqvLat(ylat[:nlat_S],vort2[:nlat_S,:],area[:nlat_S,:],nlat_S)
     Qref[-nlat_S:] = Qref2[::-1]
-    LWA_North = LWA(nlon,nlat_S,nlat_S,vort2[:nlat_S,:],Qref2,dy)
+    LWA_North = LWA(nlon,nlat_S,nlat_S,vort2[:nlat_S,:],Qref2,dmu[:nlat_S])
     LWA_result[-nlat_S:,:] = LWA_North[::-1,:]
 
     return Qref, LWA_result

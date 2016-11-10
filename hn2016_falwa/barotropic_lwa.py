@@ -15,10 +15,10 @@ import matplotlib.pyplot as plt
 a = 6.378e+6 # Earth's radius [m]
 
 # --- Calculation of local wave activity on a 2-D vorticity map ---
-def barotropic_Eqlat_LWA(ylat,vort,area,dy): # used to be Eqlat_LWA
+def barotropic_Eqlat_LWA(ylat,vort,area,dmu): # used to be Eqlat_LWA
     ''' Assume area element = a**2 cos(lat)d(lat)d(lon)
     dx = a * cos(lat) * d(lon)
-    dy = a * d(lat)
+    dmu = a cos(lat) * d(lat)
     
     Input variables:
         ylat: 1-d numpy array with equal spacing in ascending order; dimension = nlat
@@ -33,6 +33,6 @@ def barotropic_Eqlat_LWA(ylat,vort,area,dy): # used to be Eqlat_LWA
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     Qref = EqvLat(ylat,vort,area,ylat.size)
-    LWA_result = LWA(nlon,nlat,nlat,vort,Qref,dy)
+    LWA_result = LWA(nlon,nlat,nlat,vort,Qref,dmu)
     return Qref, LWA_result
 
