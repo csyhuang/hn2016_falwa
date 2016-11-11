@@ -6,10 +6,10 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 
 You can start using the package by running the two examples provided:
 
-- Example_barotropic.py:
+- Example_barotropic.ipynb:
 This script read in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 
-- Example_qgpv.py:
+- Example_qgpv.ipynb:
 This script read in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
 
 If you have any inquiries/suggestions, please email Clare S. Y. Huang: clare1068@gmail.com

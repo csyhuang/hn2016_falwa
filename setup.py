@@ -1,6 +1,6 @@
 from setuptools import setup
       
-VERSION='0.1.2'
+VERSION='0.1.3'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
@@ -20,6 +20,8 @@ barotropic model and QGPV fields on isobaric surfaces.
 The functions in this library can compute the tracer equivalent-latitude relationship 
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+
+A bug is fixed in version 0.1.3. The differential line element in lwa.py should be a vector instead of a scalar.
 
 Links
 -----
