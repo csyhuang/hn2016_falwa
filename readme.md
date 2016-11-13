@@ -33,4 +33,4 @@ Solve_Uref| To compute the eddy-free referece state of zonal wind and temperatur
 
 ## Contact
 
-Feel free to email Clare S. Y. Huang: clare1068@gmail.com if you have any inquiries/suggestions.
+Feel free to email Shao Ying (Clare) Huang: clare1068@gmail.com if you have any inquiries/suggestions.
