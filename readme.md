@@ -20,6 +20,7 @@ barotropic_Eqlat_LWA | Compute local wave activity and corresponding equivalent-
 qgpv_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
 EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
 LWA| Compute wave activity of a given trafer field, given the equivalent-latitude.
+Solve_URef_noslip_hemisphere| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) from wave activity and zonal wind fields, given no-slip boundary conditions. Documentation to be updated.
 
 ## To-do list (to be updated)
 
@@ -29,7 +30,6 @@ Function | Description
 ---------| -------------
 vertical_integral | To compute density-weighted vertical average of local wave activity, zonal wind, or other 3-D fields.
 Compute_QGPV | To compute QGPV from velocity and temperature fields.
-Solve_Uref| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) from wave activity and zonal wind fields.
 
 ## Contact
 
