@@ -1,6 +1,6 @@
 from setuptools import setup
       
-VERSION='0.1.5'
+VERSION='0.1.5b'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
@@ -22,6 +22,7 @@ proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
 v0.1.5: A function 'Solve_URef_noslip_hemisphere' has been added. This calculates the reference state introduced in Nakamura and Solomon (2010, JAS) but in a hemispheric domain. Documentations and examples to be uploaded soon.
+v0.1.5b: Include a function 'static_stability' to compute static stability from potential temperature field.
 
 Links
 -----

@@ -8,3 +8,6 @@ from barotropic_lwa import barotropic_Eqlat_LWA
 from qgpv_lwa import qgpv_Eqlat_LWA
 from lwa import LWA
 from eqv_lat import EqvLat, EqvLat_hemispheric
+from Solve_URef_noslip_hemisphere import Solve_Uref_noslip
+from static_stability import static_stability
+

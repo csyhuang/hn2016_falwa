@@ -33,6 +33,6 @@ def barotropic_Eqlat_LWA(ylat,vort,area,dmu): # used to be Eqlat_LWA
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     Qref = EqvLat(ylat,vort,area,ylat.size)
-    LWA_result = LWA(nlon,nlat,nlat,vort,Qref,dmu)
+    LWA_result = LWA(nlon,nlat,vort,Qref,dmu)
     return Qref, LWA_result
 
