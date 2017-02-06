@@ -45,7 +45,7 @@ def qgpv_Eqlat_LWA(ylat,vort,area,dmu,nlat_S=None):
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1,:] # Added the minus sign, but gotta see if NL_North is affected
     Qref2 = EqvLat(ylat[:nlat_S],vort2[:nlat_S,:],area[:nlat_S,:],nlat_S)
-    Qref[-nlat_S:] = Qref2[::-1]
+    Qref[-nlat_S:] = -Qref2[::-1]
     LWA_North = LWA(nlon,nlat_S,vort2[:nlat_S,:],Qref2,dmu[:nlat_S])
     LWA_result[-nlat_S:,:] = LWA_North[::-1,:]
 
