@@ -18,7 +18,7 @@ Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.n
 
 ## List of functions (to be updated)
 
-Type help(function) for instructions of format of input variables.
+Type help(function) for instructions on format of input variables.
 
 Function | Description
 ---------| -------------
