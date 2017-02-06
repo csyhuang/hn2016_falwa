@@ -3,9 +3,13 @@
 The package hn2016_falwa contains modules to compute the finite-amplitude local wave activity (FALWA) proposed in [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1). 
 The utilities in the library can be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
+## Message for users
+
+If you need help analyzing output from particular model/analysis with our techniques, feel free to email me (clare1068@gmail.com) with sample datasets and I can configure the code for you.
+
 ## Examples
 
-You can start using the package by running the two examples provided with the command $ python sample_script.py.
+Please refer to the example/ directory for these ipython notebooks. 
 
 Sample Script | Description
 ------------ | -------------
@@ -14,12 +18,15 @@ Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.n
 
 ## List of functions (to be updated)
 
+Type help(function) for instructions of format of input variables.
+
 Function | Description
 ---------| -------------
 barotropic_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from absolute vorticity field in a barotropic model with spherical geometry.
 qgpv_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
 EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
-LWA| Compute wave activity of a given trafer field, given the equivalent-latitude.
+static_stability| Compute static stability in hemispheric domain from 3-D potential temperature field.
+Compute_QGPV_GivenVort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
 Solve_URef_noslip_hemisphere| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
 
 ## To-do list (to be updated)
@@ -29,7 +36,7 @@ Below are functions I plan to add into my library soon. Please feel free to make
 Function | Description
 ---------| -------------
 vertical_integral | To compute density-weighted vertical average of local wave activity, zonal wind, or other 3-D fields.
-Compute_QGPV | To compute QGPV from velocity and temperature fields.
+uv_to_vorticity | To compute relative vorticity on a sphere, given 3-D zonal and meridional wind fields.
 
 ## Contact
 
