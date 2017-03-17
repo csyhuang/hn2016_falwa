@@ -23,6 +23,8 @@ def Compute_QGPV_GivenVort(omega,nlat,nlon,kmax,unih,ylat,avort,PT3,t0_cN,t0_cS,
 	QGPV, dzdiv
         QGPV: 3-d numpy array of quasi-geostrophic potential vorticity; shape = [kmax x nlat x nlon]
         dzdiv: 3-d numpy array of the stretching term in QGPV; shape = [kmax x nlat x nlon]
+		
+	Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
     '''
 
 

@@ -9,7 +9,7 @@ The use of hemispheric domain is necessary to compute the surface wave activity
 (B in Nakamura and Solomon (2010) equation (15)) from potential temperature field
 because there is a reversal of meridional gradient at the equator.
 	
-Please email Clare S. Y. Huang if you have any inquiries/suggestions: clare1068@gmail.com
+Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
 '''
 
 from math import *

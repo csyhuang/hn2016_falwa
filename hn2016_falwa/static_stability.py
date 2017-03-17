@@ -15,7 +15,7 @@ def static_stability(height,area,theta,S_ET=None,N_ET=None):
     Input variables:
         - height: array of z-coordinate [in meters] with size = kmax, equally spaced
         - ylat: array of ascending y-coordinate [latitude, in degree] with size = nlat, equally spaced
-        - theta: matrix of potential temperature [K] with shape = [kmax,nlat]
+        - theta: matrix of potential temperature [K] with shape = [kmax,nlat,nlon]
     
     Output variables:
         - t0_N (t0_S): array area-weighted average of potential temperature (\tilde{\theta} in HN16) 
@@ -24,11 +24,11 @@ def static_stability(height,area,theta,S_ET=None,N_ET=None):
         (Southern) hemispheric domain; size = kmax
             
     
-    Please email Clare S. Y. Huang if you have any inquiries/suggestions: clare1068@gmail.com
+    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
     '''
     
 
-    nlat = theta.shape[0]
+    nlat = theta.shape[1]
     if S_ET==None:
         S_ET = nlat/2
     if N_ET==None:

@@ -3,7 +3,7 @@ latitude relationship and finite-amplitude local wave activity (LWA) from the
 vorticity fields on a hemispheric domain as shown in the example in fig. 8 and 9 
 of Huang & Nakamura (2016) equation (13). 
 
-Please email Clare S. Y. Huang if you have any inquiries/suggestions: clare1068@gmail.com
+Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
 '''
 from math import *
 from lwa import LWA

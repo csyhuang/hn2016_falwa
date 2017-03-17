@@ -1,6 +1,6 @@
 from setuptools import setup
       
-VERSION='0.1.5b'
+VERSION='0.1.5c'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
@@ -23,6 +23,9 @@ finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon 
 
 v0.1.5: A function 'Solve_URef_noslip_hemisphere' has been added. This calculates the reference state introduced in Nakamura and Solomon (2010, JAS) but in a hemispheric domain. Documentations and examples to be uploaded soon.
 v0.1.5b: Include a function 'static_stability' to compute static stability from potential temperature field.
+v0.1.5c: (1) Fixed a bug in outputing equivalent latitude in the function 'qgpv_Eqlat_LWA'. The sign was flipped.
+(2) A beta version of function 'Solve_URef_noslip_hemisphere' is updated. It can only be used to compute eddy-free reference state in no-slip boundary conditions.
+ 
 
 Links
 -----
