@@ -7,7 +7,7 @@ The utilities in the library can be used to compute the tracer equivalent-latitu
 
 ## Inquiries / Issues reporting
 
-Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to [email me]<mailto:clare1068@gmail.com> with sample datasets and I can configure the code for you.
+Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <clare1068@gmail.com> with sample datasets and I can configure the code for you.
 
 ## Examples
 
