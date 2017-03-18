@@ -38,6 +38,3 @@ Function | Description
 vertical_integral | To compute density-weighted vertical average of local wave activity, zonal wind, or other 3-D fields.
 uv_to_vorticity | To compute relative vorticity on a sphere, given 3-D zonal and meridional wind fields.
 
-## Contact
-
-Feel free to email Shao Ying (Clare) Huang: clare1068@gmail.com if you have any inquiries/suggestions.
