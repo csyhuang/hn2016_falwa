@@ -1,13 +1,12 @@
 ## Python Library: hn2016_falwa
 
-Compute Finite-amplitude Local Wave Activity (FALWA) from gridded climate data.
+Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) from gridded climate data.
 
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/hn2016_falwa_diagram.png)
 
 ## Description
 
-The package hn2016_falwa contains modules to compute the finite-amplitude local wave activity (FALWA) proposed in [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1). 
-The utilities in the library can be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+The utilities in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
 ## Inquiries / Issues reporting
 
