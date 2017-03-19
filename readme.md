@@ -30,7 +30,7 @@ Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.n
 
 ## List of functions (to be updated)
 
-Type help(function) for instructions on format of input variables.
+Type help(function) for instructions on format of input variables. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
 
 Function | Description
 ---------| -------------
@@ -40,15 +40,6 @@ EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere
 static_stability| Compute static stability in hemispheric domain from 3-D potential temperature field.
 Compute_QGPV_GivenVort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
 Solve_URef_noslip_hemisphere| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
-
-## To-do list (to be updated)
-
-Below are functions I plan to add into my library soon. Please feel free to make suggestions.
-
-Function | Description
----------| -------------
-vertical_integral | To compute density-weighted vertical average of local wave activity, zonal wind, or other 3-D fields.
-uv_to_vorticity | To compute relative vorticity on a sphere, given 3-D zonal and meridional wind fields.
 
 ## Inquiries / Issues reporting
 
