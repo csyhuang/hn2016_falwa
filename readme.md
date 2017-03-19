@@ -6,10 +6,6 @@ Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Na
 
 The utilities in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-## Inquiries / Issues reporting
-
-Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <clare1068@gmail.com> with sample datasets and I can configure the code for you.
-
 ## Installation
 
 This package works in Python 2. It can be installed with pip:
@@ -53,4 +49,8 @@ Function | Description
 ---------| -------------
 vertical_integral | To compute density-weighted vertical average of local wave activity, zonal wind, or other 3-D fields.
 uv_to_vorticity | To compute relative vorticity on a sphere, given 3-D zonal and meridional wind fields.
+
+## Inquiries / Issues reporting
+
+Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <clare1068@gmail.com> with sample datasets and I can configure the code for you.
 
