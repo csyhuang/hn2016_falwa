@@ -10,6 +10,19 @@ The utilities in the library can also be used to compute the tracer equivalent-l
 
 Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <clare1068@gmail.com> with sample datasets and I can configure the code for you.
 
+## Installation
+
+This package works in Python 2. It can be installed with pip:
+```
+pip install hn2016_falwa
+```
+You can also install from the source distribution:
+```
+git clone https://github.com/csyhuang/hn2016_falwa.git
+cd hn2016_falwa
+python setup.py install
+```
+
 ## Examples
 
 Please refer to the example/ directory for these ipython notebooks. 
