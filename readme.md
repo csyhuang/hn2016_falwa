@@ -8,7 +8,7 @@ The utilities in the library can also be used to compute the tracer equivalent-l
 
 ## Installation
 
-This package works in Python 2. It can be installed with pip:
+This package works in Python 2.7. It can be installed with pip:
 ```
 pip install hn2016_falwa
 ```
