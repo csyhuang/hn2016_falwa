@@ -52,3 +52,38 @@ def qgpv_Eqlat_LWA(ylat,vort,area,dmu,nlat_S=None):
     return Qref, LWA_result
 
 
+def qgpv_input_Qref_to_compute_LWA(ylat,Qref,vort,area,dmu,nlat_S=None):
+    '''
+	This function computes LWA based on a *prescribed* Qref instead of Qref
+	obtained from the QGPV field.
+	--------------------------------------------------------------------------
+    Input variables:
+        ylat: 1-d numpy array of latitude (in degree) with equal spacing in 
+                ascending order; dimension = nlat
+        Qref: 1-d numpy array of value Q(y) where latitude y is given by ylat. 
+        vort: 2-d numpy array of vorticity values; dimension = [nlat_S x nlon]
+        area: 2-d numpy array specifying differential areal element of each 
+                grid point; dimension = [nlat_S x nlon]
+        nlat_S: the index of grid point that defines the extent of hemispheric 
+                domain from the pole. If the value of nlat_S is not input, it 
+                will be set to nlat/2, where nlat is the size of ylat.
+        
+    Output variables:
+        LWA_result: 2-d numpy array of local wave activity values; 
+                    dimension = [nlat_S x nlon]    
+    '''
+    
+    nlat = vort.shape[0]
+    nlon = vort.shape[1]
+    if nlat_S == None:
+        nlat_S = nlat/2
+        
+    LWA_result = np.zeros((nlat,nlon))
+    
+    # --- Southern Hemisphere ---
+    LWA_result[:nlat_S,:] = LWA(nlon,nlat_S,vort[:nlat_S,:],Qref[:nlat_S],dmu[:nlat_S])
+
+    # --- Northern Hemisphere ---
+    LWA_result[-nlat_S:,:] = LWA(nlon,nlat_S,vort[-nlat_S:,:],Qref[-nlat_S:],dmu[-nlat_S:])
+
+    return LWA_result
