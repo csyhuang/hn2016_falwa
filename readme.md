@@ -1,4 +1,4 @@
-## Python Library: hn2016_falwa
+## Python Library: hn2016_falwa (v0.1.6)
 
 Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) from gridded climate data.
 
@@ -35,7 +35,9 @@ Type help(function) for instructions on format of input variables. Tentative fut
 Function | Description
 ---------| -------------
 barotropic_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from absolute vorticity field in a barotropic model with spherical geometry.
+barotropic_input_Qref_to_compute_LWA | Same as *barotropic_Eqlat_LWA* except that the equivalent-latitude profile is prescribed (input)
 qgpv_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
+qgpv_input_Qref_to_compute_LWA | Same as *qgpv_Eqlat_LWA* except that the equivalent-latitude profile is prescribed (input)
 EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
 static_stability| Compute static stability in hemispheric domain from 3-D potential temperature field.
 Compute_QGPV_GivenVort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
