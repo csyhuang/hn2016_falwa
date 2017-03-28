@@ -3,6 +3,7 @@ Please make inquiries and report issues via Github: https://github.com/csyhuang/
 '''
 from math import *
 import numpy as np
+from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import pickle

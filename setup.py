@@ -1,18 +1,15 @@
 from setuptools import setup
       
-VERSION='0.1.6'
+VERSION='0.1.5c'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
-AUTHOR='Shao Ying (Clare) Huang'
+AUTHOR='Clare S. Y. Huang'
 AUTHOR_EMAIL='clare1068@gmail.com'
 LICENSE='MIT'
+
 DESCRIPTION='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)'
-install_requires=[
-   'numpy',
-   'scipy',
-   'matplotlib'
-]
+
 LONG_DESCRIPTION="""
 hn2016_falwa is a package that contains modules to compute the finite-amplitude 
 local wave activity (FALWA) proposed in Huang and Nakamura (2016 JAS):
@@ -24,11 +21,13 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-v0.1.6: Included LWA computation subroutines with *prescribed* equivalent latitude profile:
-- barotropic_input_Qref_to_compute_LWA (for barotropic vorticity)
-- qgpv_input_Qref_to_compute_LWA (for QGPV)
+v0.1.5: A function 'Solve_URef_noslip_hemisphere' has been added. This calculates the reference state introduced in Nakamura and Solomon (2010, JAS) but in a hemispheric domain. Documentations and examples to be uploaded soon.
+v0.1.5b: Include a function 'static_stability' to compute static stability from potential temperature field.
+v0.1.5c: (1) Fixed a bug in outputing equivalent latitude in the function 'qgpv_Eqlat_LWA'. The sign was flipped.
+(2) A beta version of function 'Solve_URef_noslip_hemisphere' is updated. It can only be used to compute eddy-free reference state in no-slip boundary conditions.
  
-Links:
+
+Links
 -----
 - Source code: http://github.com/csyhuang/hn2016_falwa/
 """
