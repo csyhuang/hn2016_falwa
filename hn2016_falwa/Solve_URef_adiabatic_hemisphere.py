@@ -1,5 +1,5 @@
 '''
-Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
+This is testing version of the adiabatic B.C. solver.
 '''
 from math import *
 import numpy as np
@@ -89,7 +89,7 @@ dmdz = (dm/dz)
 
 # **** Input data ****
 
-def Solve_Uref_noslip(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True): 
+def Solve_Uref_adiabatic(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True): 
 # zm_PT = zonal mean potential temperature
     '''
 	This is a beta-version of the eddy-free reference state solver introduced in Nakamura and Solomon (2010, JAS) with no-slip boundary conditions. There are still features to be built. Please contact Clare (clare1068@gmail.com) for details of usage.
