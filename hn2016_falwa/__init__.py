@@ -11,4 +11,5 @@ from eqv_lat import EqvLat, EqvLat_hemispheric
 from Solve_URef_noslip_hemisphere import Solve_Uref_noslip
 from static_stability import static_stability
 from qgpv import Compute_QGPV_GivenVort
+from theta_lwa import theta_lwa
 

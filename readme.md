@@ -42,6 +42,7 @@ EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere
 static_stability| Compute static stability in hemispheric domain from 3-D potential temperature field.
 Compute_QGPV_GivenVort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
 Solve_URef_noslip_hemisphere| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
+theta_lwa | To compute longitudinally local version of surface wave activity. (Note: B* in Nakamura and Solomon (2010) is the zonal mean version)
 
 ## Inquiries / Issues reporting
 

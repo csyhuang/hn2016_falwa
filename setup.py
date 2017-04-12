@@ -1,6 +1,6 @@
 from setuptools import setup
       
-VERSION='0.1.6'
+VERSION='0.1.7'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
@@ -28,6 +28,7 @@ v0.1.6: Included LWA computation subroutines with *prescribed* equivalent latitu
 - barotropic_input_Qref_to_compute_LWA (for barotropic vorticity)
 - qgpv_input_Qref_to_compute_LWA (for QGPV)
  
+v0.1.7: added 'theta_lwa' 
 Links:
 -----
 - Source code: http://github.com/csyhuang/hn2016_falwa/
