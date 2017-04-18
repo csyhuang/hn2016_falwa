@@ -1,7 +1,6 @@
 # Editing note on Feb 28, 2017: the input variable corm (absolute vorticity) is removed.
 from math import *
 import numpy as np
-from matplotlib.mlab import griddata
 #import matplotlib.pyplot as plt
 from scipy import interpolate
 import pickle
