@@ -3,4 +3,5 @@ python:
   - "2.7"
 # command to install dependencies
 install: 
-  - "pip install --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib"
+  - "pip install --only-binary=numpy,scipy numpy scipy"
+  - "pip install matplotlib"
