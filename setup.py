@@ -23,11 +23,14 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-v0.1.6: Included LWA computation subroutines with *prescribed* equivalent latitude profile:
-- barotropic_input_Qref_to_compute_LWA (for barotropic vorticity)
-- qgpv_input_Qref_to_compute_LWA (for QGPV)
- 
-v0.1.7: added 'theta_lwa' 
+v0.1.7:
+- Name of functions are all now in small letters.
+- The radius of planet (planet_radius) is now an optional input for the functions (default value: Earth's radius).
+- The function 'static_stability' can now take in 2D (i.e. zonal mean) or 3D field of potential temperature.
+- The syntax in the sample IPython notebooks are updated.
+- Unittest directory has been set up and will be constantly updated.
+- A new function 'theta_lwa' has been added to compute surface wave activity based on Potential temperature.
+
 Links:
 -----
 - Source code: http://github.com/csyhuang/hn2016_falwa/
