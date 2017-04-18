@@ -3,10 +3,9 @@ python:
   - "2.7"
 virtualenv:
   system_site_packages: true
-before_install:
- - sudo apt-get install -qq python-numpy python-scipy
-# command to install dependencies
+
 install: 
-  - "apt-get install python-numpy"
-  - "apt-get install python-scipy"
+  - "brew install gcc"
+  - "pip install numpy"
+  - "pip install scipy"
   - "pip install matplotlib"
