@@ -2,7 +2,7 @@
 from math import *
 import numpy as np
 from matplotlib.mlab import griddata
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from scipy import interpolate
 import pickle
 from scipy.sparse import csc_matrix
@@ -381,46 +381,46 @@ def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0
 
         u_Ref_regular[:,-nlat/2:] = u_Ref
         T_Ref_regular[:,-nlat/2:] = T_ref
-
-        plot_all_ref_quan = False
-        if plot_all_ref_quan:
-            # --- Colorbar scale ---
-            contour_int = np.arange(-120,145,5)
-            dT_contour_int = np.arange(-120,81,5)
-            T_contour_int = np.arange(160,321,5)
-            # --- Start plotting figure ---
-            fig = plt.subplots(figsize=(12,12))
-            plt.subplot(221)
-            plt.contourf(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int)
-            plt.colorbar()
-            c1=plt.contour(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int[::2],colors='k')
-            plt.clabel(c1,c1.levels,inline=True, fmt='%d', fontsize=10)
-            plt.title('$\Delta$ u '+tstamp)
-            plt.ylabel('height (km)')
-            plt.subplot(222)
-            plt.contourf(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int)
-            plt.colorbar()
-            c2=plt.contour(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int[::2],colors='k')
-            plt.clabel(c2,c2.levels,inline=True, fmt='%d', fontsize=10)
-            plt.title('$u_{REF}$ ('+BCstring+' BC)')
-            plt.subplot(223)
-            plt.contourf(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int)
-            plt.colorbar()
-            c3=plt.contour(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int,colors='k')
-            plt.clabel(c3,c3.levels,inline=True, fmt='%d', fontsize=10)
-            plt.title('$\Delta$ T')
-            plt.ylabel('height (km)')
-            plt.subplot(224)
-            plt.contourf(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int)
-            plt.colorbar()
-            c4=plt.contour(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int[::2],colors='k')
-            plt.clabel(c4,c4.levels,inline=True, fmt='%d', fontsize=10)
-            plt.title('$T_{REF}$')
-            plt.ylabel('height (km)')
-            plt.tight_layout()
-            plt.show()
-            #plt.savefig('/home/csyhuang/Dropbox/Research-code/Sep12_test3_'+BCstring+'_'+tstamp+'.png')
-            plt.close()
+#
+#        plot_all_ref_quan = False
+#        if plot_all_ref_quan:
+#            # --- Colorbar scale ---
+#            contour_int = np.arange(-120,145,5)
+#            dT_contour_int = np.arange(-120,81,5)
+#            T_contour_int = np.arange(160,321,5)
+#            # --- Start plotting figure ---
+#            fig = plt.subplots(figsize=(12,12))
+#            plt.subplot(221)
+#            plt.contourf(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int)
+#            plt.colorbar()
+#            c1=plt.contour(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int[::2],colors='k')
+#            plt.clabel(c1,c1.levels,inline=True, fmt='%d', fontsize=10)
+#            plt.title('$\Delta$ u '+tstamp)
+#            plt.ylabel('height (km)')
+#            plt.subplot(222)
+#            plt.contourf(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int)
+#            plt.colorbar()
+#            c2=plt.contour(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int[::2],colors='k')
+#            plt.clabel(c2,c2.levels,inline=True, fmt='%d', fontsize=10)
+#            plt.title('$u_{REF}$ ('+BCstring+' BC)')
+#            plt.subplot(223)
+#            plt.contourf(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int)
+#            plt.colorbar()
+#            c3=plt.contour(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int,colors='k')
+#            plt.clabel(c3,c3.levels,inline=True, fmt='%d', fontsize=10)
+#            plt.title('$\Delta$ T')
+#            plt.ylabel('height (km)')
+#            plt.subplot(224)
+#            plt.contourf(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int)
+#            plt.colorbar()
+#            c4=plt.contour(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int[::2],colors='k')
+#            plt.clabel(c4,c4.levels,inline=True, fmt='%d', fontsize=10)
+#            plt.title('$T_{REF}$')
+#            plt.ylabel('height (km)')
+#            plt.tight_layout()
+#            plt.show()
+#            #plt.savefig('/home/csyhuang/Dropbox/Research-code/Sep12_test3_'+BCstring+'_'+tstamp+'.png')
+#            plt.close()
 
     # This is for only outputing Delta_u and Uref for no-slip and adiabatic boundary conditions.
     return u_MassCorr_regular_noslip,u_Ref_regular_noslip,T_MassCorr_regular_noslip,T_Ref_regular_noslip, u_MassCorr_regular_adiab,u_Ref_regular_adiab,T_MassCorr_regular_adiab,T_Ref_regular_adiab

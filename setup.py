@@ -11,7 +11,6 @@ DESCRIPTION='python package to compute finite-amplitude local wave activity (Hua
 install_requires=[
    'numpy',
    'scipy',
-   'matplotlib'
 ]
 LONG_DESCRIPTION="""
 hn2016_falwa is a package that contains modules to compute the finite-amplitude 
