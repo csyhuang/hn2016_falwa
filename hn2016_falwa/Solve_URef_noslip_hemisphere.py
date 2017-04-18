@@ -1,8 +1,7 @@
-'''
-Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
-'''
+# Editing note on Feb 28, 2017: the input variable corm (absolute vorticity) is removed.
 from math import *
 import numpy as np
+from matplotlib.mlab import griddata
 import matplotlib.pyplot as plt
 from scipy import interpolate
 import pickle
@@ -47,10 +46,10 @@ def extrap1d(interpolator):
     return ufunclike
 
 # Constants in Noboru's code
-nlon = 240
-nlat = 121
+#nlon = 240
+#nlat = 121
 jmax = 73
-jmax1 = nlat #nlat+20
+#jmax1 = nlat #nlat+20
 #kmax = 49
 itarg = 1979        # End year
 izarg = 12          # End month
@@ -62,7 +61,6 @@ dz = 1000.          # vertical z spacing (m)
 aa = 6378000.     # planetary radius
 grav = 9.81       # gravity
 #dm = 1./float(jmax1-1)  # gaussian latitude spacing
-dm = 1./float(jmax1+1)  # gaussian latitude spacing
 p0 = 1000.          # reference pressure (hPa)
 r0 = 287.           # gas constant
 hh = 7000.          # scale height
@@ -71,17 +69,10 @@ rkappa = r0/cp
 om = 7.29e-5          # angular velocity of the earth
 
 # Constant arrays
-xlon = np.linspace(0,360,nlon,endpoint=False)
+#xlon = np.linspace(0,360,nlon,endpoint=False)
 
 # **** Define gaussian latitude grids in radian ****
 #gl = np.array([j*dm-1 for j in range(jmax1)]) # This is sin / mu
-gl = np.array([(j+1)*dm for j in range(jmax1)]) # This is sin / mu
-gl_2 = np.array([j*dm for j in range(jmax1+2)]) # This is sin / mu
-cosl = np.sqrt(1.-gl**2)
-cosl_2 = np.sqrt(1.-gl_2**2)
-alat = np.arcsin(gl)*180./pi
-alat_2 = np.arcsin(gl_2)*180./pi
-dmdz = (dm/dz)
 
 # **** Things to output in the program of generation ****
 # Half-step static stability in z to calculate epsilon
@@ -89,30 +80,21 @@ dmdz = (dm/dz)
 
 # **** Input data ****
 
-def Solve_Uref_noslip(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True): 
-# zm_PT = zonal mean potential temperature
-    '''
-	This is a beta-version of the eddy-free reference state solver introduced in Nakamura and Solomon (2010, JAS) with no-slip boundary conditions. There are still features to be built. Please contact Clare (clare1068@gmail.com) for details of usage.
-    Input variables:
-		tstamp: string of time-stamp
-		zmum: 2-d numpy array of zonal mean zonal wind x cos(lat); dimension = [kmax x nlat]
-		FAWA_cos: 2-d numpy array of zonal mean finite-amplitude wave activity x cos(lat); dimension = [kmax x nlat]
-		ylat: 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat
-		ephalf2: epsilon in Nakamura and Solomon (2010) at half-step. See Huang and Nakamura, submitted (supplementary materials); dimension = [kmax x nlat]
-		Delta_PT: 1-d numpy array of theta(kmax-2,j) - theta_ref(kmax-2) (obtained by box-counting); dimension = [nlat]
-		zm_PT: 2-d numpy array of zonal mean potential temperature (theta); dimension = [kmax x nlat]
-		Input_B0: (developing feature not used yet) 1-d numpy array; please just stuff in random numbers of dimension = [nlat]
-		Input_B1: (developing feature not used yet) 1-d numpy array; please just stuff in random numbers of dimension = [nlat]
-		use_real_Data: boolean that indicates whether realistic climate data is used. If False, the function will be tested with inputs of random numbers.
-        
-    Output variables:
-		(Please refer to Nakamura and Solomon (2010, JAS) for the notations. The output only contains non-zero values for Northern Hemispheric grid points.)
-		u_MassCorr_regular: 2-d numpy array that contains adjustment of zonal wind (no-slip B.C.); dimension = [kmax x nlat]
-		u_Ref_regular_noslip: 2-d numpy array that contains eddy-free reference state (no-slip B.C.); dimension = [kmax x nlat]
-		T_MassCorr_regular: 2-d numpy array that contains adjustment of temperature (no-slip B.C.); dimension = [kmax x nlat]
-		T_Ref_regular_noslip: 2-d numpy array that contains eddy-free temperature reference state (no-slip B.C.); dimension = [kmax x nlat]
+def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True): # zm_PT = zonal mean potential temperature
+    
+    # === These changes with input variables' dimensions ===
+    nlat = FAWA_cos.shape[-1]
+    jmax1 = nlat
+    dm = 1./float(jmax1+1)  # gaussian latitude spacing
+    gl = np.array([(j+1)*dm for j in range(jmax1)]) # This is sin / mu
+    gl_2 = np.array([j*dm for j in range(jmax1+2)]) # This is sin / mu
+    cosl = np.sqrt(1.-gl**2)
+    cosl_2 = np.sqrt(1.-gl_2**2)
+    alat = np.arcsin(gl)*180./pi
+    alat_2 = np.arcsin(gl_2)*180./pi
+    dmdz = (dm/dz)
 
-    '''
+
 
     # **** Get from input these parameters ****
     kmax = FAWA_cos.shape[0]
@@ -440,14 +422,8 @@ def Solve_Uref_noslip(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,
             #plt.savefig('/home/csyhuang/Dropbox/Research-code/Sep12_test3_'+BCstring+'_'+tstamp+'.png')
             plt.close()
 
-
-        # print 'u_Ref_regular.shape=',u_Ref_regular.shape
-
-    # return u_Ref_regular,T_Ref_regular
-    # This is for outputing solutions for both BC.
-    #return u_Ref_regular_adiab,u_Ref_regular_noslip,T_Ref_regular_adiab,T_Ref_regular_noslip
-    # This is for only outputing Delta_u and Uref for no-slip boundary condition
-    return u_MassCorr_regular,u_Ref_regular_noslip,T_MassCorr_regular,T_Ref_regular_noslip
+    # This is for only outputing Delta_u and Uref for no-slip and adiabatic boundary conditions.
+    return u_MassCorr_regular_noslip,u_Ref_regular_noslip,T_MassCorr_regular_noslip,T_Ref_regular_noslip, u_MassCorr_regular_adiab,u_Ref_regular_adiab,T_MassCorr_regular_adiab,T_Ref_regular_adiab
 
 # --- As a test whether the function Solve_Uref is working ---
 if __name__ == "__main__":

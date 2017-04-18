@@ -1,5 +1,5 @@
 import numpy as np
-from math import *
+from math import pi,exp
 
 
 def static_stability(height,area,theta,S_ET=None,N_ET=None):
@@ -14,8 +14,8 @@ def static_stability(height,area,theta,S_ET=None,N_ET=None):
     
     Input variables:
         - height: array of z-coordinate [in meters] with size = kmax, equally spaced
-        - ylat: array of ascending y-coordinate [latitude, in degree] with size = nlat, equally spaced
-        - theta: matrix of potential temperature [K] with shape = [kmax,nlat,nlon]
+        - area: array of area in ascending y-coordinate with shape [nlat,nlon] or [nlat]
+        - theta: matrix of potential temperature [K] with shape = [kmax,nlat,nlon] or [kmax,nlat]
     
     Output variables:
         - t0_N (t0_S): array area-weighted average of potential temperature (\tilde{\theta} in HN16) 
@@ -36,9 +36,16 @@ def static_stability(height,area,theta,S_ET=None,N_ET=None):
     
     stat_N = np.zeros(theta.shape[0])
     stat_S = np.zeros(theta.shape[0])
+    
+    if theta.ndim==3:
+        zonal_mean = np.mean(theta,axis=-1)
+    elif theta.ndim==2:
+        zonal_mean = theta
 
-    zonal_mean = np.mean(theta,axis=-1)
-    area_zonal_mean = np.mean(area,axis=-1)
+    if area.ndim==2:
+        area_zonal_mean = np.mean(area,axis=-1)
+    elif area.ndim==1:
+        area_zonal_mean = area
 
     csm_N_ET = np.sum(area_zonal_mean[-N_ET:])
     csm_S_ET = np.sum(area_zonal_mean[:S_ET])

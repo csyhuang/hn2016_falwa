@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
       
 VERSION='0.1.7'
 DISTNAME='hn2016_falwa'
@@ -43,5 +43,7 @@ setup(name=DISTNAME,
       author_email=AUTHOR_EMAIL,
       license=LICENSE,
       packages=['hn2016_falwa'],
-      zip_safe=False)
+      test_suite = 'tests.my_module_suite',
+	  zip_safe=False
+	  )
                   

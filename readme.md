@@ -32,16 +32,22 @@ Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.n
 
 Type help(function) for instructions on format of input variables. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
 
+To access the functions below, you can load the functions by using
+
+```
+from hn2016_falwa.api import *function*
+```
+
 Function | Description
 ---------| -------------
-barotropic_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from absolute vorticity field in a barotropic model with spherical geometry.
-barotropic_input_Qref_to_compute_LWA | Same as *barotropic_Eqlat_LWA* except that the equivalent-latitude profile is prescribed (input)
-qgpv_Eqlat_LWA | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
-qgpv_input_Qref_to_compute_LWA | Same as *qgpv_Eqlat_LWA* except that the equivalent-latitude profile is prescribed (input)
-EqvLat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
-static_stability| Compute static stability in hemispheric domain from 3-D potential temperature field.
-Compute_QGPV_GivenVort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
-Solve_URef_noslip_hemisphere| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
+barotropic_eqlat_lwa | Compute local wave activity and corresponding equivalent-latitude profile from absolute vorticity field in a barotropic model with spherical geometry.
+barotropic_input_qref_to_compute_lwa | Same as *barotropic_eqlat_lwa* except that the equivalent-latitude profile is prescribed (input)
+qgpv_eqlat_lwa | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
+qgpv_input_qref_to_compute_lwa | Same as *qgpv_eqlat_lwa* except that the equivalent-latitude profile is prescribed (input)
+eqvlat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
+static_stability| Compute static stability in hemispheric domain from 2-D/3-D potential temperature field.
+compute_qgpv_givenvort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
+solve_uref_both_bc| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip and adiabatic lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
 theta_lwa | To compute longitudinally local version of surface wave activity. (Note: B* in Nakamura and Solomon (2010) is the zonal mean version)
 
 ## Inquiries / Issues reporting
