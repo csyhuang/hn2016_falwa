@@ -37,7 +37,7 @@ Type help(function) for instructions on format of input variables. Tentative fut
 To access the functions below, you can load the functions by using
 
 ```
-from hn2016_falwa.api import *function*
+from hn2016_falwa.api import function
 ```
 
 Function | Description
