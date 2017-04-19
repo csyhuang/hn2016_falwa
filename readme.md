@@ -1,6 +1,6 @@
 ## Python Library: hn2016_falwa (v0.1.7)
 
-[![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![Coverage Status](https://coveralls.io/repos/github/csyhuang/hn2016_falwa/badge.svg?branch=master)](https://coveralls.io/github/csyhuang/hn2016_falwa?branch=master)
+[![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![Coverage Status](https://coveralls.io/repos/github/csyhuang/hn2016_falwa/badge.svg?branch=master)](https://coveralls.io/github/csyhuang/hn2016_falwa?branch=master)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)
 
 Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) from gridded climate data.
 
