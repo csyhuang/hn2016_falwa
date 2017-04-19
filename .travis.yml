@@ -11,3 +11,5 @@ install:
 # command to run tests
 script:
   - coverage run --source=hn2016_falwa setup.py test
+
+after_success: pip install codecov && codecov
