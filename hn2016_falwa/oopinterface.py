@@ -1,0 +1,495 @@
+# This is the api for object oriented interface
+import numpy as np
+from math import pi
+from scipy import interpolate
+
+
+# The function assumes uniform field
+def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
+    '''
+    Assuming regular latitude and longitude [in degree] grid, compute the curl
+    of velocity on a pressure level in spherical coordinates.
+    '''
+
+    ans = np.zeros_like((ufield))
+    ans[1:-1, 1:-1] = (vfield[1:-1, 2:] - vfield[1:-1, :-2])/(2.*dlambda) - \
+                      (ufield[2:, 1:-1] * clat[2:, np.newaxis] -
+                       ufield[:-2, 1:-1] * clat[:-2, np.newaxis])/(2.*dphi)
+    ans[0, :] = 0.0
+    ans[-1, :] = 0.0
+    ans[1:-1, 0] = ((vfield[:, 1] - vfield[:, -1])/(2.*dlambda) -
+                    (ufield[2:, 0] * clat[2:, np.newaxis] -
+                     ufield[:-2, 0] * clat[:-2, np.newaxis])/(2.*dphi))
+    ans[1:-1, -1] = ((vfield[:, 0] - vfield[:, -2])/(2.*dlambda) -
+                     (ufield[2:, -1] * clat[2:, np.newaxis] -
+                      ufield[:-2, -1] * clat[:-2, np.newaxis])/(2.*dphi))
+    ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
+    return ans
+
+
+def lwa_shared(nlon, nlat, vort, q_part, dy):
+    ''' At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
+    this function calculate the difference between the line integral of [q(x,y+y')-Q(y)]
+    over the domain {y+y'>y,q(x,y+y')<Q(y)} and {y+y'<y,q(x,y+y')>Q(y)}. See fig. (1) and
+    equation (13) of Huang and Nakamura (2016).
+    dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.
+
+    Input variables:
+        nlon: integer; longitudinal dimension of vort (i.e. vort.shape[1])
+        nlat: integer; latitudinal dimension of vort (i.e. vort.shape[0])
+        vort: 2-d numpy array of vorticity values; dimension = [nlat_S x nlon]
+        Q_part: 1-d numpy array of Q (vorticity reference state) as a function of
+                latitude. Size = nlat.
+        dy:   1-d numpy array of latitudinal differential length element
+              (e.g. dy = cos(lat) d(lat)). Size = nlat.
+
+    Output variables:
+        LWA: 2-d numpy array of local wave activity values (with cosine weighting);
+             dimension = [nlat_S x nlon]
+    '''
+    lwact = np.zeros((nlat, nlon))
+    for j in np.arange(0, nlat-1):
+        vort_e = vort[:, :]-q_part[j]
+        vort_boo = np.zeros((nlat, nlon))
+        vort_boo[np.where(vort_e[:, :]<0)] = -1
+        vort_boo[:j+1, :] = 0
+        vort_boo[np.where(vort_e[:j+1,:]>0)] = 1
+        lwact[j, :] = np.sum(vort_e*vort_boo*dy[:, np.newaxis], axis=0)
+    return lwact
+
+
+class BarotropicField(object):
+
+    """An object wind and/or PV field"""
+
+    def __init__(self, xlon, ylat, pv_field, area=None, dphi=None,
+                 n_partitions=None, planet_radius=6.378e+6):
+
+        """Create a windtempfield object.
+
+        **Arguments:**
+
+        *xlon*
+            Longitude array in degree with dimension [nlon].
+
+        *ylat*
+            Latitutde array in degree, monotonically increasing with dimension
+            [nlat].
+
+        *area*
+            Differential area at each lon-lat grid points with dimension
+            [nlat x nlon].
+            If None, it will be initiated as:
+            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).
+            This would be problematic if the grids are not uniformly distributed in degree.
+
+        *dphi*
+            Differential length element along the lat grid with dimension nlat.
+
+        *pv_field*
+            Absolute vorticity field with dimension [nlat x nlon].
+            If none, pv_field is expected to be computed with u,v,t field.
+
+        """
+
+        self.xlon = xlon
+        self.ylat = ylat
+        self.clat = np.abs(np.cos(np.deg2rad(ylat)))
+        self.nlon = xlon.size
+        self.nlat = ylat.size
+        self.planet_radius = planet_radius
+        if dphi is None:
+            self.dphi = pi/(self.nlat-1) * np.ones((self.nlat))
+        else:
+            self.dphi = dphi
+
+        if area is None:
+            self.area = 2.*pi*planet_radius**2*(np.cos(ylat[:, np.newaxis]*pi/180.)*self.dphi[:, np.newaxis])/float(self.nlon)*np.ones((self.nlat, self.nlon))
+        else:
+            self.area = area
+
+        self.pv_field = pv_field
+
+        if n_partitions is None:
+            self.n_partitions = self.nlat
+        else:
+            self.n_partitions = n_partitions
+
+    def equivalent_latitudes(self):
+
+        '''
+        Input variables (from old interface):
+            ylat: 1-d numpy array of latitude (in degree) with equal spacing in
+                ascending order; dimension = nlat
+            vort: 2-d numpy array of vorticity values; dimension = [nlat_s x nlon]
+            area: 2-d numpy array specifying differential areal element of each
+                grid point; dimension = [nlat_s x nlon]
+            n_partitions: analysis resolution to calculate equivalent latitude.
+            planet_radius: scalar; radius of spherical planet of interest consistent with input 'area'
+
+        Output variables:
+            q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
+        '''
+
+        pv_field = self.pv_field
+        area = self.area
+        ylat = self.ylat
+        planet_radius = self.planet_radius
+
+        vort_min = np.min([pv_field.min(), pv_field.min()])
+        vort_max = np.max([pv_field.max(), pv_field.max()])
+        q_part_u = np.linspace(vort_min, vort_max, self.n_partitions,
+                               endpoint=True)
+        aa = np.zeros(q_part_u.size)  # to sum up area
+        vort_flat = pv_field.flatten()  # Flatten the 2D arrays to 1D
+        area_flat = area.flatten()
+        # Find equivalent latitude:
+        inds = np.digitize(vort_flat, q_part_u)
+        for i in np.arange(0, aa.size):  # Sum up area in each bin
+            aa[i] = np.sum(area_flat[np.where(inds == i)])
+        aq = np.cumsum(aa)
+        y_part = aq/(2*pi*planet_radius**2) - 1.0
+        lat_part = np.arcsin(y_part)*180/pi
+        q_part = np.interp(ylat, lat_part, q_part_u)
+
+        self.eqvlat = q_part
+        return self.eqvlat
+
+    def lwa(self):
+        '''
+            Description to be updated soon
+        '''
+
+        if self.eqvlat is None:
+            self.eqvlat = self.equivalent_latitudes(self)
+
+        return lwa_shared(self.nlon, self.nlat, self.pv_field, self.eqvlat,
+                          self.planet_radius * self.clat * self.dphi)
+
+
+# === Next is a class of 3D objects ===
+class QGField(object):
+
+    """An object wind and/or PV field"""
+
+    def __init__(self, xlon, ylat, zlev, u_field, v_field=None, t_field=None,
+                 qgpv_field=None, area=None, dphi=None,
+                 n_partitions=None, rkappa=287./1004., planet_radius=6.378e+6,
+                 scale_height=7000.):
+
+        """Create a windtempfield object.
+
+        **Arguments:**
+
+        *xlon*
+            Longitude array in degree with dimension [nlon].
+
+        *ylat*
+            Latitutde array in degree, monotonically increasing with dimension
+            [nlat].
+
+        *zlev*
+            Pseudoheight array in meters, monotonically increasing with dimension
+            [nlev].
+
+        *u_field*
+            Zonal wind field in meters, with dimension [nlev x nlat x nlon].
+
+        *v_field*
+            Meridional wind field in meters, with dimension [nlev x nlat x nlon].
+
+        *t_field*
+            Temperature field in Kelvin, with dimension [nlev x nlat x nlon].
+
+        *qgpv_field*
+            Quasi-geostrophic potential vorticity field in 1/second, with dimension
+            [nlev x nlat x nlon]. If u_field, v_field and t_field are input,
+            qgpv_field can be using the method compute_qgpv.
+
+        *area*
+            Differential area at each lon-lat grid points with dimension
+            [nlat x nlon].
+            If None, it will be initiated as:
+            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).
+            This would be problematic if the grids are not uniformly distributed in degree.
+
+        *dphi*
+            Differential length element along the lat grid with dimension nlat.
+
+        *n_partitions*
+            Number of partitions used to compute equivalent latitude. If not
+            given, it will be assigned nlat.
+
+        """
+
+        self.xlon = xlon
+        self.ylat = ylat
+        self.zlev = zlev
+        self.clat = np.abs(np.cos(np.deg2rad(ylat)))
+        self.nlon = xlon.size
+        self.nlat = ylat.size
+        self.nlev = zlev.size
+        self.planet_radius = planet_radius
+        if dphi is None:
+            self.dphi = pi/(self.nlat-1) * np.ones((self.nlat))
+        else:
+            self.dphi = dphi
+
+        if area is None:
+            self.area = 2.*pi*planet_radius**2*(np.cos(ylat[:, np.newaxis]*pi/180.)*self.dphi[:, np.newaxis])/float(self.nlon)*np.ones((self.nlat, self.nlon))
+        else:
+            self.area = area
+
+        self.qgpv_field = qgpv_field
+
+        if n_partitions is None:
+            self.n_partitions = self.nlat
+        else:
+            self.n_partitions = n_partitions
+
+        # First, check if the qgpv_field is present
+        print 'check self.qgpv_field'
+        # print self.qgpv_field
+        if (qgpv_field is None) & (v_field is None):
+            raise ValueError('qgpv_field is missing.')
+        elif (qgpv_field is None):
+            print 'Compute QGPV field from u and v field.'
+
+        # === Obtain potential temperature field ===
+        if t_field:
+            self.pt_field = t_field[:, :, :] * \
+             np.exp(rkappa * zlev[:, np.newaxis, np.newaxis]/scale_height)
+            # Interpolation
+
+            f_Thalf = interpolate.interp1d(zlev, self.pt_field.mean(axis=-1),
+                                           axis=0)
+            zlev_half = np.array([zlev[0] + 0.5*(zlev[1]-zlev[0])]*i \
+                                 for i in range(zlev.size * 2 + 1))
+            self.pt_field_half = f_Thalf(zlev_half) # dim = [2*nlev+1,nlat]
+            print 'self.pt_field_half.shape'
+            print self.pt_field_half.shape
+
+
+
+# PT3 = TT3*(1000./unihp[:,np.newaxis,np.newaxis])**rkappa
+#
+# PTmhalf = Tmhalf2 * (1000./unihphalf[:,np.newaxis,np.newaxis])**rkappa # 2*kmax-1 x jmax
+# # print 'PTmhalf.shape=',PTmhalf.shape
+#
+# t0_N,t0_S,stat_Nhalf,stat_Shalf = HN2015_QGPV2.static_stability(unihhalf,ylat,PTmhalf,S_ET=60,N_ET=60)
+#
+# stat_cN[nccount,:] = stat_Nhalf[::2] # every odd element of stat_Nhalf
+# stat_cS[nccount,:] = stat_Shalf[::2] # every odd element of stat_Shalf
+#
+# t0_cN = t0_N[::2] # every odd element of stat_Nhalf
+# t0_cS = t0_S[::2] # every odd element of stat_Shalf
+#
+# stat_cNpmhalf = stat_Nhalf[1::2] # every even element of stat_Nhalf
+# stat_cSpmhalf = stat_Shalf[1::2] # every even element of stat_Shalf
+#
+# stat_half = np.zeros((kmax-1,nlat))
+# stat_half[:,:nlat/2] = stat_cSpmhalf[:,np.newaxis]*np.ones((kmax-1,nlat/2))
+# stat_half[:,nlat/2+1:] = stat_cNpmhalf[:,np.newaxis]*np.ones((kmax-1,nlat/2))
+# stat_half[:,nlat/2] = 0.5*(stat_half[:,nlat/2-1] + stat_half[:,nlat/2+1])
+
+
+
+    # def stretching_term(t_field, dz):
+    #     print 'scratching_term'
+    #     return None
+
+    def equivalent_latitudes(self, domain_size='half_globe'): # Has to be changed since it is qgpv.
+                                    # Use half-globe?
+
+        '''
+        Input variables
+            domain_size: can he 'half_globe' or 'full_globe'
+
+        Output variables:
+            q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
+        '''
+
+        def eqv_lat_core(ylat, vort, area, n_points):
+            vort_min = np.min([vort.min(), vort.min()])
+            vort_max = np.max([vort.max(), vort.max()])
+            q_part_u = np.linspace(vort_min, vort_max, n_points,
+                                   endpoint=True)
+            aa = np.zeros(q_part_u.size)  # to sum up area
+            vort_flat = vort.flatten()  # Flatten the 2D arrays to 1D
+            area_flat = area.flatten()
+            # Find equivalent latitude:
+            inds = np.digitize(vort_flat, q_part_u)
+            for i in np.arange(0, aa.size):  # Sum up area in each bin
+                aa[i] = np.sum(area_flat[np.where(inds == i)])
+            aq = np.cumsum(aa)
+            y_part = aq/(2*pi*planet_radius**2) - 1.0
+            lat_part = np.arcsin(y_part)*180/pi
+            q_part = np.interp(ylat, lat_part, q_part_u)
+            return q_part
+
+        area = self.area
+        ylat = self.ylat
+        planet_radius = self.planet_radius
+        self.eqvlat = np.zeros((self.nlev, self.nlat))
+
+        for k in range(self.nlev):
+            pv_field = self.qgpv_field[k, ...]
+
+            if domain_size == 'half_globe':
+                nlat_s = int(self.nlat/2)
+                qref = np.zeros(self.nlat)
+                # --- Southern Hemisphere ---
+                # qref1 = eqv_lat_core(ylat[:nlat_s],vort[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)
+                qref[:nlat_s] = eqv_lat_core(ylat[:nlat_s], pv_field[:nlat_s,:],
+                                             area[:nlat_s, :], nlat_s)
+                # --- Northern Hemisphere ---
+                pv_field_inverted = -pv_field[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
+                qref2 = eqv_lat_core(ylat[:nlat_s], pv_field_inverted[:nlat_s,:],
+                                     area[:nlat_s, :], nlat_s)
+                #qref2 = eqvlat(ylat[:nlat_s],vort2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)
+                qref[-nlat_s:] = -qref2[::-1]
+            elif domain_size == 'full_globe':
+                qref = eqv_lat_core(ylat, pv_field, area, self.nlat,
+                                    planet_radius=planet_radius)
+            else:
+                raise ValueError('Domain size is not properly specified.')
+
+            self.eqvlat[k, :] = qref
+        return self.eqvlat
+
+    def lwa(self):
+        '''
+            Description to be updated soon
+        '''
+
+        try:
+            self.eqvlat
+        except:
+            self.eqvlat = self.equivalent_latitudes(domain_size='half_globe')
+
+        lwact = np.zeros((self.nlev, self.nlat, self.nlon))
+
+        for k in range(self.nlev):
+            pv_field = self.qgpv_field[k, :, :]
+            for j in np.arange(0, self.nlat-1):
+                vort_e = pv_field[:, :]-self.eqvlat[k, j]
+                vort_boo = np.zeros((self.nlat, self.nlon))
+                vort_boo[np.where(vort_e[:, :] < 0)] = -1
+                vort_boo[:j+1, :] = 0
+                vort_boo[np.where(vort_e[:j+1, :] > 0)] = 1
+                lwact[k, j, :] = np.sum(vort_e*vort_boo * self.planet_radius *
+                                        self.clat[:, np.newaxis] *
+                                        self.dphi[:, np.newaxis], axis=0)
+        return lwact
+
+
+def main():
+    from netCDF4 import Dataset
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # === List of tests ===
+    test_2D = False
+    test_3D = True
+
+    # === Testing the 2D object ===
+    if test_2D:
+        data_path = '/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/barotropic_vorticity.nc'
+        readFile = Dataset(data_path, mode='r')
+        abs_vorticity = readFile.variables['absolute_vorticity'][:]
+
+        xlon = np.linspace(0, 360., 512, endpoint=False)
+        ylat = np.linspace(-90, 90., 256, endpoint=True)
+        nlon = xlon.size
+        nlat = ylat.size
+        Earth_radius = 6.378e+6
+        dphi = (ylat[2]-ylat[1])*pi/180.
+        area = 2.*pi*Earth_radius**2 * (np.cos(ylat[:, np.newaxis]*pi/180.)
+                                        * dphi)/float(nlon) * np.ones((nlat, nlon))
+
+        cc1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)  # area computed in the class assumed uniform grid
+
+        # Compute equivalent latitudes
+        cc1_eqvlat = cc1.equivalent_latitudes()
+
+        # Compute equivalent latitudes
+        cc1_lwa = cc1.lwa()
+
+        # --- Color axis for plotting LWA --- #
+        LWA_caxis = np.linspace(0, cc1_lwa.max(), 31, endpoint=True)
+
+        # --- Plot the abs. vorticity field, LWA and equivalent-latitude relationship and LWA --- #
+        fig = plt.subplots(figsize=(14, 4))
+
+        plt.subplot(1, 3, 1)  # Absolute vorticity map
+        c = plt.contourf(xlon, ylat, cc1.pv_field, 31)
+        cb = plt.colorbar(c)
+        cb.formatter.set_powerlimits((0, 0))
+        cb.ax.yaxis.set_offset_position('right')
+        cb.update_ticks()
+        plt.title('Absolute vorticity [1/s]')
+        plt.xlabel('Longitude (degree)')
+        plt.ylabel('Latitude (degree)')
+
+        plt.subplot(1, 3, 2)  # LWA (full domain)
+        plt.contourf(xlon, ylat, cc1_lwa, LWA_caxis)
+        plt.colorbar()
+        plt.title('Local Wave Activity [m/s]')
+        plt.xlabel('Longitude (degree)')
+        plt.ylabel('Latitude (degree)')
+
+        plt.subplot(1, 3, 3)  # Equivalent-latitude relationship Q(y)
+        plt.plot(cc1_eqvlat, ylat, 'b', label='Equivalent-latitude relationship')
+        plt.plot(np.mean(cc1.pv_field, axis=1), ylat, 'g', label='zonal mean abs. vorticity')
+        plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+        plt.ylim(-90, 90)
+        plt.legend(loc=4, fontsize=10)
+        plt.title('Equivalent-latitude profile')
+        plt.ylabel('Latitude (degree)')
+        plt.xlabel('Q(y) [1/s] | y = latitude')
+        plt.tight_layout()
+        plt.show()
+
+    # === Testing the 2D object ===
+    if test_3D:
+        print 'Test QGField'
+        u_QGPV_File = Dataset('/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/u_QGPV_240hPa_2012Oct28to31.nc', mode='r')
+        # --- Read in longitude and latitude arrays --- #
+        xlon = u_QGPV_File.variables['longitude'][:]
+        ylat = u_QGPV_File.variables['latitude'][:]
+        clat = np.abs(np.cos(ylat*pi/180.)) # cosine latitude
+        nlon = xlon.size
+        nlat = ylat.size
+
+        u = u_QGPV_File.variables['U'][0, ...]
+        QGPV = u_QGPV_File.variables['QGPV'][0, ...]
+        u_QGPV_File.close()
+
+        print u.shape
+        print QGPV.shape
+
+        cc2 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)  # area computed in the class assumed uniform grid
+        cc3 = cc2.lwa()
+        print 'cc3 shape'
+        print cc3.shape
+
+        # print 'test empty qgpv fields'
+        # cc4 = QGField(xlon, ylat, np.array([240.]), u)
+
+        plt.figure(figsize=(8, 3))
+        c = plt.contourf(xlon, ylat[80:], cc3[0, 80:, :], 31)
+        cb = plt.colorbar(c)
+        cb.formatter.set_powerlimits((0, 0))
+        cb.ax.yaxis.set_offset_position('right')
+        cb.update_ticks()
+        plt.title('Local Wave Activity at 240hPa [m/s]')
+        plt.xlabel('Longitude (degree)')
+        plt.ylabel('Latitude (degree)')
+        plt.show()
+
+
+
+
+
+if __name__ == "__main__":
+    main()
