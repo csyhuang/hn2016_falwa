@@ -1,6 +1,5 @@
 ## Python Library: hn2016_falwa (v0.1.7)
 
-[comment]: <> ( [![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![Coverage Status](https://coveralls.io/repos/github/csyhuang/hn2016_falwa/badge.svg?branch=master)](https://coveralls.io/github/csyhuang/hn2016_falwa?branch=master)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa) )
 [![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)
 
 
