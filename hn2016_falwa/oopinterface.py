@@ -260,7 +260,6 @@ class QGField(object):
             self.pt_field = t_field[:, :, :] * \
              np.exp(rkappa * zlev[:, np.newaxis, np.newaxis]/scale_height)
             # Interpolation
-
             f_Thalf = interpolate.interp1d(zlev, self.pt_field.mean(axis=-1),
                                            axis=0)
             zlev_half = np.array([zlev[0] + 0.5*(zlev[1]-zlev[0])]*i \
@@ -269,34 +268,6 @@ class QGField(object):
             print 'self.pt_field_half.shape'
             print self.pt_field_half.shape
 
-
-
-# PT3 = TT3*(1000./unihp[:,np.newaxis,np.newaxis])**rkappa
-#
-# PTmhalf = Tmhalf2 * (1000./unihphalf[:,np.newaxis,np.newaxis])**rkappa # 2*kmax-1 x jmax
-# # print 'PTmhalf.shape=',PTmhalf.shape
-#
-# t0_N,t0_S,stat_Nhalf,stat_Shalf = HN2015_QGPV2.static_stability(unihhalf,ylat,PTmhalf,S_ET=60,N_ET=60)
-#
-# stat_cN[nccount,:] = stat_Nhalf[::2] # every odd element of stat_Nhalf
-# stat_cS[nccount,:] = stat_Shalf[::2] # every odd element of stat_Shalf
-#
-# t0_cN = t0_N[::2] # every odd element of stat_Nhalf
-# t0_cS = t0_S[::2] # every odd element of stat_Shalf
-#
-# stat_cNpmhalf = stat_Nhalf[1::2] # every even element of stat_Nhalf
-# stat_cSpmhalf = stat_Shalf[1::2] # every even element of stat_Shalf
-#
-# stat_half = np.zeros((kmax-1,nlat))
-# stat_half[:,:nlat/2] = stat_cSpmhalf[:,np.newaxis]*np.ones((kmax-1,nlat/2))
-# stat_half[:,nlat/2+1:] = stat_cNpmhalf[:,np.newaxis]*np.ones((kmax-1,nlat/2))
-# stat_half[:,nlat/2] = 0.5*(stat_half[:,nlat/2-1] + stat_half[:,nlat/2+1])
-
-
-
-    # def stretching_term(t_field, dz):
-    #     print 'scratching_term'
-    #     return None
 
     def equivalent_latitudes(self, domain_size='half_globe'): # Has to be changed since it is qgpv.
                                     # Use half-globe?
@@ -390,7 +361,7 @@ def main():
 
     # === List of tests ===
     test_2D = False
-    test_3D = True
+    test_3D = False
 
     # === Testing the 2D object ===
     if test_2D:
