@@ -1,11 +1,11 @@
 import unittest
-from hn2016_falwa.api import lwa
-from hn2016_falwa.oopinterface import lwa_shared
-
 import numpy as np
 from math import pi
 
 class Test_hn2016_falwa(unittest.TestCase):
+
+    from hn2016_falwa.api import lwa
+    from hn2016_falwa.oopinterface import lwa_shared
 
     def test1_lwa(self):
         test_vort = (np.ones((5,5))*np.array([1,2,3,4,5])).swapaxes(0,1)
