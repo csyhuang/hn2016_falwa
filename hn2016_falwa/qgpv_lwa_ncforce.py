@@ -31,6 +31,8 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, planet_r
         qref: 1-d numpy array of value Q(y) where latitude y is given by ylat.
         lwa_result: 2-d numpy array of local wave activity values;
                     dimension = [nlat_s x nlon]
+        bigsigma_result: 2-d numpy array of non-conservative force contribution value;
+                    dimension = [nlat_s x nlon]
     '''
 
     nlat = vort.shape[0]
@@ -42,7 +44,7 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, planet_r
     lwa_result = np.zeros((nlat, nlon))
     bigsigma_result = np.zeros((nlat, nlon))
 
-# lwa_ncforce(nlon,  nlat,  vort,  q_part,  ncforce,  dy)
+    # lwa_ncforce(nlon,  nlat,  vort,  q_part,  ncforce,  dy)
 
     # --- Southern Hemisphere ---
     qref1 = eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :], nlat_s, planet_radius=planet_radius)
