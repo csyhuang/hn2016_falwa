@@ -5,11 +5,12 @@ from scipy import interpolate
 
 
 # The function assumes uniform field
+
 def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
-    '''
+    """
     Assuming regular latitude and longitude [in degree] grid, compute the curl
     of velocity on a pressure level in spherical coordinates.
-    '''
+    """
 
     ans = np.zeros_like((ufield))
     ans[1:-1, 1:-1] = (vfield[1:-1, 2:] - vfield[1:-1, :-2])/(2.*dlambda) - \
@@ -60,7 +61,30 @@ def lwa_shared(nlon, nlat, vort, q_part, dy):
 
 class BarotropicField(object):
 
-    """An object wind and/or PV field"""
+    """
+    An object that deals with barotropic (2D) wind and/or PV fields
+
+    :param  xlon: Longitude array in degree with dimension *nlon*.
+    :type xlon: sequence of array_like
+
+    :param  ylat: Latitutde array in degree, monotonically increasing with dimension *nlat*
+    :type ylat: sequence of array_like
+
+    :param  area: Differential area at each lon-lat grid points with dimension (nlat,nlon). If 'area=None': it will be initiated as area of uniform grid (in degree) on a spherical surface.
+    :type area: sequence of array_like
+
+    :param  dphi: Differential length element along the lat grid with dimension nlat.
+    :type dphi: sequence of array_like
+
+    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
+    :type pv_field: sequence of array_like
+
+    :returns: an instance of the object BarotropicField
+
+    :example:
+    >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
+
+    """
 
     def __init__(self, xlon, ylat, pv_field, area=None, dphi=None,
                  n_partitions=None, planet_radius=6.378e+6):
@@ -117,19 +141,30 @@ class BarotropicField(object):
 
     def equivalent_latitudes(self):
 
-        '''
-        Input variables (from old interface):
-            ylat: 1-d numpy array of latitude (in degree) with equal spacing in
-                ascending order; dimension = nlat
-            vort: 2-d numpy array of vorticity values; dimension = [nlat_s x nlon]
-            area: 2-d numpy array specifying differential areal element of each
-                grid point; dimension = [nlat_s x nlon]
-            n_partitions: analysis resolution to calculate equivalent latitude.
-            planet_radius: scalar; radius of spherical planet of interest consistent with input 'area'
+        """
+        Compute equivalent latitude with the *pv_field* stored in the object.
 
-        Output variables:
-            q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
-        '''
+        :returns: an numpy array with dimension (nlat) of equivalent latitude array.
+
+        :example:
+        >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
+        >>> eqv_lat = barofield1.equivalent_latitudes()
+
+        """
+
+        # '''
+        # Input variables (from old interface):
+        #     ylat: 1-d numpy array of latitude (in degree) with equal spacing in
+        #         ascending order; dimension = nlat
+        #     vort: 2-d numpy array of vorticity values; dimension = [nlat_s x nlon]
+        #     area: 2-d numpy array specifying differential areal element of each
+        #         grid point; dimension = [nlat_s x nlon]
+        #     n_partitions: analysis resolution to calculate equivalent latitude.
+        #     planet_radius: scalar; radius of spherical planet of interest consistent with input 'area'
+        #
+        # Output variables:
+        #     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
+        # '''
 
         pv_field = self.pv_field
         area = self.area
@@ -156,9 +191,18 @@ class BarotropicField(object):
         return self.eqvlat
 
     def lwa(self):
-        '''
-            Description to be updated soon
-        '''
+
+        """
+        Compute the finite-amplitude local wave activity based on the *equivalent_latitudes* and the *pv_field* stored in the object.
+
+        :returns: an 2-D numpy array with dimension (nlat,nlon) of local wave activity values.
+
+        :example:
+        >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
+        >>> eqv_lat = barofield1.equivalent_latitudes() # This line is optional
+        >>> lwa = barofield1.lwa()
+
+        """
 
         if self.eqvlat is None:
             self.eqvlat = self.equivalent_latitudes(self)
@@ -170,7 +214,46 @@ class BarotropicField(object):
 # === Next is a class of 3D objects ===
 class QGField(object):
 
-    """An object wind and/or PV field"""
+    """
+    An object that deals with barotropic (2D) wind and/or PV fields
+
+    :param  xlon: Longitude array in degree with dimension (*nlon*).
+    :type xlon: sequence of array_like
+
+    :param  ylat: Latitutde array in degree, monotonically increasing with dimension (*nlat*)
+    :type ylat: sequence of array_like
+
+    :param  zlev: Pseudoheight array in meters, monotonically increasing with dimension (*nlev*)
+    :type zlev: sequence of array_like
+
+    :param  u_field: Zonal wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).
+    :type u_field: sequence of array_like
+
+    :param  v_field: Meridional wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).
+    :type v_field: sequence of array_like
+
+    :param  t_field: Temperature field in Kelvin, with dimension (*nlev*,*nlat*,*nlon*).
+    :type t_field: sequence of array_like
+
+    :param  qgpv_field: Quasi-geostrophic potential vorticity field in 1/second, with dimension (*nlev*,*nlat*,*nlon*). If u_field, v_field and t_field are input, qgpv_field can be using the method compute_qgpv.
+    :type qgpv_field: sequence of array_like
+
+    :param  area: Differential area at each lon-lat grid points with dimension (*nlat*,*nlon*). If 'area=None': it will be initiated as area of uniform grid (in degree) on a spherical surface.
+    :type area: sequence of array_like
+
+    :param  dphi: Differential length element along the lat grid with dimension (*nlat*).
+    :type dphi: sequence of array_like
+
+    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
+    :type pv_field: sequence of array_like
+
+    :returns: an instance of the object BarotropicField
+
+    :example:
+    >>> qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
+
+    """
+
 
     def __init__(self, xlon, ylat, zlev, u_field, v_field=None, t_field=None,
                  qgpv_field=None, area=None, dphi=None,
@@ -271,14 +354,28 @@ class QGField(object):
 
     def equivalent_latitudes(self, domain_size='half_globe'): # Has to be changed since it is qgpv.
                                     # Use half-globe?
+        """
+        Compute equivalent latitude with the *pv_field* stored in the object.
 
-        '''
-        Input variables
-            domain_size: can he 'half_globe' or 'full_globe'
+        :param  domain_size: domain of grids to be used to compute equivalent latitude. It can he 'half_globe' or 'full_globe'.
+        :type domain_size: string
 
-        Output variables:
-            q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
-        '''
+        :returns: an numpy array with dimension (*nlev*,*nlat*) of equivalent latitude array.
+
+        :example:
+        >>> qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
+        >>> qgfield_eqvlat = qgfield1.equivalent_latitudes(domain_size='half_globe')
+
+        """
+
+
+        # '''
+        # Input variables
+        #     domain_size: Domain of grids to be used to compute equivalent latitude. It can he 'half_globe' or 'full_globe'.
+        #
+        # Output variables:
+        #     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
+        # '''
 
         def eqv_lat_core(ylat, vort, area, n_points):
             vort_min = np.min([vort.min(), vort.min()])
@@ -329,9 +426,16 @@ class QGField(object):
         return self.eqvlat
 
     def lwa(self):
-        '''
-            Description to be updated soon
-        '''
+        """
+        Compute the finite-amplitude local wave activity on each pseudoheight layer based on the *equivalent_latitudes* and the *qgpv_field* stored in the object.
+
+        :returns: an 3-D numpy array with dimension (*nlev*,*nlat*,*nlon*) of local wave activity values.
+
+        :example:
+        >>> qgfield = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
+        >>> qgfield_lwa = qgfield.lwa()
+
+        """
 
         try:
             self.eqvlat
