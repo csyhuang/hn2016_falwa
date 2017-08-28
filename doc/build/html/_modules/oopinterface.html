@@ -1,0 +1,657 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>oopinterface &#8212; hn2016_falwa 0.1.7 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for oopinterface</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This is the api for object oriented interface</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">interpolate</span>
+
+
+<span class="c1"># The function assumes uniform field</span>
+
+<span class="k">def</span> <span class="nf">curl_2D</span><span class="p">(</span><span class="n">ufield</span><span class="p">,</span> <span class="n">vfield</span><span class="p">,</span> <span class="n">clat</span><span class="p">,</span> <span class="n">dlambda</span><span class="p">,</span> <span class="n">dphi</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assuming regular latitude and longitude [in degree] grid, compute the curl</span>
+<span class="sd">    of velocity on a pressure level in spherical coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">((</span><span class="n">ufield</span><span class="p">))</span>
+    <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">vfield</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">vfield</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dlambda</span><span class="p">)</span> <span class="o">-</span> \
+                      <span class="p">(</span><span class="n">ufield</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span>
+                       <span class="n">ufield</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dphi</span><span class="p">)</span>
+    <span class="n">ans</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">ans</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">vfield</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">vfield</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dlambda</span><span class="p">)</span> <span class="o">-</span>
+                    <span class="p">(</span><span class="n">ufield</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span>
+                     <span class="n">ufield</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dphi</span><span class="p">))</span>
+    <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">vfield</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">vfield</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dlambda</span><span class="p">)</span> <span class="o">-</span>
+                     <span class="p">(</span><span class="n">ufield</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">-</span>
+                      <span class="n">ufield</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mf">2.</span><span class="o">*</span><span class="n">dphi</span><span class="p">))</span>
+    <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">planet_radius</span> <span class="o">/</span> <span class="n">clat</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">ans</span>
+
+
+<span class="k">def</span> <span class="nf">lwa_shared</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">q_part</span><span class="p">,</span> <span class="n">dy</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; At each grid point of vorticity q(x,y) and reference state vorticity Q(y),</span>
+<span class="sd">    this function calculate the difference between the line integral of [q(x,y+y&#39;)-Q(y)]</span>
+<span class="sd">    over the domain {y+y&#39;&gt;y,q(x,y+y&#39;)&lt;Q(y)} and {y+y&#39;&lt;y,q(x,y+y&#39;)&gt;Q(y)}. See fig. (1) and</span>
+<span class="sd">    equation (13) of Huang and Nakamura (2016).</span>
+<span class="sd">    dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.</span>
+
+<span class="sd">    Input variables:</span>
+<span class="sd">        nlon: integer; longitudinal dimension of vort (i.e. vort.shape[1])</span>
+<span class="sd">        nlat: integer; latitudinal dimension of vort (i.e. vort.shape[0])</span>
+<span class="sd">        vort: 2-d numpy array of vorticity values; dimension = [nlat_S x nlon]</span>
+<span class="sd">        Q_part: 1-d numpy array of Q (vorticity reference state) as a function of</span>
+<span class="sd">                latitude. Size = nlat.</span>
+<span class="sd">        dy:   1-d numpy array of latitudinal differential length element</span>
+<span class="sd">              (e.g. dy = cos(lat) d(lat)). Size = nlat.</span>
+
+<span class="sd">    Output variables:</span>
+<span class="sd">        LWA: 2-d numpy array of local wave activity values (with cosine weighting);</span>
+<span class="sd">             dimension = [nlat_S x nlon]</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">lwact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">vort_e</span> <span class="o">=</span> <span class="n">vort</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">-</span><span class="n">q_part</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">vort_boo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+        <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">vort_boo</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,:]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">lwact</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">vort_e</span><span class="o">*</span><span class="n">vort_boo</span><span class="o">*</span><span class="n">dy</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lwact</span>
+
+
+<div class="viewcode-block" id="BarotropicField"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField">[docs]</a><span class="k">class</span> <span class="nc">BarotropicField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An object that deals with barotropic (2D) wind and/or PV fields</span>
+
+<span class="sd">    :param  xlon: Longitude array in degree with dimension *nlon*.</span>
+<span class="sd">    :type xlon: sequence of array_like</span>
+
+<span class="sd">    :param  ylat: Latitutde array in degree, monotonically increasing with dimension *nlat*</span>
+<span class="sd">    :type ylat: sequence of array_like</span>
+
+<span class="sd">    :param  area: Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#39;area=None&#39;: it will be initiated as area of uniform grid (in degree) on a spherical surface.</span>
+<span class="sd">    :type area: sequence of array_like</span>
+
+<span class="sd">    :param  dphi: Differential length element along the lat grid with dimension nlat.</span>
+<span class="sd">    :type dphi: sequence of array_like</span>
+
+<span class="sd">    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If &#39;pv_field=None&#39;: pv_field is expected to be computed with u,v,t field.</span>
+<span class="sd">    :type pv_field: sequence of array_like</span>
+
+<span class="sd">    :returns: an instance of the object BarotropicField</span>
+
+<span class="sd">    :example:</span>
+<span class="sd">    &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dphi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">n_partitions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;Create a windtempfield object.</span>
+
+<span class="sd">        **Arguments:**</span>
+
+<span class="sd">        *xlon*</span>
+<span class="sd">            Longitude array in degree with dimension [nlon].</span>
+
+<span class="sd">        *ylat*</span>
+<span class="sd">            Latitutde array in degree, monotonically increasing with dimension</span>
+<span class="sd">            [nlat].</span>
+
+<span class="sd">        *area*</span>
+<span class="sd">            Differential area at each lon-lat grid points with dimension</span>
+<span class="sd">            [nlat x nlon].</span>
+<span class="sd">            If None, it will be initiated as:</span>
+<span class="sd">            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).</span>
+<span class="sd">            This would be problematic if the grids are not uniformly distributed in degree.</span>
+
+<span class="sd">        *dphi*</span>
+<span class="sd">            Differential length element along the lat grid with dimension nlat.</span>
+
+<span class="sd">        *pv_field*</span>
+<span class="sd">            Absolute vorticity field with dimension [nlat x nlon].</span>
+<span class="sd">            If none, pv_field is expected to be computed with u,v,t field.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span> <span class="o">=</span> <span class="n">xlon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">=</span> <span class="n">ylat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">ylat</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span> <span class="o">=</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span> <span class="o">=</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">=</span> <span class="n">planet_radius</span>
+        <span class="k">if</span> <span class="n">dphi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">=</span> <span class="n">dphi</span>
+
+        <span class="k">if</span> <span class="n">area</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">planet_radius</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dphi</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="n">area</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span> <span class="o">=</span> <span class="n">pv_field</span>
+
+        <span class="k">if</span> <span class="n">n_partitions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="n">n_partitions</span>
+
+<div class="viewcode-block" id="BarotropicField.equivalent_latitudes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField.equivalent_latitudes">[docs]</a>    <span class="k">def</span> <span class="nf">equivalent_latitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute equivalent latitude with the *pv_field* stored in the object.</span>
+
+<span class="sd">        :returns: an numpy array with dimension (nlat) of equivalent latitude array.</span>
+
+<span class="sd">        :example:</span>
+<span class="sd">        &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
+<span class="sd">        &gt;&gt;&gt; eqv_lat = barofield1.equivalent_latitudes()</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># &#39;&#39;&#39;</span>
+        <span class="c1"># Input variables (from old interface):</span>
+        <span class="c1">#     ylat: 1-d numpy array of latitude (in degree) with equal spacing in</span>
+        <span class="c1">#         ascending order; dimension = nlat</span>
+        <span class="c1">#     vort: 2-d numpy array of vorticity values; dimension = [nlat_s x nlon]</span>
+        <span class="c1">#     area: 2-d numpy array specifying differential areal element of each</span>
+        <span class="c1">#         grid point; dimension = [nlat_s x nlon]</span>
+        <span class="c1">#     n_partitions: analysis resolution to calculate equivalent latitude.</span>
+        <span class="c1">#     planet_radius: scalar; radius of spherical planet of interest consistent with input &#39;area&#39;</span>
+        <span class="c1">#</span>
+        <span class="c1"># Output variables:</span>
+        <span class="c1">#     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.</span>
+        <span class="c1"># &#39;&#39;&#39;</span>
+
+        <span class="n">pv_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span>
+        <span class="n">ylat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span>
+        <span class="n">planet_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span>
+
+        <span class="n">vort_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">pv_field</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">pv_field</span><span class="o">.</span><span class="n">min</span><span class="p">()])</span>
+        <span class="n">vort_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">pv_field</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">pv_field</span><span class="o">.</span><span class="n">max</span><span class="p">()])</span>
+        <span class="n">q_part_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">vort_min</span><span class="p">,</span> <span class="n">vort_max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span><span class="p">,</span>
+                               <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">aa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q_part_u</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>  <span class="c1"># to sum up area</span>
+        <span class="n">vort_flat</span> <span class="o">=</span> <span class="n">pv_field</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># Flatten the 2D arrays to 1D</span>
+        <span class="n">area_flat</span> <span class="o">=</span> <span class="n">area</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="c1"># Find equivalent latitude:</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">vort_flat</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">aa</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>  <span class="c1"># Sum up area in each bin</span>
+            <span class="n">aa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">area_flat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds</span> <span class="o">==</span> <span class="n">i</span><span class="p">)])</span>
+        <span class="n">aq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+        <span class="n">y_part</span> <span class="o">=</span> <span class="n">aq</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">planet_radius</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+        <span class="n">lat_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">y_part</span><span class="p">)</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span>
+        <span class="n">q_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">lat_part</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="n">q_part</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span></div>
+
+<div class="viewcode-block" id="BarotropicField.lwa"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField.lwa">[docs]</a>    <span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the finite-amplitude local wave activity based on the *equivalent_latitudes* and the *pv_field* stored in the object.</span>
+
+<span class="sd">        :returns: an 2-D numpy array with dimension (nlat,nlon) of local wave activity values.</span>
+
+<span class="sd">        :example:</span>
+<span class="sd">        &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
+<span class="sd">        &gt;&gt;&gt; eqv_lat = barofield1.equivalent_latitudes() # This line is optional</span>
+<span class="sd">        &gt;&gt;&gt; lwa = barofield1.lwa()</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">lwa_shared</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># === Next is a class of 3D objects ===</span>
+<div class="viewcode-block" id="QGField"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField">[docs]</a><span class="k">class</span> <span class="nc">QGField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An object that deals with barotropic (2D) wind and/or PV fields</span>
+
+<span class="sd">    :param  xlon: Longitude array in degree with dimension (*nlon*).</span>
+<span class="sd">    :type xlon: sequence of array_like</span>
+
+<span class="sd">    :param  ylat: Latitutde array in degree, monotonically increasing with dimension (*nlat*)</span>
+<span class="sd">    :type ylat: sequence of array_like</span>
+
+<span class="sd">    :param  zlev: Pseudoheight array in meters, monotonically increasing with dimension (*nlev*)</span>
+<span class="sd">    :type zlev: sequence of array_like</span>
+
+<span class="sd">    :param  u_field: Zonal wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).</span>
+<span class="sd">    :type u_field: sequence of array_like</span>
+
+<span class="sd">    :param  v_field: Meridional wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).</span>
+<span class="sd">    :type v_field: sequence of array_like</span>
+
+<span class="sd">    :param  t_field: Temperature field in Kelvin, with dimension (*nlev*,*nlat*,*nlon*).</span>
+<span class="sd">    :type t_field: sequence of array_like</span>
+
+<span class="sd">    :param  qgpv_field: Quasi-geostrophic potential vorticity field in 1/second, with dimension (*nlev*,*nlat*,*nlon*). If u_field, v_field and t_field are input, qgpv_field can be using the method compute_qgpv.</span>
+<span class="sd">    :type qgpv_field: sequence of array_like</span>
+
+<span class="sd">    :param  area: Differential area at each lon-lat grid points with dimension (*nlat*,*nlon*). If &#39;area=None&#39;: it will be initiated as area of uniform grid (in degree) on a spherical surface.</span>
+<span class="sd">    :type area: sequence of array_like</span>
+
+<span class="sd">    :param  dphi: Differential length element along the lat grid with dimension (*nlat*).</span>
+<span class="sd">    :type dphi: sequence of array_like</span>
+
+<span class="sd">    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If &#39;pv_field=None&#39;: pv_field is expected to be computed with u,v,t field.</span>
+<span class="sd">    :type pv_field: sequence of array_like</span>
+
+<span class="sd">    :returns: an instance of the object BarotropicField</span>
+
+<span class="sd">    :example:</span>
+<span class="sd">    &gt;&gt;&gt; qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">zlev</span><span class="p">,</span> <span class="n">u_field</span><span class="p">,</span> <span class="n">v_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">t_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">qgpv_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dphi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">n_partitions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rkappa</span><span class="o">=</span><span class="mf">287.</span><span class="o">/</span><span class="mf">1004.</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">,</span>
+                 <span class="n">scale_height</span><span class="o">=</span><span class="mf">7000.</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;Create a windtempfield object.</span>
+
+<span class="sd">        **Arguments:**</span>
+
+<span class="sd">        *xlon*</span>
+<span class="sd">            Longitude array in degree with dimension [nlon].</span>
+
+<span class="sd">        *ylat*</span>
+<span class="sd">            Latitutde array in degree, monotonically increasing with dimension</span>
+<span class="sd">            [nlat].</span>
+
+<span class="sd">        *zlev*</span>
+<span class="sd">            Pseudoheight array in meters, monotonically increasing with dimension</span>
+<span class="sd">            [nlev].</span>
+
+<span class="sd">        *u_field*</span>
+<span class="sd">            Zonal wind field in meters, with dimension [nlev x nlat x nlon].</span>
+
+<span class="sd">        *v_field*</span>
+<span class="sd">            Meridional wind field in meters, with dimension [nlev x nlat x nlon].</span>
+
+<span class="sd">        *t_field*</span>
+<span class="sd">            Temperature field in Kelvin, with dimension [nlev x nlat x nlon].</span>
+
+<span class="sd">        *qgpv_field*</span>
+<span class="sd">            Quasi-geostrophic potential vorticity field in 1/second, with dimension</span>
+<span class="sd">            [nlev x nlat x nlon]. If u_field, v_field and t_field are input,</span>
+<span class="sd">            qgpv_field can be using the method compute_qgpv.</span>
+
+<span class="sd">        *area*</span>
+<span class="sd">            Differential area at each lon-lat grid points with dimension</span>
+<span class="sd">            [nlat x nlon].</span>
+<span class="sd">            If None, it will be initiated as:</span>
+<span class="sd">            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).</span>
+<span class="sd">            This would be problematic if the grids are not uniformly distributed in degree.</span>
+
+<span class="sd">        *dphi*</span>
+<span class="sd">            Differential length element along the lat grid with dimension nlat.</span>
+
+<span class="sd">        *n_partitions*</span>
+<span class="sd">            Number of partitions used to compute equivalent latitude. If not</span>
+<span class="sd">            given, it will be assigned nlat.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span> <span class="o">=</span> <span class="n">xlon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">=</span> <span class="n">ylat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zlev</span> <span class="o">=</span> <span class="n">zlev</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">ylat</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span> <span class="o">=</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span> <span class="o">=</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlev</span> <span class="o">=</span> <span class="n">zlev</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">=</span> <span class="n">planet_radius</span>
+        <span class="k">if</span> <span class="n">dphi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">=</span> <span class="n">dphi</span>
+
+        <span class="k">if</span> <span class="n">area</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">planet_radius</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dphi</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="o">=</span> <span class="n">area</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_field</span> <span class="o">=</span> <span class="n">qgpv_field</span>
+
+        <span class="k">if</span> <span class="n">n_partitions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="n">n_partitions</span>
+
+        <span class="c1"># First, check if the qgpv_field is present</span>
+        <span class="nb">print</span> <span class="s1">&#39;check self.qgpv_field&#39;</span>
+        <span class="c1"># print self.qgpv_field</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">qgpv_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;qgpv_field is missing.&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">qgpv_field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="s1">&#39;Compute QGPV field from u and v field.&#39;</span>
+
+        <span class="c1"># === Obtain potential temperature field ===</span>
+        <span class="k">if</span> <span class="n">t_field</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pt_field</span> <span class="o">=</span> <span class="n">t_field</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">*</span> \
+             <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">rkappa</span> <span class="o">*</span> <span class="n">zlev</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span><span class="o">/</span><span class="n">scale_height</span><span class="p">)</span>
+            <span class="c1"># Interpolation</span>
+            <span class="n">f_Thalf</span> <span class="o">=</span> <span class="n">interpolate</span><span class="o">.</span><span class="n">interp1d</span><span class="p">(</span><span class="n">zlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pt_field</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+                                           <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">zlev_half</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">zlev</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">zlev</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">zlev</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span><span class="o">*</span><span class="n">i</span> \
+                                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">zlev</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pt_field_half</span> <span class="o">=</span> <span class="n">f_Thalf</span><span class="p">(</span><span class="n">zlev_half</span><span class="p">)</span> <span class="c1"># dim = [2*nlev+1,nlat]</span>
+            <span class="nb">print</span> <span class="s1">&#39;self.pt_field_half.shape&#39;</span>
+            <span class="nb">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">pt_field_half</span><span class="o">.</span><span class="n">shape</span>
+
+
+<div class="viewcode-block" id="QGField.equivalent_latitudes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.equivalent_latitudes">[docs]</a>    <span class="k">def</span> <span class="nf">equivalent_latitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_size</span><span class="o">=</span><span class="s1">&#39;half_globe&#39;</span><span class="p">):</span> <span class="c1"># Has to be changed since it is qgpv.</span>
+                                    <span class="c1"># Use half-globe?</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute equivalent latitude with the *pv_field* stored in the object.</span>
+
+<span class="sd">        :param  domain_size: domain of grids to be used to compute equivalent latitude. It can he &#39;half_globe&#39; or &#39;full_globe&#39;.</span>
+<span class="sd">        :type domain_size: string</span>
+
+<span class="sd">        :returns: an numpy array with dimension (*nlev*,*nlat*) of equivalent latitude array.</span>
+
+<span class="sd">        :example:</span>
+<span class="sd">        &gt;&gt;&gt; qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)</span>
+<span class="sd">        &gt;&gt;&gt; qgfield_eqvlat = qgfield1.equivalent_latitudes(domain_size=&#39;half_globe&#39;)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="c1"># &#39;&#39;&#39;</span>
+        <span class="c1"># Input variables</span>
+        <span class="c1">#     domain_size: Domain of grids to be used to compute equivalent latitude. It can he &#39;half_globe&#39; or &#39;full_globe&#39;.</span>
+        <span class="c1">#</span>
+        <span class="c1"># Output variables:</span>
+        <span class="c1">#     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.</span>
+        <span class="c1"># &#39;&#39;&#39;</span>
+
+        <span class="k">def</span> <span class="nf">eqv_lat_core</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">n_points</span><span class="p">):</span>
+            <span class="n">vort_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">vort</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">vort</span><span class="o">.</span><span class="n">min</span><span class="p">()])</span>
+            <span class="n">vort_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">vort</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">vort</span><span class="o">.</span><span class="n">max</span><span class="p">()])</span>
+            <span class="n">q_part_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">vort_min</span><span class="p">,</span> <span class="n">vort_max</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span>
+                                   <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">aa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q_part_u</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>  <span class="c1"># to sum up area</span>
+            <span class="n">vort_flat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># Flatten the 2D arrays to 1D</span>
+            <span class="n">area_flat</span> <span class="o">=</span> <span class="n">area</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="c1"># Find equivalent latitude:</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">vort_flat</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">aa</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>  <span class="c1"># Sum up area in each bin</span>
+                <span class="n">aa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">area_flat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds</span> <span class="o">==</span> <span class="n">i</span><span class="p">)])</span>
+            <span class="n">aq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+            <span class="n">y_part</span> <span class="o">=</span> <span class="n">aq</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">planet_radius</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+            <span class="n">lat_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">y_part</span><span class="p">)</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">q_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">lat_part</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">q_part</span>
+
+        <span class="n">area</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span>
+        <span class="n">ylat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span>
+        <span class="n">planet_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">):</span>
+            <span class="n">pv_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_field</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">domain_size</span> <span class="o">==</span> <span class="s1">&#39;half_globe&#39;</span><span class="p">:</span>
+                <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">qref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">)</span>
+                <span class="c1"># --- Southern Hemisphere ---</span>
+                <span class="c1"># qref1 = eqv_lat_core(ylat[:nlat_s],vort[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)</span>
+                <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">eqv_lat_core</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">pv_field</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,:],</span>
+                                             <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">nlat_s</span><span class="p">)</span>
+                <span class="c1"># --- Northern Hemisphere ---</span>
+                <span class="n">pv_field_inverted</span> <span class="o">=</span> <span class="o">-</span><span class="n">pv_field</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
+                <span class="n">qref2</span> <span class="o">=</span> <span class="n">eqv_lat_core</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">pv_field_inverted</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,:],</span>
+                                     <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">nlat_s</span><span class="p">)</span>
+                <span class="c1">#qref2 = eqvlat(ylat[:nlat_s],vort2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)</span>
+                <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">domain_size</span> <span class="o">==</span> <span class="s1">&#39;full_globe&#39;</span><span class="p">:</span>
+                <span class="n">qref</span> <span class="o">=</span> <span class="n">eqv_lat_core</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span>
+                                    <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Domain size is not properly specified.&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">qref</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span></div>
+
+<div class="viewcode-block" id="QGField.lwa"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.lwa">[docs]</a>    <span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the finite-amplitude local wave activity on each pseudoheight layer based on the *equivalent_latitudes* and the *qgpv_field* stored in the object.</span>
+
+<span class="sd">        :returns: an 3-D numpy array with dimension (*nlev*,*nlat*,*nlon*) of local wave activity values.</span>
+
+<span class="sd">        :example:</span>
+<span class="sd">        &gt;&gt;&gt; qgfield = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)</span>
+<span class="sd">        &gt;&gt;&gt; qgfield_lwa = qgfield.lwa()</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">(</span><span class="n">domain_size</span><span class="o">=</span><span class="s1">&#39;half_globe&#39;</span><span class="p">)</span>
+
+        <span class="n">lwact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">):</span>
+            <span class="n">pv_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_field</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">vort_e</span> <span class="o">=</span> <span class="n">pv_field</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                <span class="n">vort_boo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">))</span>
+                <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                <span class="n">vort_boo</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">lwact</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">vort_e</span><span class="o">*</span><span class="n">vort_boo</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">clat</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lwact</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="kn">from</span> <span class="nn">netCDF4</span> <span class="k">import</span> <span class="n">Dataset</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+    <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+    <span class="c1"># === List of tests ===</span>
+    <span class="n">test_2D</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">test_3D</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># === Testing the 2D object ===</span>
+    <span class="k">if</span> <span class="n">test_2D</span><span class="p">:</span>
+        <span class="n">data_path</span> <span class="o">=</span> <span class="s1">&#39;/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/barotropic_vorticity.nc&#39;</span>
+        <span class="n">readFile</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="n">abs_vorticity</span> <span class="o">=</span> <span class="n">readFile</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;absolute_vorticity&#39;</span><span class="p">][:]</span>
+
+        <span class="n">xlon</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">360.</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ylat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span> <span class="mf">90.</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">nlon</span> <span class="o">=</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">nlat</span> <span class="o">=</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">Earth_radius</span> <span class="o">=</span> <span class="mf">6.378e+6</span>
+        <span class="n">dphi</span> <span class="o">=</span> <span class="p">(</span><span class="n">ylat</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">ylat</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="mf">2.</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">Earth_radius</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.</span><span class="p">)</span>
+                                        <span class="o">*</span> <span class="n">dphi</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">nlon</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+
+        <span class="n">cc1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>  <span class="c1"># area computed in the class assumed uniform grid</span>
+
+        <span class="c1"># Compute equivalent latitudes</span>
+        <span class="n">cc1_eqvlat</span> <span class="o">=</span> <span class="n">cc1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
+
+        <span class="c1"># Compute equivalent latitudes</span>
+        <span class="n">cc1_lwa</span> <span class="o">=</span> <span class="n">cc1</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
+
+        <span class="c1"># --- Color axis for plotting LWA --- #</span>
+        <span class="n">LWA_caxis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cc1_lwa</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">31</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># --- Plot the abs. vorticity field, LWA and equivalent-latitude relationship and LWA --- #</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Absolute vorticity map</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">cc1</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="mi">31</span><span class="p">)</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">formatter</span><span class="o">.</span><span class="n">set_powerlimits</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_offset_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">update_ticks</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Absolute vorticity [1/s]&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Longitude (degree)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude (degree)&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># LWA (full domain)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">cc1_lwa</span><span class="p">,</span> <span class="n">LWA_caxis</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Local Wave Activity [m/s]&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Longitude (degree)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude (degree)&#39;</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># Equivalent-latitude relationship Q(y)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cc1_eqvlat</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Equivalent-latitude relationship&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cc1</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">ylat</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;zonal mean abs. vorticity&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ticklabel_format</span><span class="p">(</span><span class="n">style</span><span class="o">=</span><span class="s1">&#39;sci&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">scilimits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Equivalent-latitude profile&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude (degree)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Q(y) [1/s] | y = latitude&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="c1"># === Testing the 2D object ===</span>
+    <span class="k">if</span> <span class="n">test_3D</span><span class="p">:</span>
+        <span class="nb">print</span> <span class="s1">&#39;Test QGField&#39;</span>
+        <span class="n">u_QGPV_File</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="s1">&#39;/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/u_QGPV_240hPa_2012Oct28to31.nc&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+        <span class="c1"># --- Read in longitude and latitude arrays --- #</span>
+        <span class="n">xlon</span> <span class="o">=</span> <span class="n">u_QGPV_File</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">][:]</span>
+        <span class="n">ylat</span> <span class="o">=</span> <span class="n">u_QGPV_File</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">][:]</span>
+        <span class="n">clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">ylat</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.</span><span class="p">))</span> <span class="c1"># cosine latitude</span>
+        <span class="n">nlon</span> <span class="o">=</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">nlat</span> <span class="o">=</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="n">u</span> <span class="o">=</span> <span class="n">u_QGPV_File</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;U&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="n">QGPV</span> <span class="o">=</span> <span class="n">u_QGPV_File</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s1">&#39;QGPV&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="n">u_QGPV_File</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="nb">print</span> <span class="n">u</span><span class="o">.</span><span class="n">shape</span>
+        <span class="nb">print</span> <span class="n">QGPV</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">cc2</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">240.</span><span class="p">]),</span> <span class="n">u</span><span class="p">,</span> <span class="n">qgpv_field</span><span class="o">=</span><span class="n">QGPV</span><span class="p">)</span>  <span class="c1"># area computed in the class assumed uniform grid</span>
+        <span class="n">cc3</span> <span class="o">=</span> <span class="n">cc2</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
+        <span class="nb">print</span> <span class="s1">&#39;cc3 shape&#39;</span>
+        <span class="nb">print</span> <span class="n">cc3</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># print &#39;test empty qgpv fields&#39;</span>
+        <span class="c1"># cc4 = QGField(xlon, ylat, np.array([240.]), u)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">[</span><span class="mi">80</span><span class="p">:],</span> <span class="n">cc3</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">80</span><span class="p">:,</span> <span class="p">:],</span> <span class="mi">31</span><span class="p">)</span>
+        <span class="n">cb</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">formatter</span><span class="o">.</span><span class="n">set_powerlimits</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_offset_position</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">cb</span><span class="o">.</span><span class="n">update_ticks</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Local Wave Activity at 240hPa [m/s]&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Longitude (degree)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Latitude (degree)&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+
+
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Shao Ying (Clare) Huang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
