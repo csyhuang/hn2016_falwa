@@ -28,7 +28,7 @@ There are two interfaces for different purposes: an object-oriented interface an
 
 This interface is intended for users that apply the diagnostic right away on climate data. It provides a convenient interface to input climate fields and coordinates, and compute relevant metrics all together. 
 
-There are two classes in the interface, *BarotropicField* and *QGField*. For detailed usage, please refer to the example/ directory:
+There are two classes in the interface, *BarotropicField* and *QGField*. For detailed usage, please check the [manual page](https://cdn.rawgit.com/csyhuang/hn2016_falwa/8665693a/doc/build/html/Object%20Oriented%20Interface.html) (under construction) and refer to the example/ directory:
 
 Sample Script | Description
 ------------ | -------------
