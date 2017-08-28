@@ -22,16 +22,29 @@ cd hn2016_falwa
 python setup.py install
 ```
 
-## Examples
+There are two interfaces for different purposes: an object-oriented interface and a developer interface.
 
-Please refer to the example/ directory for these ipython notebooks. 
+## Object-oriented interface
+
+This interface is intended for users that apply the diagnostic right away on climate data. It provides a convenient interface to input climate fields and coordinates, and compute relevant metrics all together. 
+
+There are two classes in the interface, *BarotropicField* and *QGField*. For detailed usage, please refer to the example/ directory:
+
+Sample Script | Description
+------------ | -------------
+oopinterface_example_BarotropicField.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
+oopinterface_example_QGField.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
+
+## Developer interface
+
+This interface contains separate functions that users can alter the inputs more flexibly. Functions are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). Below are two examples that the functions reproduce the results from the object-oriented interface:
 
 Sample Script | Description
 ------------ | -------------
 Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
 
-## List of functions (to be updated)
+### List of functions (to be updated)
 
 Type help(function) for instructions on format of input variables. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
 
