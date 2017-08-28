@@ -41,12 +41,12 @@ This interface contains separate functions that users can alter the inputs more 
 
 Sample Script | Description
 ------------ | -------------
-Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
-Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
+Example_barotropic.ipynb | Same as *oopinterface_example_BarotropicField.ipynb*.
+Example_qgpv.ipynb | Same as *oopinterface_example_QGField.ipynb*
 
-### List of functions (to be updated)
+### List of functions (constantly being updated)
 
-Type help(function) for instructions on format of input variables. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
+Type help(function) for instructions on format of input variables. Newer functions are at the bottom. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
 
 To access the functions below, you can load the functions by using
 
@@ -65,6 +65,7 @@ static_stability| Compute static stability in hemispheric domain from 2-D/3-D po
 compute_qgpv_givenvort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
 solve_uref_both_bc| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip and adiabatic lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
 theta_lwa | To compute longitudinally local version of surface wave activity. (Note: B* in Nakamura and Solomon (2010) is the zonal mean version)
+qgpv_eqlat_lwa_ncforce | To compute local non-conservative forcing term in the local wave activity equation.
 
 ## Inquiries / Issues reporting
 

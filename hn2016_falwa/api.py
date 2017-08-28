@@ -8,4 +8,4 @@ from solve_uref_noslip_hemisphere import solve_uref_both_bc
 from static_stability import static_stability
 from qgpv import compute_qgpv_givenvort
 from theta_lwa import theta_lwa
-
+from qgpv_lwa_ncforce import qgpv_eqlat_lwa_ncforce
