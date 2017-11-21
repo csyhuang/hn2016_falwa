@@ -6,7 +6,7 @@
 hn2016_falwa: Finite-amplitude local wave activity
 ==================================================
 
-*hn2016_falwa* is a python library that provides tools to measure and study life cycle of large-scale
+`hn2016_falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
 extreme weather events. It implements the finite-amplitude local wave activity diagnostic and related 
 proposed in `Huang and Nakamura (2016) <http://dx.doi.org/10.1175/JAS-D-15-0194.1/>`_ on gridded climate 
 data.

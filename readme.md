@@ -1,6 +1,6 @@
 ## Python Library: hn2016_falwa (v0.2.0)
 
-[![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)
+[![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)
 
 Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) and [Huang and Nakamura (2017)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full) from gridded climate data.
 
@@ -8,7 +8,7 @@ Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Na
 
 The functions in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-Please check the [documentation page](https://cdn.rawgit.com/csyhuang/hn2016_falwa/b7efacaa/docs/build/html/index.html) for more details.
+Please check the [documentation page](hn2016-falwa.readthedocs.io) for more details.
 
 ## Installation
 
