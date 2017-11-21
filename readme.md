@@ -18,6 +18,11 @@ git clone https://github.com/csyhuang/hn2016_falwa.git
 cd hn2016_falwa
 python setup.py install
 ```
+Bugs have been fixed since the release. To clone the version with bug fixed (on *test* branch):
+```
+git clone -b test https://github.com/csyhuang/hn2016_falwa.git
+```
+Changes will be merged in the next updated version.
 
 There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
 interface**, which is a wrapper for the basis functions in the developer interface.
