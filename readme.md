@@ -8,7 +8,7 @@ Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Na
 
 The functions in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-Please check the [documentation page](hn2016-falwa.readthedocs.io) for more details.
+Please check the [documentation page](http://hn2016-falwa.readthedocs.io) for more details.
 
 ## Installation
 
