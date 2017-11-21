@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
       
-VERSION='0.1.7'
+VERSION='0.2.0'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
 AUTHOR='Shao Ying (Clare) Huang'
-AUTHOR_EMAIL='clare1068@gmail.com'
+AUTHOR_EMAIL='csyhuang@uchicago.edu'
 LICENSE='MIT'
 DESCRIPTION='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)'
 install_requires=[
@@ -14,8 +14,9 @@ install_requires=[
 ]
 LONG_DESCRIPTION="""
 hn2016_falwa is a package that contains modules to compute the finite-amplitude 
-local wave activity (FALWA) proposed in Huang and Nakamura (2016 JAS):
-http://dx.doi.org/10.1175/JAS-D-15-0194.1
+local wave activity (FALWA) and reference state (U_ref) in the following papers:
+Huang and Nakamura (2016, JAS): http://dx.doi.org/10.1175/JAS-D-15-0194.1
+Huang and Nakamura (2017, GRL): http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full
 The current version of the library handles calculation of FALWA in a spherical 
 barotropic model and QGPV fields on isobaric surfaces.
 
@@ -23,13 +24,8 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
-v0.1.7:
-- Name of functions are all now in small letters.
-- The radius of planet (planet_radius) is now an optional input for the functions (default value: Earth's radius).
-- The function 'static_stability' can now take in 2D (i.e. zonal mean) or 3D field of potential temperature.
-- The syntax in the sample IPython notebooks are updated.
-- Unittest directory has been set up and will be constantly updated.
-- A new function 'theta_lwa' has been added to compute surface wave activity based on Potential temperature.
+v0.2.0:
+- Functions are structred in 4 different modules: basis, wrapper, utilities and beta_version. See documentation on Github for details.
 
 Links:
 -----

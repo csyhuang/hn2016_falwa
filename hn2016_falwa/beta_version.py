@@ -1,33 +1,8 @@
-# Editing note on Feb 28, 2017: the input variable corm (absolute vorticity) is removed.
-from math import *
-import numpy as np
-#import matplotlib.pyplot as plt
-from scipy import interpolate
-import pickle
-from scipy.sparse import csc_matrix
-from scipy.sparse.linalg import spsolve
-from scipy.linalg import eig,eigvals,det
-from scipy import arange, array, exp
-from copy import copy
-import itertools
-# To solve for u_ref and then T_ref (delete all comments to proofread)
-
-def load_pickle(fname):
-    f = open(fname)
-    var = pickle.load(f)
-    f.close()
-    return var
-
-def dump_pickle(variable,fname):
-    f = open(fname, 'w')
-    pickle.dump(variable, f)
-    f.close()
-
 def input_jk_output_index(j,k,kmax):
     return j*(kmax) + k
 
-
 def extrap1d(interpolator):
+
     xs = interpolator.x
     ys = interpolator.y
 
@@ -40,47 +15,83 @@ def extrap1d(interpolator):
             return interpolator(x)
 
     def ufunclike(xs):
+        from scipy import array
         return array(map(pointwise, array(xs)))
 
     return ufunclike
 
-# Constants in Noboru's code
-#nlon = 240
-#nlat = 121
-jmax = 73
-#jmax1 = nlat #nlat+20
-#kmax = 49
-itarg = 1979        # End year
-izarg = 12          # End month
-maxits = 1000000     # max iteration for SOR
-eps = 1.e-9         # convergence threshold for SOR
-rjac = 0.95       # Jacobi radius for SOR
-dz = 1000.          # vertical z spacing (m)
-#c0 = 1.e-4       # base coriolis parameter
-aa = 6378000.     # planetary radius
-grav = 9.81       # gravity
-#dm = 1./float(jmax1-1)  # gaussian latitude spacing
-p0 = 1000.          # reference pressure (hPa)
-r0 = 287.           # gas constant
-hh = 7000.          # scale height
-cp = 1004.          # specific heat
-rkappa = r0/cp
-om = 7.29e-5          # angular velocity of the earth
 
-# Constant arrays
-#xlon = np.linspace(0,360,nlon,endpoint=False)
+def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
+                       zm_PT, Input_B0, Input_B1, use_real_Data=True):
+    """
+    Compute equivalent latitude and wave activity on a barotropic sphere.
 
-# **** Define gaussian latitude grids in radian ****
-#gl = np.array([j*dm-1 for j in range(jmax1)]) # This is sin / mu
+    Parameters
+    ----------
+    tstamp : string
+        Time stamp of the snapshot of the field.
+    znum : ndarray
+        Zonal mean wind.
+    FAWA_cos : ndarray
+        Zonal mean finite-amplitude wave activity.
+    ylat : sequence or array_like
+        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
+    ephalf2 : ndarray
+        Epsilon in Nakamura and Solomon (2010).
+    Delta_PT : ndarray
+        \Delta \Theta in Nakamura and Solomon (2010); upper-boundary conditions.
+    zm_PT : ndarray
+        Zonal mean potential temperature.
+    Input_B0 : sequence or array_like
+        Zonal-mean surface wave activity for the lowest layer (k=0). Part of the lower-boundary condition.
+    Input_B1 : sequence or array_like
+        Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.
+    use_real_Data : boolean
+        Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.
 
-# **** Things to output in the program of generation ****
-# Half-step static stability in z to calculate epsilon
-# Have a function that ccalculates epsilon
 
-# **** Input data ****
+    Returns
+    -------
+    u_MassCorr_regular_noslip : ndarray
+        2-d numpy array of mass correction \Delta u in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).
+    u_Ref_regular_noslip : ndarray
+        2-d numpy array of zonal wind reference state u_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).
+    T_MassCorr_regular_noslip : ndarray
+        2-d numpy array of adjustment in reference temperature \Delta T in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).
+    T_Ref_regular_noslip : ndarray
+        2-d numpy array of adjustment in reference temperature T_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).
+    u_MassCorr_regular_adiab : ndarray
+        2-d numpy array of mass correction \Delta u in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).
+    u_Ref_regular_adiab : ndarray
+        2-d numpy array of zonal wind reference state u_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).
+    T_MassCorr_regular_adiab : ndarray
+        2-d numpy array of adjustment in reference temperature \Delta T in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).
+    T_Ref_regular_adiab : ndarray
+        2-d numpy array of adjustment in reference temperature T_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).
 
-def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True): # zm_PT = zonal mean potential temperature
-    
+    """
+
+
+    # zm_PT = zonal mean potential temperature
+
+    # Import necessary modules
+    from math import pi, exp
+    from scipy import interpolate
+    from scipy.sparse import csc_matrix
+    from scipy.sparse.linalg import spsolve
+    from copy import copy
+    import numpy as np
+    import itertools
+
+    # === Parameters (should be input externally. To be modified) ===
+    dz = 1000.          # vertical z spacing (m)
+    aa = 6378000.     # planetary radius
+    r0 = 287.           # gas constant
+    hh = 7000.          # scale height
+    cp = 1004.          # specific heat
+    rkappa = r0/cp
+    om = 7.29e-5          # angular velocity of the earth
+
     # === These changes with input variables' dimensions ===
     nlat = FAWA_cos.shape[-1]
     jmax1 = nlat
@@ -88,32 +99,30 @@ def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0
     gl = np.array([(j+1)*dm for j in range(jmax1)]) # This is sin / mu
     gl_2 = np.array([j*dm for j in range(jmax1+2)]) # This is sin / mu
     cosl = np.sqrt(1.-gl**2)
-    cosl_2 = np.sqrt(1.-gl_2**2)
+    #cosl_2 = np.sqrt(1.-gl_2**2)
     alat = np.arcsin(gl)*180./pi
     alat_2 = np.arcsin(gl_2)*180./pi
     dmdz = (dm/dz)
 
-
-
     # **** Get from input these parameters ****
     kmax = FAWA_cos.shape[0]
-    height = np.array([i for i in range(kmax)]) # in [km]
+    #height = np.array([i for i in range(kmax)]) # in [km]
 
     # **** Initialize Coefficients ****
-    c_a = np.zeros((jmax1,kmax))
-    c_b = np.zeros((jmax1,kmax))
-    c_c = np.zeros((jmax1,kmax))
-    c_d = np.zeros((jmax1,kmax))
-    c_e = np.zeros((jmax1,kmax))
-    c_f = np.zeros((jmax1,kmax))
+    c_a = np.zeros((jmax1, kmax))
+    c_b = np.zeros((jmax1, kmax))
+    c_c = np.zeros((jmax1, kmax))
+    c_d = np.zeros((jmax1, kmax))
+    c_e = np.zeros((jmax1, kmax))
+    c_f = np.zeros((jmax1, kmax))
 
     # --- Initialize interpolated variables ---
-    zmu1 = np.zeros((jmax1,kmax))
-    cx1 = np.zeros((jmax1,kmax))
-    cor1 = np.zeros((jmax1,kmax))
-    ephalf = np.zeros((jmax1,kmax))
+    zmu1 = np.zeros((jmax1, kmax))
+    cx1 = np.zeros((jmax1, kmax))
+    cor1 = np.zeros((jmax1, kmax))
+    ephalf = np.zeros((jmax1, kmax))
     Delta_PT1 = np.zeros((jmax1+2))
-    zm_PT1 = np.zeros((jmax1,kmax))
+    zm_PT1 = np.zeros((jmax1, kmax))
     Input_B0_1 = np.zeros((jmax1+2))
     Input_B1_1 = np.zeros((jmax1+2))
 
@@ -131,31 +140,31 @@ def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0
         # --- Interpolation of ephalf ---
         f_ep_toGaussian = interpolate.interp1d(ylat[:],ephalf2[:,:].T,axis=0, kind='linear')    #[jmax x kmax]
         ephalf[:,:] = f_ep_toGaussian(alat[:])
-        
+
 		# --- Interpolation of Delta_PT ---
         f_DT_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Delta_PT[:], kind='linear') )    # This is txt in Noboru's code
         Delta_PT1[:] = f_DT_toGaussian(alat_2[:])
-        
+
 		# --- Interpolation of Input_B0_1 ---
         f_B0_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B0[:], kind='linear') )    # This is txt in Noboru's code
         Input_B0_1[:] = f_B0_toGaussian(alat_2[:])
-        
+
 		# --- Interpolation of Input_B1_1 ---
         f_B1_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B1[:], kind='linear') )     # This is txt in Noboru's code
         Input_B1_1[:] = f_B1_toGaussian(alat_2[:])
-        
+
     else:
         # Use random matrix here just to test!
-        zmu1 = np.random.rand(jmax1,kmax)+np.ones((jmax1,kmax))*1.e-8
-        cx1 = np.random.rand(jmax1,kmax)+np.ones((jmax1,kmax))*1.e-8
-        #cor1 = np.random.rand(jmax1,kmax)+np.ones((jmax1,kmax))*1.e-8
+        zmu1 = np.random.rand(jmax1, kmax)+np.ones((jmax1, kmax))*1.e-8
+        cx1 = np.random.rand(jmax1, kmax)+np.ones((jmax1, kmax))*1.e-8
+        #cor1 = np.random.rand(jmax1, kmax)+np.ones((jmax1, kmax))*1.e-8
 
 
     # --- Added on Aug 1, 2016 ---
-    cor1 = 2.*om*gl[:,np.newaxis] * np.ones((jmax1,kmax))
+    cor1 = 2.*om*gl[:,np.newaxis] * np.ones((jmax1, kmax))
     #cor1[0] = cor1[1]*0.5
 
-    # OLD: qxx0 = -cx1*cosl[:,np.newaxis]/cor1     #qxx0 = np.empty((jmax1,kmax))
+    # OLD: qxx0 = -cx1*cosl[:,np.newaxis]/cor1     #qxx0 = np.empty((jmax1, kmax))
     qxx0 = -cx1/cor1 # Input of LWA has cosine.
     c_f[0,:] = qxx0[1,:] - 2*qxx0[0,:]
     c_f[-1,:] = qxx0[-2,:] - 2*qxx0[-1,:]
@@ -194,27 +203,8 @@ def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0
     c_d[:,1:-1] = dmdz**2 *ephalf[:,0:-2]*exp(dz/(2*hh)) # Check convention of ephalf
     c_e[:,1:-1] = -(c_a[:,1:-1]+c_b[:,1:-1]+c_c[:,1:-1]+c_d[:,1:-1])
 
-    # ==== Here, shall try the numpy numerical solver instead .v. ====
-    #scipy.sparse.linalg.spsolve(A, b, permc_spec=None, use_umfpack=True)
-    # A = np.zeros((jmax1*kmax,jmax1*kmax))
     b = np.zeros((jmax1*kmax))
-    # # for j in range(jmax1):
-    #     for k in range(1,kmax-1):
-    # # for j in range(1,jmax1-1):
-    # #     for k in range(1,kmax-1):
-    #         ind = input_jk_output_index(j,k,kmax)
-    #         if (j<jmax1-1):
-    #             A[ind,input_jk_output_index(j+1,k,kmax)] = c_a[j,k]
-    #         if (j>0):
-    #             A[ind,input_jk_output_index(j-1,k,kmax)] = c_b[j,k]
-    #         A[ind,input_jk_output_index(j,k+1,kmax)] = c_c[j,k]
-    #         A[ind,input_jk_output_index(j,k-1,kmax)] = c_d[j,k]
-    #         A[ind,input_jk_output_index(j,k,kmax)] = c_e[j,k]
-    #         b[ind] = c_f[j,k]
 
-    # csc_matrix((data, (row_ind, col_ind)), [shape=(M, N)])
-    # where data, row_ind and col_ind satisfy the relationship a[row_ind[k], col_ind[k]] = data[k].
-    # Sep 10: write it into CSC matrix
     row_index=[]
     col_index=[]
     coeff = []
@@ -426,11 +416,26 @@ def solve_uref_both_bc(tstamp,zmum,FAWA_cos,ylat,ephalf2,Delta_PT,zm_PT,Input_B0
 
 # --- As a test whether the function Solve_Uref is working ---
 if __name__ == "__main__":
-    #numpy.random.rand(d0, d1, ..., dn)
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    nlat = 121
+    kmax = 49
+    jmax1 = nlat
+
+    # The codes below is just for testing purpose
+    tstamp = 'random'
+    ylat = np.linspace(-90,90,121,endpoint=True)
     t1 = np.random.rand(nlat,kmax)+np.ones((nlat,kmax))*0.001
     t2 = np.random.rand(nlat,kmax)+np.ones((nlat,kmax))*0.001
     t3 = np.random.rand(nlat,kmax)+np.ones((nlat,kmax))*0.001
-    eh = np.random.rand(jmax1,kmax)+np.ones((jmax1,kmax))*0.001
+    Delta_PT = np.random.rand(nlat)+np.ones((nlat))*0.001
+    zm_PT = np.random.rand(nlat,kmax)+np.ones((nlat,kmax))*0.001
+    Input_B0 = np.random.rand(nlat)+np.ones((nlat))*0.001
+    Input_B1 = np.random.rand(nlat)+np.ones((nlat))*0.001
+    eh = np.random.rand(jmax1, kmax)+np.ones((jmax1, kmax))*0.001
     Delta_PT = np.sort(np.random.rand(jmax1))
-    use_real_Data = False
-    uutest = Solve_Uref(t1,t2,t3,eh,Delta_PT)
+
+    xxx = solve_uref_both_bc(tstamp,t1,t2,ylat,t3,Delta_PT,zm_PT,Input_B0,Input_B1,use_real_Data=True)
+    print(xxx)

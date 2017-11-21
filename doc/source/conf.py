@@ -32,7 +32,8 @@ sys.path.insert(0, os.path.abspath('../../hn2016_falwa'))
 # ones.
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.imgmath',
-    'sphinx.ext.viewcode']
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -96,7 +97,7 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
+html_sidebars = { '**': ['globaltoc.html', 'relations.html', 'sourcelink.html', 'searchbox.html'], }
 
 # -- Options for HTMLHelp output ------------------------------------------
 
@@ -150,6 +151,8 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'hn2016_falwa', u'hn2016_falwa Documentation',
-     author, 'hn2016_falwa', 'One line description of project.',
+     author, 'hn2016_falwa', 'Python package to compute finite-amplitude wave activity.',
      'Miscellaneous'),
 ]
+
+

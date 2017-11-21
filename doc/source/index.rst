@@ -42,8 +42,13 @@ There are two interfaces for this library. One is the developer interface, where
 
 .. toctree::
    :maxdepth: 2
+   :caption: Documentation for hn2016_falwa
 
    Object Oriented Interface
+   Basis Functions
+   Wrapper Functions   
+   Utility Functions
+   Beta-version Functions
    
 
 Indices and tables
