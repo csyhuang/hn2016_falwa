@@ -1,73 +1,60 @@
-## Python Library: hn2016_falwa (v0.1.7)
+## Python Library: hn2016_falwa (v0.2.0)
 
 [![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)
 
-
-Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) from gridded climate data.
+Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) and [Huang and Nakamura (2017)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full) from gridded climate data.
 
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/hn2016_falwa_diagram.png)
 
-The utilities in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+The functions in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+
+Please check the [documentation page](https://cdn.rawgit.com/csyhuang/hn2016_falwa/b7efacaa/docs/build/html/index.html) for more details.
 
 ## Installation
 
-This package works in Python 2.7 (Python 3 version will be included soon). It can be installed with pip:
-```
-pip install hn2016_falwa
-```
-You can also install from the source distribution:
+This current version works in both Python 2.7 and 3.6. To install from the source:
 ```
 git clone https://github.com/csyhuang/hn2016_falwa.git
 cd hn2016_falwa
 python setup.py install
 ```
 
-There are two interfaces for different purposes: an object-oriented interface and a developer interface.
+There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
+interface**, which is a wrapper for the basis functions in the developer interface.
 
-## Object-oriented interface
+### Developer Interface
 
-This interface is intended for users that apply the diagnostic right away on climate data. It provides a convenient interface to input climate fields and coordinates, and compute relevant metrics all together. 
+The **developer interface**  contains separate functions that users can alter the inputs more flexibly. Functions 
+are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). The 
+**developer interface** consists of 4 types of functions:  
 
-There are two classes in the interface, *BarotropicField* and *QGField*. For detailed usage, please check the [manual page](https://cdn.rawgit.com/csyhuang/hn2016_falwa/8665693a/doc/build/html/Object%20Oriented%20Interface.html) (under construction) and refer to the example/ directory:
+- The **basis functions** are smallest unit of functions that make up the **wrapper functions** and **object-oriented interface**.  
+
+- The **wrapper functions** implement particular analysis tasks for published work/manuscripts in preparation  
+
+- The **utility functions** compute general quantities, such as static stability or quasi-geostrophic potential vorticity that are not specific to the finite-amplitude wave theory.   
+
+- The **beta-version functions** include utilities that are not fully documented but has been used in research.  
+
+Sample Script | Description
+------------- | -------------
+Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
+Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
+
+
+### Object-oriented interface
+
+The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
+
+There are two classes in the interface, *BarotropicField* and *QGField* - the latter is under development for more methods. Please refer to the example/ directory:
 
 Sample Script | Description
 ------------ | -------------
-oopinterface_example_BarotropicField.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
-oopinterface_example_QGField.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
+oopinterface_example_BarotropicField.ipynb | Same as *Example_barotropic.ipynb*.
+oopinterface_example_QGField.ipynb | Same as *Example_qgpv.ipynb* 
 
-## Developer interface
-
-This interface contains separate functions that users can alter the inputs more flexibly. Functions are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). Below are two examples that the functions reproduce the results from the object-oriented interface:
-
-Sample Script | Description
------------- | -------------
-Example_barotropic.ipynb | Same as *oopinterface_example_BarotropicField.ipynb*.
-Example_qgpv.ipynb | Same as *oopinterface_example_QGField.ipynb*
-
-### List of functions (constantly being updated)
-
-Type help(function) for instructions on format of input variables. Newer functions are at the bottom. Tentative future updates are listed on the [Project page](https://github.com/csyhuang/hn2016_falwa/projects/1).
-
-To access the functions below, you can load the functions by using
-
-```
-from hn2016_falwa.api import function
-```
-
-Function | Description
----------| -------------
-barotropic_eqlat_lwa | Compute local wave activity and corresponding equivalent-latitude profile from absolute vorticity field in a barotropic model with spherical geometry.
-barotropic_input_qref_to_compute_lwa | Same as *barotropic_eqlat_lwa* except that the equivalent-latitude profile is prescribed (input)
-qgpv_eqlat_lwa | Compute local wave activity and corresponding equivalent-latitude profile from quasi-geostrophic potential vortcitiy (QGPV) field in **hemispheric** domains.
-qgpv_input_qref_to_compute_lwa | Same as *qgpv_eqlat_lwa* except that the equivalent-latitude profile is prescribed (input)
-eqvlat| Compute Equivalent-latitude relationship from a tracer field on a sphere.
-static_stability| Compute static stability in hemispheric domain from 2-D/3-D potential temperature field.
-compute_qgpv_givenvort| Compute quasi-geostrophic potential vorticity as outlined in Huang and Nakamura (2016,JAS), given absolute vorticity and temperature as the inputs.
-solve_uref_both_bc| To compute the eddy-free referece state of zonal wind and temperature in Nakamura and Solomon (2010) but in a *hemispheric domain* from wave activity and zonal wind fields, given no-slip and adiabatic lower boundary conditions. Documentation to be updated soon. Please contact me directly if you want assistance using it in a timely manner.
-theta_lwa | To compute longitudinally local version of surface wave activity. (Note: B* in Nakamura and Solomon (2010) is the zonal mean version)
-qgpv_eqlat_lwa_ncforce | To compute local non-conservative forcing term in the local wave activity equation.
 
 ## Inquiries / Issues reporting
 
-Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <clare1068@gmail.com> with sample datasets and I can configure the code for you.
+Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <csyhuang@uchicago.edu> with sample datasets and I can configure the code for you.
 

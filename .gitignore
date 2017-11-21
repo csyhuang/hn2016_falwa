@@ -1,3 +1,16 @@
+# Putting old files
+old_not_used/
+hn2016_falwa/subroutine_not_used/
+hn2016_falwa/examples/unused_files/
+.cache/
+.ipynb_checkpoints/
+build/
+dist/
+hn2016_falwa/examples/.ipynb_checkpoints/
+hn2016_falwa/__pycache__/
+tests/__pycache__/
+hn2016_falwa.egg-info/
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

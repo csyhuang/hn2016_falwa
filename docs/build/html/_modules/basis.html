@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>basis &#8212; hn2016_falwa 0.1.7 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for basis</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span>
+
+
+<div class="viewcode-block" id="eqvlat"><a class="viewcode-back" href="../Basis Functions.html#basis.eqvlat">[docs]</a><span class="k">def</span> <span class="nf">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">,</span> <span class="n">vgrad</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute equivalent latitude, and optionally &lt;...&gt;_Q in Nakamura and Zhu (2010).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ylat : sequence or array_like</span>
+<span class="sd">        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</span>
+<span class="sd">    vort : ndarray</span>
+<span class="sd">        2-d numpy array of vorticity values; dimension = (nlat, nlon).</span>
+<span class="sd">    area : ndarray</span>
+<span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
+<span class="sd">    n_points: int</span>
+<span class="sd">        Analysis resolution to calculate equivalent latitude.</span>
+<span class="sd">    planet_radius: float</span>
+<span class="sd">        Radius of spherical planet of interest consistent with input *area*.</span>
+<span class="sd">    vgrad: ndarray, optional</span>
+<span class="sd">        2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    q_part : ndarray</span>
+<span class="sd">        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</span>
+<span class="sd">    brac : ndarray or None</span>
+<span class="sd">        1-d numpy array of averaged vgrad in the square bracket.</span>
+<span class="sd">        If *vgrad* = None, *brac* = None.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">vort_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">vort</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">vort</span><span class="o">.</span><span class="n">min</span><span class="p">()])</span>
+    <span class="n">vort_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">vort</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">vort</span><span class="o">.</span><span class="n">max</span><span class="p">()])</span>
+    <span class="n">q_part_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">vort_min</span><span class="p">,</span> <span class="n">vort_max</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span> <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1">#dq = q_part_u[2] - q_part_u[1]</span>
+    <span class="n">aa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">q_part_u</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>  <span class="c1"># to sum up area</span>
+    <span class="n">vort_flat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># Flatten the 2D arrays to 1D</span>
+    <span class="n">area_flat</span> <span class="o">=</span> <span class="n">area</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+        <span class="n">vgrad_flat</span> <span class="o">=</span> <span class="n">vgrad</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># Find equivalent latitude:</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">vort_flat</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">aa</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>  <span class="c1"># Sum up area in each bin</span>
+        <span class="n">aa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">area_flat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds</span> <span class="o">==</span> <span class="n">i</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">area_flat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds</span> <span class="o">==</span> <span class="n">i</span><span class="p">)]</span>
+                           <span class="o">*</span> <span class="n">vgrad_flat</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inds</span> <span class="o">==</span> <span class="n">i</span><span class="p">)])</span> <span class="o">/</span> <span class="n">aa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">aq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">brac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">aa</span><span class="p">)</span>
+        <span class="n">brac</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">dp</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="n">dp</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+        <span class="c1"># brac[i] = 0.5 * (dp[i-1]+dp[i])</span>
+
+    <span class="n">y_part</span> <span class="o">=</span> <span class="n">aq</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">planet_radius</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="n">lat_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">y_part</span><span class="p">))</span>
+    <span class="n">q_part</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">lat_part</span><span class="p">,</span> <span class="n">q_part_u</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">brac_return</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">lat_part</span><span class="p">,</span> <span class="n">brac</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">brac_return</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">q_part</span><span class="p">,</span> <span class="n">brac_return</span></div>
+
+
+<div class="viewcode-block" id="lwa"><a class="viewcode-back" href="../Basis Functions.html#basis.lwa">[docs]</a><span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">q_part</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">ncforce</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    At each grid point of vorticity q(x,y) and reference state vorticity Q(y),</span>
+<span class="sd">    this function calculate the difference between the line integral of [q(x,y+y&#39;)-Q(y)]</span>
+<span class="sd">    (and ncforce, if given) over the domain {y+y&#39;&gt;y,q(x,y+y&#39;)&lt;Q(y)} and {y+y&#39;&lt;y,q(x,y+y&#39;)&gt;Q(y)}.</span>
+<span class="sd">    See fig. (1) and equation (13) of Huang and Nakamura (2016).</span>
+<span class="sd">    dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nlon : int</span>
+<span class="sd">        Longitudinal dimension of vort (i.e. vort.shape[1]).</span>
+<span class="sd">    nlat : int</span>
+<span class="sd">        Latitudinal dimension of vort (i.e. vort.shape[0]).</span>
+<span class="sd">    vort : ndarray</span>
+<span class="sd">        2-d numpy array of vorticity values; dimension = (nlat,nlon).</span>
+<span class="sd">    Q_part: sequence or array_like</span>
+<span class="sd">        1-d numpy array of Q (vorticity reference state) as a function of latitude. Size = nlat.</span>
+<span class="sd">    dy: sequence or array_like</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dy = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">    ncforce: ndarray or None, optional</span>
+<span class="sd">        2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b))</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    lwact : ndarray</span>
+<span class="sd">        2-d numpy array of local wave activity calculated; dimension = (nlat,nlon).</span>
+<span class="sd">    bigsigma : ndarray or None</span>
+<span class="sd">        2-d numpy array of the nonconservative forces acting on local wave activity computed from *ncforce*.</span>
+<span class="sd">        If *ncforce* = None, *bigsigma* = None.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">lwact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bigsigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">vort_e</span> <span class="o">=</span> <span class="n">vort</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">-</span><span class="n">q_part</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">vort_boo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+        <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">vort_boo</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">vort_boo</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vort_e</span><span class="p">[:</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">lwact</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">vort_e</span><span class="o">*</span><span class="n">vort_boo</span><span class="o">*</span><span class="n">dy</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bigsigma</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ncforce</span><span class="o">*</span><span class="n">vort_boo</span><span class="o">*</span><span class="n">dy</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bigsigma</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">lwact</span><span class="p">,</span> <span class="n">bigsigma</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../Object Oriented Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Basis Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Wrapper Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Utility Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../Beta-version Functions.html">Beta-version Functions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Shao Ying (Clare) Huang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -28,37 +28,6 @@ def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     return ans
 
 
-def lwa_shared(nlon, nlat, vort, q_part, dy):
-    ''' At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
-    this function calculate the difference between the line integral of [q(x,y+y')-Q(y)]
-    over the domain {y+y'>y,q(x,y+y')<Q(y)} and {y+y'<y,q(x,y+y')>Q(y)}. See fig. (1) and
-    equation (13) of Huang and Nakamura (2016).
-    dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.
-
-    Input variables:
-        nlon: integer; longitudinal dimension of vort (i.e. vort.shape[1])
-        nlat: integer; latitudinal dimension of vort (i.e. vort.shape[0])
-        vort: 2-d numpy array of vorticity values; dimension = [nlat_S x nlon]
-        Q_part: 1-d numpy array of Q (vorticity reference state) as a function of
-                latitude. Size = nlat.
-        dy:   1-d numpy array of latitudinal differential length element
-              (e.g. dy = cos(lat) d(lat)). Size = nlat.
-
-    Output variables:
-        LWA: 2-d numpy array of local wave activity values (with cosine weighting);
-             dimension = [nlat_S x nlon]
-    '''
-    lwact = np.zeros((nlat, nlon))
-    for j in np.arange(0, nlat-1):
-        vort_e = vort[:, :]-q_part[j]
-        vort_boo = np.zeros((nlat, nlon))
-        vort_boo[np.where(vort_e[:, :]<0)] = -1
-        vort_boo[:j+1, :] = 0
-        vort_boo[np.where(vort_e[:j+1,:]>0)] = 1
-        lwact[j, :] = np.sum(vort_e*vort_boo*dy[:, np.newaxis], axis=0)
-    return lwact
-
-
 class BarotropicField(object):
 
     """
@@ -152,43 +121,17 @@ class BarotropicField(object):
 
         """
 
-        # '''
-        # Input variables (from old interface):
-        #     ylat: 1-d numpy array of latitude (in degree) with equal spacing in
-        #         ascending order; dimension = nlat
-        #     vort: 2-d numpy array of vorticity values; dimension = [nlat_s x nlon]
-        #     area: 2-d numpy array specifying differential areal element of each
-        #         grid point; dimension = [nlat_s x nlon]
-        #     n_partitions: analysis resolution to calculate equivalent latitude.
-        #     planet_radius: scalar; radius of spherical planet of interest consistent with input 'area'
-        #
-        # Output variables:
-        #     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
-        # '''
+        from hn2016_falwa import basis
 
         pv_field = self.pv_field
         area = self.area
         ylat = self.ylat
         planet_radius = self.planet_radius
 
-        vort_min = np.min([pv_field.min(), pv_field.min()])
-        vort_max = np.max([pv_field.max(), pv_field.max()])
-        q_part_u = np.linspace(vort_min, vort_max, self.n_partitions,
-                               endpoint=True)
-        aa = np.zeros(q_part_u.size)  # to sum up area
-        vort_flat = pv_field.flatten()  # Flatten the 2D arrays to 1D
-        area_flat = area.flatten()
-        # Find equivalent latitude:
-        inds = np.digitize(vort_flat, q_part_u)
-        for i in np.arange(0, aa.size):  # Sum up area in each bin
-            aa[i] = np.sum(area_flat[np.where(inds == i)])
-        aq = np.cumsum(aa)
-        y_part = aq/(2*pi*planet_radius**2) - 1.0
-        lat_part = np.arcsin(y_part)*180/pi
-        q_part = np.interp(ylat, lat_part, q_part_u)
-
-        self.eqvlat = q_part
+        self.eqvlat, dummy = basis.eqvlat(ylat, pv_field, area, self.n_partitions,
+                                    planet_radius=planet_radius)
         return self.eqvlat
+
 
     def lwa(self):
 
@@ -203,12 +146,14 @@ class BarotropicField(object):
         >>> lwa = barofield1.lwa()
 
         """
+        from hn2016_falwa import basis
 
         if self.eqvlat is None:
             self.eqvlat = self.equivalent_latitudes(self)
 
-        return lwa_shared(self.nlon, self.nlat, self.pv_field, self.eqvlat,
-                          self.planet_radius * self.clat * self.dphi)
+        lwa_ans, dummy = basis.lwa(self.nlon, self.nlat, self.pv_field, self.eqvlat,
+                                   self.planet_radius * self.clat * self.dphi)
+        return lwa_ans
 
 
 # === Next is a class of 3D objects ===
@@ -331,12 +276,12 @@ class QGField(object):
             self.n_partitions = n_partitions
 
         # First, check if the qgpv_field is present
-        print 'check self.qgpv_field'
+        print('check self.qgpv_field')
         # print self.qgpv_field
         if (qgpv_field is None) & (v_field is None):
             raise ValueError('qgpv_field is missing.')
         elif (qgpv_field is None):
-            print 'Compute QGPV field from u and v field.'
+            print('Compute QGPV field from u and v field.')
 
         # === Obtain potential temperature field ===
         if t_field:
@@ -348,8 +293,8 @@ class QGField(object):
             zlev_half = np.array([zlev[0] + 0.5*(zlev[1]-zlev[0])]*i \
                                  for i in range(zlev.size * 2 + 1))
             self.pt_field_half = f_Thalf(zlev_half) # dim = [2*nlev+1,nlat]
-            print 'self.pt_field_half.shape'
-            print self.pt_field_half.shape
+            print('self.pt_field_half.shape')
+            print(self.pt_field_half.shape)
 
 
     def equivalent_latitudes(self, domain_size='half_globe'): # Has to be changed since it is qgpv.
@@ -367,15 +312,6 @@ class QGField(object):
         >>> qgfield_eqvlat = qgfield1.equivalent_latitudes(domain_size='half_globe')
 
         """
-
-
-        # '''
-        # Input variables
-        #     domain_size: Domain of grids to be used to compute equivalent latitude. It can he 'half_globe' or 'full_globe'.
-        #
-        # Output variables:
-        #     q_part: 1-d numpy array of value Q(y) where latitude y is given by ylat.
-        # '''
 
         def eqv_lat_core(ylat, vort, area, n_points):
             vort_min = np.min([vort.min(), vort.min()])
@@ -465,11 +401,11 @@ def main():
 
     # === List of tests ===
     test_2D = False
-    test_3D = False
+    test_3D = True
 
     # === Testing the 2D object ===
     if test_2D:
-        data_path = '/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/barotropic_vorticity.nc'
+        data_path = '../examples/barotropic_vorticity.nc'
         readFile = Dataset(data_path, mode='r')
         abs_vorticity = readFile.variables['absolute_vorticity'][:]
 
@@ -527,8 +463,8 @@ def main():
 
     # === Testing the 2D object ===
     if test_3D:
-        print 'Test QGField'
-        u_QGPV_File = Dataset('/Users/shaoyinghuang/Dropbox/GitHub/hn2016_falwa/examples/u_QGPV_240hPa_2012Oct28to31.nc', mode='r')
+        print('Test QGField')
+        u_QGPV_File = Dataset('../examples/u_QGPV_240hPa_2012Oct28to31.nc', mode='r')
         # --- Read in longitude and latitude arrays --- #
         xlon = u_QGPV_File.variables['longitude'][:]
         ylat = u_QGPV_File.variables['latitude'][:]
@@ -540,13 +476,13 @@ def main():
         QGPV = u_QGPV_File.variables['QGPV'][0, ...]
         u_QGPV_File.close()
 
-        print u.shape
-        print QGPV.shape
+        print(u.shape)
+        print(QGPV.shape)
 
         cc2 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)  # area computed in the class assumed uniform grid
         cc3 = cc2.lwa()
-        print 'cc3 shape'
-        print cc3.shape
+        print('cc3 shape')
+        print(cc3.shape)
 
         # print 'test empty qgpv fields'
         # cc4 = QGField(xlon, ylat, np.array([240.]), u)

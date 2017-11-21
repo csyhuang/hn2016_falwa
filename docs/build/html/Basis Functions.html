@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Basis Functions &#8212; hn2016_falwa 0.1.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Wrapper Functions" href="Wrapper Functions.html" />
+    <link rel="prev" title="Object Oriented Interface" href="Object Oriented Interface.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-basis">
+<span id="basis-functions"></span><h1>Basis Functions<a class="headerlink" href="#module-basis" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-basis"></span><dl class="function">
+<dt id="basis.eqvlat">
+<code class="descclassname">basis.</code><code class="descname">eqvlat</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>n_points</em>, <em>planet_radius=6378000.0</em>, <em>vgrad=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#eqvlat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.eqvlat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute equivalent latitude, and optionally &lt;...&gt;_Q in Nakamura and Zhu (2010).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ylat</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
+<li><strong>vort</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of vorticity values; dimension = (nlat, nlon).</li>
+<li><strong>area</strong> (<em>ndarray</em>) &#8211; 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
+<li><strong>n_points</strong> (<em>int</em>) &#8211; Analysis resolution to calculate equivalent latitude.</li>
+<li><strong>planet_radius</strong> (<em>float</em>) &#8211; Radius of spherical planet of interest consistent with input <em>area</em>.</li>
+<li><strong>vgrad</strong> (<em>ndarray</em><em>, </em><em>optional</em>) &#8211; 2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>q_part</strong> (<em>ndarray</em>) &#8211; 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</li>
+<li><strong>brac</strong> (<em>ndarray or None</em>) &#8211; 1-d numpy array of averaged vgrad in the square bracket.
+If <em>vgrad</em> = None, <em>brac</em> = None.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="basis.lwa">
+<code class="descclassname">basis.</code><code class="descname">lwa</code><span class="sig-paren">(</span><em>nlon</em>, <em>nlat</em>, <em>vort</em>, <em>q_part</em>, <em>dy</em>, <em>ncforce=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.lwa" title="Permalink to this definition">¶</a></dt>
+<dd><p>At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
+this function calculate the difference between the line integral of [q(x,y+y&#8217;)-Q(y)]
+(and ncforce, if given) over the domain {y+y&#8217;&gt;y,q(x,y+y&#8217;)&lt;Q(y)} and {y+y&#8217;&lt;y,q(x,y+y&#8217;)&gt;Q(y)}.
+See fig. (1) and equation (13) of Huang and Nakamura (2016).
+dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nlon</strong> (<em>int</em>) &#8211; Longitudinal dimension of vort (i.e. vort.shape[1]).</li>
+<li><strong>nlat</strong> (<em>int</em>) &#8211; Latitudinal dimension of vort (i.e. vort.shape[0]).</li>
+<li><strong>vort</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of vorticity values; dimension = (nlat,nlon).</li>
+<li><strong>Q_part</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of Q (vorticity reference state) as a function of latitude. Size = nlat.</li>
+<li><strong>dy</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitudinal differential length element (e.g. dy = cos(lat) d(lat)). Size = nlat.</li>
+<li><strong>ncforce</strong> (<em>ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) &#8211; 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b))</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>lwact</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of local wave activity calculated; dimension = (nlat,nlon).</li>
+<li><strong>bigsigma</strong> (<em>ndarray or None</em>) &#8211; 2-d numpy array of the nonconservative forces acting on local wave activity computed from <em>ncforce</em>.
+If <em>ncforce</em> = None, <em>bigsigma</em> = None.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Object Oriented Interface.html" title="previous chapter">Object Oriented Interface</a></li>
+      <li>Next: <a href="Wrapper Functions.html" title="next chapter">Wrapper Functions</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Basis Functions.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Shao Ying (Clare) Huang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/Basis Functions.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

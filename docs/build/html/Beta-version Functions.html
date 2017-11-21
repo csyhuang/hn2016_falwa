@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Beta-version Functions &#8212; hn2016_falwa 0.1.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Utility Functions" href="Utility Functions.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="beta-version-functions">
+<h1>Beta-version Functions<a class="headerlink" href="#beta-version-functions" title="Permalink to this headline">¶</a></h1>
+<p>This python module (beta_version) contains functions that have been used in research work but yet with proper documentatoins and interface.</p>
+<span class="target" id="module-beta_version"></span><span class="target" id="module-beta_version"></span><dl class="function">
+<dt id="beta_version.solve_uref_both_bc">
+<code class="descclassname">beta_version.</code><code class="descname">solve_uref_both_bc</code><span class="sig-paren">(</span><em>tstamp</em>, <em>zmum</em>, <em>FAWA_cos</em>, <em>ylat</em>, <em>ephalf2</em>, <em>Delta_PT</em>, <em>zm_PT</em>, <em>Input_B0</em>, <em>Input_B1</em>, <em>use_real_Data=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beta_version.html#solve_uref_both_bc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#beta_version.solve_uref_both_bc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute equivalent latitude and wave activity on a barotropic sphere.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tstamp</strong> (<em>string</em>) &#8211; Time stamp of the snapshot of the field.</li>
+<li><strong>znum</strong> (<em>ndarray</em>) &#8211; Zonal mean wind.</li>
+<li><strong>FAWA_cos</strong> (<em>ndarray</em>) &#8211; Zonal mean finite-amplitude wave activity.</li>
+<li><strong>ylat</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
+<li><strong>ephalf2</strong> (<em>ndarray</em>) &#8211; Epsilon in Nakamura and Solomon (2010).</li>
+<li><strong>Delta_PT</strong> (<em>ndarray</em>) &#8211; Delta Theta in Nakamura and Solomon (2010); upper-boundary conditions.</li>
+<li><strong>zm_PT</strong> (<em>ndarray</em>) &#8211; Zonal mean potential temperature.</li>
+<li><strong>Input_B0</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the lowest layer (k=0). Part of the lower-boundary condition.</li>
+<li><strong>Input_B1</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.</li>
+<li><strong>use_real_Data</strong> (<em>boolean</em>) &#8211; Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>u_MassCorr_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of mass correction Delta u in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_Ref_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of zonal wind reference state u_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_MassCorr_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature Delta T in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_Ref_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature T_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_MassCorr_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of mass correction Delta u in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_Ref_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of zonal wind reference state u_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_MassCorr_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature Delta T in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_Ref_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature T_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Table Of Contents</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Beta-version Functions</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Utility Functions.html" title="previous chapter">Utility Functions</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Beta-version Functions.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Shao Ying (Clare) Huang.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/Beta-version Functions.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
