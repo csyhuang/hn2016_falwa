@@ -27,6 +27,7 @@ def barotropic_eqlat_lwa(ylat,vort,area,dmu,n_points,planet_radius = 6.378e+6):
         2-d numpy array of local wave activity values;
                     dimension = [nlat_s x nlon]
     """
+
     from hn2016_falwa import basis
 
     nlat = vort.shape[0]
@@ -508,7 +509,7 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None,
 
 
 
-def theta_lwa(ylat,theta,area,dmu,nlat_s=None,planet_radius=6.378e+6):
+def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e+6):
     """
     Compute the surface wave activity *B* based on surface potential temperature.
     See Nakamura and Solomon (2010a) for details.
@@ -542,13 +543,16 @@ def theta_lwa(ylat,theta,area,dmu,nlat_s=None,planet_radius=6.378e+6):
     nlon = theta.shape[1]
     if nlat_s == None:
         nlat_s = nlat/2
+    if n_points == None:
+        n_points = nlat_s
 
     qref = np.zeros(nlat)
     lwa_result = np.zeros((nlat,nlon))
 
     # --- southern Hemisphere ---
-    qref[:nlat_s], brac = basis.eqvlat(ylat[:nlat_s], theta[:nlat_s, :], area[:nlat_s, :],
-                               n_points, planet_radius=planet_radius)
+    qref[:nlat_s], brac = basis.eqvlat(ylat[:nlat_s], theta[:nlat_s, :],
+                                       area[:nlat_s, :], n_points,
+                                       planet_radius=planet_radius)
     #qref1 = eqvlat(ylat[:nlat_s],theta[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)
     # qref[:nlat_s] = qref1
     # lwa_south = lwa(nlon,nlat_s,theta[:nlat_s,:],qref1,dmu[:nlat_s])
