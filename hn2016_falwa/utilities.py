@@ -51,9 +51,9 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
 
     nlat = theta.shape[1]
     if s_et==None:
-        s_et = nlat/2
+        s_et = nlat//2
     if n_et==None:
-        n_et = nlat/2
+        n_et = nlat//2
 
     stat_n = np.zeros(theta.shape[0])
     stat_s = np.zeros(theta.shape[0])
@@ -85,7 +85,7 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
 
 
 def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
-                           t0_cn,t0_cs,stat_cn,stat_cs,scale_height=7000.):
+                           t0_cn,t0_cs,stat_cn,stat_cs,nlat_s=None,scale_height=7000.):
     """
     The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential
     vorticity based on the absolute vorticity, potential temperature and static
@@ -141,9 +141,10 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
 
     """
 
-    nhalf = int(nlat/2)
+    if nlat_s==None:
+        nlat_s=nlat//2
 
-    clat = np.cos(np.deg2rad(ylat))
+    clat = np.cos(ylat*pi/180.)
     clat = np.abs(clat) # Just to avoid the negative value at poles
 
     # --- Next, calculate PV ---
@@ -157,8 +158,9 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
     zdiv = np.empty_like(potential_temp)
     dzdiv = np.empty_like(potential_temp)
     for kk in range(kmax): # This is more efficient
-        zdiv[kk,:nhalf,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nhalf,:]-t0_cs[kk])/stat_cs[kk]
-        zdiv[kk,-nhalf:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nhalf:,:]-t0_cn[kk])/stat_cn[kk]
+
+    zdiv[kk,:nlat_s,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nlat_s,:]-t0_cs[kk])/stat_cs[kk]
+    zdiv[kk,-nlat_s:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nlat_s:,:]-t0_cn[kk])/stat_cn[kk]
 
     dzdiv[1:kmax-1,:,:] = np.exp(unih[1:kmax-1,np.newaxis,np.newaxis]/scale_height)* \
     (zdiv[2:kmax,:,:]-zdiv[0:kmax-2,:,:]) \

@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
       
-VERSION='0.2.0'
+VERSION='0.2.1'
 DISTNAME='hn2016_falwa'
 URL='https://github.com/csyhuang/hn2016_falwa' # how can we make download_url automatically get the right version?
 DOWNLOAD_URL='https://github.com/csyhuang/hn2016_falwa/'
@@ -26,6 +26,11 @@ finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon 
 
 v0.2.0:
 - Functions are structred in 4 different modules: basis, wrapper, utilities and beta_version. See documentation on Github for details.
+v0.2.1 (bug fixing):
+- hn2016_falwa/beta_version.py: In *solve_uref_both_bc*, a plotting option is added.
+- hn2016_falwa/wrapper.py: In all functions, when n_points are not specified, it is taken to be nlat_s (input). Also fixed a bug of missing argument n_points in *theta_lwa*.
+- hn2016_falwa/utilities.py: In *static_stability*, make s_et and n_et an integer if they are not input. In *compute_qgpv_givenvort*, remove the bug that nlat_s being hard-coded by mistake.
+
 
 Links:
 -----

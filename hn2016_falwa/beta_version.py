@@ -22,7 +22,8 @@ def extrap1d(interpolator):
 
 
 def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
-                       zm_PT, Input_B0, Input_B1, use_real_Data=True):
+                       zm_PT, Input_B0, Input_B1, use_real_Data=True,
+                       plot_all_ref_quan=False):
     """
     Compute equivalent latitude and wave activity on a barotropic sphere.
 
@@ -48,6 +49,9 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
         Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.
     use_real_Data : boolean
         Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.
+    plot_all_ref_quan : boolean
+        Whether to plot the solved reference states using matplotlib library. By default False. For debugging.
+
 
 
     Returns
@@ -82,6 +86,8 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
     from copy import copy
     import numpy as np
     import itertools
+    if plot_all_ref_quan:
+        import matplotlib.pyplot as plt
 
     # === Parameters (should be input externally. To be modified) ===
     dz = 1000.          # vertical z spacing (m)
@@ -94,7 +100,7 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
 
     # === These changes with input variables' dimensions ===
     nlat = FAWA_cos.shape[-1]
-    jmax1 = nlat
+    jmax1 = nlat//4
     dm = 1./float(jmax1+1)  # gaussian latitude spacing
     gl = np.array([(j+1)*dm for j in range(jmax1)]) # This is sin / mu
     gl_2 = np.array([j*dm for j in range(jmax1+2)]) # This is sin / mu
@@ -142,15 +148,21 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
         ephalf[:,:] = f_ep_toGaussian(alat[:])
 
 		# --- Interpolation of Delta_PT ---
-        f_DT_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Delta_PT[:], kind='linear') )    # This is txt in Noboru's code
+        #f_DT_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Delta_PT[:], kind='linear') )    # This is txt in Noboru's code
+        f_DT_toGaussian = interpolate.interp1d(ylat[:],Delta_PT[:],
+                                               kind='linear',fill_value='extrapolate')
         Delta_PT1[:] = f_DT_toGaussian(alat_2[:])
 
 		# --- Interpolation of Input_B0_1 ---
-        f_B0_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B0[:], kind='linear') )    # This is txt in Noboru's code
+        #f_B0_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B0[:], kind='linear') )    # This is txt in Noboru's code
+        f_B0_toGaussian = interpolate.interp1d(ylat[:],Input_B0[:],
+                                               kind='linear',fill_value='extrapolate')    # This is txt in Noboru's code
         Input_B0_1[:] = f_B0_toGaussian(alat_2[:])
 
 		# --- Interpolation of Input_B1_1 ---
-        f_B1_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B1[:], kind='linear') )     # This is txt in Noboru's code
+        # f_B1_toGaussian = extrap1d( interpolate.interp1d(ylat[:],Input_B1[:], kind='linear') )     # This is txt in Noboru's code
+        f_B1_toGaussian = interpolate.interp1d(ylat[:],Input_B1[:],
+                                               kind='linear',fill_value='extrapolate')    # This is txt in Noboru's code
         Input_B1_1[:] = f_B1_toGaussian(alat_2[:])
 
     else:
@@ -351,9 +363,16 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
                 T_MassCorr[j,k] = T_MassCorr[j-2,k] - (2.*om*gl[j-1])*aa*hh*dmdz / (r0 * cosl[j-1]) * (u_MassCorr[j-1,k+1]-u_MassCorr[j-1,k-1])
             # ---- First do interpolation (gl is regular grid) ----
             # f_Todd = interpolate.interp1d(gl[:-1:2],T_MassCorr[1:-1:2,k])    #[jmax x kmax]
-            f_Todd = interpolate.interp1d(gl_2[::2],T_MassCorr[::2,k])    #[jmax x kmax]
-            f_Todd_ex = extrap1d(f_Todd)
-            T_MassCorr[:,k] = f_Todd_ex(gl_2[:]) # Get all the points interpolated
+            #f_Todd = interpolate.interp1d(gl_2[::2],T_MassCorr[::2,k])    #[jmax x kmax]
+            #f_Todd_ex = extrap1d(f_Todd)
+
+            f_Todd = interpolate.interp1d(gl_2[::2],T_MassCorr[::2,k],
+                                          kind='linear',fill_value='extrapolate')
+            T_MassCorr[:,k] = f_Todd(gl_2[:])
+
+
+
+            # T_MassCorr[:,k] = f_Todd_ex(gl_2[:]) # Get all the points interpolated
 
             # ---- Then do domain average ----
             T_MC_mean = np.mean(T_MassCorr[:,k])
@@ -361,55 +380,57 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
 
         # --- First, interpolate MassCorr back to regular grid first ---
         f_u_MassCorr = interpolate.interp1d(alat_2,u_MassCorr,axis=0, kind='linear')    #[jmax x kmax]
-        u_MassCorr_regular[:,-nlat/2:] = f_u_MassCorr(ylat[-nlat/2:]).T
+        u_MassCorr_regular[:,-nlat//2:] = f_u_MassCorr(ylat[-nlat//2:]).T
         f_T_MassCorr = interpolate.interp1d(alat_2,T_MassCorr,axis=0, kind='linear')    #[jmax x kmax]
-        T_MassCorr_regular[:,-nlat/2:] = f_T_MassCorr(ylat[-nlat/2:]).T
+        T_MassCorr_regular[:,-nlat//2:] = f_T_MassCorr(ylat[-nlat//2:]).T
 
-        u_Ref = zmum[:,-nlat/2:] - u_MassCorr_regular[:,-nlat/2:]
-        T_ref = zm_PT[:,-nlat/2:] * np.exp(-np.arange(kmax)/7. * rkappa)[:,np.newaxis] - T_MassCorr_regular[:,-nlat/2:]
+        u_Ref = zmum[:,-nlat//2:] - u_MassCorr_regular[:,-nlat//2:]
+        T_ref = zm_PT[:,-nlat//2:] * np.exp(-np.arange(kmax)/7. * rkappa)[:,np.newaxis] - T_MassCorr_regular[:,-nlat//2:]
 
-        u_Ref_regular[:,-nlat/2:] = u_Ref
-        T_Ref_regular[:,-nlat/2:] = T_ref
+        u_Ref_regular[:,-nlat//2:] = u_Ref
+        T_Ref_regular[:,-nlat//2:] = T_ref
 #
-#        plot_all_ref_quan = False
-#        if plot_all_ref_quan:
-#            # --- Colorbar scale ---
-#            contour_int = np.arange(-120,145,5)
-#            dT_contour_int = np.arange(-120,81,5)
-#            T_contour_int = np.arange(160,321,5)
-#            # --- Start plotting figure ---
-#            fig = plt.subplots(figsize=(12,12))
-#            plt.subplot(221)
-#            plt.contourf(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int)
-#            plt.colorbar()
-#            c1=plt.contour(ylat[-nlat/2:],height[:-2],u_MassCorr_regular[:-2,-nlat/2:],contour_int[::2],colors='k')
-#            plt.clabel(c1,c1.levels,inline=True, fmt='%d', fontsize=10)
-#            plt.title('$\Delta$ u '+tstamp)
-#            plt.ylabel('height (km)')
-#            plt.subplot(222)
-#            plt.contourf(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int)
-#            plt.colorbar()
-#            c2=plt.contour(ylat[-nlat/2:],height[:-2],u_Ref[:-2,:],contour_int[::2],colors='k')
-#            plt.clabel(c2,c2.levels,inline=True, fmt='%d', fontsize=10)
-#            plt.title('$u_{REF}$ ('+BCstring+' BC)')
-#            plt.subplot(223)
-#            plt.contourf(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int)
-#            plt.colorbar()
-#            c3=plt.contour(ylat[-nlat/2:],height[:-2],T_MassCorr_regular[:-2,-nlat/2:],dT_contour_int,colors='k')
-#            plt.clabel(c3,c3.levels,inline=True, fmt='%d', fontsize=10)
-#            plt.title('$\Delta$ T')
-#            plt.ylabel('height (km)')
-#            plt.subplot(224)
-#            plt.contourf(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int)
-#            plt.colorbar()
-#            c4=plt.contour(ylat[-nlat/2:],height[:-2],T_ref[:-2,:],T_contour_int[::2],colors='k')
-#            plt.clabel(c4,c4.levels,inline=True, fmt='%d', fontsize=10)
-#            plt.title('$T_{REF}$')
-#            plt.ylabel('height (km)')
-#            plt.tight_layout()
-#            plt.show()
-#            #plt.savefig('/home/csyhuang/Dropbox/Research-code/Sep12_test3_'+BCstring+'_'+tstamp+'.png')
-#            plt.close()
+           #plot_all_ref_quan = False
+        if plot_all_ref_quan:
+            # --- height coordinate ---
+            height = np.array([i for i in range(kmax)]) # in [km]
+            # --- Colorbar scale ---
+            contour_int = np.arange(-120,145,5)
+            dT_contour_int = np.arange(-120,81,5)
+            T_contour_int = np.arange(160,321,5)
+            # --- Start plotting figure ---
+            fig = plt.subplots(figsize=(12,12))
+            plt.subplot(221)
+            plt.contourf(ylat[-nlat//2:],height[:-2],u_MassCorr_regular[:-2,-nlat//2:],contour_int)
+            plt.colorbar()
+            c1=plt.contour(ylat[-nlat//2:],height[:-2],u_MassCorr_regular[:-2,-nlat//2:],contour_int[::2],colors='k')
+            plt.clabel(c1,c1.levels,inline=True, fmt='%d', fontsize=10)
+            plt.title('$\Delta$ u '+tstamp)
+            plt.ylabel('height (km)')
+            plt.subplot(222)
+            plt.contourf(ylat[-nlat//2:],height[:-2],u_Ref[:-2,:],contour_int)
+            plt.colorbar()
+            c2=plt.contour(ylat[-nlat//2:],height[:-2],u_Ref[:-2,:],contour_int[::2],colors='k')
+            plt.clabel(c2,c2.levels,inline=True, fmt='%d', fontsize=10)
+            plt.title('$u_{REF}$ ('+BCstring+' BC)')
+            plt.subplot(223)
+            plt.contourf(ylat[-nlat//2:],height[:-2],T_MassCorr_regular[:-2,-nlat//2:],dT_contour_int)
+            plt.colorbar()
+            c3=plt.contour(ylat[-nlat//2:],height[:-2],T_MassCorr_regular[:-2,-nlat//2:],dT_contour_int,colors='k')
+            plt.clabel(c3,c3.levels,inline=True, fmt='%d', fontsize=10)
+            plt.title('$\Delta$ T')
+            plt.ylabel('height (km)')
+            plt.subplot(224)
+            plt.contourf(ylat[-nlat//2:],height[:-2],T_ref[:-2,:],T_contour_int)
+            plt.colorbar()
+            c4=plt.contour(ylat[-nlat//2:],height[:-2],T_ref[:-2,:],T_contour_int[::2],colors='k')
+            plt.clabel(c4,c4.levels,inline=True, fmt='%d', fontsize=10)
+            plt.title('$T_{REF}$')
+            plt.ylabel('height (km)')
+            plt.tight_layout()
+            plt.show()
+            #plt.savefig('/home/csyhuang/Dropbox/Research-code/Sep12_test3_'+BCstring+'_'+tstamp+'.png')
+            plt.close()
 
     # This is for only outputing Delta_u and Uref for no-slip and adiabatic boundary conditions.
     return u_MassCorr_regular_noslip,u_Ref_regular_noslip,T_MassCorr_regular_noslip,T_Ref_regular_noslip, u_MassCorr_regular_adiab,u_Ref_regular_adiab,T_MassCorr_regular_adiab,T_Ref_regular_adiab
