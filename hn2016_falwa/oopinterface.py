@@ -25,6 +25,7 @@ def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
                      (ufield[2:, -1] * clat[2:] -
                       ufield[:-2, -1] * clat[:-2]) / (2. * dphi))
     ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
+
     return ans
 
 
