@@ -89,7 +89,7 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
     """
     The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential
     vorticity based on the absolute vorticity, potential temperature and static
-    stability given.
+    stability given in a *hemispheric domain*.
 
     Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
 
@@ -152,14 +152,15 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
     av3 = np.empty_like(potential_temp) # du/d(lat)
     qgpv = np.empty_like(potential_temp) # av1+av2+av3+dzdiv
 
-    av1 = np.ones((kmax,nlat,nlon)) * 2*omega*np.sin(ylat[np.newaxis,:,np.newaxis]*pi/180.)
+    av1 = np.ones((kmax,nlat,nlon)) * 2*omega*np.sin(np.deg2rad(ylat[np.newaxis,:,np.newaxis]))
 
     # Calculate the z-divergence term
     zdiv = np.empty_like(potential_temp)
     dzdiv = np.empty_like(potential_temp)
     for kk in range(kmax): # This is more efficient
-        zdiv[kk,:nlat_s,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nlat_s,:]-t0_cs[kk])/stat_cs[kk]
-        zdiv[kk,-nlat_s:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nlat_s:,:]-t0_cn[kk])/stat_cn[kk]
+
+    zdiv[kk,:nlat_s,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nlat_s,:]-t0_cs[kk])/stat_cs[kk]
+    zdiv[kk,-nlat_s:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nlat_s:,:]-t0_cn[kk])/stat_cn[kk]
 
     dzdiv[1:kmax-1,:,:] = np.exp(unih[1:kmax-1,np.newaxis,np.newaxis]/scale_height)* \
     (zdiv[2:kmax,:,:]-zdiv[0:kmax-2,:,:]) \
