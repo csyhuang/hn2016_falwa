@@ -77,12 +77,12 @@ If <em>vgrad</em> = None, <em>brac</em> = None.</li>
 
 <dl class="function">
 <dt id="basis.lwa">
-<code class="descclassname">basis.</code><code class="descname">lwa</code><span class="sig-paren">(</span><em>nlon</em>, <em>nlat</em>, <em>vort</em>, <em>q_part</em>, <em>dy</em>, <em>ncforce=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.lwa" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">basis.</code><code class="descname">lwa</code><span class="sig-paren">(</span><em>nlon</em>, <em>nlat</em>, <em>vort</em>, <em>q_part</em>, <em>dmu</em>, <em>ncforce=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
 this function calculate the difference between the line integral of [q(x,y+y&#8217;)-Q(y)]
 (and ncforce, if given) over the domain {y+y&#8217;&gt;y,q(x,y+y&#8217;)&lt;Q(y)} and {y+y&#8217;&lt;y,q(x,y+y&#8217;)&gt;Q(y)}.
 See fig. (1) and equation (13) of Huang and Nakamura (2016).
-dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitude.</p>
+dmu is a vector of length nlat: dmu = cos(phi) d(phi) such that phi is the latitude.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -92,7 +92,7 @@ dy is a vector of length nlat: dy = cos(phi) d(phi) such that phi is the latitud
 <li><strong>nlat</strong> (<em>int</em>) &#8211; Latitudinal dimension of vort (i.e. vort.shape[0]).</li>
 <li><strong>vort</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of vorticity values; dimension = (nlat,nlon).</li>
 <li><strong>Q_part</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of Q (vorticity reference state) as a function of latitude. Size = nlat.</li>
-<li><strong>dy</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitudinal differential length element (e.g. dy = cos(lat) d(lat)). Size = nlat.</li>
+<li><strong>dmu</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
 <li><strong>ncforce</strong> (<em>ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) &#8211; 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b))</li>
 </ul>
 </td>

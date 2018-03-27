@@ -44,7 +44,9 @@
   <h1>Source code for wrapper</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<div class="viewcode-block" id="barotropic_eqlat_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.barotropic_eqlat_lwa">[docs]</a><span class="k">def</span> <span class="nf">barotropic_eqlat_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span><span class="n">vort</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">dmu</span><span class="p">,</span><span class="n">n_points</span><span class="p">,</span><span class="n">planet_radius</span> <span class="o">=</span> <span class="mf">6.378e+6</span><span class="p">):</span>
+
+<div class="viewcode-block" id="barotropic_eqlat_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.barotropic_eqlat_lwa">[docs]</a><span class="k">def</span> <span class="nf">barotropic_eqlat_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">dmu</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span>
+                         <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute equivalent latitude and wave activity on a barotropic sphere.</span>
 
@@ -57,7 +59,7 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -71,6 +73,7 @@
 <span class="sd">        2-d numpy array of local wave activity values;</span>
 <span class="sd">                    dimension = [nlat_s x nlon]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">basis</span>
 
     <span class="n">nlat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -78,13 +81,16 @@
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat</span>
 
-    <span class="n">qref</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">qref</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">n_points</span><span class="p">,</span>
+                               <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">lwa_result</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">qref</span><span class="p">,</span> <span class="n">dmu</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">qref</span><span class="p">,</span> <span class="n">lwa_result</span></div>
 
 
-<div class="viewcode-block" id="barotropic_input_qref_to_compute_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.barotropic_input_qref_to_compute_lwa">[docs]</a><span class="k">def</span> <span class="nf">barotropic_input_qref_to_compute_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span><span class="n">qref</span><span class="p">,</span><span class="n">vort</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">dmu</span><span class="p">,</span><span class="n">planet_radius</span> <span class="o">=</span> <span class="mf">6.378e+6</span><span class="p">):</span> <span class="c1"># used to be Eqlat_LWA</span>
+<div class="viewcode-block" id="barotropic_input_qref_to_compute_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.barotropic_input_qref_to_compute_lwa">[docs]</a><span class="k">def</span> <span class="nf">barotropic_input_qref_to_compute_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">qref</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span>
+                                         <span class="n">dmu</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
+
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function computes LWA based on a *prescribed* Qref instead of Qref obtained from the vorticity field on a barotropic sphere.</span>
 
@@ -99,7 +105,7 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
 <span class="sd">        radius of spherical planet of interest consistent with input &#39;area&#39;.</span>
 
@@ -108,13 +114,11 @@
 <span class="sd">    lwa_result : ndarray</span>
 <span class="sd">        2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
+    <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">basis</span>
     <span class="n">nlat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span><span class="n">nlat</span><span class="p">,</span><span class="n">vort</span><span class="p">,</span><span class="n">qref</span><span class="p">,</span><span class="n">dmu</span><span class="p">)</span>
+    <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">qref</span><span class="p">,</span> <span class="n">dmu</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">lwa_result</span></div>
-
-
 
 
 <div class="viewcode-block" id="eqvlat_hemispheric"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.eqvlat_hemispheric">[docs]</a><span class="k">def</span> <span class="nf">eqvlat_hemispheric</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">nlat_s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -132,7 +136,7 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -148,24 +152,22 @@
 
     <span class="n">nlat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">qref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
-    <span class="n">brac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
 
     <span class="c1"># --- Southern Hemisphere ---</span>
-    <span class="n">qref1</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">qref1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">qref1</span>
 
     <span class="c1"># --- Northern Hemisphere ---</span>
-    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
-    <span class="n">qref2</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
-
+    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">qref2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">qref</span></div>
@@ -186,7 +188,7 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -210,20 +212,24 @@
     <span class="n">brac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
 
     <span class="c1"># --- Southern Hemisphere ---</span>
-    <span class="n">qref1</span><span class="p">,</span> <span class="n">brac1</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span><span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad</span><span class="p">)</span>
+    <span class="n">qref1</span><span class="p">,</span> <span class="n">brac1</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span>
+                                <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">qref1</span>
 
     <span class="c1"># --- Northern Hemisphere ---</span>
-    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
-    <span class="n">qref2</span><span class="p">,</span> <span class="n">brac2</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span> <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad</span><span class="p">)</span>
+    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">qref2</span><span class="p">,</span> <span class="n">brac2</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span>
+                                <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad</span><span class="p">)</span>
 
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
@@ -250,9 +256,9 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -274,7 +280,7 @@
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
@@ -283,22 +289,24 @@
     <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
 
     <span class="c1"># --- Southern Hemisphere ---</span>
-    <span class="n">qref1</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                         <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">qref1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">qref1</span>
-    <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                              <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                              <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">])</span>
+    <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
+                                          <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                          <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">])</span>
 
     <span class="c1"># --- Northern Hemisphere ---</span>
-    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
-    <span class="n">qref2</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                         <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
+    <span class="n">qref2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                               <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
-                                               <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
-                                               <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
+    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
+                                           <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
+                                           <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
+                                           <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
     <span class="k">return</span> <span class="n">qref</span><span class="p">,</span> <span class="n">lwa_result</span></div>
 
 
@@ -307,7 +315,7 @@
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute equivalent latitutde *qref*, local wave activity *lwa_result* and</span>
-<span class="sd">    non-conservative force on wave activity *bigsigma_result* based on Quasi-</span>
+<span class="sd">    non-conservative force on wave activity *capsigma* based on Quasi-</span>
 <span class="sd">    geostrophic potential vorticity field *vort* at a pressure level as</span>
 <span class="sd">    outlined in Huang and Nakamura (2017).</span>
 
@@ -323,9 +331,9 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -337,7 +345,7 @@
 <span class="sd">        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</span>
 <span class="sd">    lwa_result : ndarray</span>
 <span class="sd">        2-d numpy array of local wave activity values; dimension = (nlat, nlon).</span>
-<span class="sd">    bigsigma_result: ndarray</span>
+<span class="sd">    capsigma: ndarray</span>
 <span class="sd">        2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -348,35 +356,36 @@
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
 
     <span class="n">qref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
     <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
-    <span class="n">bigsigma_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+    <span class="n">capsigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
 
     <span class="c1"># --- Southern Hemisphere ---</span>
-    <span class="n">qref1</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">qref1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span>
+                            <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">qref1</span>
-    <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">bigsigma_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                                                    <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                                                    <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span>
-                                                                    <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> \
+    <span class="n">capsigma</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                     <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span>
+                                     <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
 
     <span class="c1"># --- Northern Hemisphere ---</span>
-    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
-    <span class="n">qref2</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
+    <span class="n">qref2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                            <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">bigsigma_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                                                      <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
-                                                                      <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
-                                                                      <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
-                                                                      <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:])</span>
-    <span class="k">return</span> <span class="n">qref</span><span class="p">,</span> <span class="n">lwa_result</span><span class="p">,</span> <span class="n">bigsigma_result</span></div>
+    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> \
+    <span class="n">capsigma</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
+                                      <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span> <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
+                                      <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:])</span>
+    <span class="k">return</span> <span class="n">qref</span><span class="p">,</span> <span class="n">lwa_result</span><span class="p">,</span> <span class="n">capsigma</span></div>
 
 
 <div class="viewcode-block" id="qgpv_eqlat_lwa_options"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.qgpv_eqlat_lwa_options">[docs]</a><span class="k">def</span> <span class="nf">qgpv_eqlat_lwa_options</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">vort</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="n">dmu</span><span class="p">,</span> <span class="n">nlat_s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -385,7 +394,7 @@
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute equivalent latitutde *qref*, local wave activity *lwa_result* and</span>
-<span class="sd">    non-conservative force on wave activity *bigsigma_result* based on Quasi-</span>
+<span class="sd">    non-conservative force on wave activity *capsigma* based on Quasi-</span>
 <span class="sd">    geostrophic potential vorticity field *vort* at a pressure level as</span>
 <span class="sd">    outlined in Huang and Nakamura (2017).</span>
 
@@ -401,9 +410,9 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    n_points : int, default None</span>
 <span class="sd">        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
@@ -419,7 +428,7 @@
 <span class="sd">        1-d numpy array of &lt;...&gt;_Q(y) in NZ10 where latitude y is given by ylat; dimension = (nlat).</span>
 <span class="sd">    (3) lwa_result : ndarray</span>
 <span class="sd">        2-d numpy array of local wave activity values; dimension = (nlat, nlon).</span>
-<span class="sd">    (4) bigsigma_result: ndarray</span>
+<span class="sd">    (4) capsigma: ndarray</span>
 <span class="sd">        2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -430,7 +439,7 @@
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nlat</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
@@ -438,16 +447,18 @@
     <span class="n">qref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
     <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">bigsigma_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
+        <span class="n">capsigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">brac_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
 
     <span class="c1"># --- Southern Hemisphere ---</span>
     <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">qref1</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+        <span class="n">qref1</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
                                    <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">qref1</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+        <span class="n">qref1</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
                                    <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span>
                                    <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
 
@@ -456,37 +467,43 @@
         <span class="n">brac_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">]</span> <span class="o">=</span> <span class="n">brac</span>
 
     <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">bigsigma_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                                                    <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                                                    <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span>
-                                                                    <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">capsigma</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> \
+        <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
+                  <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                  <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span>
+                  <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">])</span>
+        <span class="n">lwa_result</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                              <span class="n">qref1</span><span class="p">,</span> <span class="n">dmu</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">])</span>
 
     <span class="c1"># --- Northern Hemisphere ---</span>
-    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
+    <span class="n">vort2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vort</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="c1"># Added the minus sign, but gotta see if NL_North is affected</span>
 
     <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                    <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+        <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">vgrad2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vgrad</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="c1"># Is this correct?</span>
-        <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                                    <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span>
-                                    <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">vgrad2</span> <span class="o">=</span> <span class="o">-</span><span class="n">vgrad</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># Is this correct?</span>
+        <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">vort2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                   <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">,</span>
+                                   <span class="n">vgrad</span><span class="o">=</span><span class="n">vgrad2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:])</span>
 
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">brac_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">brac</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">bigsigma_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
-                                                                      <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
-                                                                      <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
-                                                                      <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
-                                                                      <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:])</span>
+        <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> \
+        <span class="n">capsigma</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
+                                          <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
+                                          <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
+                                          <span class="n">ncforce</span><span class="o">=</span><span class="n">ncforce</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span> <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
+        <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">_</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">vort</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
+                                               <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span> <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
 
     <span class="c1"># Return things as dictionary</span>
     <span class="n">return_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
@@ -496,7 +513,7 @@
     <span class="k">if</span> <span class="n">vgrad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">return_dict</span><span class="p">[</span><span class="s1">&#39;brac_result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">brac_result</span>
     <span class="k">if</span> <span class="n">ncforce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">return_dict</span><span class="p">[</span><span class="s1">&#39;bigsigma_result&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bigsigma_result</span>
+        <span class="n">return_dict</span><span class="p">[</span><span class="s1">&#39;capsigma&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">capsigma</span>
 
     <span class="k">return</span> <span class="n">return_dict</span></div>
 
@@ -520,9 +537,9 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
 <span class="sd">        radius of spherical planet of interest consistent with input &#39;area&#39;.</span>
 
@@ -536,7 +553,7 @@
     <span class="n">nlat</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">vort</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
 
     <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
 
@@ -552,7 +569,7 @@
 
 
 
-<div class="viewcode-block" id="theta_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.theta_lwa">[docs]</a><span class="k">def</span> <span class="nf">theta_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span><span class="n">theta</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">dmu</span><span class="p">,</span><span class="n">nlat_s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
+<div class="viewcode-block" id="theta_lwa"><a class="viewcode-back" href="../Wrapper Functions.html#wrapper.theta_lwa">[docs]</a><span class="k">def</span> <span class="nf">theta_lwa</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span><span class="n">theta</span><span class="p">,</span><span class="n">area</span><span class="p">,</span><span class="n">dmu</span><span class="p">,</span><span class="n">nlat_s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">n_points</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the surface wave activity *B* based on surface potential temperature.</span>
 <span class="sd">    See Nakamura and Solomon (2010a) for details.</span>
@@ -566,9 +583,9 @@
 <span class="sd">    area : ndarray</span>
 <span class="sd">        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</span>
 <span class="sd">    dmu: sequence or array_like</span>
-<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.</span>
+<span class="sd">        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</span>
 <span class="sd">    nlat_s : int, default None</span>
-<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).</span>
+<span class="sd">        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</span>
 <span class="sd">    planet_radius : float, default 6.378e+6</span>
 <span class="sd">        radius of spherical planet of interest consistent with input &#39;area&#39;.</span>
 
@@ -584,15 +601,18 @@
 
     <span class="n">nlat</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">nlon</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">nlat_s</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">if</span> <span class="n">nlat_s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">nlat_s</span> <span class="o">=</span> <span class="n">nlat</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">n_points</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">n_points</span> <span class="o">=</span> <span class="n">nlat_s</span>
 
     <span class="n">qref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nlat</span><span class="p">)</span>
-    <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span><span class="n">nlon</span><span class="p">))</span>
+    <span class="n">lwa_result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="p">))</span>
 
     <span class="c1"># --- southern Hemisphere ---</span>
-    <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">theta</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
-                               <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
+    <span class="n">qref</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">theta</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                                       <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">n_points</span><span class="p">,</span>
+                                       <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="c1">#qref1 = eqvlat(ylat[:nlat_s],theta[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)</span>
     <span class="c1"># qref[:nlat_s] = qref1</span>
     <span class="c1"># lwa_south = lwa(nlon,nlat_s,theta[:nlat_s,:],qref1,dmu[:nlat_s])</span>
@@ -601,13 +621,18 @@
     <span class="c1"># lwa_result[:nlat_s,:] = lwa_south</span>
 
     <span class="c1"># --- northern Hemisphere ---</span>
-    <span class="n">theta2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span> <span class="c1"># Added the minus sign, but gotta see if NL_north is affected</span>
+    <span class="n">theta2</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="c1"># Added the minus sign, but gotta see if NL_north is affected</span>
     <span class="c1"># qref2 = eqvlat(ylat[:nlat_s],theta2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)</span>
-    <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">theta2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span> <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+    <span class="n">qref2</span><span class="p">,</span> <span class="n">brac</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">],</span> <span class="n">theta2</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
+                               <span class="n">area</span><span class="p">[:</span><span class="n">nlat_s</span><span class="p">,</span> <span class="p">:],</span>
                                <span class="n">n_points</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">planet_radius</span><span class="p">)</span>
     <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:]</span> <span class="o">=</span> <span class="n">qref2</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># lwa_north = lwa(nlon,nlat_s,theta2[:nlat_s,:],qref2,dmu[:nlat_s])</span>
-    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span> <span class="n">theta</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span> <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
+    <span class="n">lwa_result</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlat_s</span><span class="p">,</span>
+                                               <span class="n">theta</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:,</span> <span class="p">:],</span>
+                                               <span class="n">qref</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:],</span>
+                                               <span class="n">dmu</span><span class="p">[</span><span class="o">-</span><span class="n">nlat_s</span><span class="p">:])</span>
     <span class="c1"># lwa_result[-nlat_s:,:] = lwa_north[::-1,:]</span>
 
     <span class="k">return</span> <span class="n">qref</span><span class="p">,</span> <span class="n">lwa_result</span></div>

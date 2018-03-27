@@ -47,7 +47,7 @@
 <p>This python module (beta_version) contains functions that have been used in research work but yet with proper documentatoins and interface.</p>
 <span class="target" id="module-beta_version"></span><span class="target" id="module-beta_version"></span><dl class="function">
 <dt id="beta_version.solve_uref_both_bc">
-<code class="descclassname">beta_version.</code><code class="descname">solve_uref_both_bc</code><span class="sig-paren">(</span><em>tstamp</em>, <em>zmum</em>, <em>FAWA_cos</em>, <em>ylat</em>, <em>ephalf2</em>, <em>Delta_PT</em>, <em>zm_PT</em>, <em>Input_B0</em>, <em>Input_B1</em>, <em>use_real_Data=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beta_version.html#solve_uref_both_bc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#beta_version.solve_uref_both_bc" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">beta_version.</code><code class="descname">solve_uref_both_bc</code><span class="sig-paren">(</span><em>tstamp</em>, <em>zmum</em>, <em>FAWA_cos</em>, <em>ylat</em>, <em>ephalf2</em>, <em>Delta_PT</em>, <em>zm_PT</em>, <em>Input_B0</em>, <em>Input_B1</em>, <em>use_real_Data=True</em>, <em>plot_all_ref_quan=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/beta_version.html#solve_uref_both_bc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#beta_version.solve_uref_both_bc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitude and wave activity on a barotropic sphere.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -64,6 +64,7 @@
 <li><strong>Input_B0</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the lowest layer (k=0). Part of the lower-boundary condition.</li>
 <li><strong>Input_B1</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.</li>
 <li><strong>use_real_Data</strong> (<em>boolean</em>) &#8211; Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.</li>
+<li><strong>plot_all_ref_quan</strong> (<em>boolean</em>) &#8211; Whether to plot the solved reference states using matplotlib library. By default False. For debugging.</li>
 </ul>
 </td>
 </tr>

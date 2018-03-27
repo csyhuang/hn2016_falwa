@@ -1,6 +1,8 @@
 import numpy as np
 
-def barotropic_eqlat_lwa(ylat,vort,area,dmu,n_points,planet_radius = 6.378e+6):
+
+def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points,
+                         planet_radius=6.378e+6):
     """
     Compute equivalent latitude and wave activity on a barotropic sphere.
 
@@ -13,7 +15,7 @@ def barotropic_eqlat_lwa(ylat,vort,area,dmu,n_points,planet_radius = 6.378e+6):
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat*.
     planet_radius : float, default 6.378e+6
@@ -35,13 +37,16 @@ def barotropic_eqlat_lwa(ylat,vort,area,dmu,n_points,planet_radius = 6.378e+6):
     if n_points is None:
         n_points = nlat
 
-    qref, dummy = basis.eqvlat(ylat, vort, area, n_points, planet_radius=planet_radius)
+    qref, dummy = basis.eqvlat(ylat, vort, area, n_points,
+                               planet_radius=planet_radius)
     lwa_result, dummy = basis.lwa(nlon, nlat, vort, qref, dmu)
 
     return qref, lwa_result
 
 
-def barotropic_input_qref_to_compute_lwa(ylat,qref,vort,area,dmu,planet_radius = 6.378e+6): # used to be Eqlat_LWA
+def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area,
+                                         dmu, planet_radius=6.378e+6):
+
     """
     This function computes LWA based on a *prescribed* Qref instead of Qref obtained from the vorticity field on a barotropic sphere.
 
@@ -56,7 +61,7 @@ def barotropic_input_qref_to_compute_lwa(ylat,qref,vort,area,dmu,planet_radius =
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     planet_radius : float, default 6.378e+6
         radius of spherical planet of interest consistent with input 'area'.
 
@@ -65,13 +70,11 @@ def barotropic_input_qref_to_compute_lwa(ylat,qref,vort,area,dmu,planet_radius =
     lwa_result : ndarray
         2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]
     """
-
+    from hn2016_falwa import basis
     nlat = vort.shape[0]
     nlon = vort.shape[1]
-    lwa_result = lwa(nlon,nlat,vort,qref,dmu)
+    lwa_result = basis.lwa(nlon, nlat, vort, qref, dmu)
     return lwa_result
-
-
 
 
 def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
@@ -89,7 +92,7 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
     planet_radius : float, default 6.378e+6
@@ -105,24 +108,22 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
 
     nlat = vort.shape[0]
     qref = np.zeros(nlat)
-    brac = np.zeros(nlat)
 
     if nlat_s is None:
-        nlat_s = int(nlat/2)
+        nlat_s = nlat // 2
 
     if n_points is None:
         n_points = nlat_s
 
     # --- Southern Hemisphere ---
-    qref1, dummy = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
-                                n_points, planet_radius=planet_radius)
+    qref1, _ = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
 
     # --- Northern Hemisphere ---
-    vort2 = -vort[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
-    qref2, dummy = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                                n_points, planet_radius=planet_radius)
-
+    vort2 = -vort[::-1, :]
+    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = qref2[::-1]
 
     return qref
@@ -143,7 +144,7 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
     planet_radius : float, default 6.378e+6
@@ -167,20 +168,24 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
     brac = np.zeros(nlat)
 
     if nlat_s is None:
-        nlat_s = int(nlat/2)
+        nlat_s = nlat // 2
 
     if n_points is None:
         n_points = nlat_s
 
     # --- Southern Hemisphere ---
-    qref1, brac1 = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s,:], area[:nlat_s,:],
-                                n_points, planet_radius=planet_radius,vgrad=vgrad)
+    qref1, brac1 = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+                                area[:nlat_s, :],
+                                n_points, planet_radius=planet_radius,
+                                vgrad=vgrad)
     qref[:nlat_s] = qref1
 
     # --- Northern Hemisphere ---
-    vort2 = -vort[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
-    qref2, brac2 = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                                n_points, planet_radius=planet_radius, vgrad=vgrad)
+    vort2 = -vort[::-1, :]
+    qref2, brac2 = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+                                area[:nlat_s, :],
+                                n_points, planet_radius=planet_radius,
+                                vgrad=vgrad)
 
     qref[-nlat_s:] = qref2[::-1]
 
@@ -207,9 +212,9 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
     planet_radius : float, default 6.378e+6
@@ -231,7 +236,7 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None,
     nlon = vort.shape[1]
 
     if nlat_s is None:
-        nlat_s = int(nlat/2)
+        nlat_s = nlat // 2
 
     if n_points is None:
         n_points = nlat_s
@@ -240,22 +245,24 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None,
     lwa_result = np.zeros((nlat, nlon))
 
     # --- Southern Hemisphere ---
-    qref1, dummy = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
-                         n_points, planet_radius=planet_radius)
+    qref1, _ = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+                            area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
-    lwa_result[:nlat_s, :], dummy = basis.lwa(nlon, nlat_s,
-                                              vort[:nlat_s, :],
-                                              qref1, dmu[:nlat_s])
+    lwa_result[:nlat_s, :], _ = basis.lwa(nlon, nlat_s,
+                                          vort[:nlat_s, :],
+                                          qref1, dmu[:nlat_s])
 
     # --- Northern Hemisphere ---
-    vort2 = -vort[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
-    qref2, dummy = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                         n_points, planet_radius=planet_radius)
+    vort2 = -vort[::-1, :]
+    # Added the minus sign, but gotta see if NL_North is affected
+    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = -qref2[::-1]
-    lwa_result[-nlat_s:, :], dummy = basis.lwa(nlon, nlat_s,
-                                               vort[-nlat_s:, :],
-                                               qref[-nlat_s:],
-                                               dmu[-nlat_s:])
+    lwa_result[-nlat_s:, :], _ = basis.lwa(nlon, nlat_s,
+                                           vort[-nlat_s:, :],
+                                           qref[-nlat_s:],
+                                           dmu[-nlat_s:])
     return qref, lwa_result
 
 
@@ -264,7 +271,7 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
 
     """
     Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
-    non-conservative force on wave activity *bigsigma_result* based on Quasi-
+    non-conservative force on wave activity *capsigma* based on Quasi-
     geostrophic potential vorticity field *vort* at a pressure level as
     outlined in Huang and Nakamura (2017).
 
@@ -280,9 +287,9 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
     planet_radius : float, default 6.378e+6
@@ -294,7 +301,7 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
         1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
     lwa_result : ndarray
         2-d numpy array of local wave activity values; dimension = (nlat, nlon).
-    bigsigma_result: ndarray
+    capsigma: ndarray
         2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
 
     """
@@ -305,35 +312,36 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
     nlon = vort.shape[1]
 
     if nlat_s is None:
-        nlat_s = int(nlat/2)
+        nlat_s = nlat // 2
 
     if n_points is None:
         n_points = nlat_s
 
     qref = np.zeros(nlat)
     lwa_result = np.zeros((nlat, nlon))
-    bigsigma_result = np.zeros((nlat, nlon))
+    capsigma = np.zeros((nlat, nlon))
 
     # --- Southern Hemisphere ---
-    qref1, dummy = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
-                                n_points, planet_radius=planet_radius)
+    qref1, _ = basis.eqvlat(ylat[:nlat_s],
+                            vort[:nlat_s, :], area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
-    lwa_result[:nlat_s, :], bigsigma_result[:nlat_s, :] = basis.lwa(nlon, nlat_s,
-                                                                    vort[:nlat_s, :],
-                                                                    qref1, dmu[:nlat_s],
-                                                                    ncforce=ncforce[:nlat_s, :])
+    lwa_result[:nlat_s, :], \
+    capsigma[:nlat_s, :] = basis.lwa(nlon, nlat_s, vort[:nlat_s, :],
+                                     qref1, dmu[:nlat_s],
+                                     ncforce=ncforce[:nlat_s, :])
 
     # --- Northern Hemisphere ---
-    vort2 = -vort[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
-    qref2, dummy = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                                n_points, planet_radius=planet_radius)
+    vort2 = -vort[::-1, :]
+    # Added the minus sign, but gotta see if NL_North is affected
+    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
+                            n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = -qref2[::-1]
-    lwa_result[-nlat_s:, :], bigsigma_result[-nlat_s:, :] = basis.lwa(nlon, nlat_s,
-                                                                      vort[-nlat_s:, :],
-                                                                      qref[-nlat_s:],
-                                                                      dmu[-nlat_s:],
-                                                                      ncforce=ncforce[-nlat_s:, :])
-    return qref, lwa_result, bigsigma_result
+    lwa_result[-nlat_s:, :], \
+    capsigma[-nlat_s:, :] = basis.lwa(nlon, nlat_s, vort[-nlat_s:, :],
+                                      qref[-nlat_s:], dmu[-nlat_s:],
+                                      ncforce=ncforce[-nlat_s:, :])
+    return qref, lwa_result, capsigma
 
 
 def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
@@ -342,7 +350,7 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
 
     """
     Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
-    non-conservative force on wave activity *bigsigma_result* based on Quasi-
+    non-conservative force on wave activity *capsigma* based on Quasi-
     geostrophic potential vorticity field *vort* at a pressure level as
     outlined in Huang and Nakamura (2017).
 
@@ -358,9 +366,9 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     n_points : int, default None
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
     planet_radius : float, default 6.378e+6
@@ -376,7 +384,7 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
         1-d numpy array of <...>_Q(y) in NZ10 where latitude y is given by ylat; dimension = (nlat).
     (3) lwa_result : ndarray
         2-d numpy array of local wave activity values; dimension = (nlat, nlon).
-    (4) bigsigma_result: ndarray
+    (4) capsigma: ndarray
         2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
 
     """
@@ -387,7 +395,7 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
     nlon = vort.shape[1]
 
     if nlat_s is None:
-        nlat_s = int(nlat/2)
+        nlat_s = nlat // 2
 
     if n_points is None:
         n_points = nlat_s
@@ -395,16 +403,18 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
     qref = np.zeros(nlat)
     lwa_result = np.zeros((nlat, nlon))
     if ncforce is not None:
-        bigsigma_result = np.zeros((nlat, nlon))
+        capsigma = np.zeros((nlat, nlon))
     if vgrad is not None:
         brac_result = np.zeros(nlat)
 
     # --- Southern Hemisphere ---
     if vgrad is None:
-        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
+        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+                                   area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius)
     else:
-        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
+        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+                                   area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius,
                                    vgrad=vgrad[:nlat_s, :])
 
@@ -413,37 +423,43 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
         brac_result[:nlat_s] = brac
 
     if ncforce is not None:
-        lwa_result[:nlat_s, :], bigsigma_result[:nlat_s, :] = basis.lwa(nlon, nlat_s,
-                                                                    vort[:nlat_s, :],
-                                                                    qref1, dmu[:nlat_s],
-                                                                    ncforce=ncforce[:nlat_s, :])
+        lwa_result[:nlat_s, :], capsigma[:nlat_s, :] = \
+        basis.lwa(nlon, nlat_s,
+                  vort[:nlat_s, :],
+                  qref1, dmu[:nlat_s],
+                  ncforce=ncforce[:nlat_s, :])
     else:
-        lwa_result[:nlat_s, :], dummy = basis.lwa(nlon, nlat_s, vort[:nlat_s, :], qref1, dmu[:nlat_s])
+        lwa_result[:nlat_s, :], _ = basis.lwa(nlon, nlat_s, vort[:nlat_s, :],
+                                              qref1, dmu[:nlat_s])
 
     # --- Northern Hemisphere ---
-    vort2 = -vort[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
+    vort2 = -vort[::-1, :]
+    # Added the minus sign, but gotta see if NL_North is affected
 
     if vgrad is None:
-        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                                    n_points, planet_radius=planet_radius)
+        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+                                   area[:nlat_s, :],
+                                   n_points, planet_radius=planet_radius)
     else:
-        vgrad2 = -vgrad[::-1, :] # Is this correct?
-        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                                    n_points, planet_radius=planet_radius,
-                                    vgrad=vgrad2[:nlat_s, :])
+        vgrad2 = -vgrad[::-1, :]  # Is this correct?
+        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+                                   area[:nlat_s, :],
+                                   n_points, planet_radius=planet_radius,
+                                   vgrad=vgrad2[:nlat_s, :])
 
     qref[-nlat_s:] = -qref2[::-1]
     if vgrad is not None:
         brac_result[-nlat_s:] = -brac[::-1]
 
     if ncforce is not None:
-        lwa_result[-nlat_s:, :], bigsigma_result[-nlat_s:, :] = basis.lwa(nlon, nlat_s,
-                                                                      vort[-nlat_s:, :],
-                                                                      qref[-nlat_s:],
-                                                                      dmu[-nlat_s:],
-                                                                      ncforce=ncforce[-nlat_s:, :])
+        lwa_result[-nlat_s:, :], \
+        capsigma[-nlat_s:, :] = basis.lwa(nlon, nlat_s, vort[-nlat_s:, :],
+                                          qref[-nlat_s:],
+                                          dmu[-nlat_s:],
+                                          ncforce=ncforce[-nlat_s:, :])
     else:
-        lwa_result[-nlat_s:, :], dummy = basis.lwa(nlon, nlat_s, vort[-nlat_s:, :], qref[-nlat_s:], dmu[-nlat_s:])
+        lwa_result[-nlat_s:, :], _ = basis.lwa(nlon, nlat_s, vort[-nlat_s:, :],
+                                               qref[-nlat_s:], dmu[-nlat_s:])
 
     # Return things as dictionary
     return_dict = dict()
@@ -453,7 +469,7 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
     if vgrad is not None:
         return_dict['brac_result'] = brac_result
     if ncforce is not None:
-        return_dict['bigsigma_result'] = bigsigma_result
+        return_dict['capsigma'] = capsigma
 
     return return_dict
 
@@ -477,9 +493,9 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None,
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     planet_radius : float, default 6.378e+6
         radius of spherical planet of interest consistent with input 'area'.
 
@@ -493,7 +509,7 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None,
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     if nlat_s is None:
-        nlat_s = nlat/2
+        nlat_s = nlat // 2
 
     lwa_result = np.zeros((nlat, nlon))
 
@@ -523,9 +539,9 @@ def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e
     area : ndarray
         2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
     dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = cos(lat) d(lat)). Size = nlat.
+        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
     nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as int(nlat/2).
+        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
     planet_radius : float, default 6.378e+6
         radius of spherical planet of interest consistent with input 'area'.
 
@@ -541,13 +557,13 @@ def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e
 
     nlat = theta.shape[0]
     nlon = theta.shape[1]
-    if nlat_s == None:
-        nlat_s = nlat/2
-    if n_points == None:
+    if nlat_s is None:
+        nlat_s = nlat // 2
+    if n_points is None:
         n_points = nlat_s
 
     qref = np.zeros(nlat)
-    lwa_result = np.zeros((nlat,nlon))
+    lwa_result = np.zeros((nlat, nlon))
 
     # --- southern Hemisphere ---
     qref[:nlat_s], brac = basis.eqvlat(ylat[:nlat_s], theta[:nlat_s, :],
@@ -561,13 +577,18 @@ def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e
     # lwa_result[:nlat_s,:] = lwa_south
 
     # --- northern Hemisphere ---
-    theta2 = theta[::-1,:] # Added the minus sign, but gotta see if NL_north is affected
+    theta2 = theta[::-1, :]
+    # Added the minus sign, but gotta see if NL_north is affected
     # qref2 = eqvlat(ylat[:nlat_s],theta2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)
-    qref2, brac = basis.eqvlat(ylat[:nlat_s], theta2[:nlat_s, :], area[:nlat_s, :],
+    qref2, brac = basis.eqvlat(ylat[:nlat_s], theta2[:nlat_s, :],
+                               area[:nlat_s, :],
                                n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = qref2[::-1]
     # lwa_north = lwa(nlon,nlat_s,theta2[:nlat_s,:],qref2,dmu[:nlat_s])
-    lwa_result[-nlat_s:, :], dummy = basis.lwa(nlon, nlat_s, theta[-nlat_s:, :], qref[-nlat_s:], dmu[-nlat_s:])
+    lwa_result[-nlat_s:, :], dummy = basis.lwa(nlon, nlat_s,
+                                               theta[-nlat_s:, :],
+                                               qref[-nlat_s:],
+                                               dmu[-nlat_s:])
     # lwa_result[-nlat_s:,:] = lwa_north[::-1,:]
 
     return qref, lwa_result
