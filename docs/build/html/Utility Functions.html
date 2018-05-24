@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Utility Functions &#8212; hn2016_falwa 0.1.7 documentation</title>
+    <title>Utility Functions &#8212; hn2016_falwa 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.7',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -45,6 +45,101 @@
             
   <div class="section" id="module-utilities">
 <span id="utility-functions"></span><h1>Utility Functions<a class="headerlink" href="#module-utilities" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-utilities"></span><dl class="function">
+<dt id="utilities.compute_qgpv_givenvort">
+<code class="descclassname">utilities.</code><code class="descname">compute_qgpv_givenvort</code><span class="sig-paren">(</span><em>omega</em>, <em>nlat</em>, <em>nlon</em>, <em>kmax</em>, <em>unih</em>, <em>ylat</em>, <em>avort</em>, <em>potential_temp</em>, <em>t0_cn</em>, <em>t0_cs</em>, <em>stat_cn</em>, <em>stat_cs</em>, <em>nlat_s=None</em>, <em>scale_height=7000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#compute_qgpv_givenvort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.compute_qgpv_givenvort" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function &#8220;compute_qgpv_givenvort&#8221; computes the quasi-geostrophic potential
+vorticity based on the absolute vorticity, potential temperature and static
+stability given in a <em>hemispheric domain</em>.</p>
+<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Rotation rate of the planet.</li>
+<li><strong>nlat</strong> (<em>int</em>) &#8211; Latitudinal dimension of the latitude grid.</li>
+<li><strong>nlon</strong> (<em>int</em>) &#8211; Longitudinal dimension of the longitude grid.</li>
+<li><strong>kmax</strong> (<em>int</em>) &#8211; Vertical dimension of the height grid.</li>
+<li><strong>unih</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Numpy array of height in [meters]; dimension = (kmax)</li>
+<li><strong>ylat</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Numpy array of latitudes in [degrees]; dimension = (nlat)</li>
+<li><strong>avort</strong> (<em>ndarray</em>) &#8211; Three-dimension numpy array of absolute vorticity (i.e. relative vorticity
++ 2*Omega*sin(lat)) in [1/s]; dimension = (kmax x nlat x nlon)</li>
+<li><strong>potential_temp</strong> (<em>ndarray</em>) &#8211; Three-dimension numpy array of potential temperature in [K];
+dimension = (kmax x nlat x nlon)</li>
+<li><strong>t0_cn</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Northern hemispheric domain with dimension = (kmax)</li>
+<li><strong>t0_cs</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Southern hemispheric domain with dimension = (kmax)</li>
+<li><strong>stat_cn</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
+domain with dimension = (kmax)</li>
+<li><strong>stat_cs</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
+domain with dimension = (kmax)</li>
+<li><strong>scale_height</strong> (<em>float</em>) &#8211; Scale height of the atmosphere in [m] with default value 7000.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>QGPV</strong> (<em>ndarray</em>) &#8211; Three-dimension numpy array of quasi-geostrophic potential vorticity;
+dimension = (kmax x nlat x nlon)</li>
+<li><strong>dzdiv</strong> (<em>ndarray</em>) &#8211; Three-dimension numpy array of the stretching term in QGPV;
+dimension = (kmax x nlat x nlon)</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.static_stability">
+<code class="descclassname">utilities.</code><code class="descname">static_stability</code><span class="sig-paren">(</span><em>height</em>, <em>area</em>, <em>theta</em>, <em>s_et=None</em>, <em>n_et=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#static_stability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.static_stability" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function &#8220;static_stability&#8221; computes the vertical gradient (z-derivative)
+of hemispheric-averaged potential temperature, i.e. d       ilde{theta}/dz in the def-
+inition of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
+At the boundary, the static stability is estimated by forward/backward differen-
+cing involving two adjacent z-grid points:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])</dt>
+<dd>stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])</dd>
+</dl>
+</div></blockquote>
+<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>height</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Array of z-coordinate [in meters] with dimension = (kmax), equally spaced</li>
+<li><strong>area</strong> (<em>ndarray</em>) &#8211; Two-dimension numpy array specifying differential areal element of each grid point;
+dimension = (nlat, nlon).</li>
+<li><strong>theta</strong> (<em>ndarray</em>) &#8211; Matrix of potential temperature [K] with dimension (kmax,nlat,nlon) or (kmax,nlat)</li>
+<li><strong>s_et</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Index of the latitude that defines the boundary of the Southern hemispheric domain;
+initialized as nlat/2 if not input</li>
+<li><strong>n_et</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Index of the latitude that defines the boundary of the Southern hemispheric domain;
+initialized as nlat/2 if not input</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>t0_n</strong> (<em>sequence or array_like</em>) &#8211; Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Northern hemispheric domain with dimension = (kmax)</li>
+<li><strong>t0_s</strong> (<em>sequence or array_like</em>) &#8211; Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Southern hemispheric domain with dimension = (kmax)</li>
+<li><strong>stat_n</strong> (<em>sequence or array_like</em>) &#8211; Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
+domain with dimension = (kmax)</li>
+<li><strong>stat_s</strong> (<em>sequence or array_like</em>) &#8211; Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
+domain with dimension = (kmax)</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -92,7 +187,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Shao Ying (Clare) Huang.
+      &copy;2018, Clare S. Y. Huang.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
