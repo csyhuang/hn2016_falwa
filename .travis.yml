@@ -3,8 +3,8 @@ python:
   - "2.7"
   - "3.6"
 
-virtualenv:
-  system_site_packages: true
+#virtualenv:
+#  system_site_packages: true
 
 install:
   - "pip install --upgrade pip setuptools wheel"
