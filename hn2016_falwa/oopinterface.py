@@ -156,6 +156,7 @@ class QGField(object):
         Interpolate zonal wind, maridional wind, and potential temperature field onto the 
         uniform pseudoheight grids, and compute QGPV on the same grids.
 
+
         Returns
         -------
             
@@ -174,6 +175,7 @@ class QGField(object):
         static_stability : numpy.array
             One-dimension array of interpolated static stability with dimension = kmax
             
+
 
         Examples
         --------
@@ -214,7 +216,7 @@ class QGField(object):
 
 
 
-    def compute_reference_states(self):
+    def compute_reference_states(self, northern_hemisphere_results_only=True):
         """
         Compute the local wave activity and reference states of QGPV, zonal wind and 
         potential temperature using a more stable inversion algorithm applied in 
@@ -222,6 +224,13 @@ class QGField(object):
         in supplementary materials of Huang and Nakamura (2017, GRL). In this version,
         only values in the Northern Hemisphere is computed. Southern Hemispheric grid 
         points are filled with value 0.
+
+
+        Parameters
+        ----------
+        northern_hemisphere_results_only : bool
+               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
+
 
         Returns
         -------
@@ -256,7 +265,7 @@ class QGField(object):
 		    Three-dimension array of barotropic local wave activity with 
 		    dimension = [kmax, nlon, nlat]
 
-            
+
 
         Examples
         --------
@@ -291,20 +300,35 @@ class QGField(object):
                 np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):,
                                   np.newaxis]))
 
-            self.qref = np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                                   np.swapaxes(self.qref_temp_right_unit,
-                                               0, 1)))
-            self.uref = np.hstack((np.zeros((self.kmax, self.equator_idx - 1)), np.swapaxes(self.uref_temp, 0, 1)))
-            self.ptref = np.hstack((np.zeros((self.kmax, self.equator_idx - 1)), np.swapaxes(self.ptref_temp, 0, 1)))
+            if northern_hemisphere_results_only:
+                self.qref = np.swapaxes(self.qref_temp_right_unit, 0, 1)
+                self.uref = np.swapaxes(self.uref_temp, 0, 1)
+                self.ptref = np.swapaxes(self.ptref_temp, 0, 1)
+            else:
+                self.qref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.qref_temp_right_unit, 0, 1)))
+                self.uref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.uref_temp, 0, 1)))
+                self.ptref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.ptref_temp, 0, 1)))
 
         return self.qref, self.uref, self.ptref
 
 
 
-    def compute_local_fluxes(self):
+    def compute_local_fluxes(self, northern_hemisphere_results_only=True):
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) 
         and (3) in Nakamura and Huang (Science, 2018).
+
+        Parameters
+        ----------
+        northern_hemisphere_results_only : bool
+               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
+
 
         Returns
         -------
@@ -323,7 +347,8 @@ class QGField(object):
             
         static_stability : numpy.array
             One-dimension array of interpolated static stability with dimension = kmax
-            
+
+
 
         Examples
         --------
@@ -341,7 +366,8 @@ class QGField(object):
             self.compute_reference_states()
 
         # === Compute barotropic flux terms ===
-        lwa, astarbaro, ua1baro, ubaro, ua2baro, ep1baro, ep2baro, ep3baro, ep4 = \
+        lwa, astarbaro, ua1baro, ubaro, ua2baro,\
+            ep1baro, ep2baro, ep3baro, ep4 = \
             compute_local_fluxes(self.qgpv_temp,
                                  self.interpolated_u_temp,
                                  self.interpolated_v_temp,
@@ -357,35 +383,47 @@ class QGField(object):
                                  self.cp,
                                  self.prefactor)
 
-
-        self.adv_flux_f1 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                self.nlon)),
-                                      np.swapaxes(ua1baro, 0, 1)))
-        self.adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                self.nlon)),
-                                      np.swapaxes(ua2baro, 0, 1)))
-        self.adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                self.nlon)),
-                                      np.swapaxes(ep1baro, 0, 1)))
-        self.meridional_heat_flux = np.vstack((np.zeros((self.equator_idx - 1,
-                                                         self.nlon)),
-                                               np.swapaxes(ep4, 0, 1)))
-        self.lwa_baro = np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                                   np.swapaxes(astarbaro, 0, 1)))
-        self.u_baro = np.vstack((np.zeros((self.equator_idx - 1,
-                                           self.nlon)),
-                                 np.swapaxes(ubaro, 0, 1)))
-        self.lwa = np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
-                                             self.nlon)),
-                                   np.swapaxes(lwa, 0, 2)), axis=1)
-
         meri_flux_temp = np.zeros_like(ep2baro)
         meri_flux_temp[:, 1:-1] = (ep2baro[:, 1:-1] - ep3baro[:, 1:-1]) / \
             (2 * self.planet_radius * self.dphi *
              np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
-        self.divergence_eddy_momentum_flux = \
-            np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                       np.swapaxes(meri_flux_temp, 0, 1)))
+
+        if northern_hemisphere_results_only:
+            self.adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
+            self.adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
+            self.adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
+            self.meridional_heat_flux = np.swapaxes(ep4, 0, 1)
+            self.lwa_baro = np.swapaxes(astarbaro, 0, 1)
+            self.u_baro = np.swapaxes(ubaro, 0, 1)
+            self.lwa = np.swapaxes(lwa, 0, 2)
+            self.divergence_eddy_momentum_flux = \
+                np.swapaxes(meri_flux_temp, 0, 1)
+        else:
+            self.adv_flux_f1 = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(ua1baro, 0, 1)))
+            self.adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
+                                                    self.nlon)),
+                                          np.swapaxes(ua2baro, 0, 1)))
+            self.adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
+                                                    self.nlon)),
+                                          np.swapaxes(ep1baro, 0, 1)))
+            self.meridional_heat_flux = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(ep4, 0, 1)))
+            self.lwa_baro = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(astarbaro, 0, 1)))
+            self.u_baro = np.vstack((np.zeros((self.equator_idx - 1,
+                                               self.nlon)),
+                                     np.swapaxes(ubaro, 0, 1)))
+            self.lwa = \
+                np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
+                                          self.nlon)),
+                                np.swapaxes(lwa, 0, 2)), axis=1)
+            self.divergence_eddy_momentum_flux = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(meri_flux_temp, 0, 1)))
 
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, \
                self.divergence_eddy_momentum_flux, \
@@ -439,7 +477,9 @@ class BarotropicField(object):
     :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
     :type pv_field: sequence of array_like
 
+
     :returns: an instance of the object BarotropicField
+
 
     :example:
     >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)

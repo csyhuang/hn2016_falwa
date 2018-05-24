@@ -1,18 +1,30 @@
-## Python Library: hn2016_falwa (v0.2.0)
+## Python Library: hn2016_falwa (v0.3.0)
 
 [![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)
 
-Compute Finite-amplitude Local Wave Activity (FALWA) introduced in [Huang and Nakamura (2016)](http://dx.doi.org/10.1175/JAS-D-15-0194.1) and [Huang and Nakamura (2017)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full) from gridded climate data.
-
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/hn2016_falwa_diagram.png)
 
-The functions in the library can also be used to compute the tracer equivalent-latitude relationship proposed in Nakamura (1996) / Allen and Nakamura (2003) and the (zonal mean) finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms introduced in:
 
-Please check the [documentation page](http://hn2016-falwa.readthedocs.io) for more details.
+- [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1)
+- [Huang and Nakamura (2017, GRL)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full).
+- Nakamura and Huang (2018, Science) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
+
+## Important update (May 24, 2018)
+
+The most updated version v0.3.0 enhanced the methods in the class *QGField* (in `hn2016_falwa.oopinterface`) with functionality
+to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). 
+Refer to the scripts in `examples/nh2018_science/` for details.
+
+Please check the updated [documentation page](http://hn2016-falwa.readthedocs.io) as well.
 
 ## Installation
 
-This current version works in both Python 2.7 and 3.6. To install from the source:
+This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions are having 
+backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to 
+implement the installation.
+
+To install the package:
 ```
 git clone https://github.com/csyhuang/hn2016_falwa.git
 cd hn2016_falwa
