@@ -11,20 +11,10 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 - Nakamura and Huang (2018, Science) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
 
 ## Important update (May 24, 2018)
-<<<<<<< HEAD
 
 The most updated version v0.3.0 enhanced the methods in the class *QGField* (in `hn2016_falwa.oopinterface`) with functionality
 to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). 
 Refer to the scripts in `examples/nh2018_science/` for details.
-
-=======
-
-The most updated version v0.3.0 enhanced the methods in the class *QGField* (in `hn2016_falwa.oopinterface`) with functionality
-to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). 
-Refer to the scripts in `examples/nh2018_science/` for details.
-
->>>>>>> 1510a03e00a5bac5b058118bd2907e8c7810229b
-Please check the updated [documentation page](http://hn2016-falwa.readthedocs.io) as well.
 
 ## Installation
 
