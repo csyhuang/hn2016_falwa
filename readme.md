@@ -37,7 +37,20 @@ git clone -b test https://github.com/csyhuang/hn2016_falwa.git
 Changes will be merged in the next updated version.
 
 There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
-interface**, which is a wrapper for the basis functions in the developer interface.
+interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.
+
+
+### Object-oriented interface
+
+The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
+
+There are two classes in the interface, *QGField* and *BarotropicField*. Please refer to the example/ directory:
+
+Sample Script | Description
+------------- | -------------
+nh2018_science/demo_script_for_nh2018.ipynb | Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
+simple/oopinterface_example_BarotropicField.ipynb | Same as *Example_barotropic.ipynb*.
+
 
 ### Developer Interface
 
@@ -55,20 +68,8 @@ are added upon users' request on new functionalities to test hypotheses (also se
 
 Sample Script | Description
 ------------- | -------------
-Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
-
-
-### Object-oriented interface
-
-The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
-
-There are two classes in the interface, *BarotropicField* and *QGField* - the latter is under development for more methods. Please refer to the example/ directory:
-
-Sample Script | Description
------------- | -------------
-oopinterface_example_BarotropicField.ipynb | Same as *Example_barotropic.ipynb*.
-oopinterface_example_QGField.ipynb | Same as *Example_qgpv.ipynb* 
+Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 
 
 ## Inquiries / Issues reporting
