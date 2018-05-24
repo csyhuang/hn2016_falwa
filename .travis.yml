@@ -1,14 +1,14 @@
 language: python
 python:
   - "2.7"
-
-virtualenv:
-  system_site_packages: true
+  - "3.6"
 
 install:
   - "pip install --upgrade pip setuptools wheel"
-  - "pip install --only-binary=numpy,scipy numpy scipy"
+  - "sudo apt-get install python-numpy python-scipy gfortran"
+  - "pip install numpy"
   - "pip install coveralls"
+
 # command to run tests
 script:
   - coverage run --source=hn2016_falwa setup.py test

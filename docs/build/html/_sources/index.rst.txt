@@ -16,8 +16,11 @@ data.
 Installation
 ------------------------------
 
-This package works in both Python 2 and 3. Dependencies include Numpy, Scipy and optionally 
-Matplotlib. It can be installed from the source distribution::
+This current version works in both Python 2.7 and 3.6. Note that from v0.3.0 onword, some functions are 
+having  backend in Fortran. You will need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) 
+to implement the installation.
+
+Dependencies include Numpy, Scipy and optionally Matplotlib. To install from the source distribution:
 
  git clone https://github.com/csyhuang/hn2016_falwa.git
  cd hn2016_falwa

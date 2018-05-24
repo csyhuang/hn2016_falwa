@@ -9,8 +9,8 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
     At the boundary, the static stability is estimated by forward/backward differen-
     cing involving two adjacent z-grid points:
 
-        i.e. stat_n[0] = (t0_n[1]-t0_n[0])/(height[1]-height[0])
-            stat_n[-1] = (t0_n[-2]-t0_n[-1])/(height[-2]-height[-1])
+        i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])
+            stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])
 
     Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
 
@@ -50,42 +50,45 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
     """
 
     nlat = theta.shape[1]
-    if s_et==None:
-        s_et = nlat//2
-    if n_et==None:
-        n_et = nlat//2
+    if s_et is None:
+        s_et = nlat // 2
+    if n_et is None:
+        n_et = nlat // 2
 
     stat_n = np.zeros(theta.shape[0])
     stat_s = np.zeros(theta.shape[0])
 
-    if theta.ndim==3:
-        zonal_mean = np.mean(theta,axis=-1)
-    elif theta.ndim==2:
+    if theta.ndim == 3:
+        zonal_mean = np.mean(theta, axis=-1)
+    elif theta.ndim == 2:
         zonal_mean = theta
 
-    if area.ndim==2:
-        area_zonal_mean = np.mean(area,axis=-1)
-    elif area.ndim==1:
+    if area.ndim == 2:
+        area_zonal_mean = np.mean(area, axis=-1)
+    elif area.ndim == 1:
         area_zonal_mean = area
 
     csm_n_et = np.sum(area_zonal_mean[-n_et:])
     csm_s_et = np.sum(area_zonal_mean[:s_et])
 
-    t0_n = np.sum(zonal_mean[:,-n_et:]*area_zonal_mean[np.newaxis,-n_et:],axis=-1)/csm_n_et
-    t0_s = np.sum(zonal_mean[:,:s_et]*area_zonal_mean[np.newaxis,:s_et],axis=-1)/csm_s_et
+    t0_n = np.sum(zonal_mean[:, -n_et:] * area_zonal_mean[np.newaxis, -n_et:],
+                  axis=-1) / csm_n_et
+    t0_s = np.sum(zonal_mean[:, :s_et] * area_zonal_mean[np.newaxis, :s_et],
+                  axis=-1) / csm_s_et
 
-    stat_n[1:-1] = (t0_n[2:]-t0_n[:-2])/(height[2:]-height[:-2])
-    stat_s[1:-1] = (t0_s[2:]-t0_s[:-2])/(height[2:]-height[:-2])
-    stat_n[0] = (t0_n[1]-t0_n[0])/(height[1]-height[0])
-    stat_n[-1] = (t0_n[-2]-t0_n[-1])/(height[-2]-height[-1])
-    stat_s[0] = (t0_s[1]-t0_s[0])/(height[1]-height[0])
-    stat_s[-1] = (t0_s[-2]-t0_s[-1])/(height[-2]-height[-1])
+    stat_n[1:-1] = (t0_n[2:] - t0_n[:-2]) / (height[2:] - height[:-2])
+    stat_s[1:-1] = (t0_s[2:] - t0_s[:-2]) / (height[2:] - height[:-2])
+    stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])
+    stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])
+    stat_s[0] = (t0_s[1] - t0_s[0]) / (height[1] - height[0])
+    stat_s[-1] = (t0_s[-2] - t0_s[-1]) / (height[-2] - height[-1])
 
-    return t0_n,t0_s,stat_n,stat_s
+    return t0_n, t0_s, stat_n, stat_s
 
 
-def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
-                           t0_cn,t0_cs,stat_cn,stat_cs,nlat_s=None,scale_height=7000.):
+def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
+                           potential_temp, t0_cn, t0_cs, stat_cn,
+                           stat_cs, nlat_s=None, scale_height=7000.):
     """
     The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential
     vorticity based on the absolute vorticity, potential temperature and static
@@ -141,8 +144,8 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
 
     """
 
-    if nlat_s==None:
-        nlat_s=nlat//2
+    if nlat_s is None:
+        nlat_s = nlat // 2
 
     clat = np.cos(ylat*pi/180.)
     clat = np.abs(clat) # Just to avoid the negative value at poles
@@ -158,18 +161,17 @@ def compute_qgpv_givenvort(omega,nlat,nlon,kmax,unih,ylat,avort,potential_temp,
     zdiv = np.empty_like(potential_temp)
     dzdiv = np.empty_like(potential_temp)
     for kk in range(kmax): # This is more efficient
+        zdiv[kk,:nlat_s,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nlat_s,:] - t0_cs[kk])/stat_cs[kk]
+        zdiv[kk,-nlat_s:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nlat_s:,:] - t0_cn[kk])/stat_cn[kk]
 
-    zdiv[kk,:nlat_s,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,:nlat_s,:]-t0_cs[kk])/stat_cs[kk]
-    zdiv[kk,-nlat_s:,:] = exp(-unih[kk]/scale_height)*(potential_temp[kk,-nlat_s:,:]-t0_cn[kk])/stat_cn[kk]
+        dzdiv[1:kmax-1,:,:] = np.exp(unih[1:kmax-1,np.newaxis,np.newaxis]/scale_height)* \
+        (zdiv[2:kmax,:,:]-zdiv[0:kmax-2,:,:]) \
+        /(unih[2:kmax,np.newaxis,np.newaxis]-unih[0:kmax-2,np.newaxis,np.newaxis])
 
-    dzdiv[1:kmax-1,:,:] = np.exp(unih[1:kmax-1,np.newaxis,np.newaxis]/scale_height)* \
-    (zdiv[2:kmax,:,:]-zdiv[0:kmax-2,:,:]) \
-    /(unih[2:kmax,np.newaxis,np.newaxis]-unih[0:kmax-2,np.newaxis,np.newaxis])
+        dzdiv[0,:,:] = exp(unih[0]/scale_height)*(zdiv[1,:,:]-zdiv[0,:,:])/ \
+        (unih[1,np.newaxis,np.newaxis]-unih[0,np.newaxis,np.newaxis])
+        dzdiv[kmax-1,:,:] = exp(unih[kmax-1]/scale_height)*(zdiv[kmax-1,:,:]-zdiv[kmax-2,:,:])/ \
+        (unih[kmax-1,np.newaxis,np.newaxis]-unih[kmax-2,np.newaxis,np.newaxis])
 
-    dzdiv[0,:,:] = exp(unih[0]/scale_height)*(zdiv[1,:,:]-zdiv[0,:,:])/ \
-    (unih[1,np.newaxis,np.newaxis]-unih[0,np.newaxis,np.newaxis])
-    dzdiv[kmax-1,:,:] = exp(unih[kmax-1]/scale_height)*(zdiv[kmax-1,:,:]-zdiv[kmax-2,:,:])/ \
-    (unih[kmax-1,np.newaxis,np.newaxis]-unih[kmax-2,np.newaxis,np.newaxis])
-
-    qgpv = avort+dzdiv * av1
+        qgpv = avort+dzdiv * av1
     return qgpv, dzdiv

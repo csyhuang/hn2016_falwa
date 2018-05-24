@@ -1,10 +1,437 @@
 # This is the api for object oriented interface
 import numpy as np
 from math import pi
-from scipy import interpolate
+from interpolate_fields import interpolate_fields
+from compute_reference_states import compute_reference_states
+from compute_local_fluxes import compute_local_fluxes
 
 
 # The function assumes uniform field
+
+class QGField(object):
+    """
+    Local wave activity and flux analysis in quasi-geostrophic framework
+    that can be used to reproduce the results in:
+    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
+
+    .. versionadded:: 1.0.0
+    Parameters
+    ----------
+    xlon : numpy.array
+           Array of longitude (in degree) of size nlon.
+    ylat : numpy.array
+           Array of latitude (in degree) of size nlat.
+    plev : numpy.
+           Array of pressure level (in hPa) of size nlev.
+    u_field : numpy.ndarray
+           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+    v_field : numpy.ndarray
+           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+    t_field : numpy.ndarray
+           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+    kmax : int, optional
+           Dimension of uniform pseudoheight grids used for interpolation.
+    maxit : int, optional
+           Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
+    dz : float, optional
+           Size of uniform pseudoheight grids (in meters).
+    prefactor : float, optional
+           Vertical air density summed over height.
+    npart : int, optional
+           Number of partitions used to compute equivalent latitude.
+           If not initialized, it will be set to nlat.
+    tol : float, optional
+           Tolerance that defines the convergence of solution in SOR solver.
+    rjac : float, optional
+           Spectral radius of the Jacobi iteration in the SOR solver.
+    scale_height : float, optional
+           Scale height of the atmosphere in meters. Default = 7000.
+    cp : float, optional
+           Heat capacity of dry air in J/kg-K. Default = 1004.
+    dry_gas_constant : float, optional
+           Gas constant for dry air in J/kg-K. Default = 287.
+    omega : float, optional
+           Rotation rate of the earth in 1/s. Default = 7.29e-5.
+    planet_radius : float, optional
+           Radius of the planet in meters.
+           Default = 6.378e+6 (Earth's radius).
+
+
+    Examples
+    --------
+    >>> test_object = QGField(xlon, ylat, plev,
+                             u_field, v_field, t_field)
+
+    """
+
+    def __init__(self, xlon, ylat, plev,
+                 u_field, v_field, t_field,
+                 kmax=49, maxit=100000, dz=1000., prefactor=6500.,
+                 npart=None, tol=1.e-5, rjac=0.95,
+                 scale_height=7000., cp=1004., dry_gas_constant=287.,
+                 omega=7.29e-5, planet_radius=6.378e+6):
+
+        """Create a QGField object.
+        This only initialize the attributes of the object. Analysis and
+        computation are done by calling various methods.
+        """
+
+
+        self.xlon = xlon
+
+        # === Check if ylat is in ascending order and include the equator (0 degree) ===
+        if np.diff(ylat)[0]<0:
+            raise TypeError("ylat must be in ascending order")
+        if sum(ylat==0)==0:
+            raise TypeError("ylat must include the equator (i.e. degree 0)")
+        elif sum(ylat==0)==1:
+            self.equator_idx = np.argwhere(ylat==0)[0][0] + 1 # Fortran indexing starts from 1
+            self.ylat = ylat
+            self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+        else:
+            raise TypeError("There are more than 1 grid point with latitude 0.")
+
+        # === Check if plev is in decending order ===
+        if np.diff(plev)[0]>0:
+            raise TypeError("plev must be in decending order")
+        else:
+            self.plev = plev
+
+
+        # == Check the shape of wind/temperature fields ===
+        self.nlev, self.nlat, self.nlon = plev.size, ylat.size, xlon.size
+        expected_dimension = (self.nlev, self.nlat, self.nlon)
+        if u_field.shape != expected_dimension:
+            raise TypeError("Incorrect dimension of u_field. Expected dimension: "
+                            + str(expected_dimension))
+        if v_field.shape != expected_dimension:
+            raise TypeError("Incorrect dimension of v_field. Expected dimension: "
+                            + str(expected_dimension))
+        if t_field.shape != expected_dimension:
+            raise TypeError("Incorrect dimension of t_field. Expected dimension: "
+                            + str(expected_dimension))
+
+
+        self.u_field = u_field
+        self.v_field = v_field
+        self.t_field = t_field
+
+
+        # === To be computed ===
+        self.dphi = np.deg2rad(180./(self.nlat-1))
+        if npart is None:
+            self.npart = self.nlat
+        else:
+            self.npart = npart
+        self.height = np.array([i * dz for i in range(kmax)])
+
+        # === Parameters ===
+        self.kmax = kmax
+        self.maxit = maxit
+        self.dz = dz
+        self.prefactor = prefactor
+        self.tol = tol
+        self.rjac = rjac
+
+        # === Constants ===
+        self.scale_height = scale_height
+        self.cp = cp
+        self.dry_gas_constant = dry_gas_constant
+        self.omega = omega
+        self.planet_radius = planet_radius
+
+        # === Variables that will be computed in methods ===
+        self.qgpv_temp = None
+        self.interpolated_u_temp = None
+        self.interpolated_v_temp = None
+        self.interpolated_theta_temp = None
+        self.static_stability = None
+        self.qref_temp = None
+        self.uref_temp = None
+        self.ptref_temp = None
+
+
+    def interpolate_fields(self):
+        """
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the 
+        uniform pseudoheight grids, and compute QGPV on the same grids.
+
+
+        Returns
+        -------
+            
+        qgpv : numpy.ndarray
+            Three-dimension array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]
+            
+        interpolated_u : numpy.ndarray
+            Three-dimension array of interpolated zonal wind with dimension = [kmax, nlat, nlon]
+
+        interpolated_v : numpy.ndarray
+            Three-dimension array of interpolated meridional wind with dimension = [kmax, nlat, nlon]
+            
+        interpolated_theta : numpy.ndarray
+            Three-dimension array of interpolated potential temperature with dimension = [kmax, nlat, nlon]
+            
+        static_stability : numpy.array
+            One-dimension array of interpolated static stability with dimension = kmax
+            
+
+
+        Examples
+        --------
+
+        >>> adv_flux_f1, adv_flux_f2, adv_flux_f3, 
+            divergence_eddy_momentum_flux, meridional_heat_flux, 
+            lwa_baro, u_baro, lwa = test_object.compute_local_fluxes()
+
+        """
+
+        if self.qref_temp is None:
+
+            # === Interpolate fields and obtain qgpv ===
+            self.qgpv_temp, \
+            self.interpolated_u_temp, \
+            self.interpolated_v_temp, \
+            self.interpolated_theta_temp, \
+            self.static_stability = \
+                interpolate_fields(np.swapaxes(self.u_field, 0, 2),
+                                   np.swapaxes(self.v_field, 0, 2),
+                                   np.swapaxes(self.t_field, 0, 2),
+                                   self.plev,
+                                   self.height,
+                                   self.planet_radius,
+                                   self.omega,
+                                   self.dz,
+                                   self.scale_height,
+                                   self.dry_gas_constant,
+                                   self.cp)
+
+            self.qgpv = np.swapaxes(self.qgpv_temp, 0, 2)
+            self.interpolated_u = np.swapaxes(self.interpolated_u_temp, 0, 2)
+            self.interpolated_v = np.swapaxes(self.interpolated_v_temp, 0, 2)
+            self.interpolated_theta = np.swapaxes(self.interpolated_theta_temp, 0, 2)
+
+        return self.qgpv, self.interpolated_u, self.interpolated_v, \
+               self.interpolated_theta, self.static_stability
+
+
+
+    def compute_reference_states(self, northern_hemisphere_results_only=True):
+        """
+        Compute the local wave activity and reference states of QGPV, zonal wind and 
+        potential temperature using a more stable inversion algorithm applied in 
+        Nakamura and Huang (2018, Science). The equation to be invert is equation (22) 
+        in supplementary materials of Huang and Nakamura (2017, GRL). In this version,
+        only values in the Northern Hemisphere is computed. Southern Hemispheric grid 
+        points are filled with value 0.
+
+
+        Parameters
+        ----------
+        northern_hemisphere_results_only : bool
+               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
+
+
+        Returns
+        -------
+            
+		adv_flux_f1 : numpy.ndarray
+		    Two-dimension array of the second-order eddy term in zonal advective flux convergence,
+		    i.e. F1 in equation 3 of NH18, with dimension = [nlat, nlon]
+		    
+		adv_flux_f2 : numpy.ndarray
+		    Two-dimension array of the third-order eddy term in zonal advective flux convergence,
+		    i.e. F2 in equation 3 of NH18, with dimension = [nlat, nlon]
+		    
+		adv_flux_f3 : numpy.ndarray
+		    Two-dimension array of the remaining term in zonal advective flux convergence,
+		    i.e. F3 in equation 3 of NH18, with dimension = [nlat, nlon]
+		    
+		divergence_eddy_momentum_flux : numpy.ndarray
+		    Two-dimension array of the divergence of eddy momentum flux,
+		    i.e. (II) in equation 2 of NH18, with dimension = [nlat, nlon]
+		    
+		meridional_heat_flux : numpy.ndarray
+		    Two-dimension array of the low-level meridional heat flux,
+		    i.e. (III) in equation 2 of NH18, with dimension = [nlat, nlon]
+		
+		lwa_baro : np.ndarray
+		    Two-dimension array of barotropic local wave activity (with cosine weighting).
+		    
+		u_baro     : np.ndarray
+		    Two-dimension array of barotropic zonal wind (without cosine weighting).
+		    
+		lwa : np.ndarray
+		    Three-dimension array of barotropic local wave activity with 
+		    dimension = [kmax, nlon, nlat]
+
+
+
+        Examples
+        --------
+
+		>>> qref, uref, ptref 
+			= test_object.compute_reference_states()
+
+        """
+        if self.qgpv_temp is None:
+            self.interpolate_fields()
+
+        if self.uref_temp is None:
+            # === Compute reference states in Northern Hemisphere ===
+            self.qref_temp, self.uref_temp, self.ptref_temp = \
+                compute_reference_states(self.qgpv_temp,
+                                         self.interpolated_u_temp,
+                                         self.interpolated_theta_temp,
+                                         self.static_stability,
+                                         self.equator_idx,
+                                         self.npart,
+                                         self.maxit,
+                                         self.planet_radius,
+                                         self.omega,
+                                         self.dz,
+                                         self.tol,
+                                         self.scale_height,
+                                         self.dry_gas_constant,
+                                         self.cp,
+                                         self.rjac)
+
+            self.qref_temp_right_unit = self.qref_temp * 2 * self.omega * \
+                np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):,
+                                  np.newaxis]))
+
+            if northern_hemisphere_results_only:
+                self.qref = np.swapaxes(self.qref_temp_right_unit, 0, 1)
+                self.uref = np.swapaxes(self.uref_temp, 0, 1)
+                self.ptref = np.swapaxes(self.ptref_temp, 0, 1)
+            else:
+                self.qref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.qref_temp_right_unit, 0, 1)))
+                self.uref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.uref_temp, 0, 1)))
+                self.ptref = \
+                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
+                               np.swapaxes(self.ptref_temp, 0, 1)))
+
+        return self.qref, self.uref, self.ptref
+
+
+
+    def compute_local_fluxes(self, northern_hemisphere_results_only=True):
+        """
+        Compute barotropic components of local wave activity and flux terms in eqs.(2) 
+        and (3) in Nakamura and Huang (Science, 2018).
+
+        Parameters
+        ----------
+        northern_hemisphere_results_only : bool
+               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
+
+
+        Returns
+        -------
+            
+        qgpv : numpy.ndarray
+            Three-dimension array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]
+            
+        interpolated_u : numpy.ndarray
+            Three-dimension array of interpolated zonal wind with dimension = [kmax, nlat, nlon]
+
+        interpolated_v : numpy.ndarray
+            Three-dimension array of interpolated meridional wind with dimension = [kmax, nlat, nlon]
+            
+        interpolated_theta : numpy.ndarray
+            Three-dimension array of interpolated potential temperature with dimension = [kmax, nlat, nlon]
+            
+        static_stability : numpy.array
+            One-dimension array of interpolated static stability with dimension = kmax
+
+
+
+        Examples
+        --------
+
+        >>> qgpv, interpolated_u, interpolated_v,
+            interpolated_theta, static_stability 
+            = test_object.interpolate_fields()
+
+        """
+
+        if self.qgpv_temp is None:
+            self.interpolate_fields()
+
+        if self.uref_temp is None:
+            self.compute_reference_states()
+
+        # === Compute barotropic flux terms ===
+        lwa, astarbaro, ua1baro, ubaro, ua2baro,\
+            ep1baro, ep2baro, ep3baro, ep4 = \
+            compute_local_fluxes(self.qgpv_temp,
+                                 self.interpolated_u_temp,
+                                 self.interpolated_v_temp,
+                                 self.interpolated_theta_temp,
+                                 self.qref_temp,
+                                 self.uref_temp,
+                                 self.ptref_temp,
+                                 self.planet_radius,
+                                 self.omega,
+                                 self.dz,
+                                 self.scale_height,
+                                 self.dry_gas_constant,
+                                 self.cp,
+                                 self.prefactor)
+
+        meri_flux_temp = np.zeros_like(ep2baro)
+        meri_flux_temp[:, 1:-1] = (ep2baro[:, 1:-1] - ep3baro[:, 1:-1]) / \
+            (2 * self.planet_radius * self.dphi *
+             np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
+
+        if northern_hemisphere_results_only:
+            self.adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
+            self.adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
+            self.adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
+            self.meridional_heat_flux = np.swapaxes(ep4, 0, 1)
+            self.lwa_baro = np.swapaxes(astarbaro, 0, 1)
+            self.u_baro = np.swapaxes(ubaro, 0, 1)
+            self.lwa = np.swapaxes(lwa, 0, 2)
+            self.divergence_eddy_momentum_flux = \
+                np.swapaxes(meri_flux_temp, 0, 1)
+        else:
+            self.adv_flux_f1 = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(ua1baro, 0, 1)))
+            self.adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
+                                                    self.nlon)),
+                                          np.swapaxes(ua2baro, 0, 1)))
+            self.adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
+                                                    self.nlon)),
+                                          np.swapaxes(ep1baro, 0, 1)))
+            self.meridional_heat_flux = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(ep4, 0, 1)))
+            self.lwa_baro = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(astarbaro, 0, 1)))
+            self.u_baro = np.vstack((np.zeros((self.equator_idx - 1,
+                                               self.nlon)),
+                                     np.swapaxes(ubaro, 0, 1)))
+            self.lwa = \
+                np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
+                                          self.nlon)),
+                                np.swapaxes(lwa, 0, 2)), axis=1)
+            self.divergence_eddy_momentum_flux = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(meri_flux_temp, 0, 1)))
+
+        return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, \
+               self.divergence_eddy_momentum_flux, \
+               self.meridional_heat_flux, \
+               self.lwa_baro, self.u_baro, self.lwa
+
+
+
 
 def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     """
@@ -28,6 +455,8 @@ def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     return ans
 
 
+
+
 class BarotropicField(object):
 
     """
@@ -48,7 +477,9 @@ class BarotropicField(object):
     :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
     :type pv_field: sequence of array_like
 
+
     :returns: an instance of the object BarotropicField
+
 
     :example:
     >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
@@ -154,350 +585,6 @@ class BarotropicField(object):
         lwa_ans, dummy = basis.lwa(self.nlon, self.nlat, self.pv_field, self.eqvlat,
                                    self.planet_radius * self.clat * self.dphi)
         return lwa_ans
-
-
-# === Next is a class of 3D objects ===
-class QGField(object):
-
-    """
-    An object that deals with barotropic (2D) wind and/or PV fields
-
-    :param  xlon: Longitude array in degree with dimension (*nlon*).
-    :type xlon: sequence of array_like
-
-    :param  ylat: Latitutde array in degree, monotonically increasing with dimension (*nlat*)
-    :type ylat: sequence of array_like
-
-    :param  zlev: Pseudoheight array in meters, monotonically increasing with dimension (*nlev*)
-    :type zlev: sequence of array_like
-
-    :param  u_field: Zonal wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).
-    :type u_field: sequence of array_like
-
-    :param  v_field: Meridional wind field in meters, with dimension (*nlev*,*nlat*,*nlon*).
-    :type v_field: sequence of array_like
-
-    :param  t_field: Temperature field in Kelvin, with dimension (*nlev*,*nlat*,*nlon*).
-    :type t_field: sequence of array_like
-
-    :param  qgpv_field: Quasi-geostrophic potential vorticity field in 1/second, with dimension (*nlev*,*nlat*,*nlon*). If u_field, v_field and t_field are input, qgpv_field can be using the method compute_qgpv.
-    :type qgpv_field: sequence of array_like
-
-    :param  area: Differential area at each lon-lat grid points with dimension (*nlat*,*nlon*). If 'area=None': it will be initiated as area of uniform grid (in degree) on a spherical surface.
-    :type area: sequence of array_like
-
-    :param  dphi: Differential length element along the lat grid with dimension (*nlat*).
-    :type dphi: sequence of array_like
-
-    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
-    :type pv_field: sequence of array_like
-
-    :returns: an instance of the object BarotropicField
-
-    :example:
-    >>> qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
-
-    """
-
-
-    def __init__(self, xlon, ylat, zlev, u_field, v_field=None, t_field=None,
-                 qgpv_field=None, area=None, dphi=None,
-                 n_partitions=None, rkappa=287./1004., planet_radius=6.378e+6,
-                 scale_height=7000.):
-
-        """Create a windtempfield object.
-
-        **Arguments:**
-
-        *xlon*
-            Longitude array in degree with dimension [nlon].
-
-        *ylat*
-            Latitutde array in degree, monotonically increasing with dimension
-            [nlat].
-
-        *zlev*
-            Pseudoheight array in meters, monotonically increasing with dimension
-            [nlev].
-
-        *u_field*
-            Zonal wind field in meters, with dimension [nlev x nlat x nlon].
-
-        *v_field*
-            Meridional wind field in meters, with dimension [nlev x nlat x nlon].
-
-        *t_field*
-            Temperature field in Kelvin, with dimension [nlev x nlat x nlon].
-
-        *qgpv_field*
-            Quasi-geostrophic potential vorticity field in 1/second, with dimension
-            [nlev x nlat x nlon]. If u_field, v_field and t_field are input,
-            qgpv_field can be using the method compute_qgpv.
-
-        *area*
-            Differential area at each lon-lat grid points with dimension
-            [nlat x nlon].
-            If None, it will be initiated as:
-            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).
-            This would be problematic if the grids are not uniformly distributed in degree.
-
-        *dphi*
-            Differential length element along the lat grid with dimension nlat.
-
-        *n_partitions*
-            Number of partitions used to compute equivalent latitude. If not
-            given, it will be assigned nlat.
-
-        """
-
-        self.xlon = xlon
-        self.ylat = ylat
-        self.zlev = zlev
-        self.clat = np.abs(np.cos(np.deg2rad(ylat)))
-        self.nlon = xlon.size
-        self.nlat = ylat.size
-        self.nlev = zlev.size
-        self.planet_radius = planet_radius
-        if dphi is None:
-            self.dphi = pi/(self.nlat-1) * np.ones((self.nlat))
-        else:
-            self.dphi = dphi
-
-        if area is None:
-            self.area = 2.*pi*planet_radius**2*(np.cos(ylat[:, np.newaxis]*pi/180.)*self.dphi[:, np.newaxis])/float(self.nlon)*np.ones((self.nlat, self.nlon))
-        else:
-            self.area = area
-
-        self.qgpv_field = qgpv_field
-
-        if n_partitions is None:
-            self.n_partitions = self.nlat
-        else:
-            self.n_partitions = n_partitions
-
-        # First, check if the qgpv_field is present
-        print('check self.qgpv_field')
-        # print self.qgpv_field
-        if (qgpv_field is None) & (v_field is None):
-            raise ValueError('qgpv_field is missing.')
-        elif (qgpv_field is None):
-            print('Compute QGPV field from u and v field.')
-
-        # === Obtain potential temperature field ===
-        if t_field:
-            self.pt_field = t_field[:, :, :] * \
-             np.exp(rkappa * zlev[:, np.newaxis, np.newaxis]/scale_height)
-            # Interpolation
-            f_Thalf = interpolate.interp1d(zlev, self.pt_field.mean(axis=-1),
-                                           axis=0)
-            zlev_half = np.array([zlev[0] + 0.5*(zlev[1]-zlev[0])]*i \
-                                 for i in range(zlev.size * 2 + 1))
-            self.pt_field_half = f_Thalf(zlev_half) # dim = [2*nlev+1,nlat]
-            print('self.pt_field_half.shape')
-            print(self.pt_field_half.shape)
-
-
-    def equivalent_latitudes(self, domain_size='half_globe'): # Has to be changed since it is qgpv.
-                                    # Use half-globe?
-        """
-        Compute equivalent latitude with the *pv_field* stored in the object.
-
-        :param  domain_size: domain of grids to be used to compute equivalent latitude. It can he 'half_globe' or 'full_globe'.
-        :type domain_size: string
-
-        :returns: an numpy array with dimension (*nlev*,*nlat*) of equivalent latitude array.
-
-        :example:
-        >>> qgfield1 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
-        >>> qgfield_eqvlat = qgfield1.equivalent_latitudes(domain_size='half_globe')
-
-        """
-
-        def eqv_lat_core(ylat, vort, area, n_points):
-            vort_min = np.min([vort.min(), vort.min()])
-            vort_max = np.max([vort.max(), vort.max()])
-            q_part_u = np.linspace(vort_min, vort_max, n_points,
-                                   endpoint=True)
-            aa = np.zeros(q_part_u.size)  # to sum up area
-            vort_flat = vort.flatten()  # Flatten the 2D arrays to 1D
-            area_flat = area.flatten()
-            # Find equivalent latitude:
-            inds = np.digitize(vort_flat, q_part_u)
-            for i in np.arange(0, aa.size):  # Sum up area in each bin
-                aa[i] = np.sum(area_flat[np.where(inds == i)])
-            aq = np.cumsum(aa)
-            y_part = aq/(2*pi*planet_radius**2) - 1.0
-            lat_part = np.arcsin(y_part)*180/pi
-            q_part = np.interp(ylat, lat_part, q_part_u)
-            return q_part
-
-        area = self.area
-        ylat = self.ylat
-        planet_radius = self.planet_radius
-        self.eqvlat = np.zeros((self.nlev, self.nlat))
-
-        for k in range(self.nlev):
-            pv_field = self.qgpv_field[k, ...]
-
-            if domain_size == 'half_globe':
-                nlat_s = int(self.nlat/2)
-                qref = np.zeros(self.nlat)
-                # --- Southern Hemisphere ---
-                # qref1 = eqv_lat_core(ylat[:nlat_s],vort[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)
-                qref[:nlat_s] = eqv_lat_core(ylat[:nlat_s], pv_field[:nlat_s,:],
-                                             area[:nlat_s, :], nlat_s)
-                # --- Northern Hemisphere ---
-                pv_field_inverted = -pv_field[::-1, :]  # Added the minus sign, but gotta see if NL_North is affected
-                qref2 = eqv_lat_core(ylat[:nlat_s], pv_field_inverted[:nlat_s,:],
-                                     area[:nlat_s, :], nlat_s)
-                #qref2 = eqvlat(ylat[:nlat_s],vort2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=planet_radius)
-                qref[-nlat_s:] = -qref2[::-1]
-            elif domain_size == 'full_globe':
-                qref = eqv_lat_core(ylat, pv_field, area, self.nlat,
-                                    planet_radius=planet_radius)
-            else:
-                raise ValueError('Domain size is not properly specified.')
-
-            self.eqvlat[k, :] = qref
-        return self.eqvlat
-
-    def lwa(self):
-        """
-        Compute the finite-amplitude local wave activity on each pseudoheight layer based on the *equivalent_latitudes* and the *qgpv_field* stored in the object.
-
-        :returns: an 3-D numpy array with dimension (*nlev*,*nlat*,*nlon*) of local wave activity values.
-
-        :example:
-        >>> qgfield = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)
-        >>> qgfield_lwa = qgfield.lwa()
-
-        """
-
-        try:
-            self.eqvlat
-        except:
-            self.eqvlat = self.equivalent_latitudes(domain_size='half_globe')
-
-        lwact = np.zeros((self.nlev, self.nlat, self.nlon))
-
-        for k in range(self.nlev):
-            pv_field = self.qgpv_field[k, :, :]
-            for j in np.arange(0, self.nlat-1):
-                vort_e = pv_field[:, :]-self.eqvlat[k, j]
-                vort_boo = np.zeros((self.nlat, self.nlon))
-                vort_boo[np.where(vort_e[:, :] < 0)] = -1
-                vort_boo[:j+1, :] = 0
-                vort_boo[np.where(vort_e[:j+1, :] > 0)] = 1
-                lwact[k, j, :] = np.sum(vort_e*vort_boo * self.planet_radius *
-                                        self.clat[:, np.newaxis] *
-                                        self.dphi[:, np.newaxis], axis=0)
-        return lwact
-
-
-def main():
-    from netCDF4 import Dataset
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    # === List of tests ===
-    test_2D = False
-    test_3D = True
-
-    # === Testing the 2D object ===
-    if test_2D:
-        data_path = '../examples/barotropic_vorticity.nc'
-        readFile = Dataset(data_path, mode='r')
-        abs_vorticity = readFile.variables['absolute_vorticity'][:]
-
-        xlon = np.linspace(0, 360., 512, endpoint=False)
-        ylat = np.linspace(-90, 90., 256, endpoint=True)
-        nlon = xlon.size
-        nlat = ylat.size
-        Earth_radius = 6.378e+6
-        dphi = (ylat[2]-ylat[1])*pi/180.
-        area = 2.*pi*Earth_radius**2 * (np.cos(ylat[:, np.newaxis]*pi/180.)
-                                        * dphi)/float(nlon) * np.ones((nlat, nlon))
-
-        cc1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)  # area computed in the class assumed uniform grid
-
-        # Compute equivalent latitudes
-        cc1_eqvlat = cc1.equivalent_latitudes()
-
-        # Compute equivalent latitudes
-        cc1_lwa = cc1.lwa()
-
-        # --- Color axis for plotting LWA --- #
-        LWA_caxis = np.linspace(0, cc1_lwa.max(), 31, endpoint=True)
-
-        # --- Plot the abs. vorticity field, LWA and equivalent-latitude relationship and LWA --- #
-        fig = plt.subplots(figsize=(14, 4))
-
-        plt.subplot(1, 3, 1)  # Absolute vorticity map
-        c = plt.contourf(xlon, ylat, cc1.pv_field, 31)
-        cb = plt.colorbar(c)
-        cb.formatter.set_powerlimits((0, 0))
-        cb.ax.yaxis.set_offset_position('right')
-        cb.update_ticks()
-        plt.title('Absolute vorticity [1/s]')
-        plt.xlabel('Longitude (degree)')
-        plt.ylabel('Latitude (degree)')
-
-        plt.subplot(1, 3, 2)  # LWA (full domain)
-        plt.contourf(xlon, ylat, cc1_lwa, LWA_caxis)
-        plt.colorbar()
-        plt.title('Local Wave Activity [m/s]')
-        plt.xlabel('Longitude (degree)')
-        plt.ylabel('Latitude (degree)')
-
-        plt.subplot(1, 3, 3)  # Equivalent-latitude relationship Q(y)
-        plt.plot(cc1_eqvlat, ylat, 'b', label='Equivalent-latitude relationship')
-        plt.plot(np.mean(cc1.pv_field, axis=1), ylat, 'g', label='zonal mean abs. vorticity')
-        plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-        plt.ylim(-90, 90)
-        plt.legend(loc=4, fontsize=10)
-        plt.title('Equivalent-latitude profile')
-        plt.ylabel('Latitude (degree)')
-        plt.xlabel('Q(y) [1/s] | y = latitude')
-        plt.tight_layout()
-        plt.show()
-
-    # === Testing the 2D object ===
-    if test_3D:
-        print('Test QGField')
-        u_QGPV_File = Dataset('../examples/u_QGPV_240hPa_2012Oct28to31.nc', mode='r')
-        # --- Read in longitude and latitude arrays --- #
-        xlon = u_QGPV_File.variables['longitude'][:]
-        ylat = u_QGPV_File.variables['latitude'][:]
-        clat = np.abs(np.cos(ylat*pi/180.)) # cosine latitude
-        nlon = xlon.size
-        nlat = ylat.size
-
-        u = u_QGPV_File.variables['U'][0, ...]
-        QGPV = u_QGPV_File.variables['QGPV'][0, ...]
-        u_QGPV_File.close()
-
-        print(u.shape)
-        print(QGPV.shape)
-
-        cc2 = QGField(xlon, ylat, np.array([240.]), u, qgpv_field=QGPV)  # area computed in the class assumed uniform grid
-        cc3 = cc2.lwa()
-        print('cc3 shape')
-        print(cc3.shape)
-
-        # print 'test empty qgpv fields'
-        # cc4 = QGField(xlon, ylat, np.array([240.]), u)
-
-        plt.figure(figsize=(8, 3))
-        c = plt.contourf(xlon, ylat[80:], cc3[0, 80:, :], 31)
-        cb = plt.colorbar(c)
-        cb.formatter.set_powerlimits((0, 0))
-        cb.ax.yaxis.set_offset_position('right')
-        cb.update_ticks()
-        plt.title('Local Wave Activity at 240hPa [m/s]')
-        plt.xlabel('Longitude (degree)')
-        plt.ylabel('Latitude (degree)')
-        plt.show()
-
 
 
 
