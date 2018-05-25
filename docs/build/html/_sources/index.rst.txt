@@ -6,12 +6,21 @@
 hn2016_falwa: Finite-amplitude local wave activity
 ==================================================
 
-`hn2016_falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
-extreme weather events. It implements the finite-amplitude local wave activity diagnostic and related 
-proposed in `Huang and Nakamura (2016) <http://dx.doi.org/10.1175/JAS-D-15-0194.1/>`_ on gridded climate 
-data.
-
 .. image:: https://github.com/csyhuang/csyhuang.github.io/raw/master/assets/img/hn2016_falwa_diagram.png
+
+`hn2016_falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
+extreme weather events. It implements the finite-amplitude local wave activity and flux diagnostic introduced in:
+
+- `Huang and Nakamura (2016, JAS) <https://journals.ametsoc.org/doi/abs/10.1175/JAS-D-15-0194.1>`_
+- `Huang and Nakamura (2017, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2017GL073760>`_
+- `Nakamura and Huang (2018, Science) <https://doi.org/10.1126/science.aat0721>`_
+
+To users
+------------------------------
+
+If you are interested in using the package, please `leave your contact here <https://goo.gl/forms/5L8fv0mUordugq6v2>`_
+such that I can keep you updated of any changes made.
+
 
 Installation
 ------------------------------
@@ -20,7 +29,7 @@ This current version works in both Python 2.7 and 3.6. Note that from v0.3.0 onw
 having  backend in Fortran. You will need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) 
 to implement the installation.
 
-Dependencies include Numpy, Scipy and optionally Matplotlib. To install from the source distribution:
+Dependencies include Numpy, Scipy and optionally Matplotlib. To install from the source distribution::
 
  git clone https://github.com/csyhuang/hn2016_falwa.git
  cd hn2016_falwa
