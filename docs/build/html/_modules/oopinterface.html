@@ -47,7 +47,7 @@
 <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">interpolate_fields</span> <span class="k">import</span> <span class="n">interpolate_fields</span>
 <span class="kn">from</span> <span class="nn">compute_reference_states</span> <span class="k">import</span> <span class="n">compute_reference_states</span>
-<span class="kn">from</span> <span class="nn">compute_local_fluxes</span> <span class="k">import</span> <span class="n">compute_local_fluxes</span>
+<span class="kn">from</span> <span class="nn">compute_lwa_and_barotropic_fluxes</span> <span class="k">import</span> <span class="n">compute_lwa_and_barotropic_fluxes</span>
 
 
 <span class="c1"># The function assumes uniform field</span>
@@ -57,8 +57,10 @@
 <span class="sd">    Local wave activity and flux analysis in quasi-geostrophic framework</span>
 <span class="sd">    that can be used to reproduce the results in:</span>
 <span class="sd">    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)</span>
+<span class="sd">    Note that topography is assumed flat in this object.</span>
 
-<span class="sd">    .. versionadded:: 1.0.0</span>
+
+<span class="sd">    .. versionadded:: 0.3.0</span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    xlon : numpy.array</span>
@@ -197,36 +199,35 @@
 
 <div class="viewcode-block" id="QGField.interpolate_fields"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.interpolate_fields">[docs]</a>    <span class="k">def</span> <span class="nf">interpolate_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the </span>
+<span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the</span>
 <span class="sd">        uniform pseudoheight grids, and compute QGPV on the same grids.</span>
 
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">            </span>
+
 <span class="sd">        qgpv : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
+<span class="sd">            Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</span>
+
 <span class="sd">        interpolated_u : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</span>
+<span class="sd">            Three-dimensional array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</span>
 
 <span class="sd">        interpolated_v : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
+<span class="sd">            Three-dimensional array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</span>
+
 <span class="sd">        interpolated_theta : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
+<span class="sd">            Three-dimensional array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</span>
+
 <span class="sd">        static_stability : numpy.array</span>
 <span class="sd">            One-dimension array of interpolated static stability with dimension = kmax</span>
-<span class="sd">            </span>
 
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">        &gt;&gt;&gt; adv_flux_f1, adv_flux_f2, adv_flux_f3, </span>
-<span class="sd">            divergence_eddy_momentum_flux, meridional_heat_flux, </span>
-<span class="sd">            lwa_baro, u_baro, lwa = test_object.compute_local_fluxes()</span>
+<span class="sd">        &gt;&gt;&gt; qgpv, interpolated_u, interpolated_v,</span>
+<span class="sd">            interpolated_theta, static_stability</span>
+<span class="sd">            = test_object.interpolate_fields()</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -262,60 +263,31 @@
 
 <div class="viewcode-block" id="QGField.compute_reference_states"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_reference_states">[docs]</a>    <span class="k">def</span> <span class="nf">compute_reference_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the local wave activity and reference states of QGPV, zonal wind and </span>
-<span class="sd">        potential temperature using a more stable inversion algorithm applied in </span>
-<span class="sd">        Nakamura and Huang (2018, Science). The equation to be invert is equation (22) </span>
-<span class="sd">        in supplementary materials of Huang and Nakamura (2017, GRL). In this version,</span>
-<span class="sd">        only values in the Northern Hemisphere is computed. Southern Hemispheric grid </span>
-<span class="sd">        points are filled with value 0.</span>
+<span class="sd">        Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.</span>
 
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        northern_hemisphere_results_only : bool</span>
-<span class="sd">               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</span>
+<span class="sd">               If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</span>
 
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">            </span>
-<span class="sd">		adv_flux_f1 : numpy.ndarray</span>
-<span class="sd">		    Two-dimension array of the second-order eddy term in zonal advective flux convergence,</span>
-<span class="sd">		    i.e. F1 in equation 3 of NH18, with dimension = [nlat, nlon]</span>
-<span class="sd">		    </span>
-<span class="sd">		adv_flux_f2 : numpy.ndarray</span>
-<span class="sd">		    Two-dimension array of the third-order eddy term in zonal advective flux convergence,</span>
-<span class="sd">		    i.e. F2 in equation 3 of NH18, with dimension = [nlat, nlon]</span>
-<span class="sd">		    </span>
-<span class="sd">		adv_flux_f3 : numpy.ndarray</span>
-<span class="sd">		    Two-dimension array of the remaining term in zonal advective flux convergence,</span>
-<span class="sd">		    i.e. F3 in equation 3 of NH18, with dimension = [nlat, nlon]</span>
-<span class="sd">		    </span>
-<span class="sd">		divergence_eddy_momentum_flux : numpy.ndarray</span>
-<span class="sd">		    Two-dimension array of the divergence of eddy momentum flux,</span>
-<span class="sd">		    i.e. (II) in equation 2 of NH18, with dimension = [nlat, nlon]</span>
-<span class="sd">		    </span>
-<span class="sd">		meridional_heat_flux : numpy.ndarray</span>
-<span class="sd">		    Two-dimension array of the low-level meridional heat flux,</span>
-<span class="sd">		    i.e. (III) in equation 2 of NH18, with dimension = [nlat, nlon]</span>
-<span class="sd">		</span>
-<span class="sd">		lwa_baro : np.ndarray</span>
-<span class="sd">		    Two-dimension array of barotropic local wave activity (with cosine weighting).</span>
-<span class="sd">		    </span>
-<span class="sd">		u_baro     : np.ndarray</span>
-<span class="sd">		    Two-dimension array of barotropic zonal wind (without cosine weighting).</span>
-<span class="sd">		    </span>
-<span class="sd">		lwa : np.ndarray</span>
-<span class="sd">		    Three-dimension array of barotropic local wave activity with </span>
-<span class="sd">		    dimension = [kmax, nlon, nlat]</span>
 
+<span class="sd">        qref : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</span>
 
+<span class="sd">        uref : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</span>
+
+<span class="sd">        ptref : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of reference state of potential temperature (Theta_ref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">		&gt;&gt;&gt; qref, uref, ptref </span>
-<span class="sd">			= test_object.compute_reference_states()</span>
+<span class="sd">        &gt;&gt;&gt; qref, uref, ptref = test_object.compute_reference_states()</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -363,10 +335,9 @@
 
 
 
-<div class="viewcode-block" id="QGField.compute_local_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_local_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_local_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="QGField.compute_lwa_and_barotropic_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_lwa_and_barotropic_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute barotropic components of local wave activity and flux terms in eqs.(2) </span>
-<span class="sd">        and (3) in Nakamura and Huang (Science, 2018).</span>
+<span class="sd">        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -376,30 +347,43 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">            </span>
-<span class="sd">        qgpv : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
-<span class="sd">        interpolated_u : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</span>
 
-<span class="sd">        interpolated_v : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
-<span class="sd">        interpolated_theta : numpy.ndarray</span>
-<span class="sd">            Three-dimension array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</span>
-<span class="sd">            </span>
-<span class="sd">        static_stability : numpy.array</span>
-<span class="sd">            One-dimension array of interpolated static stability with dimension = kmax</span>
+<span class="sd">        adv_flux_f1 : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of the second-order eddy term in zonal advective flux convergence,</span>
+<span class="sd">            i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
 
+<span class="sd">        adv_flux_f2 : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of the third-order eddy term in zonal advective flux convergence,</span>
+<span class="sd">            i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        adv_flux_f3 : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of the remaining term in zonal advective flux convergence,</span>
+<span class="sd">            i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        divergence_eddy_momentum_flux : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of the divergence of eddy momentum flux,</span>
+<span class="sd">            i.e. (II) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        meridional_heat_flux : numpy.ndarray</span>
+<span class="sd">            Two-dimensional array of the low-level meridional heat flux,</span>
+<span class="sd">            i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        lwa_baro : np.ndarray</span>
+<span class="sd">            Two-dimensional array of barotropic local wave activity (with cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        u_baro     : np.ndarray</span>
+<span class="sd">            Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</span>
+
+<span class="sd">        lwa : np.ndarray</span>
+<span class="sd">            Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.</span>
 
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 
-<span class="sd">        &gt;&gt;&gt; qgpv, interpolated_u, interpolated_v,</span>
-<span class="sd">            interpolated_theta, static_stability </span>
-<span class="sd">            = test_object.interpolate_fields()</span>
+<span class="sd">        &gt;&gt;&gt; adv_flux_f1, adv_flux_f2, adv_flux_f3,</span>
+<span class="sd">            divergence_eddy_momentum_flux, meridional_heat_flux,</span>
+<span class="sd">            lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -412,20 +396,20 @@
         <span class="c1"># === Compute barotropic flux terms ===</span>
         <span class="n">lwa</span><span class="p">,</span> <span class="n">astarbaro</span><span class="p">,</span> <span class="n">ua1baro</span><span class="p">,</span> <span class="n">ubaro</span><span class="p">,</span> <span class="n">ua2baro</span><span class="p">,</span>\
             <span class="n">ep1baro</span><span class="p">,</span> <span class="n">ep2baro</span><span class="p">,</span> <span class="n">ep3baro</span><span class="p">,</span> <span class="n">ep4</span> <span class="o">=</span> \
-            <span class="n">compute_local_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">qref_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">uref_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">ptref_temp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">scale_height</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">dry_gas_constant</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">cp</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">prefactor</span><span class="p">)</span>
+            <span class="n">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">qref_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">uref_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">ptref_temp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">scale_height</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">dry_gas_constant</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">cp</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">prefactor</span><span class="p">)</span>
 
         <span class="n">meri_flux_temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">ep2baro</span><span class="p">)</span>
         <span class="n">meri_flux_temp</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">ep2baro</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ep3baro</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> \
@@ -506,23 +490,26 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An object that deals with barotropic (2D) wind and/or PV fields</span>
 
-<span class="sd">    :param  xlon: Longitude array in degree with dimension *nlon*.</span>
-<span class="sd">    :type xlon: sequence of array_like</span>
+<span class="sd">        xlon : np.array</span>
+<span class="sd">            Longitude array in degree with dimension = nlon.</span>
 
-<span class="sd">    :param  ylat: Latitutde array in degree, monotonically increasing with dimension *nlat*</span>
-<span class="sd">    :type ylat: sequence of array_like</span>
+<span class="sd">        ylat : np.array</span>
+<span class="sd">            Latitude array in degree with dimension = nlat.</span>
 
-<span class="sd">    :param  area: Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#39;area=None&#39;: it will be initiated as area of uniform grid (in degree) on a spherical surface.</span>
-<span class="sd">    :type area: sequence of array_like</span>
+<span class="sd">        area : np.ndarray</span>
+<span class="sd">            Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#39;area=None&#39;: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</span>
 
-<span class="sd">    :param  dphi: Differential length element along the lat grid with dimension nlat.</span>
-<span class="sd">    :type dphi: sequence of array_like</span>
+<span class="sd">        dphi : np.array</span>
+<span class="sd">            Differential length element along the lat grid with dimension = nlat.</span>
 
-<span class="sd">    :param  pv_field: Absolute vorticity field with dimension [nlat x nlon]. If &#39;pv_field=None&#39;: pv_field is expected to be computed with u,v,t field.</span>
-<span class="sd">    :type pv_field: sequence of array_like</span>
+<span class="sd">        pv_field : np.ndarray</span>
+<span class="sd">            Absolute vorticity field with dimension [nlat x nlon]. If &#39;pv_field=None&#39;: pv_field is expected to be computed with u,v,t field.</span>
 
 
-<span class="sd">    :returns: an instance of the object BarotropicField</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        An instance of the object BarotropicField</span>
 
 
 <span class="sd">    :example:</span>

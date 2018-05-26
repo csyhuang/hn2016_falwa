@@ -15,6 +15,10 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
+Minor update in v0.3.1:
+- The function compute_local_fluxes is renamed compute_lwa_and_barotropic_fluxes.
+- Fixed some typos in the documentation.
+
 Major update in v0.3.0:
 - The interface for computing local wave activity in QG framework has been released.
   See QGField in oopinterface.py.
@@ -33,14 +37,13 @@ ext2 = Extension(name='compute_reference_states',
                  sources=['hn2016_falwa/compute_reference_states.f90'],
                  f2py_options=['--quiet'])
 
-ext3 = Extension(name='compute_local_fluxes',
-                 sources=['hn2016_falwa/compute_local_fluxes.f90'],
+ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
+                 sources=['hn2016_falwa/compute_lwa_and_barotropic_fluxes.f90'],
                  f2py_options=['--quiet'])
 
 
 setup(name='hn2016_falwa',
-      #packages=find_packages(),
-      version='0.3.0',
+      version='0.3.1',
       description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
       long_description=LONG_DESCRIPTION,
       url='https://github.com/csyhuang/hn2016_falwa',
@@ -50,11 +53,6 @@ setup(name='hn2016_falwa',
       packages=['hn2016_falwa'],
       test_suite = 'tests.my_module_suite',
       ext_modules = [ext1, ext2, ext3],
-# 	  scripts=['hn2016_falwa/basis.py',
-# 	           'hn2016_falwa/beta_version.py',
-# 	           'hn2016_falwa/oopinterface.py',
-#                'hn2016_falwa/utilities.py',
-#                'hn2016_falwa/wrapper.py'],
 	  zip_safe=False
 	  )
                   
