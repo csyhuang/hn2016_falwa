@@ -1,4 +1,4 @@
-SUBROUTINE compute_local_fluxes(nlon, nlat, kmax, jd, &
+SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                           pv,uu,vv,pt,qref,uref,tref,&
                          a, om, dz, h, r, cp, prefactor, &
                          astar,astarbaro,ua1baro,ubaro,ua2baro,ep1baro,ep2baro,ep3baro,ep4)

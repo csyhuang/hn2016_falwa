@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('../../hn2016_falwa'))
 
 autodoc_mock_imports = ["interpolate_fields",
                         "compute_reference_states",
-                        "compute_local_fluxes"]
+                        "compute_lwa_and_barotropic_fluxes"]
 
 
 # -- General configuration ------------------------------------------------
