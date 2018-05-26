@@ -46,79 +46,6 @@
   <div class="section" id="module-oopinterface">
 <span id="object-oriented-interface"></span><h1>Object Oriented Interface<a class="headerlink" href="#module-oopinterface" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="oopinterface.BarotropicField">
-<em class="property">class </em><code class="descclassname">oopinterface.</code><code class="descname">BarotropicField</code><span class="sig-paren">(</span><em>xlon</em>, <em>ylat</em>, <em>pv_field</em>, <em>area=None</em>, <em>dphi=None</em>, <em>n_partitions=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField" title="Permalink to this definition">¶</a></dt>
-<dd><p>An object that deals with barotropic (2D) wind and/or PV fields</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xlon <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
-<dd>Longitude array in degree with dimension = nlon.</dd>
-<dt>ylat <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
-<dd>Latitude array in degree with dimension = nlat.</dd>
-<dt>area <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd>Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#8216;area=None&#8217;: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</dd>
-<dt>dphi <span class="classifier-delimiter">:</span> <span class="classifier">np.array</span></dt>
-<dd>Differential length element along the lat grid with dimension = nlat.</dd>
-<dt>pv_field <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
-<dd>Absolute vorticity field with dimension [nlat x nlon]. If &#8216;pv_field=None&#8217;: pv_field is expected to be computed with u,v,t field.</dd>
-</dl>
-<p>An instance of the object BarotropicField</p>
-</div></blockquote>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="oopinterface.BarotropicField.equivalent_latitudes">
-<code class="descname">equivalent_latitudes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField.equivalent_latitudes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField.equivalent_latitudes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute equivalent latitude with the <em>pv_field</em> stored in the object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an numpy array with dimension (nlat) of equivalent latitude array.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Example:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.BarotropicField.lwa">
-<code class="descname">lwa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField.lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField.lwa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the finite-amplitude local wave activity based on the <em>equivalent_latitudes</em> and the <em>pv_field</em> stored in the object.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">an 2-D numpy array with dimension (nlat,nlon) of local wave activity values.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Example:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span> <span class="c1"># This line is optional</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lwa</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
 <dt id="oopinterface.QGField">
 <em class="property">class </em><code class="descclassname">oopinterface.</code><code class="descname">QGField</code><span class="sig-paren">(</span><em>xlon</em>, <em>ylat</em>, <em>plev</em>, <em>u_field</em>, <em>v_field</em>, <em>t_field</em>, <em>kmax=49</em>, <em>maxit=100000</em>, <em>dz=1000.0</em>, <em>prefactor=6500.0</em>, <em>npart=None</em>, <em>tol=1e-05</em>, <em>rjac=0.95</em>, <em>scale_height=7000.0</em>, <em>cp=1004.0</em>, <em>dry_gas_constant=287.0</em>, <em>omega=7.29e-05</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField" title="Permalink to this definition">¶</a></dt>
 <dd><p>Local wave activity and flux analysis in quasi-geostrophic framework
@@ -249,6 +176,74 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qgpv</span><span class="p">,</span> <span class="n">interpolated_u</span><span class="p">,</span> <span class="n">interpolated_v</span><span class="p">,</span>
 <span class="go">    interpolated_theta, static_stability</span>
 <span class="go">    = test_object.interpolate_fields()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="oopinterface.BarotropicField">
+<em class="property">class </em><code class="descclassname">oopinterface.</code><code class="descname">BarotropicField</code><span class="sig-paren">(</span><em>xlon</em>, <em>ylat</em>, <em>pv_field</em>, <em>area=None</em>, <em>dphi=None</em>, <em>n_partitions=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object that deals with barotropic (2D) wind and/or PV fields</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>xlon</strong> (<em>np.array</em>) &#8211; Longitude array in degree with dimension = nlon.</li>
+<li><strong>ylat</strong> (<em>np.array</em>) &#8211; Latitude array in degree with dimension = nlat.</li>
+<li><strong>area</strong> (<em>np.ndarray</em>) &#8211; Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#8216;area=None&#8217;: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</li>
+<li><strong>dphi</strong> (<em>np.array</em>) &#8211; Differential length element along the lat grid with dimension = nlat.</li>
+<li><strong>pv_field</strong> (<em>np.ndarray</em>) &#8211; Absolute vorticity field with dimension [nlat x nlon]. If &#8216;pv_field=None&#8217;: pv_field is expected to be computed with u,v,t field.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="oopinterface.BarotropicField.equivalent_latitudes">
+<code class="descname">equivalent_latitudes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField.equivalent_latitudes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField.equivalent_latitudes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute equivalent latitude with the <em>pv_field</em> stored in the object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">An numpy array with dimension (nlat) of equivalent latitude array.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.BarotropicField.lwa">
+<code class="descname">lwa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#BarotropicField.lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.BarotropicField.lwa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the finite-amplitude local wave activity based on the <em>equivalent_latitudes</em> and the <em>pv_field</em> stored in the object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">An 2-D numpy array with dimension [nlat,nlon] of local wave activity values.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span> <span class="c1"># This line is optional</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lwa</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
 </pre></div>
 </div>
 </dd></dl>

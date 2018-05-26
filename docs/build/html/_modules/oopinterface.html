@@ -53,60 +53,61 @@
 <span class="c1"># The function assumes uniform field</span>
 
 <div class="viewcode-block" id="QGField"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField">[docs]</a><span class="k">class</span> <span class="nc">QGField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Local wave activity and flux analysis in quasi-geostrophic framework</span>
-<span class="sd">    that can be used to reproduce the results in:</span>
-<span class="sd">    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)</span>
-<span class="sd">    Note that topography is assumed flat in this object.</span>
 
 
-<span class="sd">    .. versionadded:: 0.3.0</span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    xlon : numpy.array</span>
-<span class="sd">           Array of longitude (in degree) of size nlon.</span>
-<span class="sd">    ylat : numpy.array</span>
-<span class="sd">           Array of latitude (in degree) of size nlat.</span>
-<span class="sd">    plev : numpy.</span>
-<span class="sd">           Array of pressure level (in hPa) of size nlev.</span>
-<span class="sd">    u_field : numpy.ndarray</span>
-<span class="sd">           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
-<span class="sd">    v_field : numpy.ndarray</span>
-<span class="sd">           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
-<span class="sd">    t_field : numpy.ndarray</span>
-<span class="sd">           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</span>
-<span class="sd">    kmax : int, optional</span>
-<span class="sd">           Dimension of uniform pseudoheight grids used for interpolation.</span>
-<span class="sd">    maxit : int, optional</span>
-<span class="sd">           Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</span>
-<span class="sd">    dz : float, optional</span>
-<span class="sd">           Size of uniform pseudoheight grids (in meters).</span>
-<span class="sd">    prefactor : float, optional</span>
-<span class="sd">           Vertical air density summed over height.</span>
-<span class="sd">    npart : int, optional</span>
-<span class="sd">           Number of partitions used to compute equivalent latitude.</span>
-<span class="sd">           If not initialized, it will be set to nlat.</span>
-<span class="sd">    tol : float, optional</span>
-<span class="sd">           Tolerance that defines the convergence of solution in SOR solver.</span>
-<span class="sd">    rjac : float, optional</span>
-<span class="sd">           Spectral radius of the Jacobi iteration in the SOR solver.</span>
-<span class="sd">    scale_height : float, optional</span>
-<span class="sd">           Scale height of the atmosphere in meters. Default = 7000.</span>
-<span class="sd">    cp : float, optional</span>
-<span class="sd">           Heat capacity of dry air in J/kg-K. Default = 1004.</span>
-<span class="sd">    dry_gas_constant : float, optional</span>
-<span class="sd">           Gas constant for dry air in J/kg-K. Default = 287.</span>
-<span class="sd">    omega : float, optional</span>
-<span class="sd">           Rotation rate of the earth in 1/s. Default = 7.29e-5.</span>
-<span class="sd">    planet_radius : float, optional</span>
-<span class="sd">           Radius of the planet in meters.</span>
-<span class="sd">           Default = 6.378e+6 (Earth&#39;s radius).</span>
+    <span class="sd">&quot;&quot;&quot;Local wave activity and flux analysis in quasi-geostrophic framework</span>
+<span class="sd">        that can be used to reproduce the results in:</span>
+<span class="sd">        Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)</span>
+<span class="sd">        Note that topography is assumed flat in this object.</span>
 
 
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    &gt;&gt;&gt; test_object = QGField(xlon, ylat, plev,</span>
-<span class="sd">                             u_field, v_field, t_field)</span>
+<span class="sd">        .. versionadded:: 0.3.0</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        xlon : numpy.array</span>
+<span class="sd">               Array of longitude (in degree) of size nlon.</span>
+<span class="sd">        ylat : numpy.array</span>
+<span class="sd">               Array of latitude (in degree) of size nlat.</span>
+<span class="sd">        plev : numpy.</span>
+<span class="sd">               Array of pressure level (in hPa) of size nlev.</span>
+<span class="sd">        u_field : numpy.ndarray</span>
+<span class="sd">               Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">        v_field : numpy.ndarray</span>
+<span class="sd">               Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">        t_field : numpy.ndarray</span>
+<span class="sd">               Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">        kmax : int, optional</span>
+<span class="sd">               Dimension of uniform pseudoheight grids used for interpolation.</span>
+<span class="sd">        maxit : int, optional</span>
+<span class="sd">               Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</span>
+<span class="sd">        dz : float, optional</span>
+<span class="sd">               Size of uniform pseudoheight grids (in meters).</span>
+<span class="sd">        prefactor : float, optional</span>
+<span class="sd">               Vertical air density summed over height.</span>
+<span class="sd">        npart : int, optional</span>
+<span class="sd">               Number of partitions used to compute equivalent latitude.</span>
+<span class="sd">               If not initialized, it will be set to nlat.</span>
+<span class="sd">        tol : float, optional</span>
+<span class="sd">               Tolerance that defines the convergence of solution in SOR solver.</span>
+<span class="sd">        rjac : float, optional</span>
+<span class="sd">               Spectral radius of the Jacobi iteration in the SOR solver.</span>
+<span class="sd">        scale_height : float, optional</span>
+<span class="sd">               Scale height of the atmosphere in meters. Default = 7000.</span>
+<span class="sd">        cp : float, optional</span>
+<span class="sd">               Heat capacity of dry air in J/kg-K. Default = 1004.</span>
+<span class="sd">        dry_gas_constant : float, optional</span>
+<span class="sd">               Gas constant for dry air in J/kg-K. Default = 287.</span>
+<span class="sd">        omega : float, optional</span>
+<span class="sd">               Rotation rate of the earth in 1/s. Default = 7.29e-5.</span>
+<span class="sd">        planet_radius : float, optional</span>
+<span class="sd">               Radius of the planet in meters.</span>
+<span class="sd">               Default = 6.378e+6 (Earth&#39;s radius).</span>
+
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; test_object = QGField(xlon, ylat, plev,</span>
+<span class="sd">                                 u_field, v_field, t_field)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -198,8 +199,7 @@
 
 
 <div class="viewcode-block" id="QGField.interpolate_fields"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.interpolate_fields">[docs]</a>    <span class="k">def</span> <span class="nf">interpolate_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the</span>
+        <span class="sd">&quot;&quot;&quot;Interpolate zonal wind, maridional wind, and potential temperature field onto the</span>
 <span class="sd">        uniform pseudoheight grids, and compute QGPV on the same grids.</span>
 
 
@@ -262,8 +262,8 @@
 
 
 <div class="viewcode-block" id="QGField.compute_reference_states"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_reference_states">[docs]</a>    <span class="k">def</span> <span class="nf">compute_reference_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.</span>
+
+        <span class="sd">&quot;&quot;&quot;Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.</span>
 
 
 <span class="sd">        Parameters</span>
@@ -336,8 +336,8 @@
 
 
 <div class="viewcode-block" id="QGField.compute_lwa_and_barotropic_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_lwa_and_barotropic_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).</span>
+
+        <span class="sd">&quot;&quot;&quot;Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -490,6 +490,8 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An object that deals with barotropic (2D) wind and/or PV fields</span>
 
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
 <span class="sd">        xlon : np.array</span>
 <span class="sd">            Longitude array in degree with dimension = nlon.</span>
 
@@ -506,13 +508,8 @@
 <span class="sd">            Absolute vorticity field with dimension [nlat x nlon]. If &#39;pv_field=None&#39;: pv_field is expected to be computed with u,v,t field.</span>
 
 
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-
-<span class="sd">        An instance of the object BarotropicField</span>
-
-
-<span class="sd">    :example:</span>
+<span class="sd">    Example</span>
+<span class="sd">    ---------</span>
 <span class="sd">    &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -522,30 +519,25 @@
 
         <span class="sd">&quot;&quot;&quot;Create a windtempfield object.</span>
 
-<span class="sd">        **Arguments:**</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">            xlon : np.array</span>
+<span class="sd">                Longitude array in degree with dimension = nlon.</span>
 
-<span class="sd">        *xlon*</span>
-<span class="sd">            Longitude array in degree with dimension [nlon].</span>
+<span class="sd">            ylat : np.array</span>
+<span class="sd">                Latitude array in degree with dimension = nlat.</span>
 
-<span class="sd">        *ylat*</span>
-<span class="sd">            Latitutde array in degree, monotonically increasing with dimension</span>
-<span class="sd">            [nlat].</span>
+<span class="sd">            area : np.ndarray</span>
+<span class="sd">                Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#39;area=None&#39;: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</span>
 
-<span class="sd">        *area*</span>
-<span class="sd">            Differential area at each lon-lat grid points with dimension</span>
-<span class="sd">            [nlat x nlon].</span>
-<span class="sd">            If None, it will be initiated as:</span>
-<span class="sd">            2.*pi*Earth_radius**2 *(np.cos(ylat[:,np.newaxis]*pi/180.)*dphi)/float(nlon) * np.ones((nlat,nlon)).</span>
-<span class="sd">            This would be problematic if the grids are not uniformly distributed in degree.</span>
+<span class="sd">            dphi : np.array</span>
+<span class="sd">                Differential length element along the lat grid with dimension = nlat.</span>
 
-<span class="sd">        *dphi*</span>
-<span class="sd">            Differential length element along the lat grid with dimension nlat.</span>
+<span class="sd">            pv_field : np.ndarray</span>
+<span class="sd">                Absolute vorticity field with dimension = [nlat, nlon].</span>
+<span class="sd">                If none, pv_field is expected to be computed with u,v,t field.</span>
 
-<span class="sd">        *pv_field*</span>
-<span class="sd">            Absolute vorticity field with dimension [nlat x nlon].</span>
-<span class="sd">            If none, pv_field is expected to be computed with u,v,t field.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">            &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span> <span class="o">=</span> <span class="n">xlon</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">=</span> <span class="n">ylat</span>
@@ -570,14 +562,18 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="n">n_partitions</span>
 
+
 <div class="viewcode-block" id="BarotropicField.equivalent_latitudes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField.equivalent_latitudes">[docs]</a>    <span class="k">def</span> <span class="nf">equivalent_latitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute equivalent latitude with the *pv_field* stored in the object.</span>
 
-<span class="sd">        :returns: an numpy array with dimension (nlat) of equivalent latitude array.</span>
+<span class="sd">        Return</span>
+<span class="sd">        ----------</span>
+<span class="sd">        An numpy array with dimension (nlat) of equivalent latitude array.</span>
 
-<span class="sd">        :example:</span>
+<span class="sd">        Example</span>
+<span class="sd">        ----------</span>
 <span class="sd">        &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
 <span class="sd">        &gt;&gt;&gt; eqv_lat = barofield1.equivalent_latitudes()</span>
 
@@ -598,11 +594,15 @@
 <div class="viewcode-block" id="BarotropicField.lwa"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField.lwa">[docs]</a>    <span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
         <span class="sd">&quot;&quot;&quot;</span>
+
 <span class="sd">        Compute the finite-amplitude local wave activity based on the *equivalent_latitudes* and the *pv_field* stored in the object.</span>
 
-<span class="sd">        :returns: an 2-D numpy array with dimension (nlat,nlon) of local wave activity values.</span>
+<span class="sd">        Return</span>
+<span class="sd">        ----------</span>
+<span class="sd">        An 2-D numpy array with dimension [nlat,nlon] of local wave activity values.</span>
 
-<span class="sd">        :example:</span>
+<span class="sd">        Example</span>
+<span class="sd">        ----------</span>
 <span class="sd">        &gt;&gt;&gt; barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)</span>
 <span class="sd">        &gt;&gt;&gt; eqv_lat = barofield1.equivalent_latitudes() # This line is optional</span>
 <span class="sd">        &gt;&gt;&gt; lwa = barofield1.lwa()</span>
