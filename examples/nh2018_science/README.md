@@ -7,7 +7,7 @@ Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream. Sci
 
 This notebook demonstrates how to compute local wave 
 activity and all the flux terms in equations (2) and (3) in NH2018 with the updated functionality 
-in the python package `hn2016_falwa` version 0.3.0. 
+in the python package `hn2016_falwa` version 0.3.1. 
 
 
 To run the script, please cloning the [GitHub repo](http://github.com/csyhuang/hn2016_falwa) and install  
