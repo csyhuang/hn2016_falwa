@@ -17,12 +17,12 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
 
     Parameters
     ----------
-    height : sequence or array_like
+    height : numpy.array
         Array of z-coordinate [in meters] with dimension = (kmax), equally spaced
-    area : ndarray
+    area : numpy.ndarray
         Two-dimension numpy array specifying differential areal element of each grid point;
         dimension = (nlat, nlon).
-    theta : ndarray
+    theta : numpy.ndarray
         Matrix of potential temperature [K] with dimension (kmax,nlat,nlon) or (kmax,nlat)
     s_et : int, optional
         Index of the latitude that defines the boundary of the Southern hemispheric domain;
@@ -34,16 +34,16 @@ def static_stability(height,area,theta,s_et=None,n_et=None):
 
     Returns
     -------
-    t0_n : sequence or array_like
+    t0_n : numpy.array
         Area-weighted average of potential temperature (\tilde{\theta} in HN16)
         in the Northern hemispheric domain with dimension = (kmax)
-    t0_s : sequence or array_like
+    t0_s : numpy.array
         Area-weighted average of potential temperature (\tilde{\theta} in HN16)
         in the Southern hemispheric domain with dimension = (kmax)
-    stat_n : sequence or array_like
+    stat_n : numpy.array
         Static stability (d\tilde{\theta}/dz in HN16) in the Northern hemispheric
         domain with dimension = (kmax)
-    stat_s : sequence or array_like
+    stat_s : numpy.array
         Static stability (d\tilde{\theta}/dz in HN16) in the Southern hemispheric
         domain with dimension = (kmax)
 
@@ -107,26 +107,26 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
         Longitudinal dimension of the longitude grid.
     kmax : int
         Vertical dimension of the height grid.
-    unih : sequence or array_like
+    unih : numpy.array
         Numpy array of height in [meters]; dimension = (kmax)
-    ylat : sequence or array_like
+    ylat : numpy.array
         Numpy array of latitudes in [degrees]; dimension = (nlat)
-    avort : ndarray
+    avort : numpy.ndarray
         Three-dimension numpy array of absolute vorticity (i.e. relative vorticity
         + 2*Omega*sin(lat)) in [1/s]; dimension = (kmax x nlat x nlon)
-    potential_temp : ndarray
+    potential_temp : numpy.ndarray
         Three-dimension numpy array of potential temperature in [K];
         dimension = (kmax x nlat x nlon)
-    t0_cn : sequence or array_like
+    t0_cn : numpy.array
         Area-weighted average of potential temperature (\tilde{\theta} in HN16)
         in the Northern hemispheric domain with dimension = (kmax)
-    t0_cs : sequence or array_like
+    t0_cs : numpy.array
         Area-weighted average of potential temperature (\tilde{\theta} in HN16)
         in the Southern hemispheric domain with dimension = (kmax)
-    stat_cn : sequence or array_like
+    stat_cn : numpy.array
         Static stability (d\tilde{\theta}/dz in HN16) in the Northern hemispheric
         domain with dimension = (kmax)
-    stat_cs : sequence or array_like
+    stat_cs : numpy.array
         Static stability (d\tilde{\theta}/dz in HN16) in the Southern hemispheric
         domain with dimension = (kmax)
     scale_height : float
@@ -135,10 +135,10 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
 
     Returns
     -------
-    QGPV : ndarray
+    QGPV : numpy.ndarray
         Three-dimension numpy array of quasi-geostrophic potential vorticity;
         dimension = (kmax x nlat x nlon)
-    dzdiv : ndarray
+    dzdiv : numpy.ndarray
         Three-dimension numpy array of the stretching term in QGPV;
         dimension = (kmax x nlat x nlon)
 
