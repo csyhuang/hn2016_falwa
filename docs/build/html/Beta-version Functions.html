@@ -1,26 +1,15 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Beta-version Functions &#8212; hn2016_falwa 0.3.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -33,13 +22,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="beta-version-functions">
@@ -54,29 +44,29 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>tstamp</strong> (<em>string</em>) &#8211; Time stamp of the snapshot of the field.</li>
-<li><strong>znum</strong> (<em>ndarray</em>) &#8211; Zonal mean wind.</li>
-<li><strong>FAWA_cos</strong> (<em>ndarray</em>) &#8211; Zonal mean finite-amplitude wave activity.</li>
-<li><strong>ylat</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>ephalf2</strong> (<em>ndarray</em>) &#8211; Epsilon in Nakamura and Solomon (2010).</li>
-<li><strong>Delta_PT</strong> (<em>ndarray</em>) &#8211; Delta Theta in Nakamura and Solomon (2010); upper-boundary conditions.</li>
-<li><strong>zm_PT</strong> (<em>ndarray</em>) &#8211; Zonal mean potential temperature.</li>
-<li><strong>Input_B0</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the lowest layer (k=0). Part of the lower-boundary condition.</li>
-<li><strong>Input_B1</strong> (<em>sequence</em><em> or </em><em>array_like</em>) &#8211; Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.</li>
-<li><strong>use_real_Data</strong> (<em>boolean</em>) &#8211; Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.</li>
-<li><strong>plot_all_ref_quan</strong> (<em>boolean</em>) &#8211; Whether to plot the solved reference states using matplotlib library. By default False. For debugging.</li>
+<li><strong>tstamp</strong> (<em>string</em>) – Time stamp of the snapshot of the field.</li>
+<li><strong>znum</strong> (<em>ndarray</em>) – Zonal mean wind.</li>
+<li><strong>FAWA_cos</strong> (<em>ndarray</em>) – Zonal mean finite-amplitude wave activity.</li>
+<li><strong>ylat</strong> (<em>sequence</em><em> or </em><em>array_like</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
+<li><strong>ephalf2</strong> (<em>ndarray</em>) – Epsilon in Nakamura and Solomon (2010).</li>
+<li><strong>Delta_PT</strong> (<em>ndarray</em>) – Delta Theta in Nakamura and Solomon (2010); upper-boundary conditions.</li>
+<li><strong>zm_PT</strong> (<em>ndarray</em>) – Zonal mean potential temperature.</li>
+<li><strong>Input_B0</strong> (<em>sequence</em><em> or </em><em>array_like</em>) – Zonal-mean surface wave activity for the lowest layer (k=0). Part of the lower-boundary condition.</li>
+<li><strong>Input_B1</strong> (<em>sequence</em><em> or </em><em>array_like</em>) – Zonal-mean surface wave activity for the second lowest layer (k=1). Part of the lower-boundary condition.</li>
+<li><strong>use_real_Data</strong> (<em>boolean</em>) – Whether to use input data to compute the reference states. By detault True. If false, randomly generated arrays will be used.</li>
+<li><strong>plot_all_ref_quan</strong> (<em>boolean</em>) – Whether to plot the solved reference states using matplotlib library. By default False. For debugging.</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>u_MassCorr_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of mass correction Delta u in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>u_Ref_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of zonal wind reference state u_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>T_MassCorr_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature Delta T in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>T_Ref_regular_noslip</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature T_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>u_MassCorr_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of mass correction Delta u in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>u_Ref_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of zonal wind reference state u_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>T_MassCorr_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature Delta T in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
-<li><strong>T_Ref_regular_adiab</strong> (<em>ndarray</em>) &#8211; 2-d numpy array of adjustment in reference temperature T_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_MassCorr_regular_noslip</strong> (<em>ndarray</em>) – 2-d numpy array of mass correction Delta u in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_Ref_regular_noslip</strong> (<em>ndarray</em>) – 2-d numpy array of zonal wind reference state u_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_MassCorr_regular_noslip</strong> (<em>ndarray</em>) – 2-d numpy array of adjustment in reference temperature Delta T in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_Ref_regular_noslip</strong> (<em>ndarray</em>) – 2-d numpy array of adjustment in reference temperature T_ref in NS10 with no-slip lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_MassCorr_regular_adiab</strong> (<em>ndarray</em>) – 2-d numpy array of mass correction Delta u in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>u_Ref_regular_adiab</strong> (<em>ndarray</em>) – 2-d numpy array of zonal wind reference state u_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_MassCorr_regular_adiab</strong> (<em>ndarray</em>) – 2-d numpy array of adjustment in reference temperature Delta T in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
+<li><strong>T_Ref_regular_adiab</strong> (<em>ndarray</em>) – 2-d numpy array of adjustment in reference temperature T_ref in NS10 with adiabatic lower boundary conditions; dimension = (kmax,nlat).</li>
 </ul>
 </p>
 </td>
@@ -89,6 +79,7 @@
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -118,12 +109,14 @@
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -134,8 +127,8 @@
       &copy;2018, Clare S. Y. Huang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/Beta-version Functions.rst.txt"

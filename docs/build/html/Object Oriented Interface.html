@@ -1,26 +1,15 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Object Oriented Interface &#8212; hn2016_falwa 0.3.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -34,13 +23,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body role="document">
+  </head><body>
   
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
+          
+
           <div class="body" role="main">
             
   <div class="section" id="module-oopinterface">
@@ -60,33 +50,33 @@ Note that topography is assumed flat in this object.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>xlon</strong> (<em>numpy.array</em>) &#8211; Array of longitude (in degree) of size nlon.</li>
-<li><strong>ylat</strong> (<em>numpy.array</em>) &#8211; Array of latitude (in degree) of size nlat.</li>
-<li><strong>plev</strong> (<em>numpy.</em>) &#8211; Array of pressure level (in hPa) of size nlev.</li>
-<li><strong>u_field</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
-<li><strong>v_field</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
-<li><strong>t_field</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</li>
-<li><strong>kmax</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Dimension of uniform pseudoheight grids used for interpolation.</li>
-<li><strong>maxit</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</li>
-<li><strong>dz</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Size of uniform pseudoheight grids (in meters).</li>
-<li><strong>prefactor</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Vertical air density summed over height.</li>
-<li><strong>npart</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; Number of partitions used to compute equivalent latitude.
+<li><strong>xlon</strong> (<em>numpy.array</em>) – Array of longitude (in degree) of size nlon.</li>
+<li><strong>ylat</strong> (<em>numpy.array</em>) – Array of latitude (in degree) of size nlat.</li>
+<li><strong>plev</strong> (<em>numpy.</em>) – Array of pressure level (in hPa) of size nlev.</li>
+<li><strong>u_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
+<li><strong>v_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
+<li><strong>t_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</li>
+<li><strong>kmax</strong> (<em>int</em><em>, </em><em>optional</em>) – Dimension of uniform pseudoheight grids used for interpolation.</li>
+<li><strong>maxit</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</li>
+<li><strong>dz</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of uniform pseudoheight grids (in meters).</li>
+<li><strong>prefactor</strong> (<em>float</em><em>, </em><em>optional</em>) – Vertical air density summed over height.</li>
+<li><strong>npart</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of partitions used to compute equivalent latitude.
 If not initialized, it will be set to nlat.</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Tolerance that defines the convergence of solution in SOR solver.</li>
-<li><strong>rjac</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Spectral radius of the Jacobi iteration in the SOR solver.</li>
-<li><strong>scale_height</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Scale height of the atmosphere in meters. Default = 7000.</li>
-<li><strong>cp</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Heat capacity of dry air in J/kg-K. Default = 1004.</li>
-<li><strong>dry_gas_constant</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Gas constant for dry air in J/kg-K. Default = 287.</li>
-<li><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Rotation rate of the earth in 1/s. Default = 7.29e-5.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Radius of the planet in meters.
-Default = 6.378e+6 (Earth&#8217;s radius).</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance that defines the convergence of solution in SOR solver.</li>
+<li><strong>rjac</strong> (<em>float</em><em>, </em><em>optional</em>) – Spectral radius of the Jacobi iteration in the SOR solver.</li>
+<li><strong>scale_height</strong> (<em>float</em><em>, </em><em>optional</em>) – Scale height of the atmosphere in meters. Default = 7000.</li>
+<li><strong>cp</strong> (<em>float</em><em>, </em><em>optional</em>) – Heat capacity of dry air in J/kg-K. Default = 1004.</li>
+<li><strong>dry_gas_constant</strong> (<em>float</em><em>, </em><em>optional</em>) – Gas constant for dry air in J/kg-K. Default = 287.</li>
+<li><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) – Rotation rate of the earth in 1/s. Default = 7.29e-5.</li>
+<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius of the planet in meters.
+Default = 6.378e+6 (Earth’s radius).</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_object</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">plev</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_object</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">plev</span><span class="p">,</span>
 <span class="go">                         u_field, v_field, t_field)</span>
 </pre></div>
 </div>
@@ -98,29 +88,29 @@ Default = 6.378e+6 (Earth&#8217;s radius).</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) &#8211; If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) – If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>adv_flux_f1</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of the second-order eddy term in zonal advective flux convergence,
+<li><strong>adv_flux_f1</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the second-order eddy term in zonal advective flux convergence,
 i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>adv_flux_f2</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of the third-order eddy term in zonal advective flux convergence,
+<li><strong>adv_flux_f2</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the third-order eddy term in zonal advective flux convergence,
 i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>adv_flux_f3</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of the remaining term in zonal advective flux convergence,
+<li><strong>adv_flux_f3</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the remaining term in zonal advective flux convergence,
 i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>divergence_eddy_momentum_flux</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of the divergence of eddy momentum flux,
+<li><strong>divergence_eddy_momentum_flux</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the divergence of eddy momentum flux,
 i.e. (II) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>meridional_heat_flux</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of the low-level meridional heat flux,
+<li><strong>meridional_heat_flux</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the low-level meridional heat flux,
 i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>lwa_baro</strong> (<em>np.ndarray</em>) &#8211; Two-dimensional array of barotropic local wave activity (with cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>u_baro</strong> (<em>np.ndarray</em>) &#8211; Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
-<li><strong>lwa</strong> (<em>np.ndarray</em>) &#8211; Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.</li>
+<li><strong>lwa_baro</strong> (<em>np.ndarray</em>) – Two-dimensional array of barotropic local wave activity (with cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
+<li><strong>u_baro</strong> (<em>np.ndarray</em>) – Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</li>
+<li><strong>lwa</strong> (<em>np.ndarray</em>) – Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="n">adv_flux_f2</span><span class="p">,</span> <span class="n">adv_flux_f3</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="n">adv_flux_f2</span><span class="p">,</span> <span class="n">adv_flux_f3</span><span class="p">,</span>
 <span class="go">    divergence_eddy_momentum_flux, meridional_heat_flux,</span>
 <span class="go">    lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()</span>
 </pre></div>
@@ -135,19 +125,19 @@ i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) &#8211; If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) – If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>qref</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
-<li><strong>uref</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
-<li><strong>ptref</strong> (<em>numpy.ndarray</em>) &#8211; Two-dimensional array of reference state of potential temperature (Theta_ref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
+<li><strong>qref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
+<li><strong>uref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
+<li><strong>ptref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of potential temperature (Theta_ref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qref</span><span class="p">,</span> <span class="n">uref</span><span class="p">,</span> <span class="n">ptref</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">compute_reference_states</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qref</span><span class="p">,</span> <span class="n">uref</span><span class="p">,</span> <span class="n">ptref</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">compute_reference_states</span><span class="p">()</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -162,18 +152,18 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><strong>qgpv</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</li>
-<li><strong>interpolated_u</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</li>
-<li><strong>interpolated_v</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</li>
-<li><strong>interpolated_theta</strong> (<em>numpy.ndarray</em>) &#8211; Three-dimensional array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</li>
-<li><strong>static_stability</strong> (<em>numpy.array</em>) &#8211; One-dimension array of interpolated static stability with dimension = kmax</li>
+<li><strong>qgpv</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</li>
+<li><strong>interpolated_u</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</li>
+<li><strong>interpolated_v</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</li>
+<li><strong>interpolated_theta</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</li>
+<li><strong>static_stability</strong> (<em>numpy.array</em>) – One-dimension array of interpolated static stability with dimension = kmax</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qgpv</span><span class="p">,</span> <span class="n">interpolated_u</span><span class="p">,</span> <span class="n">interpolated_v</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qgpv</span><span class="p">,</span> <span class="n">interpolated_u</span><span class="p">,</span> <span class="n">interpolated_v</span><span class="p">,</span>
 <span class="go">    interpolated_theta, static_stability</span>
 <span class="go">    = test_object.interpolate_fields()</span>
 </pre></div>
@@ -191,18 +181,18 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>xlon</strong> (<em>np.array</em>) &#8211; Longitude array in degree with dimension = nlon.</li>
-<li><strong>ylat</strong> (<em>np.array</em>) &#8211; Latitude array in degree with dimension = nlat.</li>
-<li><strong>area</strong> (<em>np.ndarray</em>) &#8211; Differential area at each lon-lat grid points with dimension (nlat,nlon). If &#8216;area=None&#8217;: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</li>
-<li><strong>dphi</strong> (<em>np.array</em>) &#8211; Differential length element along the lat grid with dimension = nlat.</li>
-<li><strong>pv_field</strong> (<em>np.ndarray</em>) &#8211; Absolute vorticity field with dimension [nlat x nlon]. If &#8216;pv_field=None&#8217;: pv_field is expected to be computed with u,v,t field.</li>
+<li><strong>xlon</strong> (<em>np.array</em>) – Longitude array in degree with dimension = nlon.</li>
+<li><strong>ylat</strong> (<em>np.array</em>) – Latitude array in degree with dimension = nlat.</li>
+<li><strong>area</strong> (<em>np.ndarray</em>) – Differential area at each lon-lat grid points with dimension (nlat,nlon). If ‘area=None’: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</li>
+<li><strong>dphi</strong> (<em>np.array</em>) – Differential length element along the lat grid with dimension = nlat.</li>
+<li><strong>pv_field</strong> (<em>np.ndarray</em>) – Absolute vorticity field with dimension [nlat x nlon]. If ‘pv_field=None’: pv_field is expected to be computed with u,v,t field.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
@@ -220,7 +210,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -241,7 +231,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span> <span class="c1"># This line is optional</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lwa</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
 </pre></div>
@@ -254,6 +244,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 
 
           </div>
+          
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -284,12 +275,14 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -300,8 +293,8 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
       &copy;2018, Clare S. Y. Huang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
       
       |
       <a href="_sources/Object Oriented Interface.rst.txt"
