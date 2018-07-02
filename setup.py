@@ -8,12 +8,15 @@ hn2016_falwa is a package that contains modules to compute the finite-amplitude
 local wave activity (FALWA) and reference state (U_ref) in the following papers:
 Huang and Nakamura (2016, JAS): http://dx.doi.org/10.1175/JAS-D-15-0194.1
 Huang and Nakamura (2017, GRL): http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full
-Nakamura and Huang (2018, Science): "Atmospheric Blocking as a Traffic Jam in the Jet Stream"
+Nakamura and Huang (2018, Science): https://doi.org/10.1126/science.aat0721
 The current version of the library handles calculation of FALWA in a spherical barotropic model and QGPV fields on isobaric surfaces.
 
 The functions in this library can compute the tracer equivalent-latitude relationship
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
+
+Minor update in v0.3.2:
+- Modified a procedure in eqvlat in basis.py such that division by a zero differential area is avoided.
 
 Minor update in v0.3.1:
 - The method compute_local_fluxes in the object QGField is renamed compute_lwa_and_barotropic_fluxes.
@@ -43,7 +46,7 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
 
 
 setup(name='hn2016_falwa',
-      version='0.3.1',
+      version='0.3.2',
       description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
       long_description=LONG_DESCRIPTION,
       url='https://github.com/csyhuang/hn2016_falwa',
