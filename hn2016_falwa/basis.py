@@ -49,14 +49,17 @@ def eqvlat(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
     for i in np.arange(0, aa.size):  # Sum up area in each bin
         aa[i] = np.sum(area_flat[np.where(inds == i)])
         if vgrad is not None:
-            dp[i] = np.sum(area_flat[np.where(inds == i)] *
-                           vgrad_flat[np.where(inds == i)]) / aa[i]
+            # This is to avoid the divided-by-zero error
+            if aa[i] == 0.:
+                continue
+            else:
+                dp[i] = np.sum(area_flat[np.where(inds == i)] *
+                               vgrad_flat[np.where(inds == i)]) / aa[i]
 
     aq = np.cumsum(aa)
     if vgrad is not None:
         brac = np.zeros_like(aa)
         brac[1:-1] = 0.5 * (dp[:-2] + dp[2:])
-        # brac[i] = 0.5 * (dp[i-1]+dp[i])
 
     y_part = aq / (2 * pi * planet_radius**2) - 1.0
     lat_part = np.rad2deg(np.arcsin(y_part))

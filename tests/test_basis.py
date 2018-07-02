@@ -17,6 +17,9 @@ class basisTestCase(unittest.TestCase):
         self.xlon = np.linspace(0, 360, self.nlon, endpoint=False)
         self.vort = np.sin(3. * np.deg2rad(self.xlon[np.newaxis, :])) \
                     * np.cos(np.deg2rad(self.ylat[:, np.newaxis]))
+        self.dummy_vgrad = 3. / (self.planet_radius * np.cos(np.deg2rad(self.ylat[:, np.newaxis]))) \
+                           * np.cos(np.deg2rad(3. * self.xlon[np.newaxis, :])) * np.cos(np.deg2rad(self.ylat[:, np.newaxis])) \
+                           - 1. / self.planet_radius * np.sin(np.deg2rad(self.ylat[:, np.newaxis]))	* np.sin(np.deg2rad(3. * self.xlon[np.newaxis, :]))	
         self.dphi = np.deg2rad(np.diff(self.ylat)[0])
         self.area = 2. * pi * self.planet_radius**2 \
                     * (np.cos(np.deg2rad(self.ylat[:, np.newaxis])) * self.dphi) \
@@ -40,11 +43,17 @@ class basisTestCase(unittest.TestCase):
         of vorticity non-decreasing with latitude, given a random vorticity field.
         '''
         from hn2016_falwa.basis import eqvlat
-        q_part, _ = basis.eqvlat(self.ylat, self.vort, self.area, self.nlat,
-                                 planet_radius=self.planet_radius,
-                                 vgrad=None)
-        self.assertTrue(np.all(np.diff(q_part) >= 0.))
-    
+        q_part1, vgrad = basis.eqvlat(self.ylat, self.vort, self.area, self.nlat,
+                                      planet_radius=self.planet_radius,
+                                      vgrad=self.dummy_vgrad)
+        q_part2, _ = basis.eqvlat(self.ylat, self.vort, self.area, self.nlat,
+                                  planet_radius=self.planet_radius,
+                                  vgrad=None)
+        self.assertTrue(np.all(np.diff(q_part1) >= 0.))
+        self.assertEqual(q_part1.tolist(), q_part2.tolist())
+        self.assertTrue(vgrad is not None)
+        self.assertEqual(vgrad.shape, q_part1.shape)
+
 
 if __name__ == '__main__':
 
