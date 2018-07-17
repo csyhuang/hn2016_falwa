@@ -4,7 +4,7 @@ from math import pi
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
-
+import hn2016_falwa.utilities as utilities
 
 # The function assumes uniform field
 
@@ -122,6 +122,8 @@ class QGField(object):
 
         # === To be computed ===
         self.dphi = np.deg2rad(180./(self.nlat-1))
+        self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
+        
         if npart is None:
             self.npart = self.nlat
         else:
@@ -305,16 +307,20 @@ class QGField(object):
         -------
 
         adv_flux_f1 : numpy.ndarray
-            Two-dimensional array of the second-order eddy term in zonal advective flux convergence,
+            Two-dimensional array of the second-order eddy term in zonal advective flux,
             i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         adv_flux_f2 : numpy.ndarray
-            Two-dimensional array of the third-order eddy term in zonal advective flux convergence,
+            Two-dimensional array of the third-order eddy term in zonal advective flux,
             i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         adv_flux_f3 : numpy.ndarray
-            Two-dimensional array of the remaining term in zonal advective flux convergence,
+            Two-dimensional array of the remaining term in zonal advective flux,
             i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+
+        convergence_zonal_advective_flux : numpy.ndarray
+            Two-dimensional array of the convergence of zonal advective flux,
+            i.e. -div(F1+F2+F3) in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         divergence_eddy_momentum_flux : numpy.ndarray
             Two-dimensional array of the divergence of eddy momentum flux,
@@ -337,7 +343,7 @@ class QGField(object):
         Examples
         --------
 
-        >>> adv_flux_f1, adv_flux_f2, adv_flux_f3,
+        >>> adv_flux_f1, adv_flux_f2, adv_flux_f3, convergence_zonal_advective_flux,
             divergence_eddy_momentum_flux, meridional_heat_flux,
             lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()
 
@@ -367,15 +373,27 @@ class QGField(object):
                                               self.cp,
                                               self.prefactor)
 
+        # === Compute divergence of the meridional eddy momentum flux ===
         meri_flux_temp = np.zeros_like(ep2baro)
         meri_flux_temp[:, 1:-1] = (ep2baro[:, 1:-1] - ep3baro[:, 1:-1]) / \
             (2 * self.planet_radius * self.dphi *
              np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
 
+
+        # === Compute convergence of the zonal LWA flux ===
+        zonal_adv_flux_sum = np.swapaxes((ua1baro + ua2baro + ep1baro), 0, 1)
+        convergence_zonal_advective_flux = \
+            utilities.zonal_convergence(zonal_adv_flux_sum,
+                                        np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                                        self.dlambda,
+                                        planet_radius=self.planet_radius)
+                                                    
+
         if northern_hemisphere_results_only:
             self.adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
             self.adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
             self.adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
+            self.convergence_zonal_advective_flux = convergence_zonal_advective_flux
             self.meridional_heat_flux = np.swapaxes(ep4, 0, 1)
             self.lwa_baro = np.swapaxes(astarbaro, 0, 1)
             self.u_baro = np.swapaxes(ubaro, 0, 1)
@@ -386,30 +404,42 @@ class QGField(object):
             self.adv_flux_f1 = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
                            np.swapaxes(ua1baro, 0, 1)))
+
             self.adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
                                                     self.nlon)),
                                           np.swapaxes(ua2baro, 0, 1)))
+
             self.adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
                                                     self.nlon)),
                                           np.swapaxes(ep1baro, 0, 1)))
+
+            self.convergence_zonal_advective_flux = \
+                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
+                           np.swapaxes(convergence_zonal_advective_flux, 0, 1)))
+
             self.meridional_heat_flux = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
                            np.swapaxes(ep4, 0, 1)))
+
             self.lwa_baro = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
                            np.swapaxes(astarbaro, 0, 1)))
+
             self.u_baro = np.vstack((np.zeros((self.equator_idx - 1,
                                                self.nlon)),
                                      np.swapaxes(ubaro, 0, 1)))
+
             self.lwa = \
                 np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
                                           self.nlon)),
                                 np.swapaxes(lwa, 0, 2)), axis=1)
+
             self.divergence_eddy_momentum_flux = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
                            np.swapaxes(meri_flux_temp, 0, 1)))
 
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, \
+               self.convergence_zonal_advective_flux, \
                self.divergence_eddy_momentum_flux, \
                self.meridional_heat_flux, \
                self.lwa_baro, self.u_baro, self.lwa
@@ -543,7 +573,7 @@ class BarotropicField(object):
         planet_radius = self.planet_radius
 
         self.eqvlat, dummy = basis.eqvlat(ylat, pv_field, area, self.n_partitions,
-                                    planet_radius=planet_radius)
+                                    planet_radius=self.planet_radius)
         return self.eqvlat
 
 
