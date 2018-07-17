@@ -4,7 +4,7 @@ from math import pi
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
-import hn2016_falwa.utilities as utilities
+import utilities
 
 # The function assumes uniform field
 
