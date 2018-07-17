@@ -5,17 +5,20 @@ be used to reproduce data required in the analyses done in
 
 Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream. Science. (2018)
 
-This notebook demonstrates how to compute local wave 
-activity and all the flux terms in equations (2) and (3) in NH2018 with the updated functionality 
-in the python package `hn2016_falwa` version 0.3.1. 
+This notebook demonstrates how to compute local wave activity (LWA), LWA flux and flux con/divergence 
+in equations (2) and (3) in NH2018 with the updated functionality in the python package `hn2016_falwa` 
+(version 0.3.1 and after).
 
+To set up the environment to run the scripts, create an environment with `example/environment.yml`:
+```
+conda env create -f environment.yml
+```
 
-To run the script, please cloning the [GitHub repo](http://github.com/csyhuang/hn2016_falwa) and install  
+To run the script, clone the [GitHub repo](http://github.com/csyhuang/hn2016_falwa) and install 
 the package with
 ```
 python setup.py install
 ```
-
 
 The sample data can be downloaded with the script `download_example.py`, given that you have 
 the python package `ecmwfapi` installed and have an account on ECMWF server.

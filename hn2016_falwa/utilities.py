@@ -175,3 +175,56 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
 
         qgpv = avort+dzdiv * av1
     return qgpv, dzdiv
+    
+    
+def zonal_convergence(field, clat, dlambda, planet_radius=6.378e+6, tol=1.e-5):
+
+    """
+    The function "zonal_convergence" computes the zonal component of the convergence 
+    operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
+    -1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)
+
+    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
+
+    Parameters
+    ----------
+    field : numpy.ndarray
+        An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]
+    
+    clat : numpy.array
+    	Numpy array of cosine latitude; dimension [nlat]
+        
+    dlambda : float
+        Differential element of longitude
+        
+	planet_radius : float, optional
+	    Radius of the planet in meters.
+	    Default = 6.378e+6 (Earth's radius)
+	    
+    tol : float, optional
+        Tolerance below which clat is considered infinitely small that the corresponding
+        grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5
+
+    Returns
+    -------
+    ans : numpy.ndarray
+        Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]
+
+    """
+    
+    zonal_diff = np.zeros_like(field)
+    
+    zonal_diff[:, 1:-1] = field[:, 2:] - field[:, :-2]
+    zonal_diff[:, 0] = field[:, 1] - field[:, -1]
+    zonal_diff[:, -1] = field[:, 0] - field[:, -2]
+    
+    # This is to avoid divided by zero
+    finite_clat = np.abs(clat) > tol
+    
+    zonal_diff[finite_clat, :] = zonal_diff[finite_clat, :] * \
+                                 (-1./(planet_radius * clat[finite_clat, np.newaxis] * 2. * dlambda))
+    
+    return zonal_diff
+    
+    
+    

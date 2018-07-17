@@ -1,7 +1,7 @@
 import unittest
 import os
 __path__=[os.path.dirname(os.path.abspath(__file__))]
-from . import test_basis, test_oopinterface
+from . import test_basis, test_oopinterface, test_utilities
 
 
 def my_module_suite():

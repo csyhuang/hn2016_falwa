@@ -15,6 +15,9 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
+Minor update in v0.3.3:
+- Added functionality to compute convergence of zonal advective flux.
+
 Minor update in v0.3.2:
 - Modified a procedure in eqvlat in basis.py such that division by a zero differential area is avoided.
 
@@ -46,7 +49,7 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
 
 
 setup(name='hn2016_falwa',
-      version='0.3.2',
+      version='0.3.3',
       description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
       long_description=LONG_DESCRIPTION,
       url='https://github.com/csyhuang/hn2016_falwa',
