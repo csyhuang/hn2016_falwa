@@ -216,6 +216,59 @@
 
         <span class="n">qgpv</span> <span class="o">=</span> <span class="n">avort</span><span class="o">+</span><span class="n">dzdiv</span> <span class="o">*</span> <span class="n">av1</span>
     <span class="k">return</span> <span class="n">qgpv</span><span class="p">,</span> <span class="n">dzdiv</span></div>
+    
+    
+<div class="viewcode-block" id="zonal_convergence"><a class="viewcode-back" href="../Utility Functions.html#utilities.zonal_convergence">[docs]</a><span class="k">def</span> <span class="nf">zonal_convergence</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">clat</span><span class="p">,</span> <span class="n">dlambda</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1.e-5</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The function &quot;zonal_convergence&quot; computes the zonal component of the convergence </span>
+<span class="sd">    operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:</span>
+<span class="sd">    -1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)</span>
+
+<span class="sd">    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    field : numpy.ndarray</span>
+<span class="sd">        An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]</span>
+<span class="sd">    </span>
+<span class="sd">    clat : numpy.array</span>
+<span class="sd">    	Numpy array of cosine latitude; dimension [nlat]</span>
+<span class="sd">        </span>
+<span class="sd">    dlambda : float</span>
+<span class="sd">        Differential element of longitude</span>
+<span class="sd">        </span>
+<span class="sd">	planet_radius : float, optional</span>
+<span class="sd">	    Radius of the planet in meters.</span>
+<span class="sd">	    Default = 6.378e+6 (Earth&#39;s radius)</span>
+<span class="sd">	    </span>
+<span class="sd">    tol : float, optional</span>
+<span class="sd">        Tolerance below which clat is considered infinitely small that the corresponding</span>
+<span class="sd">        grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ans : numpy.ndarray</span>
+<span class="sd">        Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">zonal_diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">field</span><span class="p">)</span>
+    
+    <span class="n">zonal_diff</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">field</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">zonal_diff</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">field</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">zonal_diff</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">field</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    
+    <span class="c1"># This is to avoid divided by zero</span>
+    <span class="n">finite_clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">clat</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tol</span>
+    
+    <span class="n">zonal_diff</span><span class="p">[</span><span class="n">finite_clat</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">zonal_diff</span><span class="p">[</span><span class="n">finite_clat</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> \
+                                 <span class="p">(</span><span class="o">-</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[</span><span class="n">finite_clat</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span> <span class="o">*</span> <span class="mf">2.</span> <span class="o">*</span> <span class="n">dlambda</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">zonal_diff</span></div>
+    
+    
+    
 </pre></div>
 
           </div>
