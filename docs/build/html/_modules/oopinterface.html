@@ -45,9 +45,9 @@
 <span class="kn">from</span> <span class="nn">interpolate_fields</span> <span class="k">import</span> <span class="n">interpolate_fields</span>
 <span class="kn">from</span> <span class="nn">compute_reference_states</span> <span class="k">import</span> <span class="n">compute_reference_states</span>
 <span class="kn">from</span> <span class="nn">compute_lwa_and_barotropic_fluxes</span> <span class="k">import</span> <span class="n">compute_lwa_and_barotropic_fluxes</span>
-<span class="kn">import</span> <span class="nn">utilities</span>
 
 <span class="c1"># The function assumes uniform field</span>
+
 
 <div class="viewcode-block" id="QGField"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField">[docs]</a><span class="k">class</span> <span class="nc">QGField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
@@ -390,6 +390,8 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
+        <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">utilities</span>
+        
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interpolate_fields</span><span class="p">()</span>
 
@@ -425,9 +427,9 @@
         <span class="n">zonal_adv_flux_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">((</span><span class="n">ua1baro</span> <span class="o">+</span> <span class="n">ua2baro</span> <span class="o">+</span> <span class="n">ep1baro</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> \
             <span class="n">utilities</span><span class="o">.</span><span class="n">zonal_convergence</span><span class="p">(</span><span class="n">zonal_adv_flux_sum</span><span class="p">,</span>
-                                        <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span><span class="p">:])),</span>
-                                        <span class="bp">self</span><span class="o">.</span><span class="n">dlambda</span><span class="p">,</span>
-                                        <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">)</span>
+                              <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span><span class="p">:])),</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">dlambda</span><span class="p">,</span>
+                              <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">)</span>
                                                     
 
         <span class="k">if</span> <span class="n">northern_hemisphere_results_only</span><span class="p">:</span>

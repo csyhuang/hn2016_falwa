@@ -4,9 +4,9 @@ from math import pi
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
-import utilities
 
 # The function assumes uniform field
+
 
 class QGField(object):
 
@@ -349,6 +349,8 @@ class QGField(object):
 
         """
 
+        from hn2016_falwa import utilities
+        
         if self.qgpv_temp is None:
             self.interpolate_fields()
 
@@ -384,9 +386,9 @@ class QGField(object):
         zonal_adv_flux_sum = np.swapaxes((ua1baro + ua2baro + ep1baro), 0, 1)
         convergence_zonal_advective_flux = \
             utilities.zonal_convergence(zonal_adv_flux_sum,
-                                        np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
-                                        self.dlambda,
-                                        planet_radius=self.planet_radius)
+                              np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                              self.dlambda,
+                              planet_radius=self.planet_radius)
                                                     
 
         if northern_hemisphere_results_only:
