@@ -1,4 +1,4 @@
-## Python Library: hn2016_falwa (v0.3.3)
+## Python Library: hn2016_falwa (v0.3.4)
 
 [![Build Status](https://travis-ci.org/csyhuang/hn2016_falwa.svg?branch=master)](https://travis-ci.org/csyhuang/hn2016_falwa)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)
 
@@ -15,29 +15,21 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) 
 such that I can keep you updated of any changes made.
 
-## Important update (May 24, 2018)
+## Important update (for release after May 24, 2018)
 
 The most updated version v0.3.0 enhanced the methods in the class *QGField* (in `hn2016_falwa.oopinterface`) with functionality
-to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). 
-Refer to the scripts in `examples/nh2018_science/` for details.
+to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). Please refer to the scripts in `examples/nh2018_science/` for details.
 
 ## Installation
 
-This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions are having 
-backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to 
-implement the installation.
+This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions are having backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 
-To install the package:
+Since the package is still being actively developed, please use the *develop* mode for installation:
 ```
 git clone https://github.com/csyhuang/hn2016_falwa.git
 cd hn2016_falwa
-python setup.py install
+python setup.py develop
 ```
-Bugs have been fixed since the release. To clone the version with bug fixed (on *test* branch):
-```
-git clone -b test https://github.com/csyhuang/hn2016_falwa.git
-```
-Changes will be merged in the next updated version.
 
 There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
 interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.

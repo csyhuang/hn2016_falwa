@@ -15,6 +15,9 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
+Minor update in v0.3.4:
+- Fixed an issue in compute_reference_states.f90 that can potentially lead to segmentation fault error.
+
 Minor update in v0.3.3:
 - Added functionality to compute convergence of zonal advective flux.
 
@@ -48,17 +51,17 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
                  f2py_options=['--quiet'])
 
 
-setup(name='hn2016_falwa',
-      version='0.3.3',
-      description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
-      long_description=LONG_DESCRIPTION,
-      url='https://github.com/csyhuang/hn2016_falwa',
-      author='Clare S. Y. Huang',
-      author_email='csyhuang@uchicago.edu',
-      license='MIT',
-      packages=['hn2016_falwa'],
-      test_suite = 'tests.my_module_suite',
-      ext_modules = [ext1, ext2, ext3],
-	  zip_safe=False
-	  )
-
+setup(
+    name='hn2016_falwa',
+    version='0.3.3',
+    description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
+    long_description=LONG_DESCRIPTION,
+    url='https://github.com/csyhuang/hn2016_falwa',
+    author='Clare S. Y. Huang',
+    author_email='csyhuang@uchicago.edu',
+    license='MIT',
+    packages=['hn2016_falwa'],
+    test_suite='tests.my_module_suite',
+    ext_modules=[ext1, ext2, ext3],
+    zip_safe=False
+)

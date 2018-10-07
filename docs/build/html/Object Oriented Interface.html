@@ -4,20 +4,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Object Oriented Interface &#8212; hn2016_falwa 0.3.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -31,8 +23,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
 
-  </head>
-  <body>
+  </head><body>
   
 
     <div class="document">
@@ -83,7 +74,7 @@ Default = 6.378e+6 (Earth’s radius).</li>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_object</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">plev</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_object</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">plev</span><span class="p">,</span>
 <span class="go">                         u_field, v_field, t_field)</span>
 </pre></div>
 </div>
@@ -119,7 +110,7 @@ i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="n">adv_flux_f2</span><span class="p">,</span> <span class="n">adv_flux_f3</span><span class="p">,</span> <span class="n">convergence_zonal_advective_flux</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="n">adv_flux_f2</span><span class="p">,</span> <span class="n">adv_flux_f3</span><span class="p">,</span> <span class="n">convergence_zonal_advective_flux</span><span class="p">,</span>
 <span class="go">    divergence_eddy_momentum_flux, meridional_heat_flux,</span>
 <span class="go">    lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()</span>
 </pre></div>
@@ -146,7 +137,7 @@ i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qref</span><span class="p">,</span> <span class="n">uref</span><span class="p">,</span> <span class="n">ptref</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">compute_reference_states</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qref</span><span class="p">,</span> <span class="n">uref</span><span class="p">,</span> <span class="n">ptref</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">compute_reference_states</span><span class="p">()</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -172,7 +163,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qgpv</span><span class="p">,</span> <span class="n">interpolated_u</span><span class="p">,</span> <span class="n">interpolated_v</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qgpv</span><span class="p">,</span> <span class="n">interpolated_u</span><span class="p">,</span> <span class="n">interpolated_v</span><span class="p">,</span>
 <span class="go">    interpolated_theta, static_stability</span>
 <span class="go">    = test_object.interpolate_fields()</span>
 </pre></div>
@@ -201,7 +192,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="method">
@@ -219,7 +210,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -240,7 +231,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span> <span class="c1"># This line is optional</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lwa</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">lwa</span><span class="p">()</span>
 </pre></div>
@@ -283,12 +274,14 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -299,7 +292,7 @@ uniform pseudoheight grids, and compute QGPV on the same grids.</p>
       &copy;2018, Clare S. Y. Huang.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
       
       |

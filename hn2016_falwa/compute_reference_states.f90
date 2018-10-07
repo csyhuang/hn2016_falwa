@@ -57,7 +57,8 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     wt = 0.
     do j = jd,nlat
         phi0 = dp*float(j-1)-0.5*pi
-        tb(:) = tb(:)+cos(phi0)*tbar(j,:)
+        !tb(:) = tb(:)+cos(phi0)*tbar(j,:)
+        tb(:) = tb(:)+cos(phi0)*tbar(j-(jd-1),:)
         wt = wt + cos(phi0)
     enddo
     tb(:) = tb(:)/wt

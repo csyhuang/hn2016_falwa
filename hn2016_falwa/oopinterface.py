@@ -248,6 +248,8 @@ class QGField(object):
         >>> qref, uref, ptref = test_object.compute_reference_states()
 
         """
+        self.northern_hemisphere_results_only = northern_hemisphere_results_only
+
         if self.qgpv_temp is None:
             self.interpolate_fields()
 
@@ -274,7 +276,7 @@ class QGField(object):
                 np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):,
                                   np.newaxis]))
 
-            if northern_hemisphere_results_only:
+            if self.northern_hemisphere_results_only:
                 self.qref = np.swapaxes(self.qref_temp_right_unit, 0, 1)
                 self.uref = np.swapaxes(self.uref_temp, 0, 1)
                 self.ptref = np.swapaxes(self.ptref_temp, 0, 1)
