@@ -48,8 +48,8 @@ Note that topography is assumed flat in this object.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>xlon</strong> (<em>numpy.array</em>) – Array of longitude (in degree) of size nlon.</li>
-<li><strong>ylat</strong> (<em>numpy.array</em>) – Array of latitude (in degree) of size nlat.</li>
+<li><strong>xlon</strong> (<em>numpy.array</em>) – Array of evenly-spaced longitude (in degree) of size nlon.</li>
+<li><strong>ylat</strong> (<em>numpy.array</em>) – Array of evenly-spaced latitude (in degree) of size nlat.</li>
 <li><strong>plev</strong> (<em>numpy.</em>) – Array of pressure level (in hPa) of size nlev.</li>
 <li><strong>u_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
 <li><strong>v_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</li>
@@ -143,10 +143,63 @@ i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern
 </dd></dl>
 
 <dl class="method">
+<dt id="oopinterface.QGField.get_latitude_dim">
+<code class="descname">get_latitude_dim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_latitude_dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_latitude_dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the latitude dimension of the input data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_ptref">
+<code class="descname">get_ptref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_ptref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_ptref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the potential temperature reference state [K].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_qgpv">
+<code class="descname">get_qgpv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_qgpv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_qgpv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the interpolated quasi-geostrophic potential vorticity field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_qref">
+<code class="descname">get_qref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_qref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_qref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the QGPV reference state [1/s].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_static_stability">
+<code class="descname">get_static_stability</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_static_stability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_static_stability" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the interpolated static stability.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_theta">
+<code class="descname">get_theta</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_theta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_theta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the interpolated potential temperature field [K].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_u">
+<code class="descname">get_u</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_u"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_u" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the interpolated zonal wind field [m/s].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_uref">
+<code class="descname">get_uref</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_uref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_uref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the zonal wind reference state [m/s].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="oopinterface.QGField.get_v">
+<code class="descname">get_v</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_v"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the interpolated meridional wind field [m/s].</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="oopinterface.QGField.interpolate_fields">
 <code class="descname">interpolate_fields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.interpolate_fields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.interpolate_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolate zonal wind, maridional wind, and potential temperature field onto the
-uniform pseudoheight grids, and compute QGPV on the same grids.</p>
+<dd><p>Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

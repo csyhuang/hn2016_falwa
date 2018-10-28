@@ -18,15 +18,14 @@ class QGField(object):
     Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
     Note that topography is assumed flat in this object.
 
-
     .. versionadded:: 0.3.0
 
     Parameters
     ----------
     xlon : numpy.array
-           Array of longitude (in degree) of size nlon.
+           Array of evenly-spaced longitude (in degree) of size nlon.
     ylat : numpy.array
-           Array of latitude (in degree) of size nlat.
+           Array of evenly-spaced latitude (in degree) of size nlat.
     plev : numpy.
            Array of pressure level (in hPa) of size nlev.
     u_field : numpy.ndarray
@@ -85,18 +84,21 @@ class QGField(object):
         # Check if ylat is in ascending order and include the equator
         if np.diff(ylat)[0]<0:
             raise TypeError("ylat must be in ascending order")
-        if sum(ylat == 0) == 0:
+        # Even grid
+        if (ylat.size%2==0) & (sum(ylat == 0.0) == 0):
             self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90, 90, ylat.size//2+1, endpoint=True)
+            self.ylat = np.linspace(-90., 90., ylat.size+1,
+                                    endpoint=True)
             self.equator_idx = \
                 np.argwhere(self.ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
             self.need_latitude_interpolation = True
             # raise TypeError("ylat must include the equator (i.e. degree 0)")
+        # Odd grid
         elif sum(ylat == 0) == 1:
             self.ylat_no_equator = None
             self.ylat = ylat
-            self.equator_idx = np.argwhere(yla == 0)[0][0] + 1
+            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
             self.need_latitude_interpolation = False
         else:
@@ -186,7 +188,20 @@ class QGField(object):
         self.uref_temp = None
         self.ptref_temp = None
 
-    def interp_back(self, field):
+    def get_latitude_dim(self):
+        """
+        Return the latitude dimension of the input data.
+        """
+        if self.need_latitude_interpolation:
+            return self.nlat - 1
+        else:
+            return self.nlat
+
+    def _interp_back(self, field):
+        '''
+        Internal function to interpolate the results from odd grid to even grid. If the initial input to the QGField object is an odd grid, error will be raised.
+
+        '''
 
         if self.ylat_no_equator is None:
             raise TypeError("No need for such interpolation.")
@@ -197,9 +212,7 @@ class QGField(object):
 
     def interpolate_fields(self):
         """
-        Interpolate zonal wind, maridional wind, and potential temperature field onto the
-        uniform pseudoheight grids, and compute QGPV on the same grids.
-
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.
 
         Returns
         -------
@@ -258,10 +271,10 @@ class QGField(object):
 
         if self.need_latitude_interpolation:
             # Interpolate back to original grid
-            self.qgpv = self.interp_back(self.qgpv)
-            self.interpolated_u = self.interp_back(self.interpolated_u)
-            self.interpolated_v = self.interp_back(self.interpolated_v)
-            self.interpolated_theta = self.interp_back(self.interpolated_theta)
+            self.qgpv = self._interp_back(self.qgpv)
+            self.interpolated_u = self._interp_back(self.interpolated_u)
+            self.interpolated_v = self._interp_back(self.interpolated_v)
+            self.interpolated_theta = self._interp_back(self.interpolated_theta)
 
         return self.qgpv, self.interpolated_u, self.interpolated_v, \
             self.interpolated_theta, self.static_stability
@@ -369,9 +382,9 @@ class QGField(object):
                                np.swapaxes(self.ptref_temp, 0, 1)))
 
         if self.need_latitude_interpolation:
-            self.qref = self.interp_back(self.qref)
-            self.uref = self.interp_back(self.uref)
-            self.ptref = self.interp_back(self.ptref)
+            self.qref = self._interp_back(self.qref)
+            self.uref = self._interp_back(self.uref)
+            self.ptref = self._interp_back(self.ptref)
 
         return self.qref, self.uref, self.ptref
 
@@ -397,7 +410,9 @@ class QGField(object):
         return self.ptref
 
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=True):
+    def compute_lwa_and_barotropic_fluxes(
+        self, northern_hemisphere_results_only=True
+    ):
 
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).
@@ -547,18 +562,18 @@ class QGField(object):
                            np.swapaxes(meri_flux_temp, 0, 1)))
 
         if self.need_latitude_interpolation:
-            self.adv_flux_f1 = self.interp_back(self.adv_flux_f1)
-            self.adv_flux_f2, = self.interp_back(self.adv_flux_f2,)
-            self.adv_flux_f3 = self.interp_back(self.adv_flux_f3)
+            self.adv_flux_f1 = self._interp_back(self.adv_flux_f1)
+            self.adv_flux_f2, = self._interp_back(self.adv_flux_f2,)
+            self.adv_flux_f3 = self._interp_back(self.adv_flux_f3)
             self.convergence_zonal_advective_flux = \
-                self.interp_back(self.convergence_zonal_advective_flux)
+                self._interp_back(self.convergence_zonal_advective_flux)
             self.divergence_eddy_momentum_flux = \
-                self.interp_back(self.divergence_eddy_momentum_flux)
+                self._interp_back(self.divergence_eddy_momentum_flux)
             self.meridional_heat_flux = \
-                self.interp_back(self.meridional_heat_flux)
-            self.lwa_baro = self.interp_back(self.lwa_baro)
-            self.u_baro = self.interp_back(self.u_baro)
-            self.lwa = self.interp_back(self.lwa)
+                self._interp_back(self.meridional_heat_flux)
+            self.lwa_baro = self._interp_back(self.lwa_baro)
+            self.u_baro = self._interp_back(self.u_baro)
+            self.lwa = self._interp_back(self.lwa)
 
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, \
             self.convergence_zonal_advective_flux, \
