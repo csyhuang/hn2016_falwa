@@ -1,4 +1,3 @@
-# This is the api for object oriented interface
 from math import pi
 
 import numpy as np
@@ -15,7 +14,7 @@ class QGField(object):
     """
     Local wave activity and flux analysis in quasi-geostrophic framework
     that can be used to reproduce the results in:
-    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
+    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018).
     Note that topography is assumed flat in this object.
 
     .. versionadded:: 0.3.0
