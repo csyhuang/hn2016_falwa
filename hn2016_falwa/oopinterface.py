@@ -4,6 +4,7 @@ from math import pi
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
+from scipy.interpolate import interp1d
 
 
 class QGField(object):
@@ -85,13 +86,18 @@ class QGField(object):
         if np.diff(ylat)[0]<0:
             raise TypeError("ylat must be in ascending order")
         if sum(ylat==0)==0:
-            raise TypeError("ylat must include the equator (i.e. degree 0)")
+            self.ylat_no_equator = ylat
+            self.ylat = np.linspace(-90, 90, ylat.size//2+1, endpoint=True)
+            self.equator_idx = np.argwhere(self.ylat==0)[0][0] + 1 # Fortran indexing starts from 1
+            self.need_latitude_interpolation = True
+            #raise TypeError("ylat must include the equator (i.e. degree 0)")
         elif sum(ylat==0)==1:
-            self.equator_idx = np.argwhere(ylat==0)[0][0] + 1 # Fortran indexing starts from 1
             self.ylat = ylat
-            self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+            self.equator_idx = np.argwhere(ylat==0)[0][0] + 1 # Fortran indexing starts from 1
+            self.need_latitude_interpolation = False
         else:
             raise TypeError("There are more than 1 grid point with latitude 0.")
+        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
 
         # === Check if plev is in decending order ===
         if np.diff(plev)[0]>0:
@@ -100,9 +106,9 @@ class QGField(object):
             self.plev = plev
 
 
-        # == Check the shape of wind/temperature fields ===
-        self.nlev, self.nlat, self.nlon = plev.size, ylat.size, xlon.size
-        expected_dimension = (self.nlev, self.nlat, self.nlon)
+        # === Check the shape of wind/temperature fields ===
+        self.nlev, nlat, self.nlon = plev.size, ylat.size, xlon.size
+        expected_dimension = (self.nlev, nlat, self.nlon)
         if u_field.shape != expected_dimension:
             raise TypeError("Incorrect dimension of u_field. Expected dimension: "
                             + str(expected_dimension))
@@ -113,10 +119,19 @@ class QGField(object):
             raise TypeError("Incorrect dimension of t_field. Expected dimension: "
                             + str(expected_dimension))
 
-
-        self.u_field = u_field
-        self.v_field = v_field
-        self.t_field = t_field
+        # === Do Interpolation on latitude grid if needed ===
+        self.nlat = self.ylat.size
+        if self.need_latitude_interpolation:
+            interp_u = interp1d(self.ylat_no_equator, u_field, axis=1)
+            interp_v = interp1d(self.ylat_no_equator, v_field, axis=1)
+            interp_t = interp1d(self.ylat_no_equator, t_field, axis=1)
+            self.u_field = interp_u(self.ylat)
+            self.v_field = interp_v(self.ylat)
+            self.t_field = interp_t(self.ylat)
+        else:
+            self.u_field = u_field
+            self.v_field = v_field
+            self.t_field = t_field
 
 
         # === To be computed ===
@@ -214,8 +229,18 @@ class QGField(object):
             self.interpolated_v = np.swapaxes(self.interpolated_v_temp, 0, 2)
             self.interpolated_theta = np.swapaxes(self.interpolated_theta_temp, 0, 2)
 
-        return self.qgpv, self.interpolated_u, self.interpolated_v, \
-               self.interpolated_theta, self.static_stability
+
+        if self.need_latitude_interpolation:
+            # Interpolate back to original grid
+            qgpv_rev_interp = interp1d(self.ylat, self.qgpv, axis=1)(self.ylat_no_equator)
+            u_rev_interp = interp1d(self.ylat, self.interpolated_u, axis=1)(self.ylat_no_equator)
+            v_rev_interp = interp1d(self.ylat, self.interpolated_v, axis=1)(self.ylat_no_equator)
+            theta_rev_interp = interp1d(self.ylat, self.interpolated_theta, axis=1)(self.ylat_no_equator)
+            return qgpv_rev_interp, u_rev_interp, v_rev_interp, \
+               theta_rev_interp, self.static_stability
+        else:
+            return self.qgpv, self.interpolated_u, self.interpolated_v, \
+                   self.interpolated_theta, self.static_stability
 
 
 
