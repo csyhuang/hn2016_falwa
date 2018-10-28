@@ -131,8 +131,7 @@ domain with dimension = (kmax)</li>
 <dl class="function">
 <dt id="utilities.zonal_convergence">
 <code class="descclassname">utilities.</code><code class="descname">zonal_convergence</code><span class="sig-paren">(</span><em>field</em>, <em>clat</em>, <em>dlambda</em>, <em>planet_radius=6378000.0</em>, <em>tol=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#zonal_convergence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.zonal_convergence" title="Permalink to this definition">¶</a></dt>
-<dd><p>The function “zonal_convergence” computes the zonal component of the convergence
-operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
+<dd><p>The function “zonal_convergence” computes the zonal component of the convergence operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
 -1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)</p>
 <p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -142,15 +141,10 @@ operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical su
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>field</strong> (<em>numpy.ndarray</em>) – An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]</li>
 <li><strong>clat</strong> (<em>numpy.array</em>) – Numpy array of cosine latitude; dimension [nlat]</li>
-<li><strong>dlambda</strong> (<em>float</em>) – <p>Differential element of longitude</p>
-<dl class="docutils">
-<dt>planet_radius <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
-<dd>Radius of the planet in meters.
-Default = 6.378e+6 (Earth’s radius)</dd>
-</dl>
-</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance below which clat is considered infinitely small that the corresponding
-grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5</li>
+<li><strong>dlambda</strong> (<em>float</em>) – Differential element of longitude</li>
+<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius of the planet in meters.
+Default = 6.378e+6 (Earth’s radius)</li>
+<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance below which clat is considered infinitely small that the corresponding grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5</li>
 </ul>
 </td>
 </tr>

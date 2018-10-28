@@ -35,7 +35,7 @@ Dependencies include Numpy, Scipy and optionally Matplotlib. Since the package i
  cd hn2016_falwa
  python setup.py develop
 
-To incorporate future updates, pull the new version of the code by::
+To incorporate updates, pull the new version of the code by::
 
  git pull
 

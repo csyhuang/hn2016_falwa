@@ -4,10 +4,11 @@ python:
   - "3.6"
 
 install:
-  - "pip install --upgrade pip setuptools wheel"
-  - "sudo apt-get install python-numpy python-scipy gfortran"
-  - "pip install numpy"
-  - "pip install coveralls"
+  - pip install --upgrade pip setuptools wheel
+  - sudo apt-get install python-numpy python-scipy gfortran
+  - pip install numpy
+  - pip install scipy
+  - pip install coveralls
 
 # command to run tests
 script:

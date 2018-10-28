@@ -31,8 +31,12 @@
             
   <h1>Source code for oopinterface</h1><div class="highlight"><pre>
 <span></span><span class="c1"># This is the api for object oriented interface</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">pi</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="k">import</span> <span class="n">interp1d</span>
+
+<span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">utilities</span>
 <span class="kn">from</span> <span class="nn">interpolate_fields</span> <span class="k">import</span> <span class="n">interpolate_fields</span>
 <span class="kn">from</span> <span class="nn">compute_reference_states</span> <span class="k">import</span> <span class="n">compute_reference_states</span>
 <span class="kn">from</span> <span class="nn">compute_lwa_and_barotropic_fluxes</span> <span class="k">import</span> <span class="n">compute_lwa_and_barotropic_fluxes</span>
@@ -46,15 +50,14 @@
 <span class="sd">    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)</span>
 <span class="sd">    Note that topography is assumed flat in this object.</span>
 
-
 <span class="sd">    .. versionadded:: 0.3.0</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    xlon : numpy.array</span>
-<span class="sd">           Array of longitude (in degree) of size nlon.</span>
+<span class="sd">           Array of evenly-spaced longitude (in degree) of size nlon.</span>
 <span class="sd">    ylat : numpy.array</span>
-<span class="sd">           Array of latitude (in degree) of size nlat.</span>
+<span class="sd">           Array of evenly-spaced latitude (in degree) of size nlat.</span>
 <span class="sd">    plev : numpy.</span>
 <span class="sd">           Array of pressure level (in hPa) of size nlev.</span>
 <span class="sd">    u_field : numpy.ndarray</span>
@@ -110,51 +113,82 @@
 <span class="sd">        computation are done by calling various methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span> <span class="o">=</span> <span class="n">xlon</span>
-
-        <span class="c1"># === Check if ylat is in ascending order and include the equator (0 degree) ===</span>
+        <span class="c1"># Check if ylat is in ascending order and include the equator</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ylat</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ylat must be in ascending order&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ylat</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ylat must include the equator (i.e. degree 0)&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ylat</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">ylat</span><span class="o">==</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="c1"># Fortran indexing starts from 1</span>
+        <span class="c1"># Even grid</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ylat</span><span class="o">.</span><span class="n">size</span><span class="o">%</span><span class="mi">2</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">ylat</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span> <span class="o">=</span> <span class="n">ylat</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">90.</span><span class="p">,</span> <span class="mf">90.</span><span class="p">,</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">=</span> \
+                <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="c1"># Fortran indexing starts from 1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># raise TypeError(&quot;ylat must include the equator (i.e. degree 0)&quot;)</span>
+        <span class="c1"># Odd grid</span>
+        <span class="k">elif</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ylat</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span> <span class="o">=</span> <span class="n">ylat</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">ylat</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="c1"># Fortran indexing starts from 1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;There are more than 1 grid point with latitude 0.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;There are more than 1 grid point with latitude 0.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">)))</span>
 
         <span class="c1"># === Check if plev is in decending order ===</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">plev</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">plev</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;plev must be in decending order&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">plev</span> <span class="o">=</span> <span class="n">plev</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span> <span class="o">=</span> <span class="n">xlon</span>
 
-
-        <span class="c1"># == Check the shape of wind/temperature fields ===</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span> <span class="o">=</span> <span class="n">plev</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
-        <span class="n">expected_dimension</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
+        <span class="c1"># === Check the shape of wind/temperature fields ===</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span> <span class="o">=</span> <span class="n">plev</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ylat</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">xlon</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">expected_dimension</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlev</span><span class="p">,</span> <span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">u_field</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">expected_dimension</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Incorrect dimension of u_field. Expected dimension: &quot;</span>
-                            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Incorrect dimension of u_field. Expected dimension: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">v_field</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">expected_dimension</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Incorrect dimension of v_field. Expected dimension: &quot;</span>
-                            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Incorrect dimension of v_field. Expected dimension: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">t_field</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">expected_dimension</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Incorrect dimension of t_field. Expected dimension: &quot;</span>
-                            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Incorrect dimension of t_field. Expected dimension: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">expected_dimension</span><span class="p">)</span>
+            <span class="p">)</span>
 
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">u_field</span> <span class="o">=</span> <span class="n">u_field</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">v_field</span> <span class="o">=</span> <span class="n">v_field</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">t_field</span> <span class="o">=</span> <span class="n">t_field</span>
-
+        <span class="c1"># === Do Interpolation on latitude grid if needed ===</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span><span class="p">:</span>
+            <span class="n">interp_u</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span><span class="p">,</span> <span class="n">u_field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="s2">&quot;extrapolate&quot;</span>
+            <span class="p">)</span>
+            <span class="n">interp_v</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span><span class="p">,</span> <span class="n">v_field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="s2">&quot;extrapolate&quot;</span>
+            <span class="p">)</span>
+            <span class="n">interp_t</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span><span class="p">,</span> <span class="n">t_field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="s2">&quot;extrapolate&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">u_field</span> <span class="o">=</span> <span class="n">interp_u</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v_field</span> <span class="o">=</span> <span class="n">interp_v</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_field</span> <span class="o">=</span> <span class="n">interp_t</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">u_field</span> <span class="o">=</span> <span class="n">u_field</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v_field</span> <span class="o">=</span> <span class="n">v_field</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_field</span> <span class="o">=</span> <span class="n">t_field</span>
 
         <span class="c1"># === To be computed ===</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="mf">180.</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dlambda</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlon</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlon</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        
+
         <span class="k">if</span> <span class="n">npart</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">npart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span>
         <span class="k">else</span><span class="p">:</span>
@@ -186,12 +220,31 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">uref_temp</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ptref_temp</span> <span class="o">=</span> <span class="kc">None</span>
 
+<div class="viewcode-block" id="QGField.get_latitude_dim"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_latitude_dim">[docs]</a>    <span class="k">def</span> <span class="nf">get_latitude_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the latitude dimension of the input data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span></div>
+
+    <span class="k">def</span> <span class="nf">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Internal function to interpolate the results from odd grid to even grid. If the initial input to the QGField object is an odd grid, error will be raised.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;No need for such interpolation.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">interp1d</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="s1">&#39;extrapolate&#39;</span>
+            <span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat_no_equator</span><span class="p">)</span>
 
 <div class="viewcode-block" id="QGField.interpolate_fields"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.interpolate_fields">[docs]</a>    <span class="k">def</span> <span class="nf">interpolate_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the</span>
-<span class="sd">        uniform pseudoheight grids, and compute QGPV on the same grids.</span>
-
+<span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -244,12 +297,49 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">qgpv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span><span class="p">:</span>
+            <span class="c1"># Interpolate back to original grid</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qgpv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qgpv</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v</span><span class="p">,</span> \
-               <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_stability</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_stability</span></div>
 
+<div class="viewcode-block" id="QGField.get_qgpv"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_qgpv">[docs]</a>    <span class="k">def</span> <span class="nf">get_qgpv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the interpolated quasi-geostrophic potential vorticity field.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv</span></div>
 
+<div class="viewcode-block" id="QGField.get_u"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_u">[docs]</a>    <span class="k">def</span> <span class="nf">get_u</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the interpolated zonal wind field [m/s].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_u</span></div>
+
+<div class="viewcode-block" id="QGField.get_v"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_v">[docs]</a>    <span class="k">def</span> <span class="nf">get_v</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the interpolated meridional wind field [m/s].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_v</span></div>
+
+<div class="viewcode-block" id="QGField.get_theta"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_theta">[docs]</a>    <span class="k">def</span> <span class="nf">get_theta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the interpolated potential temperature field [K].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interpolated_theta</span>        </div>
+
+<div class="viewcode-block" id="QGField.get_static_stability"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_static_stability">[docs]</a>    <span class="k">def</span> <span class="nf">get_static_stability</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the interpolated static stability.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_stability</span>        </div>
 
 <div class="viewcode-block" id="QGField.compute_reference_states"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_reference_states">[docs]</a>    <span class="k">def</span> <span class="nf">compute_reference_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 
@@ -261,7 +351,6 @@
 <span class="sd">        ----------</span>
 <span class="sd">        northern_hemisphere_results_only : bool</span>
 <span class="sd">               If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.</span>
-
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -324,11 +413,38 @@
                     <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">kmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)),</span>
                                <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ptref_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qref</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">uref</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ptref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ptref</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qref</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uref</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ptref</span></div>
 
 
+<div class="viewcode-block" id="QGField.get_qref"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_qref">[docs]</a>    <span class="k">def</span> <span class="nf">get_qref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the QGPV reference state [1/s].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qref</span></div>
 
-<div class="viewcode-block" id="QGField.compute_lwa_and_barotropic_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_lwa_and_barotropic_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+<div class="viewcode-block" id="QGField.get_uref"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_uref">[docs]</a>    <span class="k">def</span> <span class="nf">get_uref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the zonal wind reference state [m/s].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uref</span></div>
+
+
+<div class="viewcode-block" id="QGField.get_ptref"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.get_ptref">[docs]</a>    <span class="k">def</span> <span class="nf">get_ptref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the potential temperature reference state [K].</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ptref</span></div>
+
+
+<div class="viewcode-block" id="QGField.compute_lwa_and_barotropic_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_lwa_and_barotropic_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
 
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).</span>
@@ -385,8 +501,6 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">utilities</span>
-        
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qgpv_temp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interpolate_fields</span><span class="p">()</span>
 
@@ -417,21 +531,22 @@
             <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span> <span class="o">*</span>
              <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
 
-
         <span class="c1"># === Compute convergence of the zonal LWA flux ===</span>
         <span class="n">zonal_adv_flux_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">((</span><span class="n">ua1baro</span> <span class="o">+</span> <span class="n">ua2baro</span> <span class="o">+</span> <span class="n">ep1baro</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> \
-            <span class="n">utilities</span><span class="o">.</span><span class="n">zonal_convergence</span><span class="p">(</span><span class="n">zonal_adv_flux_sum</span><span class="p">,</span>
-                              <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span><span class="p">:])),</span>
-                              <span class="bp">self</span><span class="o">.</span><span class="n">dlambda</span><span class="p">,</span>
-                              <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">)</span>
-                                                    
+            <span class="n">utilities</span><span class="o">.</span><span class="n">zonal_convergence</span><span class="p">(</span>
+                <span class="n">zonal_adv_flux_sum</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span><span class="p">:])),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dlambda</span><span class="p">,</span>
+                <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">northern_hemisphere_results_only</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ua1baro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ua2baro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ep1baro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> <span class="n">convergence_zonal_advective_flux</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> \
+                <span class="n">convergence_zonal_advective_flux</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ep4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">lwa_baro</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">astarbaro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">u_baro</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ubaro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -452,8 +567,10 @@
                                           <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">ep1baro</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> \
-                <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)),</span>
-                           <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">convergence_zonal_advective_flux</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)),</span>
+                     <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">convergence_zonal_advective_flux</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span> <span class="o">=</span> \
                 <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)),</span>
@@ -476,13 +593,25 @@
                 <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">equator_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)),</span>
                            <span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">meri_flux_temp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">need_latitude_interpolation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f2</span><span class="p">,</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f2</span><span class="p">,)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">divergence_eddy_momentum_flux</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">divergence_eddy_momentum_flux</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lwa_baro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lwa_baro</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">u_baro</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_baro</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interp_back</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lwa</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">adv_flux_f3</span><span class="p">,</span> \
-               <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span><span class="p">,</span> \
-               <span class="bp">self</span><span class="o">.</span><span class="n">divergence_eddy_momentum_flux</span><span class="p">,</span> \
-               <span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span><span class="p">,</span> \
-               <span class="bp">self</span><span class="o">.</span><span class="n">lwa_baro</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_baro</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span></div></div>
-
-
+            <span class="bp">self</span><span class="o">.</span><span class="n">convergence_zonal_advective_flux</span><span class="p">,</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">divergence_eddy_momentum_flux</span><span class="p">,</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">meridional_heat_flux</span><span class="p">,</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">lwa_baro</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">u_baro</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">curl_2D</span><span class="p">(</span><span class="n">ufield</span><span class="p">,</span> <span class="n">vfield</span><span class="p">,</span> <span class="n">clat</span><span class="p">,</span> <span class="n">dlambda</span><span class="p">,</span> <span class="n">dphi</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="mf">6.378e+6</span><span class="p">):</span>
@@ -505,8 +634,6 @@
                       <span class="n">ufield</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">clat</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">dphi</span><span class="p">))</span>
     <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">ans</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">planet_radius</span> <span class="o">/</span> <span class="n">clat</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">ans</span>
-
-
 
 
 <div class="viewcode-block" id="BarotropicField"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField">[docs]</a><span class="k">class</span> <span class="nc">BarotropicField</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -605,15 +732,12 @@
 
         <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="k">import</span> <span class="n">basis</span>
 
-        <span class="n">pv_field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span>
-        <span class="n">area</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span>
-        <span class="n">ylat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span>
-        <span class="n">planet_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ylat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span><span class="p">,</span>
+            <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span>
+        <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">(</span><span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="p">,</span> <span class="n">area</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span><span class="p">,</span>
-                                    <span class="n">planet_radius</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span></div>
-
 
 <div class="viewcode-block" id="BarotropicField.lwa"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.BarotropicField.lwa">[docs]</a>    <span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
@@ -637,11 +761,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-        <span class="n">lwa_ans</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span>
-                                   <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span><span class="p">)</span>
+        <span class="n">lwa_ans</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">lwa_ans</span></div></div>
-
-
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

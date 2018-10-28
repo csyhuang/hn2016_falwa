@@ -1,6 +1,10 @@
 # This is the api for object oriented interface
-import numpy as np
 from math import pi
+
+import numpy as np
+from scipy.interpolate import interp1d
+
+from hn2016_falwa import utilities
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
@@ -14,15 +18,14 @@ class QGField(object):
     Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
     Note that topography is assumed flat in this object.
 
-
     .. versionadded:: 0.3.0
 
     Parameters
     ----------
     xlon : numpy.array
-           Array of longitude (in degree) of size nlon.
+           Array of evenly-spaced longitude (in degree) of size nlon.
     ylat : numpy.array
-           Array of latitude (in degree) of size nlat.
+           Array of evenly-spaced latitude (in degree) of size nlat.
     plev : numpy.
            Array of pressure level (in hPa) of size nlev.
     u_field : numpy.ndarray
@@ -78,51 +81,82 @@ class QGField(object):
         computation are done by calling various methods.
         """
 
-
-        self.xlon = xlon
-
-        # === Check if ylat is in ascending order and include the equator (0 degree) ===
+        # Check if ylat is in ascending order and include the equator
         if np.diff(ylat)[0]<0:
             raise TypeError("ylat must be in ascending order")
-        if sum(ylat==0)==0:
-            raise TypeError("ylat must include the equator (i.e. degree 0)")
-        elif sum(ylat==0)==1:
-            self.equator_idx = np.argwhere(ylat==0)[0][0] + 1 # Fortran indexing starts from 1
+        # Even grid
+        if (ylat.size%2==0) & (sum(ylat == 0.0) == 0):
+            self.ylat_no_equator = ylat
+            self.ylat = np.linspace(-90., 90., ylat.size+1,
+                                    endpoint=True)
+            self.equator_idx = \
+                np.argwhere(self.ylat == 0)[0][0] + 1
+            # Fortran indexing starts from 1
+            self.need_latitude_interpolation = True
+            # raise TypeError("ylat must include the equator (i.e. degree 0)")
+        # Odd grid
+        elif sum(ylat == 0) == 1:
+            self.ylat_no_equator = None
             self.ylat = ylat
-            self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1
+            # Fortran indexing starts from 1
+            self.need_latitude_interpolation = False
         else:
-            raise TypeError("There are more than 1 grid point with latitude 0.")
+            raise TypeError(
+                "There are more than 1 grid point with latitude 0."
+            )
+        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
 
         # === Check if plev is in decending order ===
-        if np.diff(plev)[0]>0:
+        if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order")
         else:
             self.plev = plev
+        self.xlon = xlon
 
-
-        # == Check the shape of wind/temperature fields ===
-        self.nlev, self.nlat, self.nlon = plev.size, ylat.size, xlon.size
-        expected_dimension = (self.nlev, self.nlat, self.nlon)
+        # === Check the shape of wind/temperature fields ===
+        self.nlev, nlat, self.nlon = plev.size, ylat.size, xlon.size
+        expected_dimension = (self.nlev, nlat, self.nlon)
         if u_field.shape != expected_dimension:
-            raise TypeError("Incorrect dimension of u_field. Expected dimension: "
-                            + str(expected_dimension))
+            raise TypeError(
+                "Incorrect dimension of u_field. Expected dimension: {}"
+                .format(expected_dimension)
+            )
         if v_field.shape != expected_dimension:
-            raise TypeError("Incorrect dimension of v_field. Expected dimension: "
-                            + str(expected_dimension))
+            raise TypeError(
+                "Incorrect dimension of v_field. Expected dimension: {}"
+                .format(expected_dimension)
+            )
         if t_field.shape != expected_dimension:
-            raise TypeError("Incorrect dimension of t_field. Expected dimension: "
-                            + str(expected_dimension))
+            raise TypeError(
+                "Incorrect dimension of t_field. Expected dimension: {}"
+                .format(expected_dimension)
+            )
 
-
-        self.u_field = u_field
-        self.v_field = v_field
-        self.t_field = t_field
-
+        # === Do Interpolation on latitude grid if needed ===
+        self.nlat = self.ylat.size
+        if self.need_latitude_interpolation:
+            interp_u = interp1d(
+                self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate"
+            )
+            interp_v = interp1d(
+                self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate"
+            )
+            interp_t = interp1d(
+                self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate"
+            )
+            self.u_field = interp_u(self.ylat)
+            self.v_field = interp_v(self.ylat)
+            self.t_field = interp_t(self.ylat)
+        else:
+            self.u_field = u_field
+            self.v_field = v_field
+            self.t_field = t_field
 
         # === To be computed ===
         self.dphi = np.deg2rad(180./(self.nlat-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
-        
+
         if npart is None:
             self.npart = self.nlat
         else:
@@ -154,12 +188,31 @@ class QGField(object):
         self.uref_temp = None
         self.ptref_temp = None
 
+    def get_latitude_dim(self):
+        """
+        Return the latitude dimension of the input data.
+        """
+        if self.need_latitude_interpolation:
+            return self.nlat - 1
+        else:
+            return self.nlat
+
+    def _interp_back(self, field):
+        '''
+        Internal function to interpolate the results from odd grid to even grid. If the initial input to the QGField object is an odd grid, error will be raised.
+
+        '''
+
+        if self.ylat_no_equator is None:
+            raise TypeError("No need for such interpolation.")
+        else:
+            return interp1d(
+                self.ylat, field, axis=1, fill_value='extrapolate'
+            )(self.ylat_no_equator)
 
     def interpolate_fields(self):
         """
-        Interpolate zonal wind, maridional wind, and potential temperature field onto the
-        uniform pseudoheight grids, and compute QGPV on the same grids.
-
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.
 
         Returns
         -------
@@ -212,12 +265,49 @@ class QGField(object):
             self.qgpv = np.swapaxes(self.qgpv_temp, 0, 2)
             self.interpolated_u = np.swapaxes(self.interpolated_u_temp, 0, 2)
             self.interpolated_v = np.swapaxes(self.interpolated_v_temp, 0, 2)
-            self.interpolated_theta = np.swapaxes(self.interpolated_theta_temp, 0, 2)
+            self.interpolated_theta = np.swapaxes(
+                self.interpolated_theta_temp, 0, 2
+            )
+
+        if self.need_latitude_interpolation:
+            # Interpolate back to original grid
+            self.qgpv = self._interp_back(self.qgpv)
+            self.interpolated_u = self._interp_back(self.interpolated_u)
+            self.interpolated_v = self._interp_back(self.interpolated_v)
+            self.interpolated_theta = self._interp_back(self.interpolated_theta)
 
         return self.qgpv, self.interpolated_u, self.interpolated_v, \
-               self.interpolated_theta, self.static_stability
+            self.interpolated_theta, self.static_stability
 
+    def get_qgpv(self):
+        """
+        Retrieve the interpolated quasi-geostrophic potential vorticity field.
+        """
+        return self.qgpv
 
+    def get_u(self):
+        """
+        Retrieve the interpolated zonal wind field [m/s].
+        """
+        return self.interpolated_u
+
+    def get_v(self):
+        """
+        Retrieve the interpolated meridional wind field [m/s].
+        """
+        return self.interpolated_v
+
+    def get_theta(self):
+        """
+        Retrieve the interpolated potential temperature field [K].
+        """
+        return self.interpolated_theta        
+
+    def get_static_stability(self):
+        """
+        Retrieve the interpolated static stability.
+        """
+        return self.static_stability        
 
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
@@ -229,7 +319,6 @@ class QGField(object):
         ----------
         northern_hemisphere_results_only : bool
                If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
-
 
         Returns
         -------
@@ -292,11 +381,38 @@ class QGField(object):
                     np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
                                np.swapaxes(self.ptref_temp, 0, 1)))
 
+        if self.need_latitude_interpolation:
+            self.qref = self._interp_back(self.qref)
+            self.uref = self._interp_back(self.uref)
+            self.ptref = self._interp_back(self.ptref)
+
         return self.qref, self.uref, self.ptref
 
 
+    def get_qref(self):
+        """
+        Retrieve the QGPV reference state [1/s].
+        """
+        return self.qref
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=True):
+
+    def get_uref(self):
+        """
+        Retrieve the zonal wind reference state [m/s].
+        """
+        return self.uref
+
+
+    def get_ptref(self):
+        """
+        Retrieve the potential temperature reference state [K].
+        """
+        return self.ptref
+
+
+    def compute_lwa_and_barotropic_fluxes(
+        self, northern_hemisphere_results_only=True
+    ):
 
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).
@@ -353,8 +469,6 @@ class QGField(object):
 
         """
 
-        from hn2016_falwa import utilities
-        
         if self.qgpv_temp is None:
             self.interpolate_fields()
 
@@ -385,21 +499,22 @@ class QGField(object):
             (2 * self.planet_radius * self.dphi *
              np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
 
-
         # === Compute convergence of the zonal LWA flux ===
         zonal_adv_flux_sum = np.swapaxes((ua1baro + ua2baro + ep1baro), 0, 1)
         convergence_zonal_advective_flux = \
-            utilities.zonal_convergence(zonal_adv_flux_sum,
-                              np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
-                              self.dlambda,
-                              planet_radius=self.planet_radius)
-                                                    
+            utilities.zonal_convergence(
+                zonal_adv_flux_sum,
+                np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                self.dlambda,
+                planet_radius=self.planet_radius
+            )
 
         if northern_hemisphere_results_only:
             self.adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
             self.adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
             self.adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
-            self.convergence_zonal_advective_flux = convergence_zonal_advective_flux
+            self.convergence_zonal_advective_flux = \
+                convergence_zonal_advective_flux
             self.meridional_heat_flux = np.swapaxes(ep4, 0, 1)
             self.lwa_baro = np.swapaxes(astarbaro, 0, 1)
             self.u_baro = np.swapaxes(ubaro, 0, 1)
@@ -420,8 +535,10 @@ class QGField(object):
                                           np.swapaxes(ep1baro, 0, 1)))
 
             self.convergence_zonal_advective_flux = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(convergence_zonal_advective_flux, 0, 1)))
+                np.vstack(
+                    (np.zeros((self.equator_idx - 1, self.nlon)),
+                     np.swapaxes(convergence_zonal_advective_flux, 0, 1))
+                )
 
             self.meridional_heat_flux = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
@@ -444,13 +561,25 @@ class QGField(object):
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
                            np.swapaxes(meri_flux_temp, 0, 1)))
 
+        if self.need_latitude_interpolation:
+            self.adv_flux_f1 = self._interp_back(self.adv_flux_f1)
+            self.adv_flux_f2, = self._interp_back(self.adv_flux_f2,)
+            self.adv_flux_f3 = self._interp_back(self.adv_flux_f3)
+            self.convergence_zonal_advective_flux = \
+                self._interp_back(self.convergence_zonal_advective_flux)
+            self.divergence_eddy_momentum_flux = \
+                self._interp_back(self.divergence_eddy_momentum_flux)
+            self.meridional_heat_flux = \
+                self._interp_back(self.meridional_heat_flux)
+            self.lwa_baro = self._interp_back(self.lwa_baro)
+            self.u_baro = self._interp_back(self.u_baro)
+            self.lwa = self._interp_back(self.lwa)
+
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, \
-               self.convergence_zonal_advective_flux, \
-               self.divergence_eddy_momentum_flux, \
-               self.meridional_heat_flux, \
-               self.lwa_baro, self.u_baro, self.lwa
-
-
+            self.convergence_zonal_advective_flux, \
+            self.divergence_eddy_momentum_flux, \
+            self.meridional_heat_flux, \
+            self.lwa_baro, self.u_baro, self.lwa
 
 
 def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
@@ -473,8 +602,6 @@ def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
                       ufield[:-2, -1] * clat[:-2]) / (2. * dphi))
     ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
     return ans
-
-
 
 
 class BarotropicField(object):
@@ -573,15 +700,12 @@ class BarotropicField(object):
 
         from hn2016_falwa import basis
 
-        pv_field = self.pv_field
-        area = self.area
-        ylat = self.ylat
-        planet_radius = self.planet_radius
+        self.eqvlat, dummy = basis.eqvlat(
+            self.ylat, self.pv_field, self.area, self.n_partitions,
+            planet_radius=self.planet_radius
+        )
 
-        self.eqvlat, dummy = basis.eqvlat(ylat, pv_field, area, self.n_partitions,
-                                    planet_radius=self.planet_radius)
         return self.eqvlat
-
 
     def lwa(self):
 
@@ -605,11 +729,11 @@ class BarotropicField(object):
         if self.eqvlat is None:
             self.eqvlat = self.equivalent_latitudes(self)
 
-        lwa_ans, dummy = basis.lwa(self.nlon, self.nlat, self.pv_field, self.eqvlat,
-                                   self.planet_radius * self.clat * self.dphi)
+        lwa_ans, dummy = basis.lwa(
+            self.nlon, self.nlat, self.pv_field, self.eqvlat,
+            self.planet_radius * self.clat * self.dphi
+        )
         return lwa_ans
-
-
 
 
 if __name__ == "__main__":

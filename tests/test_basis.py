@@ -31,24 +31,27 @@ class basisTestCase(unittest.TestCase):
         lwa shall be all zero when the there is no meridional component in the
         wind field.
         '''
-        
-        test_vort = (np.ones((5, 5)) * np.array([1, 2, 3, 4, 5])).swapaxes(0, 1)
+
+        test_vort = (np.ones((5, 5)) * np.array([1, 2, 3, 4, 5]))\
+            .swapaxes(0, 1)
         test_q_part = np.array([1, 2, 3, 4, 5])
         input_result, _ = basis.lwa(5, 5, test_vort, test_q_part, np.ones(5))
         self.assertTrue(np.array_equal(input_result, np.zeros((5, 5))))
 
     def test_eqvlat(self):
         '''
-        To test whether the eqvlat function in basis.py produce a reference state
-        of vorticity non-decreasing with latitude, given a random vorticity field.
+        To test whether the eqvlat function in basis.py produce a reference state of vorticity non-decreasing with latitude, given a random vorticity field.
         '''
-        from hn2016_falwa.basis import eqvlat
-        q_part1, vgrad = basis.eqvlat(self.ylat, self.vort, self.area, self.nlat,
-                                      planet_radius=self.planet_radius,
-                                      vgrad=self.dummy_vgrad)
-        q_part2, _ = basis.eqvlat(self.ylat, self.vort, self.area, self.nlat,
-                                  planet_radius=self.planet_radius,
-                                  vgrad=None)
+        q_part1, vgrad = basis.eqvlat(
+            self.ylat, self.vort, self.area, self.nlat,
+            planet_radius=self.planet_radius,
+            vgrad=self.dummy_vgrad
+        )
+        q_part2, _ = basis.eqvlat(
+            self.ylat, self.vort, self.area, self.nlat,
+            planet_radius=self.planet_radius,
+            vgrad=None
+        )
         self.assertTrue(np.all(np.diff(q_part1) >= 0.))
         self.assertEqual(q_part1.tolist(), q_part2.tolist())
         self.assertTrue(vgrad is not None)
