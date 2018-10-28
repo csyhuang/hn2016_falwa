@@ -31,6 +31,11 @@ cd hn2016_falwa
 python setup.py develop
 ```
 
+To incorporate updates, pull the new version of the code by:
+```
+git pull
+```
+
 There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
 interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.
 
