@@ -1,6 +1,7 @@
 # This is the api for object oriented interface
 import numpy as np
 from math import pi
+from hn2016_falwa import utilities
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
@@ -232,17 +233,43 @@ class QGField(object):
 
         if self.need_latitude_interpolation:
             # Interpolate back to original grid
-            qgpv_rev_interp = interp1d(self.ylat, self.qgpv, axis=1)(self.ylat_no_equator)
-            u_rev_interp = interp1d(self.ylat, self.interpolated_u, axis=1)(self.ylat_no_equator)
-            v_rev_interp = interp1d(self.ylat, self.interpolated_v, axis=1)(self.ylat_no_equator)
-            theta_rev_interp = interp1d(self.ylat, self.interpolated_theta, axis=1)(self.ylat_no_equator)
-            return qgpv_rev_interp, u_rev_interp, v_rev_interp, \
-               theta_rev_interp, self.static_stability
-        else:
-            return self.qgpv, self.interpolated_u, self.interpolated_v, \
-                   self.interpolated_theta, self.static_stability
+            self.qgpv = interp1d(self.ylat, self.qgpv, axis=1)(self.ylat_no_equator)
+            self.interpolated_u = interp1d(self.ylat, self.interpolated_u, axis=1)(self.ylat_no_equator)
+            self.interpolated_v = interp1d(self.ylat, self.interpolated_v, axis=1)(self.ylat_no_equator)
+            self.interpolated_theta = interp1d(self.ylat, self.interpolated_theta, axis=1)(self.ylat_no_equator)
 
+        return self.qgpv, self.interpolated_u, self.interpolated_v, \
+               self.interpolated_theta, self.static_stability
 
+    def get_qgpv(self):
+        """
+        Retrieve the interpolated quasi-geostrophic potential vorticity field.
+        """
+        return self.qgpv
+
+    def get_u(self):
+        """
+        Retrieve the interpolated zonal wind field [m/s].
+        """
+        return self.interpolated_u
+
+    def get_v(self):
+        """
+        Retrieve the interpolated meridional wind field [m/s].
+        """
+        return self.interpolated_v
+
+    def get_theta(self):
+        """
+        Retrieve the interpolated potential temperature field [K].
+        """
+        return self.interpolated_theta        
+
+    def get_static_stability(self):
+        """
+        Retrieve the interpolated static stability.
+        """
+        return self.static_stability        
 
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
@@ -317,8 +344,33 @@ class QGField(object):
                     np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
                                np.swapaxes(self.ptref_temp, 0, 1)))
 
+        if self.need_latitude_interpolation:
+        	self.qref = interp1d(self.ylat, self.qref, axis=1)(self.ylat_no_equator)
+        	self.uref = interp1d(self.ylat, self.uref, axis=1)(self.ylat_no_equator)
+        	self.ptref = interp1d(self.ylat, self.ptref, axis=1)(self.ylat_no_equator)
+
         return self.qref, self.uref, self.ptref
 
+
+    def get_qref(self):
+        """
+        Retrieve the QGPV reference state [1/s].
+        """
+        return self.qref
+
+
+    def get_uref(self):
+        """
+        Retrieve the zonal wind reference state [m/s].
+        """
+        return self.uref
+
+
+    def get_ptref(self):
+        """
+        Retrieve the potential temperature reference state [K].
+        """
+        return self.ptref
 
 
     def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=True):
@@ -378,8 +430,6 @@ class QGField(object):
 
         """
 
-        from hn2016_falwa import utilities
-        
         if self.qgpv_temp is None:
             self.interpolate_fields()
 
