@@ -5,65 +5,64 @@ from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
 
-# The function assumes uniform field
-
 
 class QGField(object):
 
-
-    """Local wave activity and flux analysis in quasi-geostrophic framework
-        that can be used to reproduce the results in:
-        Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
-        Note that topography is assumed flat in this object.
-
-
-        .. versionadded:: 0.3.0
-        Parameters
-        ----------
-        xlon : numpy.array
-               Array of longitude (in degree) of size nlon.
-        ylat : numpy.array
-               Array of latitude (in degree) of size nlat.
-        plev : numpy.
-               Array of pressure level (in hPa) of size nlev.
-        u_field : numpy.ndarray
-               Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
-        v_field : numpy.ndarray
-               Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
-        t_field : numpy.ndarray
-               Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
-        kmax : int, optional
-               Dimension of uniform pseudoheight grids used for interpolation.
-        maxit : int, optional
-               Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
-        dz : float, optional
-               Size of uniform pseudoheight grids (in meters).
-        prefactor : float, optional
-               Vertical air density summed over height.
-        npart : int, optional
-               Number of partitions used to compute equivalent latitude.
-               If not initialized, it will be set to nlat.
-        tol : float, optional
-               Tolerance that defines the convergence of solution in SOR solver.
-        rjac : float, optional
-               Spectral radius of the Jacobi iteration in the SOR solver.
-        scale_height : float, optional
-               Scale height of the atmosphere in meters. Default = 7000.
-        cp : float, optional
-               Heat capacity of dry air in J/kg-K. Default = 1004.
-        dry_gas_constant : float, optional
-               Gas constant for dry air in J/kg-K. Default = 287.
-        omega : float, optional
-               Rotation rate of the earth in 1/s. Default = 7.29e-5.
-        planet_radius : float, optional
-               Radius of the planet in meters.
-               Default = 6.378e+6 (Earth's radius).
+    """
+    Local wave activity and flux analysis in quasi-geostrophic framework
+    that can be used to reproduce the results in:
+    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018)
+    Note that topography is assumed flat in this object.
 
 
-        Examples
-        --------
-        >>> test_object = QGField(xlon, ylat, plev,
-                                 u_field, v_field, t_field)
+    .. versionadded:: 0.3.0
+
+    Parameters
+    ----------
+    xlon : numpy.array
+           Array of longitude (in degree) of size nlon.
+    ylat : numpy.array
+           Array of latitude (in degree) of size nlat.
+    plev : numpy.
+           Array of pressure level (in hPa) of size nlev.
+    u_field : numpy.ndarray
+           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+    v_field : numpy.ndarray
+           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+    t_field : numpy.ndarray
+           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+    kmax : int, optional
+           Dimension of uniform pseudoheight grids used for interpolation.
+    maxit : int, optional
+           Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
+    dz : float, optional
+           Size of uniform pseudoheight grids (in meters).
+    prefactor : float, optional
+           Vertical air density summed over height.
+    npart : int, optional
+           Number of partitions used to compute equivalent latitude.
+           If not initialized, it will be set to nlat.
+    tol : float, optional
+           Tolerance that defines the convergence of solution in SOR solver.
+    rjac : float, optional
+           Spectral radius of the Jacobi iteration in the SOR solver.
+    scale_height : float, optional
+           Scale height of the atmosphere in meters. Default = 7000.
+    cp : float, optional
+           Heat capacity of dry air in J/kg-K. Default = 1004.
+    dry_gas_constant : float, optional
+           Gas constant for dry air in J/kg-K. Default = 287.
+    omega : float, optional
+           Rotation rate of the earth in 1/s. Default = 7.29e-5.
+    planet_radius : float, optional
+           Radius of the planet in meters.
+           Default = 6.378e+6 (Earth's radius).
+
+
+    Examples
+    --------
+    >>> test_object = QGField(xlon, ylat, plev,
+                             u_field, v_field, t_field)
 
     """
 
@@ -157,7 +156,8 @@ class QGField(object):
 
 
     def interpolate_fields(self):
-        """Interpolate zonal wind, maridional wind, and potential temperature field onto the
+        """
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the
         uniform pseudoheight grids, and compute QGPV on the same grids.
 
 
@@ -221,7 +221,8 @@ class QGField(object):
 
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
-        """Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.
+        """
+        Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.
 
 
         Parameters
@@ -297,7 +298,8 @@ class QGField(object):
 
     def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=True):
 
-        """Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).
+        """
+        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).
 
         Parameters
         ----------
