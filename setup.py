@@ -15,6 +15,9 @@ The functions in this library can compute the tracer equivalent-latitude relatio
 proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
 finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
 
+Minor update in v0.3.6:
+- Fixed a bug in oopinterface.QGField that interpolation is done on a grid larger than the Northern hemispheric grid size when northern_hemisphere_results_only=True.
+
 Minor update in v0.3.5:
 - Added new functionality in the class 'QGField' to accept latitude grids with even number of grid points.
 
