@@ -1,7 +1,13 @@
 import numpy as np
-from math import pi,exp
+from math import pi, exp
 
-def static_stability(height,area,theta,s_et=None,n_et=None):
+def static_stability(
+    height,
+    area,
+    theta,
+    s_et=None,
+    n_et=None
+):
     """
     The function "static_stability" computes the vertical gradient (z-derivative)
     of hemispheric-averaged potential temperature, i.e. d\tilde{theta}/dz in the def-
@@ -90,9 +96,7 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
                            potential_temp, t0_cn, t0_cs, stat_cn,
                            stat_cs, nlat_s=None, scale_height=7000.):
     """
-    The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential
-    vorticity based on the absolute vorticity, potential temperature and static
-    stability given in a *hemispheric domain*.
+    The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential vorticity based on the absolute vorticity, potential temperature and static stability given in a *hemispheric domain*.
 
     Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
 
