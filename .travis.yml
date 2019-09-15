@@ -15,8 +15,6 @@ install:
 
 # command to run tests
 script:
-  - pwd
-  - ls
-  - pytest
+  - python setup.py pytest
 
 after_success: pip install codecov && codecov
