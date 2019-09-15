@@ -14,9 +14,10 @@ xlon = np.linspace(0, 2. * pi, nlon, endpoint=False)
 ylat = np.linspace(-90., 90., nlat, endpoint=True)
 plev = np.array([1000, 900, 800, 700, 600, 500, 400, 300, 200, 100, 10, 1])
 kmax = 49
-u_field = np.reshape(np.loadtxt(os.getcwd() + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
-v_field = np.reshape(np.loadtxt(os.getcwd() + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
-t_field = np.reshape(np.loadtxt(os.getcwd() + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
+get_cwd = os.path.dirname(os.path.abspath(__file__))
+u_field = np.reshape(np.loadtxt(get_cwd + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
+v_field = np.reshape(np.loadtxt(get_cwd + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
+t_field = np.reshape(np.loadtxt(get_cwd + '/test_data/demo_u.txt'), [nlev, nlat, nlon])
 theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P0) ** (-DRY_GAS_CONSTANT / CP)
 
 

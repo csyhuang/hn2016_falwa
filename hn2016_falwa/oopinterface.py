@@ -5,9 +5,9 @@ from scipy.interpolate import interp1d
 
 from hn2016_falwa import utilities
 from hn2016_falwa.constant import *
-from hn2016_falwa.interpolate_fields import interpolate_fields
-from hn2016_falwa.compute_reference_states import compute_reference_states
-from hn2016_falwa.compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
+from interpolate_fields import interpolate_fields
+from compute_reference_states import compute_reference_states
+from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
 
 
 class QGField(object):

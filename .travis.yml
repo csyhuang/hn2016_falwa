@@ -9,7 +9,8 @@ python:
 install:
   - pip install --upgrade pip setuptools wheel
   - sudo apt-get install python-numpy python-scipy gfortran
-  - pip install -r requirements.txt
+  - pip install numpy
+  - pip install scipy
   - pip install coveralls
 
 # command to run tests

@@ -1,8 +1,6 @@
 from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
-install_requires=['numpy', 'scipy']
-
 LONG_DESCRIPTION="""
 hn2016_falwa is a package that contains modules to compute the finite-amplitude
 local wave activity (FALWA) and reference state (U_ref) in the following papers:
@@ -68,5 +66,6 @@ setup(
     license='MIT',
     packages=find_packages(),
     ext_modules=[ext1, ext2, ext3],
+    extras_require={'test': ['pytest', 'pytest-xdist']},
     zip_safe=False
 )
