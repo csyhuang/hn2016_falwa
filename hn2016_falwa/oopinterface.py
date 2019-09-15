@@ -269,17 +269,19 @@ class QGField(object):
                 self._interpolated_v_temp, \
                 self._interpolated_theta_temp, \
                 self._static_stability = \
-                interpolate_fields(np.swapaxes(self.u_field, 0, 2),
-                                   np.swapaxes(self.v_field, 0, 2),
-                                   np.swapaxes(self.t_field, 0, 2),
-                                   self.plev,
-                                   self.height,
-                                   self.planet_radius,
-                                   self.omega,
-                                   self.dz,
-                                   self.scale_height,
-                                   self.dry_gas_constant,
-                                   self.cp)
+                interpolate_fields(
+                    np.swapaxes(self.u_field, 0, 2),
+                    np.swapaxes(self.v_field, 0, 2),
+                    np.swapaxes(self.t_field, 0, 2),
+                    self.plev,
+                    self.height,
+                    self.planet_radius,
+                    self.omega,
+                    self.dz,
+                    self.scale_height,
+                    self.dry_gas_constant,
+                    self.cp
+                )
 
             self._qgpv = np.swapaxes(self._qgpv_temp, 0, 2)
             self._interpolated_u = np.swapaxes(self._interpolated_u_temp, 0, 2)
@@ -348,7 +350,6 @@ class QGField(object):
         Retrieve the interpolated static stability.
         """
         return self._static_stability
-
 
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
@@ -705,7 +706,7 @@ class QGField(object):
             return self.nlat
 
 
-def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
+def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     """
     Assuming regular latitude and longitude [in degree] grid, compute the curl
     of velocity on a pressure level in spherical coordinates.
@@ -804,6 +805,9 @@ class BarotropicField(object):
         else:
             self.n_partitions = n_partitions
 
+        # Quantities that are computed with the methods below
+        self.eqvlat = None
+        self.lwa = None
 
     def equivalent_latitudes(self):
 
@@ -823,11 +827,11 @@ class BarotropicField(object):
 
         from hn2016_falwa import basis
 
-        self.eqvlat, dummy = basis.eqvlat(
-            self.ylat, self.pv_field, self.area, self.n_partitions,
-            planet_radius=self.planet_radius
-        )
-
+        if self.eqvlat is None:
+            self.eqvlat, dummy = basis.eqvlat(
+                self.ylat, self.pv_field, self.area, self.n_partitions,
+                planet_radius=self.planet_radius
+            )
         return self.eqvlat
 
     def lwa(self):
@@ -850,10 +854,11 @@ class BarotropicField(object):
         from hn2016_falwa import basis
 
         if self.eqvlat is None:
-            self.eqvlat = self.equivalent_latitudes(self)
+            self.eqvlat = self.equivalent_latitudes()
 
-        lwa_ans, dummy = basis.lwa(
-            self.nlon, self.nlat, self.pv_field, self.eqvlat,
-            self.planet_radius * self.clat * self.dphi
-        )
-        return lwa_ans
+        if self.lwa is None:
+            self.lwa, dummy = basis.lwa(
+                self.nlon, self.nlat, self.pv_field, self.eqvlat,
+                self.planet_radius * self.clat * self.dphi
+            )
+        return self.lwa
