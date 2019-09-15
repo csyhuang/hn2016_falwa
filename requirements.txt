@@ -2,3 +2,4 @@ numpy
 scipy
 matplotlib
 ecmwf-api-client==1.4.2
+pytest
