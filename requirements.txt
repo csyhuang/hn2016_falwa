@@ -1,5 +1,5 @@
 numpy
 scipy
 matplotlib
-ecmwf-api-client==1.4.2
+ecmwf-api-client
 pytest
