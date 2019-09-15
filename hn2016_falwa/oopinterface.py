@@ -415,9 +415,6 @@ class QGField(object):
                 self._qref = np.swapaxes(qref_temp_right_unit, 0, 1)
                 self._uref = np.swapaxes(self._uref_temp, 0, 1)
                 self._ptref = np.swapaxes(self._ptref_temp, 0, 1)
-                ylat_interp_from = self.ylat[-(self._qref.shape[1]):]
-                if self.need_latitude_interpolation:
-                    ylat_interp_to = self.ylat_no_equator[-self.ylat_no_equator.size//2:]
             else:
                 self._qref = \
                     np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
@@ -570,9 +567,6 @@ class QGField(object):
             self._lwa = np.swapaxes(lwa, 0, 2)
             self._divergence_eddy_momentum_flux = \
                 np.swapaxes(meri_flux_temp, 0, 1)
-            # ylat_interp_from = self.ylat[-(self._adv_flux_f1.shape[0]):]
-            # if self.need_latitude_interpolation:
-            #     ylat_interp_to = self.ylat_no_equator[-self.ylat_no_equator.size//2:]
         else:
             self._adv_flux_f1 = \
                 np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
