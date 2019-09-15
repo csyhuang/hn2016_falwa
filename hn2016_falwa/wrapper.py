@@ -1,8 +1,8 @@
 import numpy as np
+from hn2016_falwa.constant import EARTH_RADIUS
 
 
-def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points,
-                         planet_radius=6.378e+6):
+def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS):
     """
     Compute equivalent latitude and wave activity on a barotropic sphere.
 
@@ -44,8 +44,7 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points,
     return qref, lwa_result
 
 
-def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area,
-                                         dmu, planet_radius=6.378e+6):
+def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, planet_radius=EARTH_RADIUS):
 
     """
     This function computes LWA based on a *prescribed* Qref instead of Qref obtained from the vorticity field on a barotropic sphere.
@@ -77,8 +76,7 @@ def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area,
     return lwa_result
 
 
-def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
-                       planet_radius=6.378e+6):
+def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
 
     """
     Compute equivalent latitude in a hemispheric domain.
@@ -129,8 +127,7 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
     return qref
 
 
-def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
-                               planet_radius=6.378e+6, vgrad=None):
+def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS, vgrad=None):
 
     """
     Compute equivalent latitude and <...>_Q in Nakamura and Zhu (2010) in a hemispheric domain.
@@ -195,8 +192,7 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None,
     return qref, brac
 
 
-def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None,
-                   planet_radius=6.378e+6):
+def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
 
     """
     Compute equivalent latitutde *qref* and local wave activity *lwa_result* based
@@ -266,8 +262,7 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None,
     return qref, lwa_result
 
 
-def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
-                           n_points=None, planet_radius=6.378e+6):
+def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
 
     """
     Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
@@ -344,9 +339,8 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None,
     return qref, lwa_result, capsigma
 
 
-def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
-                           n_points=None, vgrad=None, ncforce=None,
-                           planet_radius=6.378e+6):
+def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vgrad=None, ncforce=None,
+                           planet_radius=EARTH_RADIUS):
 
     """
     Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
@@ -474,8 +468,7 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None,
     return return_dict
 
 
-def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None,
-                                   planet_radius=6.378e+6):
+def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None, planet_radius=EARTH_RADIUS):
     """
     Compute equivalent latitutde *qref* and local wave activity *lwa_result* based
     on Quasi-geostrophic potential vorticity field *vort* at a pressure level as
@@ -524,8 +517,7 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None,
     return lwa_result
 
 
-
-def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e+6):
+def theta_lwa(ylat, theta, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
     """
     Compute the surface wave activity *B* based on surface potential temperature.
     See Nakamura and Solomon (2010a) for details.
@@ -569,26 +561,19 @@ def theta_lwa(ylat,theta,area,dmu,nlat_s=None,n_points=None,planet_radius=6.378e
     qref[:nlat_s], brac = basis.eqvlat(ylat[:nlat_s], theta[:nlat_s, :],
                                        area[:nlat_s, :], n_points,
                                        planet_radius=planet_radius)
-    #qref1 = eqvlat(ylat[:nlat_s],theta[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)
-    # qref[:nlat_s] = qref1
-    # lwa_south = lwa(nlon,nlat_s,theta[:nlat_s,:],qref1,dmu[:nlat_s])
     lwa_result[:nlat_s, :], dummy = basis.lwa(nlon, nlat_s, theta[:nlat_s, :],
                                               qref[:nlat_s], dmu[:nlat_s])
-    # lwa_result[:nlat_s,:] = lwa_south
 
     # --- northern Hemisphere ---
     theta2 = theta[::-1, :]
     # Added the minus sign, but gotta see if NL_north is affected
-    # qref2 = eqvlat(ylat[:nlat_s],theta2[:nlat_s,:],area[:nlat_s,:],nlat_s,planet_radius=6.378e+6)
     qref2, brac = basis.eqvlat(ylat[:nlat_s], theta2[:nlat_s, :],
                                area[:nlat_s, :],
                                n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = qref2[::-1]
-    # lwa_north = lwa(nlon,nlat_s,theta2[:nlat_s,:],qref2,dmu[:nlat_s])
     lwa_result[-nlat_s:, :], dummy = basis.lwa(nlon, nlat_s,
                                                theta[-nlat_s:, :],
                                                qref[-nlat_s:],
                                                dmu[-nlat_s:])
-    # lwa_result[-nlat_s:,:] = lwa_north[::-1,:]
 
     return qref, lwa_result

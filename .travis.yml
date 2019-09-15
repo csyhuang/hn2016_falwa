@@ -1,7 +1,10 @@
 language: python
 python:
   - "2.7"
-  - "3.6"
+  - "3.4"
+  - "3.5"
+  - "3.6"      # current default Python on Travis CI
+  - "3.7"
 
 install:
   - pip install --upgrade pip setuptools wheel
@@ -12,6 +15,6 @@ install:
 
 # command to run tests
 script:
-  - coverage run --source=hn2016_falwa setup.py test
+  - python setup.py pytest
 
 after_success: pip install codecov && codecov

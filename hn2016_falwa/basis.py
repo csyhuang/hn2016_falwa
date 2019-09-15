@@ -35,7 +35,6 @@ def eqvlat(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
     vort_min = np.min([vort.min(), vort.min()])
     vort_max = np.max([vort.max(), vort.max()])
     q_part_u = np.linspace(vort_min, vort_max, n_points, endpoint=True)
-    #dq = q_part_u[2] - q_part_u[1]
     aa = np.zeros(q_part_u.size)  # to sum up area
     vort_flat = vort.flatten()  # Flatten the 2D arrays to 1D
     area_flat = area.flatten()
