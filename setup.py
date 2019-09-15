@@ -65,7 +65,6 @@ setup(
     author_email='csyhuang@uchicago.edu',
     license='MIT',
     packages=find_packages(),
-    setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     ext_modules=[ext1, ext2, ext3],
     zip_safe=False
