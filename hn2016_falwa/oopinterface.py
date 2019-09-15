@@ -4,6 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from hn2016_falwa import utilities
+from hn2016_falwa import basis
 from hn2016_falwa.constant import *
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
@@ -712,7 +713,7 @@ def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     of velocity on a pressure level in spherical coordinates.
     """
 
-    ans = np.zeros_like((ufield))
+    ans = np.zeros_like(ufield)
     ans[1:-1, 1:-1] = (vfield[1:-1, 2:] - vfield[1:-1, :-2])/(2.*dlambda) - \
                       (ufield[2:, 1:-1] * clat[2:, np.newaxis] -
                        ufield[:-2, 1:-1] * clat[:-2, np.newaxis])/(2.*dphi)
@@ -760,7 +761,8 @@ class BarotropicField(object):
     def __init__(self, xlon, ylat, pv_field, area=None, dphi=None,
                  n_partitions=None, planet_radius=6.378e+6):
 
-        """Create a windtempfield object.
+        """
+        Create a BarotropicField object.
 
         Parameters
         ----------
@@ -780,7 +782,7 @@ class BarotropicField(object):
                 Absolute vorticity field with dimension = [nlat, nlon].
                 If none, pv_field is expected to be computed with u,v,t field.
 
-            """
+        """
 
         self.xlon = xlon
         self.ylat = ylat
@@ -794,7 +796,9 @@ class BarotropicField(object):
             self.dphi = dphi
 
         if area is None:
-            self.area = 2.*pi*planet_radius**2*(np.cos(ylat[:, np.newaxis]*pi/180.)*self.dphi[:, np.newaxis])/float(self.nlon)*np.ones((self.nlat, self.nlon))
+            self.area = 2. * pi * planet_radius ** 2 * \
+                        (np.cos(ylat[:, np.newaxis] * pi/180.) * self.dphi[:, np.newaxis])\
+                        / float(self.nlon)*np.ones((self.nlat, self.nlon))
         else:
             self.area = area
 
@@ -809,10 +813,34 @@ class BarotropicField(object):
         self.eqvlat = None
         self.lwa = None
 
-    def equivalent_latitudes(self):
-
+    def _compute_eqvlat(self):
         """
-        Compute equivalent latitude with the *pv_field* stored in the object.
+        Internal function. Compute equivalent latitude if it has not been computed yet.
+        """
+        self.eqvlat, _ = basis.eqvlat(
+            self.ylat, self.pv_field, self.area, self.n_partitions,
+            planet_radius=self.planet_radius
+        )
+        return self.eqvlat
+
+    def _compute_lwa(self):
+        """
+        Internal function. Compute equivalent latitude if it has not been computed yet.
+        """
+        if self.eqvlat is None:
+            self.eqvlat = self.equivalent_latitudes()
+
+        if self.lwa is None:
+            self.lwa, dummy = basis.lwa(
+                self.nlon, self.nlat, self.pv_field, self.eqvlat,
+                self.planet_radius * self.clat * self.dphi
+            )
+        return self.lwa
+
+    @property
+    def equivalent_latitudes(self):
+        """
+        Return the computd quivalent latitude with the *pv_field* stored in the object.
 
         Return
         ----------
@@ -821,23 +849,17 @@ class BarotropicField(object):
         Example
         ----------
         >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
-        >>> eqv_lat = barofield1.equivalent_latitudes()
+        >>> eqv_lat = barofield1.equivalent_latitudes
 
         """
-
-        from hn2016_falwa import basis
-
         if self.eqvlat is None:
-            self.eqvlat, dummy = basis.eqvlat(
-                self.ylat, self.pv_field, self.area, self.n_partitions,
-                planet_radius=self.planet_radius
-            )
+            return self._compute_eqvlat()
         return self.eqvlat
 
+    @property
     def lwa(self):
 
         """
-
         Compute the finite-amplitude local wave activity based on the *equivalent_latitudes* and the *pv_field* stored in the object.
 
         Return
@@ -847,18 +869,9 @@ class BarotropicField(object):
         Example
         ----------
         >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
-        >>> eqv_lat = barofield1.equivalent_latitudes() # This line is optional
-        >>> lwa = barofield1.lwa()
+        >>> lwa = barofield1.lwa
 
         """
-        from hn2016_falwa import basis
-
-        if self.eqvlat is None:
-            self.eqvlat = self.equivalent_latitudes()
-
         if self.lwa is None:
-            self.lwa, dummy = basis.lwa(
-                self.nlon, self.nlat, self.pv_field, self.eqvlat,
-                self.planet_radius * self.clat * self.dphi
-            )
+            return self._compute_lwa()
         return self.lwa
