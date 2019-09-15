@@ -66,8 +66,7 @@ setup(
     author='Clare S. Y. Huang',
     author_email='csyhuang@uchicago.edu',
     license='MIT',
-    packages=['hn2016_falwa'],
-    test_suite='tests.my_module_suite',
+    packages=find_packages(),
     ext_modules=[ext1, ext2, ext3],
     zip_safe=False
 )
