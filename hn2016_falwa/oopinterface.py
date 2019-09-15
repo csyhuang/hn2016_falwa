@@ -209,15 +209,6 @@ class QGField(object):
         self._lwa = None
         self._divergence_eddy_momentum_flux = None
 
-    def get_latitude_dim(self):
-        """
-        Return the latitude dimension of the input data.
-        """
-        if self.need_latitude_interpolation:
-            return self.ylat_no_equator.size
-        else:
-            return self.nlat
-
     def _interp_back(
         self,
         field,
@@ -358,35 +349,6 @@ class QGField(object):
         """
         return self._static_stability
 
-    def get_qgpv(self):
-        """
-        Retrieve the interpolated quasi-geostrophic potential vorticity field.
-        """
-        return self.qgpv
-
-    def get_u(self):
-        """
-        Retrieve the interpolated zonal wind field [m/s].
-        """
-        return self.interpolated_u
-
-    def get_v(self):
-        """
-        Retrieve the interpolated meridional wind field [m/s].
-        """
-        return self.interpolated_v
-
-    def get_theta(self):
-        """
-        Retrieve the interpolated potential temperature field [K].
-        """
-        return self.interpolated_theta
-
-    def get_static_stability(self):
-        """
-        Retrieve the interpolated static stability.
-        """
-        return self._static_stability
 
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
@@ -494,23 +456,6 @@ class QGField(object):
         else:
             return self._ptref
 
-    def get_qref(self):
-        """
-        Retrieve the QGPV reference state [1/s].
-        """
-        return self.qref
-
-    def get_uref(self):
-        """
-        Retrieve the zonal wind reference state [m/s].
-        """
-        return self.uref
-
-    def get_ptref(self):
-        """
-        Retrieve the potential temperature reference state [K].
-        """
-        return self.ptref
 
     def compute_lwa_and_barotropic_fluxes(
         self, northern_hemisphere_results_only=True
@@ -749,6 +694,15 @@ class QGField(object):
             return self._interp_back(self._lwa, self.ylat, self.ylat_no_equator)
         else:
             return self._lwa
+
+    def get_latitude_dim(self):
+        """
+        Return the latitude dimension of the input data.
+        """
+        if self.need_latitude_interpolation:
+            return self.ylat_no_equator.size
+        else:
+            return self.nlat
 
 
 def curl_2D(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
