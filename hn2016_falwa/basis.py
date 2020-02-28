@@ -18,7 +18,7 @@ def eqvlat(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
     n_points: int
         Analysis resolution to calculate equivalent latitude.
     planet_radius: float
-        Radius of spherical planet of interest consistent with input *area*.
+        Radius of spherical planet of interest consistent with input *area*. Default: earth's radius 6.378e+6
     vgrad: ndarray, optional
         2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)
 

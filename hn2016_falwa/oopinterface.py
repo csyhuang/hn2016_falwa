@@ -65,8 +65,7 @@ class QGField(object):
 
     Examples
     --------
-    >>> test_object = QGField(xlon, ylat, plev,
-                             u_field, v_field, t_field)
+    >>> test_object = QGField(xlon, ylat, plev, u_field, v_field, t_field)
 
     """
 
@@ -291,59 +290,42 @@ class QGField(object):
                 self._interpolated_theta_temp, 0, 2
             )
 
-        if self.need_latitude_interpolation:
-            # Interpolate back to original grid
-            self._qgpv = self._interp_back(
-                self._qgpv, self.ylat, self.ylat_no_equator
-            )
-            self._interpolated_u = self._interp_back(
-                self._interpolated_u, self.ylat, self.ylat_no_equator
-            )
-            self._interpolated_v = self._interp_back(
-                self._interpolated_v, self.ylat, self.ylat_no_equator
-            )
-            self._interpolated_theta = self._interp_back(
-                self._interpolated_theta, self.ylat, self.ylat_no_equator
-            )
+        return self.qgpv, self.interpolated_u, self.interpolated_v, \
+               self.interpolated_theta, self.static_stability
 
-        return self._qgpv, self._interpolated_u, self._interpolated_v, \
-               self._interpolated_theta, self._static_stability
+    def _return_interp_variables(self, variable):
+        if self.need_latitude_interpolation:
+            if self.northern_hemisphere_results_only:
+                return self._interp_back(
+                    variable, self.ylat[-(self.nlat//2+1):], self.ylat_no_equator[-(self.nlat//2):])
+            else:
+                return self._interp_back(variable, self.ylat, self.ylat_no_equator)
+        else:
+            return variable
 
     @property
     def qgpv(self):
         if self._qgpv is None:
             raise ValueError('QGPV field is not present in the QGField object.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._qgpv, self.ylat, self.ylat_no_equator)
-        else:
-            return self._qgpv
+        return self._return_interp_variables(self._qgpv)
 
     @property
     def interpolated_u(self):
         if self._interpolated_u is None:
             raise ValueError('interpolated_u is not present in the QGField object.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._interpolated_u, self.ylat, self.ylat_no_equator)
-        else:
-            return self._interpolated_u
+        return self._return_interp_variables(self._interpolated_u)
 
     @property
     def interpolated_v(self):
         if self._interpolated_v is None:
             raise ValueError('interpolated_v is not present in the QGField object.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._interpolated_v, self.ylat, self.ylat_no_equator)
-        else:
-            return self._interpolated_v
+        return self._return_interp_variables(self._interpolated_v)
 
     @property
     def interpolated_theta(self):
         if self._interpolated_theta is None:
             raise ValueError('interpolated_theta is not present in the QGField object.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._interpolated_theta, self.ylat, self.ylat_no_equator)
-        else:
-            return self._interpolated_theta
+        return self._return_interp_variables(self._interpolated_theta)
 
     @property
     def static_stability(self):
@@ -430,31 +412,30 @@ class QGField(object):
 
     @property
     def qref(self):
+        """
+        Return reference state of QGPV (Qref).
+        """
         if self._qref is None:
             raise ValueError('qref is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._qref, self.ylat, self.ylat_no_equator)
-        else:
-            return self._qref
+        return self._return_interp_variables(self._qref)
 
     @property
     def uref(self):
+        """
+        Return reference state of zonal wind (Uref).
+        """
         if self._uref is None:
             raise ValueError('uref field is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._uref, self.ylat, self.ylat_no_equator)
-        else:
-            return self._uref
+        return self._return_interp_variables(self._uref)
 
     @property
     def ptref(self):
+        """
+        Return reference state of potential temperature (\Theta_ref).
+        """
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._ptref, self.ylat, self.ylat_no_equator)
-        else:
-            return self._ptref
-
+        return self._return_interp_variables(self._ptref)
 
     def compute_lwa_and_barotropic_fluxes(
         self, northern_hemisphere_results_only=True
@@ -614,82 +595,55 @@ class QGField(object):
     def adv_flux_f1(self):
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._adv_flux_f1, self.ylat, self.ylat_no_equator)
-        else:
-            return self._adv_flux_f1
+        return self._return_interp_variables(self._adv_flux_f1)
 
     @property
     def adv_flux_f2(self):
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._adv_flux_f2, self.ylat, self.ylat_no_equator)
-        else:
-            return self._adv_flux_f2
+        return self._return_interp_variables(self._adv_flux_f2)
 
     @property
     def adv_flux_f3(self):
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._adv_flux_f3, self.ylat, self.ylat_no_equator)
-        else:
-            return self._adv_flux_f3
+        return self._return_interp_variables(self._adv_flux_f3)
 
     @property
     def convergence_zonal_advective_flux(self):
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._convergence_zonal_advective_flux, self.ylat, self.ylat_no_equator)
-        else:
-            return self._convergence_zonal_advective_flux
+        return self._return_interp_variables(self._convergence_zonal_advective_flux)
 
     @property
     def divergence_eddy_momentum_flux(self):
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._divergence_eddy_momentum_flux, self.ylat, self.ylat_no_equator)
-        else:
-            return self._divergence_eddy_momentum_flux
+        return self._return_interp_variables(self._divergence_eddy_momentum_flux)
 
     @property
     def meridional_heat_flux(self):
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._meridional_heat_flux, self.ylat, self.ylat_no_equator)
-        else:
-            return self._meridional_heat_flux
+        return self._return_interp_variables(self._meridional_heat_flux)
 
     @property
     def lwa_baro(self):
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._lwa_baro, self.ylat, self.ylat_no_equator)
-        else:
-            return self._lwa_baro
+        return self._return_interp_variables(self._lwa_baro)
 
     @property
     def u_baro(self):
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._u_baro, self.ylat, self.ylat_no_equator)
-        else:
-            return self._u_baro
+        return self._return_interp_variables(self._u_baro)
 
     @property
     def lwa(self):
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
-        if self.need_latitude_interpolation:
-            return self._interp_back(self._lwa, self.ylat, self.ylat_no_equator)
-        else:
-            return self._lwa
+        return self._return_interp_variables(self._lwa)
 
     def get_latitude_dim(self):
         """
