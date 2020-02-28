@@ -295,9 +295,6 @@ class QGField(object):
     def _return_interp_variables(self, variable, interp_axis, northern_hemisphere_results_only=True):
         if self.need_latitude_interpolation:
             if northern_hemisphere_results_only:
-                print('variable.shape = {}'.format(variable.shape))
-                print('ylat.shape = {}'.format(self.ylat[-(self.nlat//2+1):].shape))
-                print('ylat_no_equator.shape = {}'.format(self.ylat_no_equator[-(self.nlat//2):].shape))
                 return self._interp_back(
                     variable, self.ylat[-(self.nlat//2+1):],
                     self.ylat_no_equator[-(self.nlat//2):],
