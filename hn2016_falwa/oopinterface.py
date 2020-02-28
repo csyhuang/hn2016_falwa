@@ -88,8 +88,7 @@ class QGField(object):
             # Even grid
             self.need_latitude_interpolation = True
             self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90., 90., ylat.size+1,
-                                    endpoint=True)
+            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
             self.equator_idx = \
                 np.argwhere(self.ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
@@ -293,13 +292,18 @@ class QGField(object):
         return self.qgpv, self.interpolated_u, self.interpolated_v, \
                self.interpolated_theta, self.static_stability
 
-    def _return_interp_variables(self, variable):
+    def _return_interp_variables(self, variable, interp_axis, northern_hemisphere_results_only=True):
         if self.need_latitude_interpolation:
-            if self.northern_hemisphere_results_only:
+            if northern_hemisphere_results_only:
+                print('variable.shape = {}'.format(variable.shape))
+                print('ylat.shape = {}'.format(self.ylat[-(self.nlat//2+1):].shape))
+                print('ylat_no_equator.shape = {}'.format(self.ylat_no_equator[-(self.nlat//2):].shape))
                 return self._interp_back(
-                    variable, self.ylat[-(self.nlat//2+1):], self.ylat_no_equator[-(self.nlat//2):])
+                    variable, self.ylat[-(self.nlat//2+1):],
+                    self.ylat_no_equator[-(self.nlat//2):],
+                    which_axis=interp_axis)
             else:
-                return self._interp_back(variable, self.ylat, self.ylat_no_equator)
+                return self._interp_back(variable, self.ylat, self.ylat_no_equator, which_axis=interp_axis)
         else:
             return variable
 
@@ -307,25 +311,29 @@ class QGField(object):
     def qgpv(self):
         if self._qgpv is None:
             raise ValueError('QGPV field is not present in the QGField object.')
-        return self._return_interp_variables(self._qgpv)
+        return self._return_interp_variables(
+            variable=self._qgpv, interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_u(self):
         if self._interpolated_u is None:
             raise ValueError('interpolated_u is not present in the QGField object.')
-        return self._return_interp_variables(self._interpolated_u)
+        return self._return_interp_variables(
+            variable=self._interpolated_u, interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_v(self):
         if self._interpolated_v is None:
             raise ValueError('interpolated_v is not present in the QGField object.')
-        return self._return_interp_variables(self._interpolated_v)
+        return self._return_interp_variables(
+            variable=self._interpolated_v, interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_theta(self):
         if self._interpolated_theta is None:
             raise ValueError('interpolated_theta is not present in the QGField object.')
-        return self._return_interp_variables(self._interpolated_theta)
+        return self._return_interp_variables(
+            variable=self._interpolated_theta, interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def static_stability(self):
@@ -417,7 +425,7 @@ class QGField(object):
         """
         if self._qref is None:
             raise ValueError('qref is not computed yet.')
-        return self._return_interp_variables(self._qref)
+        return self._return_interp_variables(variable=self._qref, interp_axis=1)
 
     @property
     def uref(self):
@@ -426,7 +434,7 @@ class QGField(object):
         """
         if self._uref is None:
             raise ValueError('uref field is not computed yet.')
-        return self._return_interp_variables(self._uref)
+        return self._return_interp_variables(variable=self._uref, interp_axis=1)
 
     @property
     def ptref(self):
@@ -435,7 +443,7 @@ class QGField(object):
         """
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
-        return self._return_interp_variables(self._ptref)
+        return self._return_interp_variables(variable=self._ptref, interp_axis=1)
 
     def compute_lwa_and_barotropic_fluxes(
         self, northern_hemisphere_results_only=True
@@ -537,6 +545,8 @@ class QGField(object):
                 planet_radius=self.planet_radius
             )
 
+        self.northern_hemisphere_results_only = northern_hemisphere_results_only
+
         if northern_hemisphere_results_only:
             self._adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
             self._adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
@@ -595,55 +605,55 @@ class QGField(object):
     def adv_flux_f1(self):
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
-        return self._return_interp_variables(self._adv_flux_f1)
+        return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0)
 
     @property
     def adv_flux_f2(self):
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
-        return self._return_interp_variables(self._adv_flux_f2)
+        return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0)
 
     @property
     def adv_flux_f3(self):
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
-        return self._return_interp_variables(self._adv_flux_f3)
+        return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0)
 
     @property
     def convergence_zonal_advective_flux(self):
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
-        return self._return_interp_variables(self._convergence_zonal_advective_flux)
+        return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0)
 
     @property
     def divergence_eddy_momentum_flux(self):
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
-        return self._return_interp_variables(self._divergence_eddy_momentum_flux)
+        return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0)
 
     @property
     def meridional_heat_flux(self):
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
-        return self._return_interp_variables(self._meridional_heat_flux)
+        return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0)
 
     @property
     def lwa_baro(self):
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
-        return self._return_interp_variables(self._lwa_baro)
+        return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0)
 
     @property
     def u_baro(self):
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
-        return self._return_interp_variables(self._u_baro)
+        return self._return_interp_variables(variable=self._u_baro, interp_axis=0)
 
     @property
     def lwa(self):
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
-        return self._return_interp_variables(self._lwa)
+        return self._return_interp_variables(variable=self._lwa, interp_axis=1)
 
     def get_latitude_dim(self):
         """
