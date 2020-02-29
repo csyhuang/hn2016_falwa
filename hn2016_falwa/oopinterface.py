@@ -116,7 +116,6 @@ class QGField(object):
         self.nlat = ylat.size
         self.nlon = xlon.size
         expected_dimension = (self.nlev, self.nlat, self.nlon)
-
         if u_field.shape != expected_dimension:
             raise TypeError(
                 "Incorrect dimension of u_field. Expected dimension: {}"
@@ -198,7 +197,7 @@ class QGField(object):
         self._interpolated_u = None
         self._interpolated_v = None
         self._interpolated_theta = None
-        self.northern_hemisphere_results_only = True
+        self.northern_hemisphere_results_only = False
 
         # Computation from compute_lwa_and_barotropic_fluxes
         self._adv_flux_f1 = None
@@ -345,6 +344,25 @@ class QGField(object):
         """
         return self._static_stability
 
+    def _compute_reference_state_wrapper(self, qgpv, u, theta):
+        return compute_reference_states(
+            qgpv,
+            u,
+            theta,
+            self._static_stability,
+            self.equator_idx,
+            self.npart,
+            self.maxit,
+            self.planet_radius,
+            self.omega,
+            self.dz,
+            self.tol,
+            self.scale_height,
+            self.dry_gas_constant,
+            self.cp,
+            self.rjac,
+        )
+
     def compute_reference_states(self, northern_hemisphere_results_only=True):
 
         """
@@ -381,44 +399,14 @@ class QGField(object):
             self.interpolate_fields()
 
         # === Compute reference states in Northern Hemisphere ===
-        self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp = \
-            compute_reference_states(
-                self._qgpv_temp,
-                self._interpolated_u_temp,
-                self._interpolated_theta_temp,
-                self._static_stability,
-                self.equator_idx,
-                self.npart,
-                self.maxit,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.tol,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp,
-                self.rjac,
-            )
+        self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp = self._compute_reference_state_wrapper(
+            qgpv=self._qgpv_temp, u=self._interpolated_u_temp, theta=self._interpolated_theta_temp)
 
         # === Compute reference states in Southern Hemisphere ===
-        self._qref_stemp, self._uref_stemp, self._ptref_stemp = \
-            compute_reference_states(
-                -self._qgpv_temp[:, ::-1, :],
-                self._interpolated_u_temp[:, ::-1, :],
-                self._interpolated_theta_temp[:, ::-1, :],
-                self._static_stability,
-                self.equator_idx,
-                self.npart,
-                self.maxit,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.tol,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp,
-                self.rjac,
-            )
+        self._qref_stemp, self._uref_stemp, self._ptref_stemp = self._compute_reference_state_wrapper(
+            qgpv=self._qgpv_temp[:, ::-1, :],
+            u=self._interpolated_u_temp[:, ::-1, :],
+            theta=self._interpolated_theta_temp[:, ::-1, :])
 
         qref_ntemp_right_unit = \
             self._qref_ntemp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
@@ -469,6 +457,23 @@ class QGField(object):
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
         return self._return_interp_variables(variable=self._ptref, interp_axis=1, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta):
+        return compute_lwa_and_barotropic_fluxes(
+            qgpv,
+            u,
+            v,
+            theta,
+            self._qref_ntemp,
+            self._uref_ntemp,
+            self._ptref_ntemp,
+            self.planet_radius,
+            self.omega,
+            self.dz,
+            self.scale_height,
+            self.dry_gas_constant,
+            self.cp,
+            self.prefactor)
 
     def compute_lwa_and_barotropic_fluxes(
         self, northern_hemisphere_results_only=True
@@ -540,42 +545,20 @@ class QGField(object):
         # === Compute barotropic flux terms (NHem) ===
         lwa_nhem, astarbaro_nhem, ua1baro_nhem, ubaro_nhem, ua2baro_nhem,\
             ep1baro_nhem, ep2baro_nhem, ep3baro_nhem, ep4_nhem = \
-            compute_lwa_and_barotropic_fluxes(
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
                 self._qgpv_temp,
                 self._interpolated_u_temp,
                 self._interpolated_v_temp,
-                self._interpolated_theta_temp,
-                self._qref_ntemp,
-                self._uref_ntemp,
-                self._ptref_ntemp,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp,
-                self.prefactor
-            )
+                self._interpolated_theta_temp)
 
         # === Compute barotropic flux terms (SHem) ===
         lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
             ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
-            compute_lwa_and_barotropic_fluxes(
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
                 -self._qgpv_temp[:, ::-1, :],
                 self._interpolated_u_temp[:, ::-1, :],
                 self._interpolated_v_temp[:, ::-1, :],
-                self._interpolated_theta_temp[:, ::-1, :],
-                self._qref_stemp,
-                self._uref_stemp,
-                self._ptref_stemp,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp,
-                self.prefactor
-            )
+                self._interpolated_theta_temp[:, ::-1, :])
 
         # *** Northern Hemisphere ***
         # Compute divergence of the meridional eddy momentum flux
@@ -631,7 +614,7 @@ class QGField(object):
             self._adv_flux_f3 = np.vstack((np.swapaxes(ep1baro_shem[:, ::-1], 0, 1),
                                            np.swapaxes(ep1baro_nhem[:, 1:], 0, 1)))
 
-            # axes already swapped for convergence zonal advective flux
+            # Axes already swapped for convergence zonal advective flux
             self._convergence_zonal_advective_flux = np.vstack((convergence_zonal_advective_flux_shem[::-1, :],
                                                                 convergence_zonal_advective_flux_nhem[1:, :]))
 
@@ -646,13 +629,11 @@ class QGField(object):
             self._u_baro = np.vstack((np.swapaxes(ubaro_shem[:, ::-1], 0, 1),
                                       np.swapaxes(ubaro_nhem[:, 1:], 0, 1)))
 
-            self._lwa = \
-                np.concatenate((np.swapaxes(lwa_shem[:, ::-1], 0, 2),
-                                np.swapaxes(lwa_nhem[:, 1:], 0, 2)), axis=1)
+            self._lwa = np.concatenate((np.swapaxes(lwa_shem[:, ::-1], 0, 2),
+                                        np.swapaxes(lwa_nhem[:, 1:], 0, 2)), axis=1)
 
-            self._divergence_eddy_momentum_flux = \
-                np.vstack((np.swapaxes(meri_flux_shem_temp[:, ::-1], 0, 1),
-                           np.swapaxes(meri_flux_nhem_temp[:, 1:], 0, 1)))
+            self._divergence_eddy_momentum_flux = np.vstack((np.swapaxes(meri_flux_shem_temp[:, ::-1], 0, 1),
+                                                             np.swapaxes(meri_flux_nhem_temp[:, 1:], 0, 1)))
 
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, self.convergence_zonal_advective_flux,\
                self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa
