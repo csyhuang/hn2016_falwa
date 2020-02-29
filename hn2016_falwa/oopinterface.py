@@ -185,9 +185,12 @@ class QGField(object):
         self._static_stability = None
 
         # Computation from computer_reference_states
-        self._qref_temp = None
-        self._uref_temp = None
-        self._ptref_temp = None
+        self._qref_stemp = None
+        self._uref_stemp = None
+        self._ptref_stemp = None
+        self._qref_ntemp = None
+        self._uref_ntemp = None
+        self._ptref_ntemp = None
         self._qref = None
         self._uref = None
         self._ptref = None
@@ -219,6 +222,9 @@ class QGField(object):
         Internal function to interpolate the results from odd grid to even grid.
         If the initial input to the QGField object is an odd grid, error will be raised.
         """
+        # print('For debugging. field.shape = {}'.format(field.shape))
+        # print('For debugging. interp_from.shape = {}'.format(interp_from.shape))
+        # print('For debugging. interp_to.shape = {}'.format(interp_to.shape))
 
         if self.ylat_no_equator is None:
             raise TypeError("No need for such interpolation.")
@@ -260,7 +266,7 @@ class QGField(object):
 
         """
 
-        if self._qref_temp is None:
+        if self._qref_ntemp is None:
 
             # === Interpolate fields and obtain qgpv ===
             self._qgpv_temp, \
@@ -374,44 +380,66 @@ class QGField(object):
         if self._qgpv_temp is None:
             self.interpolate_fields()
 
-        if self._uref_temp is None:
-            # === Compute reference states in Northern Hemisphere ===
-            self._qref_temp, self._uref_temp, self._ptref_temp = \
-                compute_reference_states(
-                    self._qgpv_temp,
-                    self._interpolated_u_temp,
-                    self._interpolated_theta_temp,
-                    self._static_stability,
-                    self.equator_idx,
-                    self.npart,
-                    self.maxit,
-                    self.planet_radius,
-                    self.omega,
-                    self.dz,
-                    self.tol,
-                    self.scale_height,
-                    self.dry_gas_constant,
-                    self.cp,
-                    self.rjac
-                )
+        # === Compute reference states in Northern Hemisphere ===
+        self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp = \
+            compute_reference_states(
+                self._qgpv_temp,
+                self._interpolated_u_temp,
+                self._interpolated_theta_temp,
+                self._static_stability,
+                self.equator_idx,
+                self.npart,
+                self.maxit,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.tol,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp,
+                self.rjac,
+            )
 
-            qref_temp_right_unit = \
-                self._qref_temp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
+        # === Compute reference states in Southern Hemisphere ===
+        self._qref_stemp, self._uref_stemp, self._ptref_stemp = \
+            compute_reference_states(
+                -self._qgpv_temp[:, ::-1, :],
+                self._interpolated_u_temp[:, ::-1, :],
+                self._interpolated_theta_temp[:, ::-1, :],
+                self._static_stability,
+                self.equator_idx,
+                self.npart,
+                self.maxit,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.tol,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp,
+                self.rjac,
+            )
 
-            if self.northern_hemisphere_results_only:
-                self._qref = np.swapaxes(qref_temp_right_unit, 0, 1)
-                self._uref = np.swapaxes(self._uref_temp, 0, 1)
-                self._ptref = np.swapaxes(self._ptref_temp, 0, 1)
-            else:
-                self._qref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(qref_temp_right_unit, 0, 1)))
-                self._uref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(self._uref_temp, 0, 1)))
-                self._ptref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(self._ptref_temp, 0, 1)))
+        qref_ntemp_right_unit = \
+            self._qref_ntemp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
+        qref_stemp_right_unit = \
+            self._qref_stemp[::-1, :] * 2 * self.omega * np.sin(
+                np.deg2rad(self.ylat[:self.equator_idx, np.newaxis]))
+
+        if self.northern_hemisphere_results_only:
+            self._qref = np.swapaxes(qref_ntemp_right_unit, 0, 1)
+            self._uref = np.swapaxes(self._uref_ntemp, 0, 1)
+            self._ptref = np.swapaxes(self._ptref_ntemp, 0, 1)
+        else:
+            self._qref = \
+                np.hstack((np.swapaxes(qref_stemp_right_unit[:, :], 0, 1),
+                           np.swapaxes(qref_ntemp_right_unit[1:, :], 0, 1)))
+            self._uref = \
+                np.hstack((np.swapaxes(self._uref_stemp[::-1, :], 0, 1),
+                           np.swapaxes(self._uref_ntemp[1:, :], 0, 1)))
+            self._ptref = \
+                np.hstack((np.swapaxes(self._ptref_stemp[::-1, :], 0, 1),
+                           np.swapaxes(self._ptref_ntemp[1:, :], 0, 1)))
 
         return self.qref, self.uref, self.ptref
 
@@ -422,7 +450,7 @@ class QGField(object):
         """
         if self._qref is None:
             raise ValueError('qref is not computed yet.')
-        return self._return_interp_variables(variable=self._qref, interp_axis=1)
+        return self._return_interp_variables(variable=self._qref, interp_axis=1, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def uref(self):
@@ -431,7 +459,7 @@ class QGField(object):
         """
         if self._uref is None:
             raise ValueError('uref field is not computed yet.')
-        return self._return_interp_variables(variable=self._uref, interp_axis=1)
+        return self._return_interp_variables(variable=self._uref, interp_axis=1, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def ptref(self):
@@ -440,7 +468,7 @@ class QGField(object):
         """
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
-        return self._return_interp_variables(variable=self._ptref, interp_axis=1)
+        return self._return_interp_variables(variable=self._ptref, interp_axis=1, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     def compute_lwa_and_barotropic_fluxes(
         self, northern_hemisphere_results_only=True
@@ -501,22 +529,25 @@ class QGField(object):
 
         """
 
+        self.northern_hemisphere_results_only = northern_hemisphere_results_only
+
         if self._qgpv_temp is None:
             self.interpolate_fields()
 
-        if self._uref_temp is None:
+        if self._uref_ntemp is None:
             self.compute_reference_states()
 
-        # === Compute barotropic flux terms ===
-        lwa, astarbaro, ua1baro, ubaro, ua2baro, ep1baro, ep2baro, ep3baro, ep4 = \
+        # === Compute barotropic flux terms (NHem) ===
+        lwa_nhem, astarbaro_nhem, ua1baro_nhem, ubaro_nhem, ua2baro_nhem,\
+            ep1baro_nhem, ep2baro_nhem, ep3baro_nhem, ep4_nhem = \
             compute_lwa_and_barotropic_fluxes(
                 self._qgpv_temp,
                 self._interpolated_u_temp,
                 self._interpolated_v_temp,
                 self._interpolated_theta_temp,
-                self._qref_temp,
-                self._uref_temp,
-                self._ptref_temp,
+                self._qref_ntemp,
+                self._uref_ntemp,
+                self._ptref_ntemp,
                 self.planet_radius,
                 self.omega,
                 self.dz,
@@ -526,74 +557,102 @@ class QGField(object):
                 self.prefactor
             )
 
-        # === Compute divergence of the meridional eddy momentum flux ===
-        meri_flux_temp = np.zeros_like(ep2baro)
-        meri_flux_temp[:, 1:-1] = (ep2baro[:, 1:-1] - ep3baro[:, 1:-1]) / \
+        # === Compute barotropic flux terms (SHem) ===
+        lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
+            ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
+            compute_lwa_and_barotropic_fluxes(
+                -self._qgpv_temp[:, ::-1, :],
+                self._interpolated_u_temp[:, ::-1, :],
+                self._interpolated_v_temp[:, ::-1, :],
+                self._interpolated_theta_temp[:, ::-1, :],
+                self._qref_stemp,
+                self._uref_stemp,
+                self._ptref_stemp,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp,
+                self.prefactor
+            )
+
+        # *** Northern Hemisphere ***
+        # Compute divergence of the meridional eddy momentum flux
+        meri_flux_nhem_temp = np.zeros_like(ep2baro_nhem)
+        meri_flux_nhem_temp[:, 1:-1] = (ep2baro_nhem[:, 1:-1] - ep3baro_nhem[:, 1:-1]) / \
             (2 * self.planet_radius * self.dphi *
              np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
-
-        # === Compute convergence of the zonal LWA flux ===
-        zonal_adv_flux_sum = np.swapaxes((ua1baro + ua2baro + ep1baro), 0, 1)
-        convergence_zonal_advective_flux = \
+        # Compute convergence of the zonal LWA flux
+        zonal_adv_flux_nhem_sum = np.swapaxes((ua1baro_nhem + ua2baro_nhem + ep1baro_nhem), 0, 1)
+        convergence_zonal_advective_flux_nhem = \
             utilities.zonal_convergence(
-                zonal_adv_flux_sum,
+                zonal_adv_flux_nhem_sum,
                 np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
                 self.dlambda,
                 planet_radius=self.planet_radius
             )
 
-        self.northern_hemisphere_results_only = northern_hemisphere_results_only
+        # *** Southern Hemisphere ***
+        # Compute divergence of the meridional eddy momentum flux
+        meri_flux_shem_temp = np.zeros_like(ep2baro_shem)
+        meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
+            (2 * self.planet_radius * self.dphi *
+             np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
+        # Compute convergence of the zonal LWA flux
+        zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
+        convergence_zonal_advective_flux_shem = \
+            utilities.zonal_convergence(
+                zonal_adv_flux_shem_sum,
+                np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                self.dlambda,
+                planet_radius=self.planet_radius
+            )
 
         if northern_hemisphere_results_only:
-            self._adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
-            self._adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
-            self._adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
-            self._convergence_zonal_advective_flux = convergence_zonal_advective_flux
-            self._meridional_heat_flux = np.swapaxes(ep4, 0, 1)
-            self._lwa_baro = np.swapaxes(astarbaro, 0, 1)
-            self._u_baro = np.swapaxes(ubaro, 0, 1)
-            self._lwa = np.swapaxes(lwa, 0, 2)
+            self._adv_flux_f1 = np.swapaxes(ua1baro_nhem, 0, 1)
+            self._adv_flux_f2 = np.swapaxes(ua2baro_nhem, 0, 1)
+            self._adv_flux_f3 = np.swapaxes(ep1baro_nhem, 0, 1)
+            self._convergence_zonal_advective_flux = convergence_zonal_advective_flux_nhem
+            self._meridional_heat_flux = np.swapaxes(ep4_nhem, 0, 1)
+            self._lwa_baro = np.swapaxes(astarbaro_nhem, 0, 1)
+            self._u_baro = np.swapaxes(ubaro_nhem, 0, 1)
+            self._lwa = np.swapaxes(lwa_nhem, 0, 2)
             self._divergence_eddy_momentum_flux = \
-                np.swapaxes(meri_flux_temp, 0, 1)
+                np.swapaxes(meri_flux_nhem_temp, 0, 1)
         else:
-            self._adv_flux_f1 = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(ua1baro, 0, 1)))
+            # Flip component in southern hemisphere
+            self._adv_flux_f1 = np.vstack((np.swapaxes(ua1baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ua1baro_nhem[:, 1:], 0, 1)))
 
-            self._adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                     self.nlon)),
-                                           np.swapaxes(ua2baro, 0, 1)))
+            self._adv_flux_f2 = np.vstack((np.swapaxes(ua2baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ua2baro_nhem[:, 1:], 0, 1)))
 
-            self._adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                     self.nlon)),
-                                           np.swapaxes(ep1baro, 0, 1)))
+            self._adv_flux_f3 = np.vstack((np.swapaxes(ep1baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ep1baro_nhem[:, 1:], 0, 1)))
 
-            self._convergence_zonal_advective_flux = \
-                np.vstack(
-                    (np.zeros((self.equator_idx - 1, self.nlon)),
-                     np.swapaxes(convergence_zonal_advective_flux, 0, 1))
-                )
+            # axes already swapped for convergence zonal advective flux
+            self._convergence_zonal_advective_flux = np.vstack((convergence_zonal_advective_flux_shem[::-1, :],
+                                                                convergence_zonal_advective_flux_nhem[1:, :]))
 
             self._meridional_heat_flux = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(ep4, 0, 1)))
+                np.vstack((np.swapaxes(ep4_shem[:, ::-1], 0, 1),
+                           np.swapaxes(ep4_nhem[:, 1:], 0, 1)))
 
             self._lwa_baro = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(astarbaro, 0, 1)))
+                np.vstack((np.swapaxes(astarbaro_shem[:, ::-1], 0, 1),
+                           np.swapaxes(astarbaro_nhem[:, 1:], 0, 1)))
 
-            self._u_baro = np.vstack((np.zeros((self.equator_idx - 1,
-                                                self.nlon)),
-                                      np.swapaxes(ubaro, 0, 1)))
+            self._u_baro = np.vstack((np.swapaxes(ubaro_shem[:, ::-1], 0, 1),
+                                      np.swapaxes(ubaro_nhem[:, 1:], 0, 1)))
 
             self._lwa = \
-                np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
-                                          self.nlon)),
-                                np.swapaxes(lwa, 0, 2)), axis=1)
+                np.concatenate((np.swapaxes(lwa_shem[:, ::-1], 0, 2),
+                                np.swapaxes(lwa_nhem[:, 1:], 0, 2)), axis=1)
 
             self._divergence_eddy_momentum_flux = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(meri_flux_temp, 0, 1)))
+                np.vstack((np.swapaxes(meri_flux_shem_temp[:, ::-1], 0, 1),
+                           np.swapaxes(meri_flux_nhem_temp[:, 1:], 0, 1)))
 
         return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, self.convergence_zonal_advective_flux,\
                self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa
@@ -602,55 +661,55 @@ class QGField(object):
     def adv_flux_f1(self):
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def adv_flux_f2(self):
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def adv_flux_f3(self):
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def convergence_zonal_advective_flux(self):
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def divergence_eddy_momentum_flux(self):
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def meridional_heat_flux(self):
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def lwa_baro(self):
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
-        return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0)
+        return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def u_baro(self):
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
-        return self._return_interp_variables(variable=self._u_baro, interp_axis=0)
+        return self._return_interp_variables(variable=self._u_baro, interp_axis=0, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def lwa(self):
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
-        return self._return_interp_variables(variable=self._lwa, interp_axis=1)
+        return self._return_interp_variables(variable=self._lwa, interp_axis=1, northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     def get_latitude_dim(self):
         """
