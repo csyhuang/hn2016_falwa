@@ -52,11 +52,11 @@ def test_qgfield():
         qgfield.interpolate_fields()
 
     # Check that the dimensions of the interpolated fields are correct
-    assert (49, 121, 240) == qgpv.shape
-    assert (49, 121, 240) == interpolated_u.shape
-    assert (49, 121, 240) == interpolated_v.shape
-    assert (49, 121, 240) == interpolated_theta.shape
-    assert (49,) == static_stability.shape
+    assert (kmax, nlat, nlon) == qgpv.shape
+    assert (kmax, nlat, nlon) == interpolated_u.shape
+    assert (kmax, nlat, nlon) == interpolated_v.shape
+    assert (kmax, nlat, nlon) == interpolated_theta.shape
+    assert (kmax,) == static_stability.shape
 
     assert (interpolated_u[1:-1, :, :].max() <= u_field.max()) & \
            (interpolated_u[1:-1, :, :].max() >= u_field.min())
@@ -81,9 +81,9 @@ def test_qgfield():
         )
 
     # Check dimension of the input field
-    assert (49, 61) == qref_north_hem.shape
-    assert (49, 61) == uref_north_hem.shape
-    assert (49, 61) == ptref_north_hem.shape
+    assert (kmax, nlat//2+1) == qref_north_hem.shape
+    assert (kmax, nlat//2+1) == uref_north_hem.shape
+    assert (kmax, nlat//2+1) == ptref_north_hem.shape
 
     # Check if qref is monotonically increasing in N. Hem
     assert (np.diff(qref_north_hem, axis=-1)[1:-1, 1:-1] >= 0.).all()
@@ -119,11 +119,11 @@ def test_qgfield_full_globe():
         qgfield.interpolate_fields()
 
     # Check that the dimensions of the interpolated fields are correct
-    assert (49, 121, 240) == qgpv.shape
-    assert (49, 121, 240) == interpolated_u.shape
-    assert (49, 121, 240) == interpolated_v.shape
-    assert (49, 121, 240) == interpolated_theta.shape
-    assert (49,) == static_stability.shape
+    assert (kmax, nlat, nlon) == qgpv.shape
+    assert (kmax, nlat, nlon) == interpolated_u.shape
+    assert (kmax, nlat, nlon) == interpolated_v.shape
+    assert (kmax, nlat, nlon) == interpolated_theta.shape
+    assert (kmax,) == static_stability.shape
 
     assert (interpolated_u[1:-1, :, :].max() <= u_field.max()) & \
            (interpolated_u[1:-1, :, :].max() >= u_field.min())
@@ -148,13 +148,13 @@ def test_qgfield_full_globe():
         )
 
     # Check dimension of the input field
-    assert (49, 121) == qref_full_hem.shape
-    assert (49, 121) == uref_full_hem.shape
-    assert (49, 121) == ptref_full_hem.shape
+    assert (kmax, nlat) == qref_full_hem.shape
+    assert (kmax, nlat) == uref_full_hem.shape
+    assert (kmax, nlat) == ptref_full_hem.shape
 
     # Check if qref is monotonically increasing in both hemisphere (exclude equator)
-    assert (np.diff(qref_full_hem, axis=-1)[1:-1, 1:59] >= 0.).all()  # South Hem
-    assert (np.diff(qref_full_hem, axis=-1)[1:-1, 61:-1] >= 0.).all()  # North Hem
+    assert (np.diff(qref_full_hem, axis=-1)[1:-1, 1:nlat//2-1] >= 0.).all()  # South Hem
+    assert (np.diff(qref_full_hem, axis=-1)[1:-1, nlat//2+1:-1] >= 0.).all()  # North Hem
 
 
 def test_raise_error_for_unrealistic_fields():
@@ -223,16 +223,16 @@ def test_interpolate_fields_even_grids():
     qgpv, interpolated_u, interpolated_v, interpolated_theta, static_stability = \
         qgfield_even.interpolate_fields()
 
-    assert 49 == qgfield_even.kmax
-    assert 120 == qgfield_even.get_latitude_dim()
-    assert 240 == qgfield_even.nlon
+    assert kmax == qgfield_even.kmax
+    assert nlat-1 == qgfield_even.get_latitude_dim()
+    assert nlon == qgfield_even.nlon
 
     # Check that the dimensions of the interpolated fields are correct
-    assert (49, 120, 240) == qgpv.shape
-    assert (49, 120, 240) == interpolated_u.shape
-    assert (49, 120, 240) == interpolated_v.shape
-    assert (49, 120, 240) == interpolated_theta.shape
-    assert (49,) == static_stability.shape
+    assert (kmax, nlat-1, nlon) == qgpv.shape
+    assert (kmax, nlat-1, nlon) == interpolated_u.shape
+    assert (kmax, nlat-1, nlon) == interpolated_v.shape
+    assert (kmax, nlat-1, nlon) == interpolated_theta.shape
+    assert (kmax,) == static_stability.shape
 
     # Check that at the interior grid points, the interpolated fields
     # are bounded
