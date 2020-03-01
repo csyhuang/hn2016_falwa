@@ -231,3 +231,25 @@ def zonal_convergence(field, clat, dlambda, planet_radius=6.378e+6, tol=1.e-5):
                                  (-1./(planet_radius * clat[finite_clat, np.newaxis] * 2. * dlambda))
 
     return zonal_diff
+
+
+def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
+    """
+    Assuming regular latitude and longitude [in degree] grid, compute the curl
+    of velocity on a pressure level in spherical coordinates.
+    """
+
+    ans = np.zeros_like(ufield)
+    ans[1:-1, 1:-1] = (vfield[1:-1, 2:] - vfield[1:-1, :-2])/(2.*dlambda) - \
+                      (ufield[2:, 1:-1] * clat[2:, np.newaxis] -
+                       ufield[:-2, 1:-1] * clat[:-2, np.newaxis])/(2.*dphi)
+    ans[0, :] = 0.0
+    ans[-1, :] = 0.0
+    ans[1:-1, 0] = ((vfield[1:-1, 1] - vfield[1:-1, -1]) / (2. * dlambda) -
+                    (ufield[2:, 0] * clat[2:] -
+                     ufield[:-2, 0] * clat[:-2]) / (2. * dphi))
+    ans[1:-1, -1] = ((vfield[1:-1, 0] - vfield[1:-1, -2]) / (2. * dlambda) -
+                     (ufield[2:, -1] * clat[2:] -
+                      ufield[:-2, -1] * clat[:-2]) / (2. * dphi))
+    ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
+    return ans

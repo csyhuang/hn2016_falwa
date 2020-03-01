@@ -1,11 +1,12 @@
 SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits,&
-               a,om,dz,eps,h,r,cp,rjac,qref,u,tref)
+               a,om,dz,eps,h,r,cp,rjac,qref,u,tref,num_of_iter)
 
 
     integer, intent(in) :: nlon,nlat,kmax,jd,npart,maxits
     real, intent(in) :: pv(nlon,nlat,kmax),uu(nlon,nlat,kmax),pt(nlon,nlat,kmax),stat(kmax)
     real, intent(in) :: a, om, dz,eps,h, r, cp, rjac
     real, intent(out) :: qref(jd,kmax),u(jd,kmax),tref(jd,kmax)
+    integer, intent(out) :: num_of_iter
 
 
     real :: pv2(nlon,nlat)
@@ -217,6 +218,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     ! **** Converged! (u is the mass correction) ****
 
     write(6,*)  n,mm,kk,' converged at n = ',nnn
+    num_of_iter = nnn
 
     do j = 2,(jd-1)
         phi0 = dp*float(j-1)
