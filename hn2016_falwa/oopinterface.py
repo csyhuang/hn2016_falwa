@@ -74,7 +74,8 @@ class QGField(object):
                  scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS):
 
-        """Create a QGField object.
+        """
+        Create a QGField object.
         This only initialize the attributes of the object. Analysis and
         computation are done by calling various methods.
         """
@@ -309,6 +310,7 @@ class QGField(object):
             self.planet_radius, self.omega, self.dz, self.scale_height, self.dry_gas_constant, self.cp, self.prefactor)
 
     def interpolate_fields(self):
+
         """
         Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,
         and compute QGPV on the same grids. This returns named tuple called "Interpolated_fields" that consists of
@@ -470,6 +472,7 @@ class QGField(object):
         return reference_states
 
     def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
+
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
         Nakamura and Huang (Science, 2018). It returns a named tuple called "LWA_and_fluxes" that consists of

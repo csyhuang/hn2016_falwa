@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>oopinterface &mdash; hn2016_falwa 0.3.8 documentation</title>
+  <title>oopinterface &mdash; hn2016_falwa 0.4.0 documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.3.8
+                0.4.0
               </div>
             
           
@@ -227,7 +227,8 @@
                  <span class="n">scale_height</span><span class="o">=</span><span class="n">SCALE_HEIGHT</span><span class="p">,</span> <span class="n">cp</span><span class="o">=</span><span class="n">CP</span><span class="p">,</span> <span class="n">dry_gas_constant</span><span class="o">=</span><span class="n">DRY_GAS_CONSTANT</span><span class="p">,</span>
                  <span class="n">omega</span><span class="o">=</span><span class="n">EARTH_OMEGA</span><span class="p">,</span> <span class="n">planet_radius</span><span class="o">=</span><span class="n">EARTH_RADIUS</span><span class="p">):</span>
 
-        <span class="sd">&quot;&quot;&quot;Create a QGField object.</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a QGField object.</span>
 <span class="sd">        This only initialize the attributes of the object. Analysis and</span>
 <span class="sd">        computation are done by calling various methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -462,6 +463,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">omega</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dry_gas_constant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefactor</span><span class="p">)</span>
 
 <div class="viewcode-block" id="QGField.interpolate_fields"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.interpolate_fields">[docs]</a>    <span class="k">def</span> <span class="nf">interpolate_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,</span>
 <span class="sd">        and compute QGPV on the same grids. This returns named tuple called &quot;Interpolated_fields&quot; that consists of</span>
@@ -623,6 +625,7 @@
         <span class="k">return</span> <span class="n">reference_states</span></div>
 
 <div class="viewcode-block" id="QGField.compute_lwa_and_barotropic_fluxes"><a class="viewcode-back" href="../Object Oriented Interface.html#oopinterface.QGField.compute_lwa_and_barotropic_fluxes">[docs]</a>    <span class="k">def</span> <span class="nf">compute_lwa_and_barotropic_fluxes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">northern_hemisphere_results_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in</span>
 <span class="sd">        Nakamura and Huang (Science, 2018). It returns a named tuple called &quot;LWA_and_fluxes&quot; that consists of</span>
