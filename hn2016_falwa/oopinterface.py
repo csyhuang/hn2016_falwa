@@ -310,13 +310,12 @@ class QGField(object):
 
     def interpolate_fields(self):
         """
-        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,
+        and compute QGPV on the same grids. This returns named tuple called "Interpolated_fields" that consists of
+        5 elements as listed below.
 
         Returns
         -------
-
-        A named tuple called "Interpolated_fields" that consists of 5 elements:
-
         QGPV : numpy.ndarray
             Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]
 
@@ -388,18 +387,16 @@ class QGField(object):
         equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the
         Northern Hemisphere is computed.
 
+        This function returns named tuple called "Reference_states" that consists of 3 elements:
 
         Parameters
         ----------
         northern_hemisphere_results_only : bool
            If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
-           returned. This parameter is present since the current version (v0.3.1) of the package only return analysis
-           in the northern hemisphere. Default: False.
+           returned. Default: False.
 
         Returns
         -------
-        A named tuple called "Reference_states" that consists of 3 elements:
-
         Qref : numpy.ndarray
             Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with
             dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or
@@ -475,19 +472,17 @@ class QGField(object):
     def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
-        Nakamura and Huang (Science, 2018).
+        Nakamura and Huang (Science, 2018). It returns a named tuple called "LWA_and_fluxes" that consists of
+        9 elements as listed below.
 
         Parameters
         ----------
         northern_hemisphere_results_only : bool
-           If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be
-           returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in
-           the northern hemisphere. Default: False.
+           If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
+           returned. Default: False.
 
         Returns
         -------
-        A named tuple called "LWA_and_fluxes" that consists of 9 elements:
-
         adv_flux_f1 : numpy.ndarray
             Two-dimensional array of the second-order eddy term in zonal advective flux,
             i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
@@ -660,6 +655,9 @@ class QGField(object):
 
     @property
     def qgpv(self):
+        """
+        Quasi-geostrophic potential vorticity on the regular pseudoheight grids.
+        """
         if self._qgpv is None:
             raise ValueError('QGPV field is not present in the QGField object.')
         return self._return_interp_variables(
@@ -667,6 +665,9 @@ class QGField(object):
 
     @property
     def interpolated_u(self):
+        """
+        Zonal wind on the regular pseudoheight grids.
+        """
         if self._interpolated_u is None:
             raise ValueError('interpolated_u is not present in the QGField object.')
         return self._return_interp_variables(
@@ -674,6 +675,9 @@ class QGField(object):
 
     @property
     def interpolated_v(self):
+        """
+        Meridional wind on the regular pseudoheight grids.
+        """
         if self._interpolated_v is None:
             raise ValueError('interpolated_v is not present in the QGField object.')
         return self._return_interp_variables(
@@ -681,6 +685,9 @@ class QGField(object):
 
     @property
     def interpolated_theta(self):
+        """
+        Potential temperature on the regular pseudoheight grids.
+        """
         if self._interpolated_theta is None:
             raise ValueError('interpolated_theta is not present in the QGField object.')
         return self._return_interp_variables(
@@ -689,14 +696,14 @@ class QGField(object):
     @property
     def static_stability(self):
         """
-        Retrieve the interpolated static stability.
+        The interpolated static stability.
         """
         return self._static_stability
 
     @property
     def qref(self):
         """
-        Return reference state of QGPV (Qref).
+        Reference state of QGPV (Qref).
         """
         if self._qref is None:
             raise ValueError('qref is not computed yet.')
@@ -706,7 +713,7 @@ class QGField(object):
     @property
     def uref(self):
         """
-        Return reference state of zonal wind (Uref).
+        Reference state of zonal wind (Uref).
         """
         if self._uref is None:
             raise ValueError('uref field is not computed yet.')
@@ -716,7 +723,7 @@ class QGField(object):
     @property
     def ptref(self):
         """
-        Return reference state of potential temperature (\Theta_ref).
+        Reference state of potential temperature (\Theta_ref).
         """
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
@@ -725,6 +732,9 @@ class QGField(object):
 
     @property
     def adv_flux_f1(self):
+        """
+        Two-dimensional array of the second-order eddy term in zonal advective flux, i.e. F1 in equation 3 of NH18
+        """
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0,
@@ -732,6 +742,9 @@ class QGField(object):
 
     @property
     def adv_flux_f2(self):
+        """
+        Two-dimensional array of the third-order eddy term in zonal advective flux, i.e. F2 in equation 3 of NH18
+        """
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0,
@@ -739,6 +752,9 @@ class QGField(object):
 
     @property
     def adv_flux_f3(self):
+        """
+        Two-dimensional array of the remaining term in zonal advective flux, i.e. F3 in equation 3 of NH18
+        """
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0,
@@ -746,6 +762,9 @@ class QGField(object):
 
     @property
     def convergence_zonal_advective_flux(self):
+        """
+        Two-dimensional array of the convergence of zonal advective flux, i.e. -div(F1+F2+F3) in equation 3 of NH18
+        """
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
         return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0,
@@ -753,6 +772,9 @@ class QGField(object):
 
     @property
     def divergence_eddy_momentum_flux(self):
+        """
+        Two-dimensional array of the divergence of eddy momentum flux, i.e. (II) in equation 2 of NH18
+        """
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
         return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0,
@@ -760,6 +782,9 @@ class QGField(object):
 
     @property
     def meridional_heat_flux(self):
+        """
+        Two-dimensional array of the low-level meridional heat flux, i.e. (III) in equation 2 of NH18
+        """
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
         return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0,
@@ -767,6 +792,9 @@ class QGField(object):
 
     @property
     def lwa_baro(self):
+        """
+        Two-dimensional array of barotropic local wave activity (with cosine weighting).
+        """
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
         return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0,
@@ -774,6 +802,9 @@ class QGField(object):
 
     @property
     def u_baro(self):
+        """
+        Two-dimensional array of barotropic zonal wind (without cosine weighting).
+        """
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
         return self._return_interp_variables(variable=self._u_baro, interp_axis=0,
@@ -781,6 +812,9 @@ class QGField(object):
 
     @property
     def lwa(self):
+        """
+        Three-dimensional array of barotropic local wave activity
+        """
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
         return self._return_interp_variables(variable=self._lwa, interp_axis=1,

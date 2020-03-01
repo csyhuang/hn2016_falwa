@@ -1,225 +1,328 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Utility Functions &#8212; hn2016_falwa 0.3.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Utility Functions &mdash; hn2016_falwa 0.3.8 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Beta-version Functions" href="Beta-version Functions.html" />
-    <link rel="prev" title="Wrapper Functions" href="Wrapper Functions.html" />
+    <link rel="prev" title="Wrapper Functions" href="Wrapper Functions.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-  </head><body>
-  
+          
+            <a href="index.html" class="icon icon-home"> hn2016_falwa
+          
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+          
+          </a>
+
+          
             
-  <div class="section" id="module-utilities">
-<span id="utility-functions"></span><h1>Utility Functions<a class="headerlink" href="#module-utilities" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
-<dt id="utilities.compute_qgpv_givenvort">
-<code class="descclassname">utilities.</code><code class="descname">compute_qgpv_givenvort</code><span class="sig-paren">(</span><em>omega</em>, <em>nlat</em>, <em>nlon</em>, <em>kmax</em>, <em>unih</em>, <em>ylat</em>, <em>avort</em>, <em>potential_temp</em>, <em>t0_cn</em>, <em>t0_cs</em>, <em>stat_cn</em>, <em>stat_cs</em>, <em>nlat_s=None</em>, <em>scale_height=7000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#compute_qgpv_givenvort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.compute_qgpv_givenvort" title="Permalink to this definition">¶</a></dt>
-<dd><p>The function “compute_qgpv_givenvort” computes the quasi-geostrophic potential
-vorticity based on the absolute vorticity, potential temperature and static
-stability given in a <em>hemispheric domain</em>.</p>
-<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) – Rotation rate of the planet.</li>
-<li><strong>nlat</strong> (<em>int</em>) – Latitudinal dimension of the latitude grid.</li>
-<li><strong>nlon</strong> (<em>int</em>) – Longitudinal dimension of the longitude grid.</li>
-<li><strong>kmax</strong> (<em>int</em>) – Vertical dimension of the height grid.</li>
-<li><strong>unih</strong> (<em>numpy.array</em>) – Numpy array of height in [meters]; dimension = (kmax)</li>
-<li><strong>ylat</strong> (<em>numpy.array</em>) – Numpy array of latitudes in [degrees]; dimension = (nlat)</li>
-<li><strong>avort</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of absolute vorticity (i.e. relative vorticity
-+ 2*Omega*sin(lat)) in [1/s]; dimension = (kmax x nlat x nlon)</li>
-<li><strong>potential_temp</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of potential temperature in [K];
-dimension = (kmax x nlat x nlon)</li>
-<li><strong>t0_cn</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
-in the Northern hemispheric domain with dimension = (kmax)</li>
-<li><strong>t0_cs</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
-in the Southern hemispheric domain with dimension = (kmax)</li>
-<li><strong>stat_cn</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
-domain with dimension = (kmax)</li>
-<li><strong>stat_cs</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
-domain with dimension = (kmax)</li>
-<li><strong>scale_height</strong> (<em>float</em>) – Scale height of the atmosphere in [m] with default value 7000.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>QGPV</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of quasi-geostrophic potential vorticity;
-dimension = (kmax x nlat x nlon)</li>
-<li><strong>dzdiv</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of the stretching term in QGPV;
-dimension = (kmax x nlat x nlon)</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
+            
+              <div class="version">
+                0.3.8
+              </div>
+            
+          
 
-<dl class="function">
-<dt id="utilities.static_stability">
-<code class="descclassname">utilities.</code><code class="descname">static_stability</code><span class="sig-paren">(</span><em>height</em>, <em>area</em>, <em>theta</em>, <em>s_et=None</em>, <em>n_et=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#static_stability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.static_stability" title="Permalink to this definition">¶</a></dt>
-<dd><p>The function “static_stability” computes the vertical gradient (z-derivative)
-of hemispheric-averaged potential temperature, i.e. d       ilde{theta}/dz in the def-
-inition of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
-At the boundary, the static stability is estimated by forward/backward differen-
-cing involving two adjacent z-grid points:</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])</dt>
-<dd>stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])</dd>
-</dl>
-</div></blockquote>
-<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>height</strong> (<em>numpy.array</em>) – Array of z-coordinate [in meters] with dimension = (kmax), equally spaced</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – Two-dimension numpy array specifying differential areal element of each grid point;
-dimension = (nlat, nlon).</li>
-<li><strong>theta</strong> (<em>numpy.ndarray</em>) – Matrix of potential temperature [K] with dimension (kmax,nlat,nlon) or (kmax,nlat)</li>
-<li><strong>s_et</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the latitude that defines the boundary of the Southern hemispheric domain;
-initialized as nlat/2 if not input</li>
-<li><strong>n_et</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the latitude that defines the boundary of the Southern hemispheric domain;
-initialized as nlat/2 if not input</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>t0_n</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
-in the Northern hemispheric domain with dimension = (kmax)</li>
-<li><strong>t0_s</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
-in the Southern hemispheric domain with dimension = (kmax)</li>
-<li><strong>stat_n</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
-domain with dimension = (kmax)</li>
-<li><strong>stat_s</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
-domain with dimension = (kmax)</li>
-</ul>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="utilities.zonal_convergence">
-<code class="descclassname">utilities.</code><code class="descname">zonal_convergence</code><span class="sig-paren">(</span><em>field</em>, <em>clat</em>, <em>dlambda</em>, <em>planet_radius=6378000.0</em>, <em>tol=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#zonal_convergence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.zonal_convergence" title="Permalink to this definition">¶</a></dt>
-<dd><p>The function “zonal_convergence” computes the zonal component of the convergence operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
--1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)</p>
-<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>field</strong> (<em>numpy.ndarray</em>) – An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]</li>
-<li><strong>clat</strong> (<em>numpy.array</em>) – Numpy array of cosine latitude; dimension [nlat]</li>
-<li><strong>dlambda</strong> (<em>float</em>) – Differential element of longitude</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius of the planet in meters.
-Default = 6.378e+6 (Earth’s radius)</li>
-<li><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance below which clat is considered infinitely small that the corresponding grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ans</strong> – Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
 </div>
 
-
-          </div>
+          
         </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h3><a href="index.html">Table Of Contents</a></h3>
-<ul class="current">
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Utility Functions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
 </ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="Wrapper Functions.html" title="previous chapter">Wrapper Functions</a></li>
-      <li>Next: <a href="Beta-version Functions.html" title="next chapter">Beta-version Functions</a></li>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/Utility Functions.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+
+            
+          
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2018, Clare S. Y. Huang.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
-      <a href="_sources/Utility Functions.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
+    </nav>
 
-    
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hn2016_falwa</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
     
-  </body>
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Utility Functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/Utility Functions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-utilities">
+<span id="utility-functions"></span><h1>Utility Functions<a class="headerlink" href="#module-utilities" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="utilities.compute_qgpv_givenvort">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">compute_qgpv_givenvort</code><span class="sig-paren">(</span><em class="sig-param">omega</em>, <em class="sig-param">nlat</em>, <em class="sig-param">nlon</em>, <em class="sig-param">kmax</em>, <em class="sig-param">unih</em>, <em class="sig-param">ylat</em>, <em class="sig-param">avort</em>, <em class="sig-param">potential_temp</em>, <em class="sig-param">t0_cn</em>, <em class="sig-param">t0_cs</em>, <em class="sig-param">stat_cn</em>, <em class="sig-param">stat_cs</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">scale_height=7000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#compute_qgpv_givenvort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.compute_qgpv_givenvort" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function “compute_qgpv_givenvort” computes the quasi-geostrophic potential vorticity based on the absolute vorticity, potential temperature and static stability given in a <em>hemispheric domain</em>.</p>
+<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) – Rotation rate of the planet.</p></li>
+<li><p><strong>nlat</strong> (<em>int</em>) – Latitudinal dimension of the latitude grid.</p></li>
+<li><p><strong>nlon</strong> (<em>int</em>) – Longitudinal dimension of the longitude grid.</p></li>
+<li><p><strong>kmax</strong> (<em>int</em>) – Vertical dimension of the height grid.</p></li>
+<li><p><strong>unih</strong> (<em>numpy.array</em>) – Numpy array of height in [meters]; dimension = (kmax)</p></li>
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – Numpy array of latitudes in [degrees]; dimension = (nlat)</p></li>
+<li><p><strong>avort</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of absolute vorticity (i.e. relative vorticity
++ 2*Omega*sin(lat)) in [1/s]; dimension = (kmax x nlat x nlon)</p></li>
+<li><p><strong>potential_temp</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of potential temperature in [K];
+dimension = (kmax x nlat x nlon)</p></li>
+<li><p><strong>t0_cn</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Northern hemispheric domain with dimension = (kmax)</p></li>
+<li><p><strong>t0_cs</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Southern hemispheric domain with dimension = (kmax)</p></li>
+<li><p><strong>stat_cn</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
+domain with dimension = (kmax)</p></li>
+<li><p><strong>stat_cs</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
+domain with dimension = (kmax)</p></li>
+<li><p><strong>scale_height</strong> (<em>float</em>) – Scale height of the atmosphere in [m] with default value 7000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>QGPV</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of quasi-geostrophic potential vorticity;
+dimension = (kmax x nlat x nlon)</p></li>
+<li><p><strong>dzdiv</strong> (<em>numpy.ndarray</em>) – Three-dimension numpy array of the stretching term in QGPV;
+dimension = (kmax x nlat x nlon)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.curl_2d">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">curl_2d</code><span class="sig-paren">(</span><em class="sig-param">ufield</em>, <em class="sig-param">vfield</em>, <em class="sig-param">clat</em>, <em class="sig-param">dlambda</em>, <em class="sig-param">dphi</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#curl_2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.curl_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assuming regular latitude and longitude [in degree] grid, compute the curl
+of velocity on a pressure level in spherical coordinates.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.static_stability">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">static_stability</code><span class="sig-paren">(</span><em class="sig-param">height</em>, <em class="sig-param">area</em>, <em class="sig-param">theta</em>, <em class="sig-param">s_et=None</em>, <em class="sig-param">n_et=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#static_stability"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.static_stability" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function “static_stability” computes the vertical gradient (z-derivative)
+of hemispheric-averaged potential temperature, i.e. d       ilde{theta}/dz in the def-
+inition of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
+At the boundary, the static stability is estimated by forward/backward differen-
+cing involving two adjacent z-grid points:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])</dt><dd><p>stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>height</strong> (<em>numpy.array</em>) – Array of z-coordinate [in meters] with dimension = (kmax), equally spaced</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – Two-dimension numpy array specifying differential areal element of each grid point;
+dimension = (nlat, nlon).</p></li>
+<li><p><strong>theta</strong> (<em>numpy.ndarray</em>) – Matrix of potential temperature [K] with dimension (kmax,nlat,nlon) or (kmax,nlat)</p></li>
+<li><p><strong>s_et</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the latitude that defines the boundary of the Southern hemispheric domain;
+initialized as nlat/2 if not input</p></li>
+<li><p><strong>n_et</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the latitude that defines the boundary of the Southern hemispheric domain;
+initialized as nlat/2 if not input</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t0_n</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Northern hemispheric domain with dimension = (kmax)</p></li>
+<li><p><strong>t0_s</strong> (<em>numpy.array</em>) – Area-weighted average of potential temperature (        ilde{   heta} in HN16)
+in the Southern hemispheric domain with dimension = (kmax)</p></li>
+<li><p><strong>stat_n</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Northern hemispheric
+domain with dimension = (kmax)</p></li>
+<li><p><strong>stat_s</strong> (<em>numpy.array</em>) – Static stability (d     ilde{   heta}/dz in HN16) in the Southern hemispheric
+domain with dimension = (kmax)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utilities.zonal_convergence">
+<code class="sig-prename descclassname">utilities.</code><code class="sig-name descname">zonal_convergence</code><span class="sig-paren">(</span><em class="sig-param">field</em>, <em class="sig-param">clat</em>, <em class="sig-param">dlambda</em>, <em class="sig-param">planet_radius=6378000.0</em>, <em class="sig-param">tol=1e-05</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utilities.html#zonal_convergence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utilities.zonal_convergence" title="Permalink to this definition">¶</a></dt>
+<dd><p>The function “zonal_convergence” computes the zonal component of the convergence operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
+-1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)</p>
+<p>Please make inquiries and report issues via Github: <a class="reference external" href="https://github.com/csyhuang/hn2016_falwa/issues">https://github.com/csyhuang/hn2016_falwa/issues</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> (<em>numpy.ndarray</em>) – An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]</p></li>
+<li><p><strong>clat</strong> (<em>numpy.array</em>) – Numpy array of cosine latitude; dimension [nlat]</p></li>
+<li><p><strong>dlambda</strong> (<em>float</em>) – Differential element of longitude</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius of the planet in meters.
+Default = 6.378e+6 (Earth’s radius)</p></li>
+<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance below which clat is considered infinitely small that the corresponding grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>ans</strong> – Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Beta-version Functions.html" class="btn btn-neutral float-right" title="Beta-version Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Wrapper Functions.html" class="btn btn-neutral float-left" title="Wrapper Functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Clare S. Y. Huang
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
 </html>
