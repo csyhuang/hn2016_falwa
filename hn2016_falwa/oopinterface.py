@@ -300,12 +300,12 @@ class QGField(object):
             self.rjac,
         )
 
-    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta):
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp):
         """
         Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
         """
         return compute_lwa_and_barotropic_fluxes(
-            qgpv, u, v, theta, self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp,
+            qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp,
             self.planet_radius, self.omega, self.dz, self.scale_height, self.dry_gas_constant, self.cp, self.prefactor)
 
     def interpolate_fields(self):
@@ -554,16 +554,23 @@ class QGField(object):
                 self._qgpv_temp,
                 self._interpolated_u_temp,
                 self._interpolated_v_temp,
-                self._interpolated_theta_temp)
+                self._interpolated_theta_temp,
+                self._qref_ntemp,
+                self._uref_ntemp,
+                self._ptref_ntemp)
 
         # === Compute barotropic flux terms (SHem) ===
-        lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
-            ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
-            self._compute_lwa_and_barotropic_fluxes_wrapper(
-                -self._qgpv_temp[:, ::-1, :],
-                self._interpolated_u_temp[:, ::-1, :],
-                self._interpolated_v_temp[:, ::-1, :],
-                self._interpolated_theta_temp[:, ::-1, :])
+        if not northern_hemisphere_results_only:
+            lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
+                ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
+                self._compute_lwa_and_barotropic_fluxes_wrapper(
+                    -self._qgpv_temp[:, ::-1, :],
+                    self._interpolated_u_temp[:, ::-1, :],
+                    self._interpolated_v_temp[:, ::-1, :],
+                    self._interpolated_theta_temp[:, ::-1, :],
+                    self._qref_stemp,
+                    self._uref_stemp,
+                    self._ptref_stemp)
 
         # *** Northern Hemisphere ***
         # Compute divergence of the meridional eddy momentum flux
@@ -583,19 +590,20 @@ class QGField(object):
 
         # *** Southern Hemisphere ***
         # Compute divergence of the meridional eddy momentum flux
-        meri_flux_shem_temp = np.zeros_like(ep2baro_shem)
-        meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
-            (2 * self.planet_radius * self.dphi *
-             np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
-        # Compute convergence of the zonal LWA flux
-        zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
-        convergence_zonal_advective_flux_shem = \
-            utilities.zonal_convergence(
-                zonal_adv_flux_shem_sum,
-                np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
-                self.dlambda,
-                planet_radius=self.planet_radius
-            )
+        if not northern_hemisphere_results_only:
+            meri_flux_shem_temp = np.zeros_like(ep2baro_shem)
+            meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
+                (2 * self.planet_radius * self.dphi *
+                 np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
+            # Compute convergence of the zonal LWA flux
+            zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
+            convergence_zonal_advective_flux_shem = \
+                utilities.zonal_convergence(
+                    zonal_adv_flux_shem_sum,
+                    np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                    self.dlambda,
+                    planet_radius=self.planet_radius
+                )
 
         if northern_hemisphere_results_only:
             self._adv_flux_f1 = np.swapaxes(ua1baro_nhem, 0, 1)
