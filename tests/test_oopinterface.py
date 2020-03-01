@@ -2,6 +2,7 @@ import os
 import pytest
 import numpy as np
 from math import pi
+from collections import namedtuple
 from scipy.interpolate import interp1d
 
 from hn2016_falwa.constant import *
@@ -76,17 +77,27 @@ def test_qgfield():
     # Check that the output reference states are of correct dimension, and
     # the QGPV reference state is non-decreasing.
     qref_north_hem, uref_north_hem, ptref_north_hem = \
-        qgfield.compute_reference_states(
-            northern_hemisphere_results_only=True
-        )
+        qgfield.compute_reference_states(northern_hemisphere_results_only=True)
 
     # Check dimension of the input field
-    assert (kmax, nlat//2+1) == qref_north_hem.shape
-    assert (kmax, nlat//2+1) == uref_north_hem.shape
-    assert (kmax, nlat//2+1) == ptref_north_hem.shape
+    assert (kmax, nlat // 2 + 1) == qref_north_hem.shape
+    assert (kmax, nlat // 2 + 1) == uref_north_hem.shape
+    assert (kmax, nlat // 2 + 1) == ptref_north_hem.shape
 
     # Check if qref is monotonically increasing in N. Hem
     assert (np.diff(qref_north_hem, axis=-1)[1:-1, 1:-1] >= 0.).all()
+
+    # Check LWA and fluxes
+    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only=True)
+    assert lwa_and_fluxes.adv_flux_f1.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.adv_flux_f2.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.adv_flux_f3.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.convergence_zonal_advective_flux.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.divergence_eddy_momentum_flux.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.meridional_heat_flux.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.lwa_baro.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.u_baro.shape == (nlat // 2 + 1, nlon)
+    assert lwa_and_fluxes.lwa.shape == (kmax, nlat // 2 + 1, nlon)
 
 
 def test_qgfield_full_globe():
@@ -115,37 +126,12 @@ def test_qgfield_full_globe():
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
-    qgpv, interpolated_u, interpolated_v, interpolated_theta, static_stability = \
-        qgfield.interpolate_fields()
-
-    # Check that the dimensions of the interpolated fields are correct
-    assert (kmax, nlat, nlon) == qgpv.shape
-    assert (kmax, nlat, nlon) == interpolated_u.shape
-    assert (kmax, nlat, nlon) == interpolated_v.shape
-    assert (kmax, nlat, nlon) == interpolated_theta.shape
-    assert (kmax,) == static_stability.shape
-
-    assert (interpolated_u[1:-1, :, :].max() <= u_field.max()) & \
-           (interpolated_u[1:-1, :, :].max() >= u_field.min())
-    assert (interpolated_u[1:-1, :, :].min() <= u_field.max()) & \
-           (interpolated_u[1:-1, :, :].min() >= u_field.min())
-    assert (interpolated_v[1:-1, :, :].max() <= v_field.max()) & \
-           (interpolated_v[1:-1, :, :].max() >= v_field.min())
-    assert (interpolated_v[1:-1, :, :].min() <= v_field.max()) & \
-           (interpolated_v[1:-1, :, :].min() >= v_field.min())
-    assert (interpolated_theta[1:-1, :, :].max() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, :, :].max() >= theta_field.min())
-    assert (interpolated_theta[1:-1, :, :].min() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, :, :].min() >= theta_field.min())
-    assert 0 == np.isnan(qgpv).sum()
-    assert 0 == (qgpv == float('Inf')).sum()
+    interpolated_fields = qgfield.interpolate_fields()
 
     # Check that the output reference states are of correct dimension, and
     # the QGPV reference state is non-decreasing.
-    qref_full_hem, uref_full_hem, ptref_full_hem = \
-        qgfield.compute_reference_states(
-            northern_hemisphere_results_only=False
-        )
+    qref_full_hem, uref_full_hem, ptref_full_hem = qgfield.compute_reference_states(
+        northern_hemisphere_results_only=False)
 
     # Check dimension of the input field
     assert (kmax, nlat) == qref_full_hem.shape
@@ -154,7 +140,19 @@ def test_qgfield_full_globe():
 
     # Check if qref is monotonically increasing in both hemisphere (exclude equator)
     assert (np.diff(qref_full_hem, axis=-1)[1:-1, 1:nlat//2-1] >= 0.).all()  # South Hem
-    assert (np.diff(qref_full_hem, axis=-1)[1:-1, nlat//2+1:-1] >= 0.).all()  # North Hem
+    assert (np.diff(qref_full_hem, axis=-1)[1:-1, nlat // 2 + 1:-1] >= 0.).all()  # North Hem
+
+    # Check LWA and fluxes
+    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only=False)
+    assert lwa_and_fluxes.adv_flux_f1.shape == (nlat, nlon)
+    assert lwa_and_fluxes.adv_flux_f2.shape == (nlat, nlon)
+    assert lwa_and_fluxes.adv_flux_f3.shape == (nlat, nlon)
+    assert lwa_and_fluxes.convergence_zonal_advective_flux.shape == (nlat, nlon)
+    assert lwa_and_fluxes.divergence_eddy_momentum_flux.shape == (nlat, nlon)
+    assert lwa_and_fluxes.meridional_heat_flux.shape == (nlat, nlon)
+    assert lwa_and_fluxes.lwa_baro.shape == (nlat, nlon)
+    assert lwa_and_fluxes.u_baro.shape == (nlat, nlon)
+    assert lwa_and_fluxes.lwa.shape == (kmax, nlat, nlon)
 
 
 def test_raise_error_for_unrealistic_fields():

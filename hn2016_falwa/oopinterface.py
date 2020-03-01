@@ -380,7 +380,7 @@ class QGField(object):
             self.static_stability)
         return interpolated_fields
 
-    def compute_reference_states(self, northern_hemisphere_results_only=True):
+    def compute_reference_states(self, northern_hemisphere_results_only=False):
 
         """
         Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
@@ -394,7 +394,7 @@ class QGField(object):
         northern_hemisphere_results_only : bool
            If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
            returned. This parameter is present since the current version (v0.3.1) of the package only return analysis
-           in the northern hemisphere. Default: True.
+           in the northern hemisphere. Default: False.
 
         Returns
         -------
@@ -472,7 +472,7 @@ class QGField(object):
             self.ptref)
         return reference_states
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=True):
+    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
         Nakamura and Huang (Science, 2018).
@@ -482,7 +482,7 @@ class QGField(object):
         northern_hemisphere_results_only : bool
            If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be
            returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in
-           the northern hemisphere. Default: True.
+           the northern hemisphere. Default: False.
 
         Returns
         -------
