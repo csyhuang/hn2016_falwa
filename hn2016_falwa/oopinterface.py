@@ -593,6 +593,9 @@ class QGField(object):
             meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
                 (2 * self.planet_radius * self.dphi *
                  np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
+            # Flip the sign for southern hemisphere
+            meri_flux_shem_temp[:, 1:-1] = -meri_flux_shem_temp[:, 1:-1]
+
             # Compute convergence of the zonal LWA flux
             zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
             convergence_zonal_advective_flux_shem = \
@@ -629,8 +632,9 @@ class QGField(object):
             self._convergence_zonal_advective_flux = np.vstack((convergence_zonal_advective_flux_shem[::-1, :],
                                                                 convergence_zonal_advective_flux_nhem[1:, :]))
 
+            # Negative sign for southern hemisphere upon flipping (via Coriolis parameter)
             self._meridional_heat_flux = \
-                np.vstack((np.swapaxes(ep4_shem[:, ::-1], 0, 1),
+                np.vstack((np.swapaxes(-ep4_shem[:, ::-1], 0, 1),
                            np.swapaxes(ep4_nhem[:, 1:], 0, 1)))
 
             self._lwa_baro = \
