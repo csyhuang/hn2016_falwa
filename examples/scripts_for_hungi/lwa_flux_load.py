@@ -1,6 +1,6 @@
 import os
 from math import pi
-
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy import dtype
 from scipy.interpolate import interp1d
@@ -17,7 +17,7 @@ from hn2016_falwa.oopinterface import QGField
 #import sys
 #sys.executable
 
-data_dir = '/scratch/midway2/hungi/Data/Frierson_Aqua_GCM/'
+data_dir = ''
 d_sim = Dataset(data_dir+'atmos_daily.nc','r')
 
 
@@ -61,7 +61,8 @@ nlev = plev.size
 # --- Parameters and constants --- #
 clat = np.cos(np.deg2rad(ylat))          # cosine latitude
 p0 = 1000.                               # surface pressure [hPa]
-height = np.arange(0,48001,1000)         # pseudoheight [m]
+kmax = 30                                # number of grid points for vertical extrapolation (dimension of height)
+height = np.arange(0, (kmax-1)*1000 + 1, 1000)         # pseudoheight [m]
 p_grid = 1000. * np.exp(-height/7000.)   # pressure level on regular pseudoheight grid
 dz = 1000.                          # differential height element
 dphi = np.diff(ylat)[0]*pi/180.     # differential latitudinal element
@@ -71,7 +72,6 @@ cp = 1004.                          # heat capacity of dry air
 rr = 287.                           # gas constant
 omega = 7.29e-5                     # rotation rate of the earth
 aa = 6.378e+6                       # earth radius
-kmax = 49                           # number of grid points for vertical extrapolation (dimension of height)
 prefactor = 6500.                   # integrated sum of density from ground to aloft
 npart = nlat                        # number of partitions to construct the equivalent latitude grids
 maxits = 100000                     # maximum number of iteration in the SOR solver to solve for reference state
@@ -79,8 +79,6 @@ tol = 1.e-5                         # tolerance that define convergence of solut
 rjac = 0.95                         # spectral radius of the Jacobi iteration in the SOR solver.              
 jd = nlat//2+1                      # (one plus) index of latitude grid point with value 0 deg
                                     # This is to be input to fortran code. The index convention is different.
-
-
 
 # --- Define variables in output file --- #
 output_fname = 'atmos_daily_lowab_tropics_lwa_flux.nc'
@@ -140,7 +138,10 @@ u_baro.units = 'm/s'
 # --- Compute local wave activity and output the data at a particular latitude --- #
 #for tstep in range(ntimes):
     
-
+print('ylat = {}'.format(ylat))
+print('plev = {}'.format(plev))
+print('nlat = {}'.format(nlat))
+print(d_sim)
 
 for tstep in range(ntimes):
     
@@ -148,13 +149,20 @@ for tstep in range(ntimes):
     vv = d_sim.variables['vcomp'][tstep, ::-1, :, :].data
     tt = d_sim.variables['temp'][tstep, ::-1, :, :].data
 
-    qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt)
+    qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax)
 
     qgpv[tstep, :, :, :], interpolated_u[tstep, :, :, :], interpolated_v[tstep, :, :, :], \
         interpolated_theta[tstep, :, :, :], static_stability = qgfield_object.interpolate_fields()
+    print('Finished interpolation. Start computing reference state.')
+
+    # plt.contourf(xlon, ylat, interpolated_u[tstep, 10, :, :])
+    # plt.colorbar()
+    # plt.show()
 
     qref[tstep, :, (nlat//2):], uref[tstep, :, (nlat//2):], ptref[tstep, :, (nlat//2):] = \
         qgfield_object.compute_reference_states(northern_hemisphere_results_only=True)
+
+    print('Finished computing reference state.')
 
     adv_flux_f1[tstep, (nlat//2):, :], \
     adv_flux_f2[tstep, (nlat//2):, :], \
@@ -165,7 +173,7 @@ for tstep in range(ntimes):
     lwa_baro[tstep, (nlat//2):, :], \
     u_baro[tstep, (nlat//2):, :], \
     lwa[tstep, :, (nlat//2):, :] \
-        = qgfield_object.compute_lwa_and_barotropic_fluxes()
+        = qgfield_object.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only=True)
     
     print(tstep)
     
@@ -173,8 +181,7 @@ output_file.close()
 print('Output {} timesteps of data to the file {}'.format(ntimes, output_fname))
 
 
-
-    # --- Delete netCDF files downloaded for that year ---
+# --- Delete netCDF files downloaded for that year ---
 #    for file in files_downloaded:
 #        os.remove(file)
 #        print('{} deleted.'.format(file))
