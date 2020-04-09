@@ -80,34 +80,13 @@ class QGField(object):
         computation are done by calling various methods.
         """
 
-        # Check if ylat is in ascending order and include the equator
-        if np.diff(ylat)[0] < 0:
-            raise TypeError("ylat must be in ascending order")
-        if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
-            # Even grid
-            self.need_latitude_interpolation = True
-            self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
-            self.equator_idx = \
-                np.argwhere(self.ylat == 0)[0][0] + 1
-            # Fortran indexing starts from 1
-        elif sum(ylat == 0) == 1:
-            # Odd grid
-            self.need_latitude_interpolation = False
-            self.ylat_no_equator = None
-            self.ylat = ylat
-            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
-        else:
-            raise TypeError(
-                "There are more than 1 grid point with latitude 0."
-            )
-        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+        # === Check if ylat is in ascending order and include the equator ===
+        self._check_and_flip_ylat(ylat)
 
-        # === Check if plev is in decending order ===
-        if np.diff(plev)[0] > 0:
-            raise TypeError("plev must be in decending order")
-        else:
-            self.plev = plev
+        # === Check the validity of plev ===
+        self._check_valid_plev(plev, scale_height, kmax, dz)
+
+        # === Initialize longitude grid ===
         self.xlon = xlon
 
         # === Check the shape of wind/temperature fields ===
@@ -115,33 +94,15 @@ class QGField(object):
         self.nlat = ylat.size
         self.nlon = xlon.size
         expected_dimension = (self.nlev, self.nlat, self.nlon)
-        if u_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of u_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
-        if v_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of v_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
-        if t_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of t_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
+        self._check_dimension_of_fields(field=u_field, field_name='u_field', expected_dim=expected_dimension)
+        self._check_dimension_of_fields(field=v_field, field_name='v_field', expected_dim=expected_dimension)
+        self._check_dimension_of_fields(field=t_field, field_name='t_field', expected_dim=expected_dimension)
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
-            interp_u = interp1d(
-                self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate"
-            )
-            interp_v = interp1d(
-                self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate"
-            )
-            interp_t = interp1d(
-                self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate"
-            )
+            interp_u = interp1d(self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate")
+            interp_v = interp1d(self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate")
+            interp_t = interp1d(self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate")
             self.u_field = interp_u(self.ylat)
             self.v_field = interp_v(self.ylat)
             self.t_field = interp_t(self.ylat)
@@ -209,20 +170,84 @@ class QGField(object):
         self._lwa = None
         self._divergence_eddy_momentum_flux = None
 
-    def _interp_back(
-        self,
-        field,
-        interp_from,
-        interp_to,
-        which_axis=1):
+    def _check_valid_plev(self, plev, scale_height, kmax, dz):
+        """
+        Private function. Check the validity of plev to see
+            1. if plev is in decending order
+            2. if kmax is valid given the max pseudoheight in the input data
+
+        Parameters
+        ----------
+        plev : numpy.ndarray
+               Array of pressure level (in hPa) of size nlev.
+        scale_height : float, optional
+               Scale height of the atmosphere in meters. Default = 7000.
+        kmax : int, optional
+               Dimension of uniform pseudoheight grids used for interpolation.
+        dz : float, optional
+               Size of uniform pseudoheight grids (in meters).
+        """
+        # Check if plev is in decending order
+        if np.diff(plev)[0] > 0:
+            raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
+        else:
+            self.plev = plev
+
+        # Check if kmax is valid given the max pseudoheight in the input data
+        hmax = -scale_height*np.log(plev[-1]/1000.)
+        if hmax < (kmax-1) * dz:
+            raise ValueError('Input kmax = {} but the maximum valid kmax'.format(kmax) +
+                             '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax//dz)+1))
+
+    def _check_and_flip_ylat(self, ylat):
+        """
+        Private function. Check if ylat is in ascending order and include the equator. If not, create a new grid with
+        odd number of grid points that include the equator.
+
+        Parameters
+        ----------
+        ylat : numpy.array
+               Array of evenly-spaced latitude (in degree) of size nlat.
+        """
+        # Check if ylat is in ascending order and include the equator
+        if np.diff(ylat)[0] < 0:
+            raise TypeError("ylat must be in ascending order")
+        if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
+            # Even grid
+            self.need_latitude_interpolation = True
+            self.ylat_no_equator = ylat
+            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            self.equator_idx = \
+                np.argwhere(self.ylat == 0)[0][0] + 1
+            # Fortran indexing starts from 1
+        elif sum(ylat == 0) == 1:
+            # Odd grid
+            self.need_latitude_interpolation = False
+            self.ylat_no_equator = None
+            self.ylat = ylat
+            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
+        else:
+            raise TypeError(
+                "There are more than 1 grid point with latitude 0."
+            )
+        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+
+    @staticmethod
+    def _check_dimension_of_fields(field, field_name, expected_dim):
+        """
+        Private function. Check if the field of a specific field_name has the expected dimension expected_dim.
+        """
+        if field.shape != expected_dim:
+            raise TypeError(
+                "Incorrect dimension of {}. Expected dimension: {}"
+                .format(field_name, expected_dim)
+            )
+
+    def _interp_back(self, field, interp_from, interp_to, which_axis=1):
         """
         Private function to interpolate the results from odd grid to even grid.
         If the initial input to the QGField object is an odd grid, error will be raised.
         """
-        # print('For debugging. field.shape = {}'.format(field.shape))
-        # print('For debugging. interp_from.shape = {}'.format(interp_from.shape))
-        # print('For debugging. interp_to.shape = {}'.format(interp_to.shape))
-
         if self.ylat_no_equator is None:
             raise TypeError("No need for such interpolation.")
         else:
@@ -593,8 +618,6 @@ class QGField(object):
             meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
                 (2 * self.planet_radius * self.dphi *
                  np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
-            # Flip the sign for southern hemisphere
-            meri_flux_shem_temp[:, 1:-1] = -meri_flux_shem_temp[:, 1:-1]
 
             # Compute convergence of the zonal LWA flux
             zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
@@ -647,7 +670,7 @@ class QGField(object):
             self._lwa = np.concatenate((np.swapaxes(lwa_shem[:, ::-1], 0, 2),
                                         np.swapaxes(lwa_nhem[:, 1:], 0, 2)), axis=1)
 
-            self._divergence_eddy_momentum_flux = np.vstack((np.swapaxes(meri_flux_shem_temp[:, ::-1], 0, 1),
+            self._divergence_eddy_momentum_flux = np.vstack((np.swapaxes(-meri_flux_shem_temp[:, ::-1], 0, 1),
                                                              np.swapaxes(meri_flux_nhem_temp[:, 1:], 0, 1)))
 
         # Construct a named tuple

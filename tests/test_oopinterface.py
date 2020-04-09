@@ -156,6 +156,9 @@ def test_qgfield_full_globe():
 
 
 def test_raise_error_for_unrealistic_fields():
+    """
+    Error shall be raised if the SOR algorithm for computing reference state does not converge.
+    """
     qgfield = QGField(
         xlon=xlon,
         ylat=ylat,
@@ -179,6 +182,24 @@ def test_raise_error_for_unrealistic_fields():
     qgfield.interpolate_fields()
     with pytest.raises(ValueError):
         qgfield.compute_reference_states()
+
+
+def test_raise_error_for_unrealistic_kmax():
+    """
+    Error shall be raised if kmax is out of bound of the pressure grid provided in the input data
+
+    .. versionadded:: 0.4.0
+    """
+    too_large_kmax = 1000
+    with pytest.raises(ValueError):
+        QGField(
+            xlon=xlon,
+            ylat=ylat,
+            plev=plev,
+            u_field=u_field,
+            v_field=v_field,
+            t_field=t_field,
+            kmax=too_large_kmax)
 
 
 def test_interpolate_fields_even_grids():
