@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'hn2016_falwa'
-copyright = u'2018, Clare S. Y. Huang'
+copyright = u'2020, Clare S. Y. Huang'
 author = u'Clare S. Y. Huang'
 
 # The version info for the project you're documenting, acts as replacement for
