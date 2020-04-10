@@ -411,8 +411,7 @@ class QGField(object):
         """
         Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
         stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is
-        equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the
-        Northern Hemisphere is computed.
+        equation (22) in supplementary materials of Huang and Nakamura (2017, GRL).
 
         This function returns named tuple called "Reference_states" that consists of 3 elements:
 
@@ -501,7 +500,8 @@ class QGField(object):
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
         Nakamura and Huang (Science, 2018). It returns a named tuple called "LWA_and_fluxes" that consists of
-        9 elements as listed below.
+        9 elements as listed below. The discretization scheme that is used in the numerical integration is outlined
+        in the Supplementary materials of Huang and Nakamura (GRL, 2017).
 
         Parameters
         ----------
