@@ -219,7 +219,8 @@ Default = 6.378e+6 (Earth’s radius).</p></li>
 <code class="sig-name descname">compute_lwa_and_barotropic_fluxes</code><span class="sig-paren">(</span><em class="sig-param">northern_hemisphere_results_only=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.compute_lwa_and_barotropic_fluxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.compute_lwa_and_barotropic_fluxes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
 Nakamura and Huang (Science, 2018). It returns a named tuple called “LWA_and_fluxes” that consists of
-9 elements as listed below.</p>
+9 elements as listed below. The discretization scheme that is used in the numerical integration is outlined
+in the Supplementary materials of Huang and Nakamura (GRL, 2017).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) – If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
@@ -269,8 +270,7 @@ northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if nort
 <code class="sig-name descname">compute_reference_states</code><span class="sig-paren">(</span><em class="sig-param">northern_hemisphere_results_only=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.compute_reference_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.compute_reference_states" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
 stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is
-equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the
-Northern Hemisphere is computed.</p>
+equation (22) in supplementary materials of Huang and Nakamura (2017, GRL).</p>
 <p>This function returns named tuple called “Reference_states” that consists of 3 elements:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
