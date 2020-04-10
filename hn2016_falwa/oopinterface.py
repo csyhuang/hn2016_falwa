@@ -1,14 +1,12 @@
-from math import pi
-
 import numpy as np
 from scipy.interpolate import interp1d
 
 from hn2016_falwa import utilities
-from hn2016_falwa import basis
 from hn2016_falwa.constant import *
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
+from collections import namedtuple
 
 
 class QGField(object):
@@ -76,39 +74,19 @@ class QGField(object):
                  scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS):
 
-        """Create a QGField object.
+        """
+        Create a QGField object.
         This only initialize the attributes of the object. Analysis and
         computation are done by calling various methods.
         """
 
-        # Check if ylat is in ascending order and include the equator
-        if np.diff(ylat)[0] < 0:
-            raise TypeError("ylat must be in ascending order")
-        if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
-            # Even grid
-            self.need_latitude_interpolation = True
-            self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
-            self.equator_idx = \
-                np.argwhere(self.ylat == 0)[0][0] + 1
-            # Fortran indexing starts from 1
-        elif sum(ylat == 0) == 1:
-            # Odd grid
-            self.need_latitude_interpolation = False
-            self.ylat_no_equator = None
-            self.ylat = ylat
-            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
-        else:
-            raise TypeError(
-                "There are more than 1 grid point with latitude 0."
-            )
-        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+        # === Check if ylat is in ascending order and include the equator ===
+        self._check_and_flip_ylat(ylat)
 
-        # === Check if plev is in decending order ===
-        if np.diff(plev)[0] > 0:
-            raise TypeError("plev must be in decending order")
-        else:
-            self.plev = plev
+        # === Check the validity of plev ===
+        self._check_valid_plev(plev, scale_height, kmax, dz)
+
+        # === Initialize longitude grid ===
         self.xlon = xlon
 
         # === Check the shape of wind/temperature fields ===
@@ -116,34 +94,15 @@ class QGField(object):
         self.nlat = ylat.size
         self.nlon = xlon.size
         expected_dimension = (self.nlev, self.nlat, self.nlon)
-
-        if u_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of u_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
-        if v_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of v_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
-        if t_field.shape != expected_dimension:
-            raise TypeError(
-                "Incorrect dimension of t_field. Expected dimension: {}"
-                .format(expected_dimension)
-            )
+        self._check_dimension_of_fields(field=u_field, field_name='u_field', expected_dim=expected_dimension)
+        self._check_dimension_of_fields(field=v_field, field_name='v_field', expected_dim=expected_dimension)
+        self._check_dimension_of_fields(field=t_field, field_name='t_field', expected_dim=expected_dimension)
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
-            interp_u = interp1d(
-                self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate"
-            )
-            interp_v = interp1d(
-                self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate"
-            )
-            interp_t = interp1d(
-                self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate"
-            )
+            interp_u = interp1d(self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate")
+            interp_v = interp1d(self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate")
+            interp_t = interp1d(self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate")
             self.u_field = interp_u(self.ylat)
             self.v_field = interp_v(self.ylat)
             self.t_field = interp_t(self.ylat)
@@ -185,9 +144,12 @@ class QGField(object):
         self._static_stability = None
 
         # Computation from computer_reference_states
-        self._qref_temp = None
-        self._uref_temp = None
-        self._ptref_temp = None
+        self._qref_stemp = None
+        self._uref_stemp = None
+        self._ptref_stemp = None
+        self._qref_ntemp = None
+        self._uref_ntemp = None
+        self._ptref_ntemp = None
         self._qref = None
         self._uref = None
         self._ptref = None
@@ -195,7 +157,7 @@ class QGField(object):
         self._interpolated_u = None
         self._interpolated_v = None
         self._interpolated_theta = None
-        self.northern_hemisphere_results_only = True
+        self.northern_hemisphere_results_only = False
 
         # Computation from compute_lwa_and_barotropic_fluxes
         self._adv_flux_f1 = None
@@ -208,18 +170,84 @@ class QGField(object):
         self._lwa = None
         self._divergence_eddy_momentum_flux = None
 
-    def _interp_back(
-        self,
-        field,
-        interp_from,
-        interp_to,
-        which_axis=1
-    ):
+    def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
-        Internal function to interpolate the results from odd grid to even grid.
+        Private function. Check the validity of plev to see
+            1. if plev is in decending order
+            2. if kmax is valid given the max pseudoheight in the input data
+
+        Parameters
+        ----------
+        plev : numpy.ndarray
+               Array of pressure level (in hPa) of size nlev.
+        scale_height : float, optional
+               Scale height of the atmosphere in meters. Default = 7000.
+        kmax : int, optional
+               Dimension of uniform pseudoheight grids used for interpolation.
+        dz : float, optional
+               Size of uniform pseudoheight grids (in meters).
+        """
+        # Check if plev is in decending order
+        if np.diff(plev)[0] > 0:
+            raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
+        else:
+            self.plev = plev
+
+        # Check if kmax is valid given the max pseudoheight in the input data
+        hmax = -scale_height*np.log(plev[-1]/1000.)
+        if hmax < (kmax-1) * dz:
+            raise ValueError('Input kmax = {} but the maximum valid kmax'.format(kmax) +
+                             '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax//dz)+1))
+
+    def _check_and_flip_ylat(self, ylat):
+        """
+        Private function. Check if ylat is in ascending order and include the equator. If not, create a new grid with
+        odd number of grid points that include the equator.
+
+        Parameters
+        ----------
+        ylat : numpy.array
+               Array of evenly-spaced latitude (in degree) of size nlat.
+        """
+        # Check if ylat is in ascending order and include the equator
+        if np.diff(ylat)[0] < 0:
+            raise TypeError("ylat must be in ascending order")
+        if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
+            # Even grid
+            self.need_latitude_interpolation = True
+            self.ylat_no_equator = ylat
+            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            self.equator_idx = \
+                np.argwhere(self.ylat == 0)[0][0] + 1
+            # Fortran indexing starts from 1
+        elif sum(ylat == 0) == 1:
+            # Odd grid
+            self.need_latitude_interpolation = False
+            self.ylat_no_equator = None
+            self.ylat = ylat
+            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
+        else:
+            raise TypeError(
+                "There are more than 1 grid point with latitude 0."
+            )
+        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+
+    @staticmethod
+    def _check_dimension_of_fields(field, field_name, expected_dim):
+        """
+        Private function. Check if the field of a specific field_name has the expected dimension expected_dim.
+        """
+        if field.shape != expected_dim:
+            raise TypeError(
+                "Incorrect dimension of {}. Expected dimension: {}"
+                .format(field_name, expected_dim)
+            )
+
+    def _interp_back(self, field, interp_from, interp_to, which_axis=1):
+        """
+        Private function to interpolate the results from odd grid to even grid.
         If the initial input to the QGField object is an odd grid, error will be raised.
         """
-
         if self.ylat_no_equator is None:
             raise TypeError("No need for such interpolation.")
         else:
@@ -228,39 +256,118 @@ class QGField(object):
                 fill_value='extrapolate'
             )(interp_to)
 
-    def interpolate_fields(self):
+    def _return_interp_variables(self, variable, interp_axis, northern_hemisphere_results_only=True):
         """
-        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids, and compute QGPV on the same grids.
+        Private function to return interpolated variables from odd grid back to even grid if originally
+        the data was given on an odd grid.
+
+        Parameters
+        ----------
+            variable(numpy.ndarray): the variable to be interpolated
+
+            interp_axis(int): the index of axis for interpolation
+
+            northern_hemisphere_results_only(bool): whether only to return northern hemispheric results.
+                Will be deprecated in upcoming release.
 
         Returns
         -------
+            The interpolated variable(numpy.ndarray)
+        """
+        if self.need_latitude_interpolation:
+            if northern_hemisphere_results_only:
+                return self._interp_back(
+                    variable, self.ylat[-(self.nlat//2+1):],
+                    self.ylat_no_equator[-(self.nlat//2):],
+                    which_axis=interp_axis)
+            else:
+                return self._interp_back(variable, self.ylat, self.ylat_no_equator, which_axis=interp_axis)
+        else:
+            return variable
 
-        qgpv : numpy.ndarray
+    def _compute_reference_state_wrapper(self, qgpv, u, theta):
+        """
+        Private function to call the fortran subroutine compute_reference_states that returns variable of
+        dimension [nlat, kmax]. Swapping of axes is needed for other computation.
+
+        Parameters
+        ----------
+            qgpv(numpy.ndarray): QGPV
+
+            u(numpy.ndarray): 3D zonal wind
+
+            theta(numpy.ndarray): 3D potential temperature
+
+            num_of_iter(int): number of iteration when solving the eliptic equation
+
+        Returns
+        -------
+            Qref(numpy.ndarray): Reference state of QGPV of dimension [nlat, kmax]
+
+            Uref(numpy.ndarray): Reference state of zonal wind of dimension [nlat, kmax]
+
+            PTref(numpy.ndarray): Reference state of potential temperature of dimension [nlat, kmax]
+        """
+        return compute_reference_states(
+            qgpv,
+            u,
+            theta,
+            self._static_stability,
+            self.equator_idx,
+            self.npart,
+            self.maxit,
+            self.planet_radius,
+            self.omega,
+            self.dz,
+            self.tol,
+            self.scale_height,
+            self.dry_gas_constant,
+            self.cp,
+            self.rjac,
+        )
+
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp):
+        """
+        Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
+        """
+        return compute_lwa_and_barotropic_fluxes(
+            qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp,
+            self.planet_radius, self.omega, self.dz, self.scale_height, self.dry_gas_constant, self.cp, self.prefactor)
+
+    def interpolate_fields(self):
+
+        """
+        Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,
+        and compute QGPV on the same grids. This returns named tuple called "Interpolated_fields" that consists of
+        5 elements as listed below.
+
+        Returns
+        -------
+        QGPV : numpy.ndarray
             Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]
 
-        interpolated_u : numpy.ndarray
+        U : numpy.ndarray
             Three-dimensional array of interpolated zonal wind with dimension = [kmax, nlat, nlon]
 
-        interpolated_v : numpy.ndarray
+        V : numpy.ndarray
             Three-dimensional array of interpolated meridional wind with dimension = [kmax, nlat, nlon]
 
-        interpolated_theta : numpy.ndarray
+        Theta : numpy.ndarray
             Three-dimensional array of interpolated potential temperature with dimension = [kmax, nlat, nlon]
 
-        static_stability : numpy.array
+        Static_stability : numpy.array
             One-dimension array of interpolated static stability with dimension = kmax
 
 
         Examples
         --------
 
-        >>> qgpv, interpolated_u, interpolated_v,
-            interpolated_theta, static_stability
-            = test_object.interpolate_fields()
+        >>> interpolated_fields = test_object.interpolate_fields()
+        >>> interpolated_fields.QGPV  # This is to access the QGPV field
 
         """
 
-        if self._qref_temp is None:
+        if self._qref_ntemp is None:
 
             # === Interpolate fields and obtain qgpv ===
             self._qgpv_temp, \
@@ -289,78 +396,47 @@ class QGField(object):
                 self._interpolated_theta_temp, 0, 2
             )
 
-        return self.qgpv, self.interpolated_u, self.interpolated_v, \
-               self.interpolated_theta, self.static_stability
+        # Construct a named tuple
+        Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
+        interpolated_fields = Interpolated_fields(
+            self.qgpv,
+            self.interpolated_u,
+            self.interpolated_v,
+            self.interpolated_theta,
+            self.static_stability)
+        return interpolated_fields
 
-    def _return_interp_variables(self, variable, interp_axis, northern_hemisphere_results_only=True):
-        if self.need_latitude_interpolation:
-            if northern_hemisphere_results_only:
-                return self._interp_back(
-                    variable, self.ylat[-(self.nlat//2+1):],
-                    self.ylat_no_equator[-(self.nlat//2):],
-                    which_axis=interp_axis)
-            else:
-                return self._interp_back(variable, self.ylat, self.ylat_no_equator, which_axis=interp_axis)
-        else:
-            return variable
-
-    @property
-    def qgpv(self):
-        if self._qgpv is None:
-            raise ValueError('QGPV field is not present in the QGField object.')
-        return self._return_interp_variables(
-            variable=self._qgpv, interp_axis=1, northern_hemisphere_results_only=False)
-
-    @property
-    def interpolated_u(self):
-        if self._interpolated_u is None:
-            raise ValueError('interpolated_u is not present in the QGField object.')
-        return self._return_interp_variables(
-            variable=self._interpolated_u, interp_axis=1, northern_hemisphere_results_only=False)
-
-    @property
-    def interpolated_v(self):
-        if self._interpolated_v is None:
-            raise ValueError('interpolated_v is not present in the QGField object.')
-        return self._return_interp_variables(
-            variable=self._interpolated_v, interp_axis=1, northern_hemisphere_results_only=False)
-
-    @property
-    def interpolated_theta(self):
-        if self._interpolated_theta is None:
-            raise ValueError('interpolated_theta is not present in the QGField object.')
-        return self._return_interp_variables(
-            variable=self._interpolated_theta, interp_axis=1, northern_hemisphere_results_only=False)
-
-    @property
-    def static_stability(self):
-        """
-        Retrieve the interpolated static stability.
-        """
-        return self._static_stability
-
-    def compute_reference_states(self, northern_hemisphere_results_only=True):
+    def compute_reference_states(self, northern_hemisphere_results_only=False):
 
         """
-        Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is equation (22) in supplementary materials of Huang and Nakamura (2017, GRL). In this version, only values in the Northern Hemisphere is computed.
+        Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
+        stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is
+        equation (22) in supplementary materials of Huang and Nakamura (2017, GRL).
 
+        This function returns named tuple called "Reference_states" that consists of 3 elements:
 
         Parameters
         ----------
         northern_hemisphere_results_only : bool
-               If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
+           If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
+           returned. Default: False.
 
         Returns
         -------
+        Qref : numpy.ndarray
+            Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with
+            dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or
+            dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True
 
-        qref : numpy.ndarray
-            Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True
+        Uref : numpy.ndarray
+            Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon]
+            if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if
+            northern_hemisphere_results_only=True
 
-        uref : numpy.ndarray
-            Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True
-
-        ptref : numpy.ndarray
-            Two-dimensional array of reference state of potential temperature (Theta_ref) with dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True
+        PTref : numpy.ndarray
+            Two-dimensional array of reference state of potential temperature (Theta_ref) with
+            dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or
+            dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True
 
         Examples
         --------
@@ -374,123 +450,109 @@ class QGField(object):
         if self._qgpv_temp is None:
             self.interpolate_fields()
 
-        if self._uref_temp is None:
-            # === Compute reference states in Northern Hemisphere ===
-            self._qref_temp, self._uref_temp, self._ptref_temp = \
-                compute_reference_states(
-                    self._qgpv_temp,
-                    self._interpolated_u_temp,
-                    self._interpolated_theta_temp,
-                    self._static_stability,
-                    self.equator_idx,
-                    self.npart,
-                    self.maxit,
-                    self.planet_radius,
-                    self.omega,
-                    self.dz,
-                    self.tol,
-                    self.scale_height,
-                    self.dry_gas_constant,
-                    self.cp,
-                    self.rjac
-                )
+        # === Compute reference states in Northern Hemisphere ===
+        self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp, num_of_iter = self._compute_reference_state_wrapper(
+            qgpv=self._qgpv_temp, u=self._interpolated_u_temp, theta=self._interpolated_theta_temp)
+        if num_of_iter >= self.maxit:
+            raise ValueError("The reference state does not converge for Northern Hemisphere.")
+        # *** Convert Qref to the right unit
+        qref_ntemp_right_unit = \
+            self._qref_ntemp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
 
-            qref_temp_right_unit = \
-                self._qref_temp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
+        # === Compute reference states in Southern Hemisphere ===
+        if not self.northern_hemisphere_results_only:
+            self._qref_stemp, self._uref_stemp, self._ptref_stemp, num_of_iter = self._compute_reference_state_wrapper(
+                qgpv=-self._qgpv_temp[:, ::-1, :],
+                u=self._interpolated_u_temp[:, ::-1, :],
+                theta=self._interpolated_theta_temp[:, ::-1, :])
+            if num_of_iter >= self.maxit:
+                raise ValueError("The reference state does not converge for Southern Hemisphere.")
 
-            if self.northern_hemisphere_results_only:
-                self._qref = np.swapaxes(qref_temp_right_unit, 0, 1)
-                self._uref = np.swapaxes(self._uref_temp, 0, 1)
-                self._ptref = np.swapaxes(self._ptref_temp, 0, 1)
-            else:
-                self._qref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(qref_temp_right_unit, 0, 1)))
-                self._uref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(self._uref_temp, 0, 1)))
-                self._ptref = \
-                    np.hstack((np.zeros((self.kmax, self.equator_idx - 1)),
-                               np.swapaxes(self._ptref_temp, 0, 1)))
+            # *** Convert Qref to the right unit
+            qref_stemp_right_unit = self._qref_stemp[::-1, :] * 2 * self.omega * np.sin(
+                np.deg2rad(self.ylat[:self.equator_idx, np.newaxis]))
 
-        return self.qref, self.uref, self.ptref
+        if self.northern_hemisphere_results_only:
+            self._qref = np.swapaxes(qref_ntemp_right_unit, 0, 1)
+            self._uref = np.swapaxes(self._uref_ntemp, 0, 1)
+            self._ptref = np.swapaxes(self._ptref_ntemp, 0, 1)
+        else:
+            self._qref = \
+                np.hstack((np.swapaxes(qref_stemp_right_unit[:, :], 0, 1),
+                           np.swapaxes(qref_ntemp_right_unit[1:, :], 0, 1)))
+            self._uref = \
+                np.hstack((np.swapaxes(self._uref_stemp[::-1, :], 0, 1),
+                           np.swapaxes(self._uref_ntemp[1:, :], 0, 1)))
+            self._ptref = \
+                np.hstack((np.swapaxes(self._ptref_stemp[::-1, :], 0, 1),
+                           np.swapaxes(self._ptref_ntemp[1:, :], 0, 1)))
 
-    @property
-    def qref(self):
-        """
-        Return reference state of QGPV (Qref).
-        """
-        if self._qref is None:
-            raise ValueError('qref is not computed yet.')
-        return self._return_interp_variables(variable=self._qref, interp_axis=1)
+        # Construct a named tuple
+        Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
+        reference_states = Reference_states(
+            self.qref,
+            self.uref,
+            self.ptref)
+        return reference_states
 
-    @property
-    def uref(self):
-        """
-        Return reference state of zonal wind (Uref).
-        """
-        if self._uref is None:
-            raise ValueError('uref field is not computed yet.')
-        return self._return_interp_variables(variable=self._uref, interp_axis=1)
-
-    @property
-    def ptref(self):
-        """
-        Return reference state of potential temperature (\Theta_ref).
-        """
-        if self._ptref is None:
-            raise ValueError('ptref field is not computed yet.')
-        return self._return_interp_variables(variable=self._ptref, interp_axis=1)
-
-    def compute_lwa_and_barotropic_fluxes(
-        self, northern_hemisphere_results_only=True
-    ):
+    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
 
         """
-        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in Nakamura and Huang (Science, 2018).
+        Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
+        Nakamura and Huang (Science, 2018). It returns a named tuple called "LWA_and_fluxes" that consists of
+        9 elements as listed below. The discretization scheme that is used in the numerical integration is outlined
+        in the Supplementary materials of Huang and Nakamura (GRL, 2017).
 
         Parameters
         ----------
         northern_hemisphere_results_only : bool
-               If true, arrays of size [kmax, nlat//2] will be returned. Otherwise, arrays of size [kmax, nlat] will be returned. This parameter is present since the current version (v0.3.1) of the package only return analysis in the northern hemisphere. Default: True.
-
+           If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
+           returned. Default: False.
 
         Returns
         -------
-
         adv_flux_f1 : numpy.ndarray
             Two-dimensional array of the second-order eddy term in zonal advective flux,
-            i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
+            or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         adv_flux_f2 : numpy.ndarray
             Two-dimensional array of the third-order eddy term in zonal advective flux,
-            i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
+            or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         adv_flux_f3 : numpy.ndarray
             Two-dimensional array of the remaining term in zonal advective flux,
-            i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
+            or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         convergence_zonal_advective_flux : numpy.ndarray
             Two-dimensional array of the convergence of zonal advective flux,
-            i.e. -div(F1+F2+F3) in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. -div(F1+F2+F3) in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if
+            northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         divergence_eddy_momentum_flux : numpy.ndarray
             Two-dimensional array of the divergence of eddy momentum flux,
-            i.e. (II) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. (II) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
+            or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         meridional_heat_flux : numpy.ndarray
             Two-dimensional array of the low-level meridional heat flux,
-            i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
+            or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         lwa_baro : np.ndarray
-            Two-dimensional array of barotropic local wave activity (with cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+            Two-dimensional array of barotropic local wave activity (with cosine weighting).
+            Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if
+            northern_hemisphere_results_only=False.
 
-        u_baro     : np.ndarray
-            Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
+        u_baro : np.ndarray
+            Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if
+            northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.
 
         lwa : np.ndarray
-            Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.
-
+            Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if
+            northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.
 
         Examples
         --------
@@ -498,159 +560,295 @@ class QGField(object):
         >>> adv_flux_f1, adv_flux_f2, adv_flux_f3, convergence_zonal_advective_flux,
             divergence_eddy_momentum_flux, meridional_heat_flux,
             lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()
-
         """
+
+        self.northern_hemisphere_results_only = northern_hemisphere_results_only
 
         if self._qgpv_temp is None:
             self.interpolate_fields()
 
-        if self._uref_temp is None:
+        if self._uref_ntemp is None:
             self.compute_reference_states()
 
-        # === Compute barotropic flux terms ===
-        lwa, astarbaro, ua1baro, ubaro, ua2baro, ep1baro, ep2baro, ep3baro, ep4 = \
-            compute_lwa_and_barotropic_fluxes(
+        # === Compute barotropic flux terms (NHem) ===
+        lwa_nhem, astarbaro_nhem, ua1baro_nhem, ubaro_nhem, ua2baro_nhem,\
+            ep1baro_nhem, ep2baro_nhem, ep3baro_nhem, ep4_nhem = \
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
                 self._qgpv_temp,
                 self._interpolated_u_temp,
                 self._interpolated_v_temp,
                 self._interpolated_theta_temp,
-                self._qref_temp,
-                self._uref_temp,
-                self._ptref_temp,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp,
-                self.prefactor
-            )
+                self._qref_ntemp,
+                self._uref_ntemp,
+                self._ptref_ntemp)
 
-        # === Compute divergence of the meridional eddy momentum flux ===
-        meri_flux_temp = np.zeros_like(ep2baro)
-        meri_flux_temp[:, 1:-1] = (ep2baro[:, 1:-1] - ep3baro[:, 1:-1]) / \
+        # === Compute barotropic flux terms (SHem) ===
+        if not northern_hemisphere_results_only:
+            lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
+                ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
+                self._compute_lwa_and_barotropic_fluxes_wrapper(
+                    -self._qgpv_temp[:, ::-1, :],
+                    self._interpolated_u_temp[:, ::-1, :],
+                    self._interpolated_v_temp[:, ::-1, :],
+                    self._interpolated_theta_temp[:, ::-1, :],
+                    self._qref_stemp,
+                    self._uref_stemp,
+                    self._ptref_stemp)
+
+        # *** Northern Hemisphere ***
+        # Compute divergence of the meridional eddy momentum flux
+        meri_flux_nhem_temp = np.zeros_like(ep2baro_nhem)
+        meri_flux_nhem_temp[:, 1:-1] = (ep2baro_nhem[:, 1:-1] - ep3baro_nhem[:, 1:-1]) / \
             (2 * self.planet_radius * self.dphi *
              np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
-
-        # === Compute convergence of the zonal LWA flux ===
-        zonal_adv_flux_sum = np.swapaxes((ua1baro + ua2baro + ep1baro), 0, 1)
-        convergence_zonal_advective_flux = \
+        # Compute convergence of the zonal LWA flux
+        zonal_adv_flux_nhem_sum = np.swapaxes((ua1baro_nhem + ua2baro_nhem + ep1baro_nhem), 0, 1)
+        convergence_zonal_advective_flux_nhem = \
             utilities.zonal_convergence(
-                zonal_adv_flux_sum,
+                zonal_adv_flux_nhem_sum,
                 np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
                 self.dlambda,
                 planet_radius=self.planet_radius
             )
 
-        self.northern_hemisphere_results_only = northern_hemisphere_results_only
+        # *** Southern Hemisphere ***
+        # Compute divergence of the meridional eddy momentum flux
+        if not northern_hemisphere_results_only:
+            meri_flux_shem_temp = np.zeros_like(ep2baro_shem)
+            meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
+                (2 * self.planet_radius * self.dphi *
+                 np.cos(np.deg2rad(self.ylat[-self.equator_idx + 1:-1])))
 
-        if northern_hemisphere_results_only:
-            self._adv_flux_f1 = np.swapaxes(ua1baro, 0, 1)
-            self._adv_flux_f2 = np.swapaxes(ua2baro, 0, 1)
-            self._adv_flux_f3 = np.swapaxes(ep1baro, 0, 1)
-            self._convergence_zonal_advective_flux = convergence_zonal_advective_flux
-            self._meridional_heat_flux = np.swapaxes(ep4, 0, 1)
-            self._lwa_baro = np.swapaxes(astarbaro, 0, 1)
-            self._u_baro = np.swapaxes(ubaro, 0, 1)
-            self._lwa = np.swapaxes(lwa, 0, 2)
-            self._divergence_eddy_momentum_flux = \
-                np.swapaxes(meri_flux_temp, 0, 1)
-        else:
-            self._adv_flux_f1 = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(ua1baro, 0, 1)))
-
-            self._adv_flux_f2 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                     self.nlon)),
-                                           np.swapaxes(ua2baro, 0, 1)))
-
-            self._adv_flux_f3 = np.vstack((np.zeros((self.equator_idx - 1,
-                                                     self.nlon)),
-                                           np.swapaxes(ep1baro, 0, 1)))
-
-            self._convergence_zonal_advective_flux = \
-                np.vstack(
-                    (np.zeros((self.equator_idx - 1, self.nlon)),
-                     np.swapaxes(convergence_zonal_advective_flux, 0, 1))
+            # Compute convergence of the zonal LWA flux
+            zonal_adv_flux_shem_sum = np.swapaxes((ua1baro_shem + ua2baro_shem + ep1baro_shem), 0, 1)  # axes swapped
+            convergence_zonal_advective_flux_shem = \
+                utilities.zonal_convergence(
+                    zonal_adv_flux_shem_sum,
+                    np.cos(np.deg2rad(self.ylat[-self.equator_idx:])),
+                    self.dlambda,
+                    planet_radius=self.planet_radius
                 )
 
+        if northern_hemisphere_results_only:
+            self._adv_flux_f1 = np.swapaxes(ua1baro_nhem, 0, 1)
+            self._adv_flux_f2 = np.swapaxes(ua2baro_nhem, 0, 1)
+            self._adv_flux_f3 = np.swapaxes(ep1baro_nhem, 0, 1)
+            self._convergence_zonal_advective_flux = convergence_zonal_advective_flux_nhem
+            self._meridional_heat_flux = np.swapaxes(ep4_nhem, 0, 1)
+            self._lwa_baro = np.swapaxes(astarbaro_nhem, 0, 1)
+            self._u_baro = np.swapaxes(ubaro_nhem, 0, 1)
+            self._lwa = np.swapaxes(lwa_nhem, 0, 2)
+            self._divergence_eddy_momentum_flux = \
+                np.swapaxes(meri_flux_nhem_temp, 0, 1)
+        else:
+            # Flip component in southern hemisphere
+            self._adv_flux_f1 = np.vstack((np.swapaxes(ua1baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ua1baro_nhem[:, 1:], 0, 1)))
+
+            self._adv_flux_f2 = np.vstack((np.swapaxes(ua2baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ua2baro_nhem[:, 1:], 0, 1)))
+
+            self._adv_flux_f3 = np.vstack((np.swapaxes(ep1baro_shem[:, ::-1], 0, 1),
+                                           np.swapaxes(ep1baro_nhem[:, 1:], 0, 1)))
+
+            # Axes already swapped for convergence zonal advective flux
+            self._convergence_zonal_advective_flux = np.vstack((convergence_zonal_advective_flux_shem[::-1, :],
+                                                                convergence_zonal_advective_flux_nhem[1:, :]))
+
+            # Negative sign for southern hemisphere upon flipping (via Coriolis parameter)
             self._meridional_heat_flux = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(ep4, 0, 1)))
+                np.vstack((np.swapaxes(-ep4_shem[:, ::-1], 0, 1),
+                           np.swapaxes(ep4_nhem[:, 1:], 0, 1)))
 
             self._lwa_baro = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(astarbaro, 0, 1)))
+                np.vstack((np.swapaxes(astarbaro_shem[:, ::-1], 0, 1),
+                           np.swapaxes(astarbaro_nhem[:, 1:], 0, 1)))
 
-            self._u_baro = np.vstack((np.zeros((self.equator_idx - 1,
-                                                self.nlon)),
-                                      np.swapaxes(ubaro, 0, 1)))
+            self._u_baro = np.vstack((np.swapaxes(ubaro_shem[:, ::-1], 0, 1),
+                                      np.swapaxes(ubaro_nhem[:, 1:], 0, 1)))
 
-            self._lwa = \
-                np.concatenate((np.zeros((self.kmax, self.equator_idx - 1,
-                                          self.nlon)),
-                                np.swapaxes(lwa, 0, 2)), axis=1)
+            self._lwa = np.concatenate((np.swapaxes(lwa_shem[:, ::-1], 0, 2),
+                                        np.swapaxes(lwa_nhem[:, 1:], 0, 2)), axis=1)
 
-            self._divergence_eddy_momentum_flux = \
-                np.vstack((np.zeros((self.equator_idx - 1, self.nlon)),
-                           np.swapaxes(meri_flux_temp, 0, 1)))
+            self._divergence_eddy_momentum_flux = np.vstack((np.swapaxes(-meri_flux_shem_temp[:, ::-1], 0, 1),
+                                                             np.swapaxes(meri_flux_nhem_temp[:, 1:], 0, 1)))
 
-        return self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, self.convergence_zonal_advective_flux,\
-               self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa
+        # Construct a named tuple
+        LWA_and_fluxes = namedtuple(
+            'LWA_and_fluxes',
+            ['adv_flux_f1', 'adv_flux_f2', 'adv_flux_f3', 'convergence_zonal_advective_flux',
+             'divergence_eddy_momentum_flux', 'meridional_heat_flux', 'lwa_baro', 'u_baro', 'lwa'])
+        lwa_and_fluxes = LWA_and_fluxes(
+            self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, self.convergence_zonal_advective_flux,
+            self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa)
+        return lwa_and_fluxes
+
+    @property
+    def qgpv(self):
+        """
+        Quasi-geostrophic potential vorticity on the regular pseudoheight grids.
+        """
+        if self._qgpv is None:
+            raise ValueError('QGPV field is not present in the QGField object.')
+        return self._return_interp_variables(
+            variable=self._qgpv, interp_axis=1, northern_hemisphere_results_only=False)
+
+    @property
+    def interpolated_u(self):
+        """
+        Zonal wind on the regular pseudoheight grids.
+        """
+        if self._interpolated_u is None:
+            raise ValueError('interpolated_u is not present in the QGField object.')
+        return self._return_interp_variables(
+            variable=self._interpolated_u, interp_axis=1, northern_hemisphere_results_only=False)
+
+    @property
+    def interpolated_v(self):
+        """
+        Meridional wind on the regular pseudoheight grids.
+        """
+        if self._interpolated_v is None:
+            raise ValueError('interpolated_v is not present in the QGField object.')
+        return self._return_interp_variables(
+            variable=self._interpolated_v, interp_axis=1, northern_hemisphere_results_only=False)
+
+    @property
+    def interpolated_theta(self):
+        """
+        Potential temperature on the regular pseudoheight grids.
+        """
+        if self._interpolated_theta is None:
+            raise ValueError('interpolated_theta is not present in the QGField object.')
+        return self._return_interp_variables(
+            variable=self._interpolated_theta, interp_axis=1, northern_hemisphere_results_only=False)
+
+    @property
+    def static_stability(self):
+        """
+        The interpolated static stability.
+        """
+        return self._static_stability
+
+    @property
+    def qref(self):
+        """
+        Reference state of QGPV (Qref).
+        """
+        if self._qref is None:
+            raise ValueError('qref is not computed yet.')
+        return self._return_interp_variables(variable=self._qref, interp_axis=1,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+
+    @property
+    def uref(self):
+        """
+        Reference state of zonal wind (Uref).
+        """
+        if self._uref is None:
+            raise ValueError('uref field is not computed yet.')
+        return self._return_interp_variables(variable=self._uref, interp_axis=1,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+
+    @property
+    def ptref(self):
+        """
+        Reference state of potential temperature (\Theta_ref).
+        """
+        if self._ptref is None:
+            raise ValueError('ptref field is not computed yet.')
+        return self._return_interp_variables(variable=self._ptref, interp_axis=1,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def adv_flux_f1(self):
+        """
+        Two-dimensional array of the second-order eddy term in zonal advective flux, i.e. F1 in equation 3 of NH18
+        """
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def adv_flux_f2(self):
+        """
+        Two-dimensional array of the third-order eddy term in zonal advective flux, i.e. F2 in equation 3 of NH18
+        """
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def adv_flux_f3(self):
+        """
+        Two-dimensional array of the remaining term in zonal advective flux, i.e. F3 in equation 3 of NH18
+        """
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
-        return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0)
+        return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def convergence_zonal_advective_flux(self):
+        """
+        Two-dimensional array of the convergence of zonal advective flux, i.e. -div(F1+F2+F3) in equation 3 of NH18
+        """
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def divergence_eddy_momentum_flux(self):
+        """
+        Two-dimensional array of the divergence of eddy momentum flux, i.e. (II) in equation 2 of NH18
+        """
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def meridional_heat_flux(self):
+        """
+        Two-dimensional array of the low-level meridional heat flux, i.e. (III) in equation 2 of NH18
+        """
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
-        return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0)
+        return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def lwa_baro(self):
+        """
+        Two-dimensional array of barotropic local wave activity (with cosine weighting).
+        """
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
-        return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0)
+        return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def u_baro(self):
+        """
+        Two-dimensional array of barotropic zonal wind (without cosine weighting).
+        """
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
-        return self._return_interp_variables(variable=self._u_baro, interp_axis=0)
+        return self._return_interp_variables(variable=self._u_baro, interp_axis=0,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     @property
     def lwa(self):
+        """
+        Three-dimensional array of barotropic local wave activity
+        """
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
-        return self._return_interp_variables(variable=self._lwa, interp_axis=1)
+        return self._return_interp_variables(variable=self._lwa, interp_axis=1,
+                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     def get_latitude_dim(self):
         """
@@ -661,172 +859,3 @@ class QGField(object):
         else:
             return self.nlat
 
-
-def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
-    """
-    Assuming regular latitude and longitude [in degree] grid, compute the curl
-    of velocity on a pressure level in spherical coordinates.
-    """
-
-    ans = np.zeros_like(ufield)
-    ans[1:-1, 1:-1] = (vfield[1:-1, 2:] - vfield[1:-1, :-2])/(2.*dlambda) - \
-                      (ufield[2:, 1:-1] * clat[2:, np.newaxis] -
-                       ufield[:-2, 1:-1] * clat[:-2, np.newaxis])/(2.*dphi)
-    ans[0, :] = 0.0
-    ans[-1, :] = 0.0
-    ans[1:-1, 0] = ((vfield[1:-1, 1] - vfield[1:-1, -1]) / (2. * dlambda) -
-                    (ufield[2:, 0] * clat[2:] -
-                     ufield[:-2, 0] * clat[:-2]) / (2. * dphi))
-    ans[1:-1, -1] = ((vfield[1:-1, 0] - vfield[1:-1, -2]) / (2. * dlambda) -
-                     (ufield[2:, -1] * clat[2:] -
-                      ufield[:-2, -1] * clat[:-2]) / (2. * dphi))
-    ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
-    return ans
-
-
-class BarotropicField(object):
-
-    """
-    An object that deals with barotropic (2D) wind and/or PV fields
-
-    Parameters
-    ----------
-        xlon : np.array
-            Longitude array in degree with dimension = nlon.
-
-        ylat : np.array
-            Latitude array in degree with dimension = nlat.
-
-        area : np.ndarray
-            Differential area at each lon-lat grid points with dimension (nlat,nlon). If 'area=None': it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]
-
-        dphi : np.array
-            Differential length element along the lat grid with dimension = nlat.
-
-        pv_field : np.ndarray
-            Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
-
-
-    Example
-    ---------
-    >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
-
-    """
-
-    def __init__(self, xlon, ylat, pv_field, area=None, dphi=None,
-                 n_partitions=None, planet_radius=6.378e+6):
-
-        """
-        Create a BarotropicField object.
-
-        Parameters
-        ----------
-            xlon : np.array
-                Longitude array in degree with dimension = nlon.
-
-            ylat : np.array
-                Latitude array in degree with dimension = nlat.
-
-            area : np.ndarray
-                Differential area at each lon-lat grid points with dimension (nlat,nlon). If 'area=None': it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]
-
-            dphi : np.array
-                Differential length element along the lat grid with dimension = nlat.
-
-            pv_field : np.ndarray
-                Absolute vorticity field with dimension = [nlat, nlon].
-                If none, pv_field is expected to be computed with u,v,t field.
-
-        """
-
-        self.xlon = xlon
-        self.ylat = ylat
-        self.clat = np.abs(np.cos(np.deg2rad(ylat)))
-        self.nlon = xlon.size
-        self.nlat = ylat.size
-        self.planet_radius = planet_radius
-        if dphi is None:
-            self.dphi = pi/(self.nlat-1) * np.ones((self.nlat))
-        else:
-            self.dphi = dphi
-
-        if area is None:
-            self.area = 2. * pi * planet_radius ** 2 * \
-                        (np.cos(ylat[:, np.newaxis] * pi/180.) * self.dphi[:, np.newaxis])\
-                        / float(self.nlon)*np.ones((self.nlat, self.nlon))
-        else:
-            self.area = area
-
-        self.pv_field = pv_field
-
-        if n_partitions is None:
-            self.n_partitions = self.nlat
-        else:
-            self.n_partitions = n_partitions
-
-        # Quantities that are computed with the methods below
-        self.eqvlat = None
-        self.lwa = None
-
-    def _compute_eqvlat(self):
-        """
-        Internal function. Compute equivalent latitude if it has not been computed yet.
-        """
-        self.eqvlat, _ = basis.eqvlat(
-            self.ylat, self.pv_field, self.area, self.n_partitions,
-            planet_radius=self.planet_radius
-        )
-        return self.eqvlat
-
-    def _compute_lwa(self):
-        """
-        Internal function. Compute equivalent latitude if it has not been computed yet.
-        """
-        if self.eqvlat is None:
-            self.eqvlat = self.equivalent_latitudes()
-
-        if self.lwa is None:
-            self.lwa, dummy = basis.lwa(
-                self.nlon, self.nlat, self.pv_field, self.eqvlat,
-                self.planet_radius * self.clat * self.dphi
-            )
-        return self.lwa
-
-    @property
-    def equivalent_latitudes(self):
-        """
-        Return the computd quivalent latitude with the *pv_field* stored in the object.
-
-        Return
-        ----------
-        An numpy array with dimension (nlat) of equivalent latitude array.
-
-        Example
-        ----------
-        >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
-        >>> eqv_lat = barofield1.equivalent_latitudes
-
-        """
-        if self.eqvlat is None:
-            return self._compute_eqvlat()
-        return self.eqvlat
-
-    @property
-    def lwa(self):
-
-        """
-        Compute the finite-amplitude local wave activity based on the *equivalent_latitudes* and the *pv_field* stored in the object.
-
-        Return
-        ----------
-        An 2-D numpy array with dimension [nlat,nlon] of local wave activity values.
-
-        Example
-        ----------
-        >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
-        >>> lwa = barofield1.lwa
-
-        """
-        if self.lwa is None:
-            return self._compute_lwa()
-        return self.lwa

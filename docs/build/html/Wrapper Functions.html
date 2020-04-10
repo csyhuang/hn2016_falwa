@@ -1,398 +1,468 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Wrapper Functions &#8212; hn2016_falwa 0.3.0 documentation</title>
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Wrapper Functions &mdash; hn2016_falwa 0.4.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utility Functions" href="Utility Functions.html" />
-    <link rel="prev" title="Basis Functions" href="Basis Functions.html" />
+    <link rel="next" title="Beta-version Functions" href="Beta-version Functions.html" />
+    <link rel="prev" title="Utility Functions" href="Utility Functions.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
    
-  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
 
-  </head><body>
-  
+          
+            <a href="index.html" class="icon icon-home"> hn2016_falwa
+          
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hn2016_falwa</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Wrapper Functions</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/Wrapper Functions.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="module-wrapper">
 <span id="wrapper-functions"></span><h1>Wrapper Functions<a class="headerlink" href="#module-wrapper" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="wrapper.barotropic_eqlat_lwa">
-<code class="descclassname">wrapper.</code><code class="descname">barotropic_eqlat_lwa</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>dmu</em>, <em>n_points</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#barotropic_eqlat_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.barotropic_eqlat_lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">barotropic_eqlat_lwa</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">n_points</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#barotropic_eqlat_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.barotropic_eqlat_lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitude and wave activity on a barotropic sphere.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
-<li><p class="first"><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p>
-</li>
-<li><p class="first"><strong>lwa_result</strong> (<em>numpy.ndarray</em>) –</p>
-<dl class="docutils">
-<dt>2-d numpy array of local wave activity values;</dt>
-<dd><p class="first last">dimension = [nlat_s x nlon]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>lwa_result</strong> (<em>numpy.ndarray</em>) –</p>
+<dl class="simple">
+<dt>2-d numpy array of local wave activity values;</dt><dd><p>dimension = [nlat_s x nlon]</p>
 </dd>
 </dl>
 </li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.barotropic_input_qref_to_compute_lwa">
-<code class="descclassname">wrapper.</code><code class="descname">barotropic_input_qref_to_compute_lwa</code><span class="sig-paren">(</span><em>ylat</em>, <em>qref</em>, <em>vort</em>, <em>area</em>, <em>dmu</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#barotropic_input_qref_to_compute_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.barotropic_input_qref_to_compute_lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">barotropic_input_qref_to_compute_lwa</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">qref</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#barotropic_input_qref_to_compute_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.barotropic_input_qref_to_compute_lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function computes LWA based on a <em>prescribed</em> Qref instead of Qref obtained from the vorticity field on a barotropic sphere.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of prescribed reference value of vorticity at each latitude; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of prescribed reference value of vorticity at each latitude; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lwa_result</strong> – 2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>lwa_result</strong> – 2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.eqvlat_bracket_hemispheric">
-<code class="descclassname">wrapper.</code><code class="descname">eqvlat_bracket_hemispheric</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>planet_radius=6378000.0</em>, <em>vgrad=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#eqvlat_bracket_hemispheric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.eqvlat_bracket_hemispheric" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">eqvlat_bracket_hemispheric</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">planet_radius=6378000.0</em>, <em class="sig-param">vgrad=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#eqvlat_bracket_hemispheric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.eqvlat_bracket_hemispheric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitude and &lt;…&gt;_Q in Nakamura and Zhu (2010) in a hemispheric domain.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
-<li><strong>vgrad</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – 2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
+<li><p><strong>vgrad</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – 2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>q_part</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>brac</strong> (<em>numpy.ndarray or None</em>) – 1-d numpy array of averaged vgrad in the square bracket.
-If <em>vgrad</em> = None, <em>brac</em> = None.</li>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>q_part</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>brac</strong> (<em>numpy.ndarray or None</em>) – 1-d numpy array of averaged vgrad in the square bracket.
+If <em>vgrad</em> = None, <em>brac</em> = None.</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.eqvlat_hemispheric">
-<code class="descclassname">wrapper.</code><code class="descname">eqvlat_hemispheric</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#eqvlat_hemispheric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.eqvlat_hemispheric" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">eqvlat_hemispheric</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#eqvlat_hemispheric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.eqvlat_hemispheric" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitude in a hemispheric domain.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of vorticity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>q_part</strong> – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>q_part</strong> – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.qgpv_eqlat_lwa">
-<code class="descclassname">wrapper.</code><code class="descname">qgpv_eqlat_lwa</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>dmu</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">qgpv_eqlat_lwa</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitutde <em>qref</em> and local wave activity <em>lwa_result</em> based
 on Quasi-geostrophic potential vorticity field <em>vort</em> at a pressure level as
 outlined in Huang and Nakamura (2017).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
-<li><p class="first"><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p>
-</li>
-<li><p class="first"><strong>lwa_result</strong> (<em>numpy.ndarray</em>) –</p>
-<dl class="docutils">
-<dt>2-d numpy array of local wave activity values;</dt>
-<dd><p class="first last">dimension = [nlat_s x nlon]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>lwa_result</strong> (<em>numpy.ndarray</em>) –</p>
+<dl class="simple">
+<dt>2-d numpy array of local wave activity values;</dt><dd><p>dimension = [nlat_s x nlon]</p>
 </dd>
 </dl>
 </li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.qgpv_eqlat_lwa_ncforce">
-<code class="descclassname">wrapper.</code><code class="descname">qgpv_eqlat_lwa_ncforce</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>ncforce</em>, <em>area</em>, <em>dmu</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa_ncforce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa_ncforce" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">qgpv_eqlat_lwa_ncforce</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">ncforce</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa_ncforce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa_ncforce" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitutde <em>qref</em>, local wave activity <em>lwa_result</em> and
 non-conservative force on wave activity <em>capsigma</em> based on Quasi-
 geostrophic potential vorticity field <em>vort</em> at a pressure level as
 outlined in Huang and Nakamura (2017).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</li>
-<li><strong>ncforce</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
-dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</p></li>
+<li><p><strong>ncforce</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
+dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</li>
-<li><strong>capsigma</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</li>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>capsigma</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.qgpv_eqlat_lwa_options">
-<code class="descclassname">wrapper.</code><code class="descname">qgpv_eqlat_lwa_options</code><span class="sig-paren">(</span><em>ylat</em>, <em>vort</em>, <em>area</em>, <em>dmu</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>vgrad=None</em>, <em>ncforce=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa_options" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">qgpv_eqlat_lwa_options</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">vgrad=None</em>, <em class="sig-param">ncforce=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_eqlat_lwa_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_eqlat_lwa_options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitutde <em>qref</em>, local wave activity <em>lwa_result</em> and
 non-conservative force on wave activity <em>capsigma</em> based on Quasi-
 geostrophic potential vorticity field <em>vort</em> at a pressure level as
 outlined in Huang and Nakamura (2017).</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</li>
-<li><strong>ncforce</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
-dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</p></li>
+<li><p><strong>ncforce</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
+dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>n_points</strong> (<em>int</em><em>, </em><em>default None</em>) – Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as <em>nlat_s</em>.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>return_dict</strong> (<em>dictionary</em>) – A dictionary that consist of the 4 computed outputs listed below.</li>
-<li><strong>(1) qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>(2) brac_result</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of &lt;…&gt;_Q(y) in NZ10 where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>(3) lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</li>
-<li><strong>(4) capsigma</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</li>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>return_dict</strong> (<em>dictionary</em>) – A dictionary that consist of the 4 computed outputs listed below.</p></li>
+<li><p><strong>(1) qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>(2) brac_result</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of &lt;…&gt;_Q(y) in NZ10 where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>(3) lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</p></li>
+<li><p><strong>(4) capsigma</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.qgpv_input_qref_to_compute_lwa">
-<code class="descclassname">wrapper.</code><code class="descname">qgpv_input_qref_to_compute_lwa</code><span class="sig-paren">(</span><em>ylat</em>, <em>qref</em>, <em>vort</em>, <em>area</em>, <em>dmu</em>, <em>nlat_s=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_input_qref_to_compute_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_input_qref_to_compute_lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">qgpv_input_qref_to_compute_lwa</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">qref</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#qgpv_input_qref_to_compute_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.qgpv_input_qref_to_compute_lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitutde <em>qref</em> and local wave activity <em>lwa_result</em> based
 on Quasi-geostrophic potential vorticity field <em>vort</em> at a pressure level as
 outlined in Huang and Nakamura (2017). This function computes lwa based on a
 prescribed <em>qref</em> instead of <em>qref</em> obtained from the QGPV field.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>qref</strong> (<em>numpy.ndarray</em>) – 1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>vort</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>lwa_result</strong> – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>lwa_result</strong> – 2-d numpy array of local wave activity values; dimension = (nlat, nlon).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
 <dt id="wrapper.theta_lwa">
-<code class="descclassname">wrapper.</code><code class="descname">theta_lwa</code><span class="sig-paren">(</span><em>ylat</em>, <em>theta</em>, <em>area</em>, <em>dmu</em>, <em>nlat_s=None</em>, <em>n_points=None</em>, <em>planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#theta_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.theta_lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">wrapper.</code><code class="sig-name descname">theta_lwa</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">theta</em>, <em class="sig-param">area</em>, <em class="sig-param">dmu</em>, <em class="sig-param">nlat_s=None</em>, <em class="sig-param">n_points=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wrapper.html#theta_lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wrapper.theta_lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the surface wave activity <em>B</em> based on surface potential temperature.
 See Nakamura and Solomon (2010a) for details.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</li>
-<li><strong>theta</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of surface potential temperature field; dimension = (nlat, nlon).</li>
-<li><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</li>
-<li><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</li>
-<li><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</li>
-<li><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – 1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.</p></li>
+<li><p><strong>theta</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of surface potential temperature field; dimension = (nlat, nlon).</p></li>
+<li><p><strong>area</strong> (<em>numpy.ndarray</em>) – 2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).</p></li>
+<li><p><strong>dmu</strong> (<em>numpy.array</em>) – 1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.</p></li>
+<li><p><strong>nlat_s</strong> (<em>int</em><em>, </em><em>default None</em>) – The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.</p></li>
+<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>default 6.378e+6</em>) – radius of spherical planet of interest consistent with input ‘area’.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
-<li><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of value reference potential temperature <em>Theta(y)</em> approximated by box counting method, where latitude y is given by ylat; dimension = (nlat).</li>
-<li><strong>lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local surface wave activity values; dimension = (nlat, nlon).</li>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>qref</strong> (<em>numpy.array</em>) – 1-d numpy array of value reference potential temperature <em>Theta(y)</em> approximated by box counting method, where latitude y is given by ylat; dimension = (nlat).</p></li>
+<li><p><strong>lwa_result</strong> (<em>numpy.ndarray</em>) – 2-d numpy array of local surface wave activity values; dimension = (nlat, nlon).</p></li>
 </ul>
 </p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+           </div>
+           
           </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Beta-version Functions.html" class="btn btn-neutral float-right" title="Beta-version Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Utility Functions.html" class="btn btn-neutral float-left" title="Utility Functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Clare S. Y. Huang
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h3><a href="index.html">Table Of Contents</a></h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Wrapper Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
-</ul>
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="index.html">Documentation overview</a><ul>
-      <li>Previous: <a href="Basis Functions.html" title="previous chapter">Basis Functions</a></li>
-      <li>Next: <a href="Utility Functions.html" title="next chapter">Utility Functions</a></li>
-  </ul></li>
-</ul>
-</div>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/Wrapper Functions.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    </div>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2018, Clare S. Y. Huang.
-      
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
-      
-      |
-      <a href="_sources/Wrapper Functions.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
 
-    
+    </section>
 
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
     
-  </body>
+   
+
+</body>
 </html>

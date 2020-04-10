@@ -67,8 +67,8 @@ The **object-oriented interface** is an easy-to-use interface that takes in the 
 
    Object Oriented Interface
    Basis Functions
-   Wrapper Functions   
    Utility Functions
+   Wrapper Functions
    Beta-version Functions
 
 
