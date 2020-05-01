@@ -86,8 +86,8 @@ class BarotropicField(object):
             self.n_partitions = n_partitions
 
         # Quantities that are computed with the methods below
-        self.eqvlat = None
-        self.lwa = None
+        self._eqvlat = None
+        self._lwa = None
 
     def _compute_eqvlat(self):
         """
@@ -103,12 +103,10 @@ class BarotropicField(object):
         """
         Private function. Compute equivalent latitude if it has not been computed yet.
         """
-        if self.eqvlat is None:
-            self.eqvlat = self.equivalent_latitudes()
-
-        if self.lwa is None:
-            self.lwa, dummy = basis.lwa(
-                self.nlon, self.nlat, self.pv_field, self.eqvlat,
+        eqvlat = self.equivalent_latitudes
+        if self._lwa is None:
+            self._lwa, dummy = basis.lwa(
+                self.nlon, self.nlat, self.pv_field, eqvlat,
                 self.planet_radius * self.clat * self.dphi
             )
         return self.lwa
@@ -128,9 +126,9 @@ class BarotropicField(object):
         >>> eqv_lat = barofield1.equivalent_latitudes
 
         """
-        if self.eqvlat is None:
+        if self._eqvlat is None:
             return self._compute_eqvlat()
-        return self.eqvlat
+        return self._eqvlat
 
     @property
     def lwa(self):
@@ -148,6 +146,6 @@ class BarotropicField(object):
         >>> lwa = barofield1.lwa
 
         """
-        if self.lwa is None:
+        if self._lwa is None:
             return self._compute_lwa()
-        return self.lwa
+        return self._lwa
