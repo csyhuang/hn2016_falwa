@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Object Oriented Interface &mdash; hn2016_falwa 0.4.0 documentation</title>
+  <title>Object Oriented Interface &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.4.0
+                0.4.1
               </div>
             
           
@@ -170,11 +170,15 @@ Note that topography is assumed flat in this object.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>xlon</strong> (<em>numpy.array</em>) – Array of evenly-spaced longitude (in degree) of size nlon.</p></li>
-<li><p><strong>ylat</strong> (<em>numpy.array</em>) – Array of evenly-spaced latitude (in degree) of size nlat.</p></li>
+<li><p><strong>ylat</strong> (<em>numpy.array</em>) – Array of evenly-spaced latitude (in degree) of size nlat.
+If it is a masked array, the value ylat.data will be used.</p></li>
 <li><p><strong>plev</strong> (<em>numpy.</em>) – Array of pressure level (in hPa) of size nlev.</p></li>
-<li><p><strong>u_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</p></li>
-<li><p><strong>v_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</p></li>
-<li><p><strong>t_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</p></li>
+<li><p><strong>u_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+If it is a masked array, the value u_field.data will be used.</p></li>
+<li><p><strong>v_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+If it is a masked array, the value v_field.data will be used.</p></li>
+<li><p><strong>t_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+If it is a masked array, the value t_field.data will be used.</p></li>
 <li><p><strong>kmax</strong> (<em>int</em><em>, </em><em>optional</em>) – Dimension of uniform pseudoheight grids used for interpolation.</p></li>
 <li><p><strong>maxit</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</p></li>
 <li><p><strong>dz</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of uniform pseudoheight grids (in meters).</p></li>
@@ -496,7 +500,7 @@ and compute QGPV on the same grids. This returns named tuple called “Interpola
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Clare S. Y. Huang
+        &copy; Copyright 2020, Clare S. Y. Huang
 
     </p>
   </div>

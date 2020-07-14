@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>oopinterface &mdash; hn2016_falwa 0.4.0 documentation</title>
+  <title>oopinterface &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.4.0
+                0.4.1
               </div>
             
           
@@ -152,6 +152,7 @@
             
   <h1>Source code for oopinterface</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
 
 <span class="kn">from</span> <span class="nn">hn2016_falwa</span> <span class="kn">import</span> <span class="n">utilities</span>
@@ -178,14 +179,18 @@
 <span class="sd">           Array of evenly-spaced longitude (in degree) of size nlon.</span>
 <span class="sd">    ylat : numpy.array</span>
 <span class="sd">           Array of evenly-spaced latitude (in degree) of size nlat.</span>
+<span class="sd">           If it is a masked array, the value ylat.data will be used.</span>
 <span class="sd">    plev : numpy.</span>
 <span class="sd">           Array of pressure level (in hPa) of size nlev.</span>
 <span class="sd">    u_field : numpy.ndarray</span>
 <span class="sd">           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">           If it is a masked array, the value u_field.data will be used.</span>
 <span class="sd">    v_field : numpy.ndarray</span>
 <span class="sd">           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">           If it is a masked array, the value v_field.data will be used.</span>
 <span class="sd">    t_field : numpy.ndarray</span>
 <span class="sd">           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].</span>
+<span class="sd">           If it is a masked array, the value t_field.data will be used.</span>
 <span class="sd">    kmax : int, optional</span>
 <span class="sd">           Dimension of uniform pseudoheight grids used for interpolation.</span>
 <span class="sd">    maxit : int, optional</span>
@@ -232,6 +237,31 @@
 <span class="sd">        This only initialize the attributes of the object. Analysis and</span>
 <span class="sd">        computation are done by calling various methods.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># === Check whether the input field is masked array. If so, turn them to normal array ===</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">ylat</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;ylat is a masked array of dimension </span><span class="si">{dim}</span><span class="s1"> with </span><span class="si">{num}</span><span class="s1"> masked elements and fill value </span><span class="si">{fill}</span><span class="s1">. &#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">ylat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">ylat</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">fill</span><span class="o">=</span><span class="n">ylat</span><span class="o">.</span><span class="n">fill_value</span><span class="p">))</span>
+            <span class="n">ylat</span> <span class="o">=</span> <span class="n">ylat</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">u_field</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;u_field is a masked array of dimension </span><span class="si">{dim}</span><span class="s1"> with </span><span class="si">{num}</span><span class="s1"> masked elements and fill value </span><span class="si">{fill}</span><span class="s1">. &#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">u_field</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">u_field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">fill</span><span class="o">=</span><span class="n">u_field</span><span class="o">.</span><span class="n">fill_value</span><span class="p">))</span>
+            <span class="n">u_field</span> <span class="o">=</span> <span class="n">u_field</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">v_field</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;v_field is a masked array of dimension </span><span class="si">{dim}</span><span class="s1"> with </span><span class="si">{num}</span><span class="s1"> masked elements and fill value </span><span class="si">{fill}</span><span class="s1">. &#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">v_field</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">v_field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">fill</span><span class="o">=</span><span class="n">v_field</span><span class="o">.</span><span class="n">fill_value</span><span class="p">))</span>
+            <span class="n">v_field</span> <span class="o">=</span> <span class="n">v_field</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">t_field</span><span class="p">):</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s1">&#39;t_field is a masked array of dimension </span><span class="si">{dim}</span><span class="s1"> with </span><span class="si">{num}</span><span class="s1"> masked elements and fill value </span><span class="si">{fill}</span><span class="s1">. &#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">t_field</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">t_field</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">fill</span><span class="o">=</span><span class="n">t_field</span><span class="o">.</span><span class="n">fill_value</span><span class="p">))</span>
+            <span class="n">t_field</span> <span class="o">=</span> <span class="n">t_field</span><span class="o">.</span><span class="n">data</span>
 
         <span class="c1"># === Check if ylat is in ascending order and include the equator ===</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_and_flip_ylat</span><span class="p">(</span><span class="n">ylat</span><span class="p">)</span>
@@ -906,7 +936,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ptref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reference state of potential temperature (\Theta_ref).</span>
+<span class="sd">        Reference state of potential temperature (\\Theta_ref).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ptref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;ptref field is not computed yet.&#39;</span><span class="p">)</span>
@@ -1024,7 +1054,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Clare S. Y. Huang
+        &copy; Copyright 2020, Clare S. Y. Huang
 
     </p>
   </div>

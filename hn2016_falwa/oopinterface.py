@@ -26,14 +26,18 @@ class QGField(object):
            Array of evenly-spaced longitude (in degree) of size nlon.
     ylat : numpy.array
            Array of evenly-spaced latitude (in degree) of size nlat.
+           If it is a masked array, the value ylat.data will be used.
     plev : numpy.
            Array of pressure level (in hPa) of size nlev.
     u_field : numpy.ndarray
            Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+           If it is a masked array, the value u_field.data will be used.
     v_field : numpy.ndarray
            Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+           If it is a masked array, the value v_field.data will be used.
     t_field : numpy.ndarray
            Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+           If it is a masked array, the value t_field.data will be used.
     kmax : int, optional
            Dimension of uniform pseudoheight grids used for interpolation.
     maxit : int, optional

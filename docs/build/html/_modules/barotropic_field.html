@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>barotropic_field &mdash; hn2016_falwa 0.4.0 documentation</title>
+  <title>barotropic_field &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.4.0
+                0.4.1
               </div>
             
           
@@ -239,8 +239,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">n_partitions</span> <span class="o">=</span> <span class="n">n_partitions</span>
 
         <span class="c1"># Quantities that are computed with the methods below</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eqvlat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lwa</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">_compute_eqvlat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -256,12 +256,10 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Private function. Compute equivalent latitude if it has not been computed yet.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_latitudes</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span><span class="p">,</span>
+        <span class="n">eqvlat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">equivalent_latitudes</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lwa</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lwa</span><span class="p">,</span> <span class="n">dummy</span> <span class="o">=</span> <span class="n">basis</span><span class="o">.</span><span class="n">lwa</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pv_field</span><span class="p">,</span> <span class="n">eqvlat</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">planet_radius</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">clat</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dphi</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span>
@@ -281,9 +279,9 @@
 <span class="sd">        &gt;&gt;&gt; eqv_lat = barofield1.equivalent_latitudes</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eqvlat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_eqvlat</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eqvlat</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eqvlat</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">lwa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -301,9 +299,9 @@
 <span class="sd">        &gt;&gt;&gt; lwa = barofield1.lwa</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lwa</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_lwa</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lwa</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lwa</span></div>
 </pre></div>
 
            </div>
@@ -316,7 +314,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2018, Clare S. Y. Huang
+        &copy; Copyright 2020, Clare S. Y. Huang
 
     </p>
   </div>
