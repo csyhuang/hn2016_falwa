@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from scipy.interpolate import interp1d
 
 from hn2016_falwa import utilities
@@ -79,6 +80,31 @@ class QGField(object):
         This only initialize the attributes of the object. Analysis and
         computation are done by calling various methods.
         """
+
+        # === Check whether the input field is masked array. If so, turn them to normal array ===
+        if np.ma.is_masked(ylat):
+            warnings.warn(
+                'ylat is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(dim=ylat.shape, num=ylat.mask.sum(), fill=ylat.fill_value))
+            ylat = ylat.data
+
+        if np.ma.is_masked(u_field):
+            warnings.warn(
+                'u_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(dim=u_field.shape, num=u_field.mask.sum(), fill=u_field.fill_value))
+            u_field = u_field.data
+
+        if np.ma.is_masked(v_field):
+            warnings.warn(
+                'v_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(dim=v_field.shape, num=v_field.mask.sum(), fill=v_field.fill_value))
+            v_field = v_field.data
+
+        if np.ma.is_masked(t_field):
+            warnings.warn(
+                't_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(dim=t_field.shape, num=t_field.mask.sum(), fill=t_field.fill_value))
+            t_field = t_field.data
 
         # === Check if ylat is in ascending order and include the equator ===
         self._check_and_flip_ylat(ylat)
@@ -753,7 +779,7 @@ class QGField(object):
     @property
     def ptref(self):
         """
-        Reference state of potential temperature (\Theta_ref).
+        Reference state of potential temperature (\\Theta_ref).
         """
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')

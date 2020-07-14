@@ -1,8 +1,8 @@
 import os
 import pytest
+import warnings
 import numpy as np
 from math import pi
-from collections import namedtuple
 from scipy.interpolate import interp1d
 
 from hn2016_falwa.constant import *
@@ -25,27 +25,29 @@ theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P0) ** (-DRY_GAS_CONS
 
 def test_qgfield():
 
-    # Create a QGField object for testing
-    qgfield = QGField(
-        xlon=xlon,
-        ylat=ylat,
-        plev=plev,
-        u_field=u_field,
-        v_field=v_field,
-        t_field=t_field,
-        kmax=kmax,
-        maxit=100000,
-        dz=1000.,
-        prefactor=6500.,
-        npart=None,
-        tol=1.e-5,
-        rjac=0.95,
-        scale_height=SCALE_HEIGHT,
-        cp=CP,
-        dry_gas_constant=DRY_GAS_CONSTANT,
-        omega=EARTH_OMEGA,
-        planet_radius=EARTH_RADIUS
-    )
+    # Create a QGField object out of some masked array for testing. The test below is to ensure
+    # warning is raised for masked array.
+    with pytest.warns(UserWarning):
+        qgfield = QGField(
+            xlon=xlon,
+            ylat=np.ma.masked_equal(ylat, 0.0),
+            plev=plev,
+            u_field=np.ma.masked_equal(u_field, 0.0),
+            v_field=np.ma.masked_equal(v_field, 0.0),
+            t_field=np.ma.masked_equal(t_field, 0.0),
+            kmax=kmax,
+            maxit=100000,
+            dz=1000.,
+            prefactor=6500.,
+            npart=None,
+            tol=1.e-5,
+            rjac=0.95,
+            scale_height=SCALE_HEIGHT,
+            cp=CP,
+            dry_gas_constant=DRY_GAS_CONSTANT,
+            omega=EARTH_OMEGA,
+            planet_radius=EARTH_RADIUS
+        )
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
