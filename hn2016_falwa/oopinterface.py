@@ -86,25 +86,25 @@ class QGField(object):
         """
 
         # === Check whether the input field is masked array. If so, turn them to normal array ===
-        if np.ma.is_masked(ylat):
+        if np.ma.is_masked(ylat) or isinstance(ylat, np.ma.core.MaskedArray):
             warnings.warn(
                 'ylat is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
                 .format(dim=ylat.shape, num=ylat.mask.sum(), fill=ylat.fill_value))
             ylat = ylat.data
 
-        if np.ma.is_masked(u_field):
+        if np.ma.is_masked(u_field) or isinstance(u_field, np.ma.core.MaskedArray):
             warnings.warn(
                 'u_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
                 .format(dim=u_field.shape, num=u_field.mask.sum(), fill=u_field.fill_value))
             u_field = u_field.data
 
-        if np.ma.is_masked(v_field):
+        if np.ma.is_masked(v_field) or isinstance(v_field, np.ma.core.MaskedArray):
             warnings.warn(
                 'v_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
                 .format(dim=v_field.shape, num=v_field.mask.sum(), fill=v_field.fill_value))
             v_field = v_field.data
 
-        if np.ma.is_masked(t_field):
+        if np.ma.is_masked(t_field) or isinstance(t_field, np.ma.core.MaskedArray):
             warnings.warn(
                 't_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
                 .format(dim=t_field.shape, num=t_field.mask.sum(), fill=t_field.fill_value))
