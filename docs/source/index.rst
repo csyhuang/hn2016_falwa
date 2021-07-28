@@ -15,14 +15,7 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 - `Huang and Nakamura (2017, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2017GL073760>`_
 - `Nakamura and Huang (2018, Science) <https://doi.org/10.1126/science.aat0721>`_
 
-To users
-------------------------------
-
-If you are interested in using the package, please `leave your contact here <https://goo.gl/forms/5L8fv0mUordugq6v2>`_
-such that I can keep you updated of any changes made.
-
-
-Installation
+Package Installation
 ------------------------------
 
 This current version works in both Python 2.7 and 3.6. Note that from v0.3.0 onword, some functions are 
@@ -40,12 +33,30 @@ To incorporate updates, pull the new version of the code by::
  git pull
 
 
+Quick start
+-----------------------------------------
+
+The jupyter notebook in `examples/nh2018_science` demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018).
+To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
+
+THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute::
+
+ conda env create -f environment.yml
 
 Developer v.s. Object-oriented Interfaces
 -----------------------------------------
 
 There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
-interface**, which is a wrapper for the basis functions in the developer interface.
+interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.
+Users are strongly adviced to use only the object-oriented interface.
+
+The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
+
+There are two classes with object-oriented interface: *QGField* and *BarotropicField*. Please refer to the **sample scripts** for their usage:
+
+* nh2018_science/demo_script_for_nh2018.ipynb: Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
+
+* simple/oopinterface_example_BarotropicField.ipynb: Compute equivalent latitude and barotropic wave activity.
 
 The **developer interface**  contains separate functions that users can alter the inputs more flexibly. Functions 
 are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). The 
@@ -62,10 +73,12 @@ are added upon users' request on new functionalities to test hypotheses (also se
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
 
+
 .. toctree::
    :maxdepth: 2
 
    Object Oriented Interface
+   Barotropic Field
    Basis Functions
    Utility Functions
    Wrapper Functions

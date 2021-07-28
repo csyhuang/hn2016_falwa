@@ -10,19 +10,9 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 - [Huang and Nakamura (2017, GRL)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full).
 - [Nakamura and Huang (2018, Science)](https://doi.org/10.1126/science.aat0721) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
 
-## To users
+## Package Installation
 
-If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) 
-such that I can keep you updated of any changes made.
-
-## Important update (for release after May 24, 2018)
-
-The most updated version v0.3.0 enhanced the methods in the class *QGField* (in `hn2016_falwa.oopinterface`) with functionality
-to compute (the barotropic components of) LWA and flux terms present in Nakamura and Huang (2018, Science). Please refer to the scripts in `examples/nh2018_science/` for details.
-
-## Installation
-
-This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions are having backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
+This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 
 Since the package is still being actively developed, please use the *develop* mode for installation:
 ```
@@ -36,15 +26,28 @@ To incorporate updates, pull the new version of the code by:
 git pull
 ```
 
-There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
-interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.
+## Quick start
 
+The jupyter notebook in `examples/nh2018_science` demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018). 
+To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
+
+THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute:
+
+```bash
+conda env create -f environment.yml
+```
+
+## Interfaces
+
+There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
+interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules. 
+Users are strongly adviced to use only the object-oriented interface.
 
 ### Object-oriented interface
 
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
-There are two classes in the interface, *QGField* and *BarotropicField*. Please refer to the example/ directory:
+There are two classes with object-oriented interface: *QGField* and *BarotropicField*. Please refer to the example/ directory:
 
 Sample Script | Description
 ------------- | -------------
@@ -71,8 +74,8 @@ Sample Script | Description
 Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
 Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 
-
 ## Inquiries / Issues reporting
 
-Please make inquiries about / report issues with the package on the [Issues page](https://github.com/csyhuang/hn2016_falwa/issues). If you need help analyzing output from particular model/analysis with our techniques, feel free to email me <csyhuang@uchicago.edu> with sample datasets and I can configure the code for you.
-
+- If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) or email me(csyhuang at uchicago.edu) such that I can keep you updated of any changes made.
+- If you encounter *coding issues/bugs* when using the package, please create an [Issue ticket](https://github.com/csyhuang/hn2016_falwa/issues).
+- If you have scientific questions, please contact me via email(csyhuang at uchicago.edu).

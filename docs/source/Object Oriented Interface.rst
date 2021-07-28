@@ -3,14 +3,8 @@
 Object Oriented Interface
 ==========================
 
-.. py:module:: oopinterface
-
-.. autoclass:: QGField
+.. automodule:: oopinterface
    :members:
 
-.. py:module:: barotropic_field
-
-.. autoclass:: BarotropicField
-   :members:
 
 
