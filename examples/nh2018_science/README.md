@@ -27,4 +27,5 @@ The functionalities are enhanced and included in the class object `QGField` unde
 `hn2016_falwa.oopinterface`. Please refer to the [documentation](http://hn2016-falwa.readthedocs.io/) (search `QGField`) 
 for the input/methods this class provides.
 
-Feel free to contact Clare S. Y. Huang (csyhuang@uchicago.edu) if you have any questions or suggestions regarding the package.
+- If you encounter *coding issues/bugs* when using the package, please create an [Issue ticket](https://github.com/csyhuang/hn2016_falwa/issues).
+- If you have scientific questions, please contact Clare S. Y. Huang via email(csyhuang at uchicago.edu).

@@ -56,7 +56,7 @@ There are two classes with object-oriented interface: *QGField* and *BarotropicF
 
 * nh2018_science/demo_script_for_nh2018.ipynb: Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
 
-* simple/oopinterface_example_BarotropicField.ipynb: Compute equivalent latitude and barotropic wave activity.
+* simple/oopinterface_example_BarotropicField.ipynb: It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the **equivalent-latitude** relationship (e.g. Nakamura 1996) and **local wave activity** (Huang and Nakamura 2016) in a global domain.
 
 The **developer interface**  contains separate functions that users can alter the inputs more flexibly. Functions 
 are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). The 

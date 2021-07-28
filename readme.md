@@ -52,7 +52,7 @@ There are two classes with object-oriented interface: *QGField* and *BarotropicF
 Sample Script | Description
 ------------- | -------------
 nh2018_science/demo_script_for_nh2018.ipynb | Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
-simple/oopinterface_example_BarotropicField.ipynb | Same as *Example_barotropic.ipynb*.
+simple/oopinterface_example_BarotropicField.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 
 
 ### Developer Interface
@@ -69,13 +69,9 @@ are added upon users' request on new functionalities to test hypotheses (also se
 
 - The **beta-version functions** include utilities that are not fully documented but has been used in research.  
 
-Sample Script | Description
-------------- | -------------
-Example_qgpv.ipynb | It reads in a sample datasets u_QGPV_240hPa_2012Oct28to31.nc", which contains zonal velocity and QGPV field at 240hPa derived form ERA-Interim reanalysis data. Similar to fig. 9 in Huang and Nakamura (2016), a hemispheric domain is used here.
-Example_barotropic.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
 
 ## Inquiries / Issues reporting
 
 - If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) or email me(csyhuang at uchicago.edu) such that I can keep you updated of any changes made.
 - If you encounter *coding issues/bugs* when using the package, please create an [Issue ticket](https://github.com/csyhuang/hn2016_falwa/issues).
-- If you have scientific questions, please contact me via email(csyhuang at uchicago.edu).
+- If you have scientific questions, please contact Clare S. Y. Huang via email(csyhuang at uchicago.edu).
