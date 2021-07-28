@@ -1,23 +1,31 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Basis Functions &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,14 +37,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utility Functions" href="Utility Functions.html" />
-    <link rel="prev" title="Object Oriented Interface" href="Object Oriented Interface.html" /> 
+    <link rel="next" title="Utility Functions" href="Utility%20Functions.html" />
+    <link rel="prev" title="Object Oriented Interface" href="Object%20Oriented%20Interface.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -77,6 +81,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -85,16 +90,17 @@
             
             
               <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Object%20Oriented%20Interface.html">Object Oriented Interface</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Basis Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility%20Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper%20Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version%20Functions.html">Beta-version Functions</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -129,18 +135,20 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Basis Functions</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/Basis Functions.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -156,9 +164,9 @@
             
   <div class="section" id="module-basis">
 <span id="basis-functions"></span><h1>Basis Functions<a class="headerlink" href="#module-basis" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
+<dl class="py function">
 <dt id="basis.eqvlat">
-<code class="sig-prename descclassname">basis.</code><code class="sig-name descname">eqvlat</code><span class="sig-paren">(</span><em class="sig-param">ylat</em>, <em class="sig-param">vort</em>, <em class="sig-param">area</em>, <em class="sig-param">n_points</em>, <em class="sig-param">planet_radius=6378000.0</em>, <em class="sig-param">vgrad=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#eqvlat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.eqvlat" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">basis.</code><code class="sig-name descname">eqvlat</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ylat</span></em>, <em class="sig-param"><span class="n">vort</span></em>, <em class="sig-param"><span class="n">area</span></em>, <em class="sig-param"><span class="n">n_points</span></em>, <em class="sig-param"><span class="n">planet_radius</span><span class="o">=</span><span class="default_value">6378000.0</span></em>, <em class="sig-param"><span class="n">vgrad</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#eqvlat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.eqvlat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute equivalent latitude, and optionally &lt;…&gt;_Q in Nakamura and Zhu (2010).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -182,9 +190,9 @@ If <em>vgrad</em> = None, <em>brac</em> = None.</p></li>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="basis.lwa">
-<code class="sig-prename descclassname">basis.</code><code class="sig-name descname">lwa</code><span class="sig-paren">(</span><em class="sig-param">nlon</em>, <em class="sig-param">nlat</em>, <em class="sig-param">vort</em>, <em class="sig-param">q_part</em>, <em class="sig-param">dmu</em>, <em class="sig-param">ncforce=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.lwa" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">basis.</code><code class="sig-name descname">lwa</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nlon</span></em>, <em class="sig-param"><span class="n">nlat</span></em>, <em class="sig-param"><span class="n">vort</span></em>, <em class="sig-param"><span class="n">q_part</span></em>, <em class="sig-param"><span class="n">dmu</span></em>, <em class="sig-param"><span class="n">ncforce</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/basis.html#lwa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#basis.lwa" title="Permalink to this definition">¶</a></dt>
 <dd><p>At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
 this function calculate the difference between the line integral of [q(x,y+y’)-Q(y)]
 (and ncforce, if given) over the domain {y+y’&gt;y,q(x,y+y’)&lt;Q(y)} and {y+y’&lt;y,q(x,y+y’)&gt;Q(y)}.
@@ -219,29 +227,29 @@ If <em>ncforce</em> = None, <em>bigsigma</em> = None.</p></li>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="Utility Functions.html" class="btn btn-neutral float-right" title="Utility Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="Object Oriented Interface.html" class="btn btn-neutral float-left" title="Object Oriented Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="Utility%20Functions.html" class="btn btn-neutral float-right" title="Utility Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="Object%20Oriented%20Interface.html" class="btn btn-neutral float-left" title="Object Oriented Interface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2020, Clare S. Y. Huang
+        &#169; Copyright 2020, Clare S. Y. Huang.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -249,7 +257,6 @@ If <em>ncforce</em> = None, <em>bigsigma</em> = None.</p></li>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

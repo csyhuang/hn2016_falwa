@@ -1,23 +1,31 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>hn2016_falwa: Finite-amplitude local wave activity &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,13 +37,9 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Object Oriented Interface" href="Object Oriented Interface.html" /> 
+    <link rel="next" title="Object Oriented Interface" href="Object%20Oriented%20Interface.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -76,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -84,16 +89,17 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Object%20Oriented%20Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Basis%20Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility%20Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper%20Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version%20Functions.html">Beta-version Functions</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -128,18 +134,20 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
         
       <li>hn2016_falwa: Finite-amplitude local wave activity</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -163,13 +171,8 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 <li><p><a class="reference external" href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2017GL073760">Huang and Nakamura (2017, GRL)</a></p></li>
 <li><p><a class="reference external" href="https://doi.org/10.1126/science.aat0721">Nakamura and Huang (2018, Science)</a></p></li>
 </ul>
-<div class="section" id="to-users">
-<h2>To users<a class="headerlink" href="#to-users" title="Permalink to this headline">¶</a></h2>
-<p>If you are interested in using the package, please <a class="reference external" href="https://goo.gl/forms/5L8fv0mUordugq6v2">leave your contact here</a>
-such that I can keep you updated of any changes made.</p>
-</div>
-<div class="section" id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="package-installation">
+<h2>Package Installation<a class="headerlink" href="#package-installation" title="Permalink to this headline">¶</a></h2>
 <p>This current version works in both Python 2.7 and 3.6. Note that from v0.3.0 onword, some functions are
 having  backend in Fortran. You will need a fortran compiler (e.g. <a class="reference external" href="http://hpc.sourceforge.net/">gfortran</a>)
 to implement the installation.</p>
@@ -184,10 +187,22 @@ to implement the installation.</p>
 </pre></div>
 </div>
 </div>
+<div class="section" id="quick-start">
+<h2>Quick start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h2>
+<p>The jupyter notebook in <cite>examples/nh2018_science</cite> demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018).
+To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.</p>
+<p>THe conda environment for running the notebook can be found in <cite>environment.yml</cite>. To create the conda environment, execute:</p>
+<p><code class="docutils literal notranslate"><span class="pre">`bash</span>
+<span class="pre">conda</span> <span class="pre">env</span> <span class="pre">create</span> <span class="pre">-f</span> <span class="pre">environment.yml</span>
+<span class="pre">`</span></code></p>
+</div>
 <div class="section" id="developer-v-s-object-oriented-interfaces">
 <h2>Developer v.s. Object-oriented Interfaces<a class="headerlink" href="#developer-v-s-object-oriented-interfaces" title="Permalink to this headline">¶</a></h2>
 <p>There are two interfaces for this library. One is the <strong>developer interface</strong>; the other is the <strong>object-oriented
-interface</strong>, which is a wrapper for the basis functions in the developer interface.</p>
+interface</strong>, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules.
+Users are strongly adviced to use only the object-oriented interface.</p>
+<p>The <strong>object-oriented interface</strong> is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.</p>
+<p>There are two classes in the interface, <em>QGField</em> and <em>BarotropicField</em>. Please refer to the example/ directory:</p>
 <p>The <strong>developer interface</strong>  contains separate functions that users can alter the inputs more flexibly. Functions
 are added upon users’ request on new functionalities to test hypotheses (also see the <em>test</em> branch). The
 <strong>developer interface</strong> consists of 4 types of functions:</p>
@@ -200,11 +215,11 @@ are added upon users’ request on new functionalities to test hypotheses (also 
 <p>The <strong>object-oriented interface</strong> is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="Object Oriented Interface.html">Object Oriented Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Object%20Oriented%20Interface.html">Object Oriented Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Basis%20Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility%20Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper%20Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version%20Functions.html">Beta-version Functions</a></li>
 </ul>
 </div>
 </div>
@@ -227,27 +242,28 @@ are added upon users’ request on new functionalities to test hypotheses (also 
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="Object Oriented Interface.html" class="btn btn-neutral float-right" title="Object Oriented Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
+        <a href="Object%20Oriented%20Interface.html" class="btn btn-neutral float-right" title="Object Oriented Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2020, Clare S. Y. Huang
+        &#169; Copyright 2020, Clare S. Y. Huang.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -255,7 +271,6 @@ are added upon users’ request on new functionalities to test hypotheses (also 
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

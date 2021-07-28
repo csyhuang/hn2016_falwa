@@ -1,23 +1,31 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Object Oriented Interface &mdash; hn2016_falwa 0.4.1 documentation</title>
   
 
   
-  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
   
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -29,13 +37,9 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Basis Functions" href="Basis Functions.html" />
+    <link rel="next" title="Basis Functions" href="Basis%20Functions.html" />
     <link rel="prev" title="hn2016_falwa: Finite-amplitude local wave activity" href="index.html" /> 
 </head>
 
@@ -77,6 +81,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -86,15 +91,16 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Object Oriented Interface</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Basis Functions.html">Basis Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Utility Functions.html">Utility Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Wrapper Functions.html">Wrapper Functions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="Beta-version Functions.html">Beta-version Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Basis%20Functions.html">Basis Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Utility%20Functions.html">Utility Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Wrapper%20Functions.html">Wrapper Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Beta-version%20Functions.html">Beta-version Functions</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -129,18 +135,20 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Object Oriented Interface</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/Object Oriented Interface.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -156,358 +164,36 @@
             
   <div class="section" id="module-oopinterface">
 <span id="object-oriented-interface"></span><h1>Object Oriented Interface<a class="headerlink" href="#module-oopinterface" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="oopinterface.QGField">
-<em class="property">class </em><code class="sig-prename descclassname">oopinterface.</code><code class="sig-name descname">QGField</code><span class="sig-paren">(</span><em class="sig-param">xlon</em>, <em class="sig-param">ylat</em>, <em class="sig-param">plev</em>, <em class="sig-param">u_field</em>, <em class="sig-param">v_field</em>, <em class="sig-param">t_field</em>, <em class="sig-param">kmax=49</em>, <em class="sig-param">maxit=100000</em>, <em class="sig-param">dz=1000.0</em>, <em class="sig-param">prefactor=6500.0</em>, <em class="sig-param">npart=None</em>, <em class="sig-param">tol=1e-05</em>, <em class="sig-param">rjac=0.95</em>, <em class="sig-param">scale_height=7000.0</em>, <em class="sig-param">cp=1004.0</em>, <em class="sig-param">dry_gas_constant=287.0</em>, <em class="sig-param">omega=7.29e-05</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField" title="Permalink to this definition">¶</a></dt>
-<dd><p>Local wave activity and flux analysis in quasi-geostrophic framework
-that can be used to reproduce the results in:
-Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018).
-Note that topography is assumed flat in this object.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 0.3.0.</span></p>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>xlon</strong> (<em>numpy.array</em>) – Array of evenly-spaced longitude (in degree) of size nlon.</p></li>
-<li><p><strong>ylat</strong> (<em>numpy.array</em>) – Array of evenly-spaced latitude (in degree) of size nlat.
-If it is a masked array, the value ylat.data will be used.</p></li>
-<li><p><strong>plev</strong> (<em>numpy.</em>) – Array of pressure level (in hPa) of size nlev.</p></li>
-<li><p><strong>u_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
-If it is a masked array, the value u_field.data will be used.</p></li>
-<li><p><strong>v_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
-If it is a masked array, the value v_field.data will be used.</p></li>
-<li><p><strong>t_field</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
-If it is a masked array, the value t_field.data will be used.</p></li>
-<li><p><strong>kmax</strong> (<em>int</em><em>, </em><em>optional</em>) – Dimension of uniform pseudoheight grids used for interpolation.</p></li>
-<li><p><strong>maxit</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.</p></li>
-<li><p><strong>dz</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of uniform pseudoheight grids (in meters).</p></li>
-<li><p><strong>prefactor</strong> (<em>float</em><em>, </em><em>optional</em>) – Vertical air density summed over height.</p></li>
-<li><p><strong>npart</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of partitions used to compute equivalent latitude.
-If not initialized, it will be set to nlat.</p></li>
-<li><p><strong>tol</strong> (<em>float</em><em>, </em><em>optional</em>) – Tolerance that defines the convergence of solution in SOR solver.</p></li>
-<li><p><strong>rjac</strong> (<em>float</em><em>, </em><em>optional</em>) – Spectral radius of the Jacobi iteration in the SOR solver.</p></li>
-<li><p><strong>scale_height</strong> (<em>float</em><em>, </em><em>optional</em>) – Scale height of the atmosphere in meters. Default = 7000.</p></li>
-<li><p><strong>cp</strong> (<em>float</em><em>, </em><em>optional</em>) – Heat capacity of dry air in J/kg-K. Default = 1004.</p></li>
-<li><p><strong>dry_gas_constant</strong> (<em>float</em><em>, </em><em>optional</em>) – Gas constant for dry air in J/kg-K. Default = 287.</p></li>
-<li><p><strong>omega</strong> (<em>float</em><em>, </em><em>optional</em>) – Rotation rate of the earth in 1/s. Default = 7.29e-5.</p></li>
-<li><p><strong>planet_radius</strong> (<em>float</em><em>, </em><em>optional</em>) – Radius of the planet in meters.
-Default = 6.378e+6 (Earth’s radius).</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_object</span> <span class="o">=</span> <span class="n">QGField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">plev</span><span class="p">,</span> <span class="n">u_field</span><span class="p">,</span> <span class="n">v_field</span><span class="p">,</span> <span class="n">t_field</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="oopinterface.QGField.adv_flux_f1">
-<em class="property">property </em><code class="sig-name descname">adv_flux_f1</code><a class="headerlink" href="#oopinterface.QGField.adv_flux_f1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the second-order eddy term in zonal advective flux, i.e. F1 in equation 3 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.adv_flux_f2">
-<em class="property">property </em><code class="sig-name descname">adv_flux_f2</code><a class="headerlink" href="#oopinterface.QGField.adv_flux_f2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the third-order eddy term in zonal advective flux, i.e. F2 in equation 3 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.adv_flux_f3">
-<em class="property">property </em><code class="sig-name descname">adv_flux_f3</code><a class="headerlink" href="#oopinterface.QGField.adv_flux_f3" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the remaining term in zonal advective flux, i.e. F3 in equation 3 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.compute_lwa_and_barotropic_fluxes">
-<code class="sig-name descname">compute_lwa_and_barotropic_fluxes</code><span class="sig-paren">(</span><em class="sig-param">northern_hemisphere_results_only=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.compute_lwa_and_barotropic_fluxes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.compute_lwa_and_barotropic_fluxes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
-Nakamura and Huang (Science, 2018). It returns a named tuple called “LWA_and_fluxes” that consists of
-9 elements as listed below. The discretization scheme that is used in the numerical integration is outlined
-in the Supplementary materials of Huang and Nakamura (GRL, 2017).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) – If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
-returned. Default: False.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>adv_flux_f1</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the second-order eddy term in zonal advective flux,
-i.e. F1 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
-or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>adv_flux_f2</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the third-order eddy term in zonal advective flux,
-i.e. F2 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
-or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>adv_flux_f3</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the remaining term in zonal advective flux,
-i.e. F3 in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
-or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>convergence_zonal_advective_flux</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the convergence of zonal advective flux,
-i.e. -div(F1+F2+F3) in equation 3 of NH18, with dimension = [nlat//2+1, nlon] if
-northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>divergence_eddy_momentum_flux</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the divergence of eddy momentum flux,
-i.e. (II) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
-or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>meridional_heat_flux</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of the low-level meridional heat flux,
-i.e. (III) in equation 2 of NH18, with dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True,
-or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>lwa_baro</strong> (<em>np.ndarray</em>) – Two-dimensional array of barotropic local wave activity (with cosine weighting).
-Dimension = [nlat//2+1, nlon] if northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if
-northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>u_baro</strong> (<em>np.ndarray</em>) – Two-dimensional array of barotropic zonal wind (without cosine weighting). Dimension = [nlat//2+1, nlon] if
-northern_hemisphere_results_only=True, or dimension = [nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-<li><p><strong>lwa</strong> (<em>np.ndarray</em>) – Three-dimensional array of barotropic local wave activity Dimension = [kmax, nlat//2+1, nlon] if
-northern_hemisphere_results_only=True, or dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False.</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">adv_flux_f1</span><span class="p">,</span> <span class="n">adv_flux_f2</span><span class="p">,</span> <span class="n">adv_flux_f3</span><span class="p">,</span> <span class="n">convergence_zonal_advective_flux</span><span class="p">,</span>
-<span class="go">    divergence_eddy_momentum_flux, meridional_heat_flux,</span>
-<span class="go">    lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.compute_reference_states">
-<code class="sig-name descname">compute_reference_states</code><span class="sig-paren">(</span><em class="sig-param">northern_hemisphere_results_only=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.compute_reference_states"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.compute_reference_states" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
-stable inversion algorithm applied in Nakamura and Huang (2018, Science). The equation to be invert is
-equation (22) in supplementary materials of Huang and Nakamura (2017, GRL).</p>
-<p>This function returns named tuple called “Reference_states” that consists of 3 elements:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>northern_hemisphere_results_only</strong> (<em>bool</em>) – If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
-returned. Default: False.</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>Qref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of quasi-geostrophic potential vorticity (QGPV) with
-dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or
-dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</p></li>
-<li><p><strong>Uref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of zonal wind (Uref) with dimension = [kmax, nlat, nlon]
-if northern_hemisphere_results_only=False, or dimension = [kmax, nlat//2+1, nlon] if
-northern_hemisphere_results_only=True</p></li>
-<li><p><strong>PTref</strong> (<em>numpy.ndarray</em>) – Two-dimensional array of reference state of potential temperature (Theta_ref) with
-dimension = [kmax, nlat, nlon] if northern_hemisphere_results_only=False, or
-dimension = [kmax, nlat//2+1, nlon] if northern_hemisphere_results_only=True</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">qref</span><span class="p">,</span> <span class="n">uref</span><span class="p">,</span> <span class="n">ptref</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">compute_reference_states</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.convergence_zonal_advective_flux">
-<em class="property">property </em><code class="sig-name descname">convergence_zonal_advective_flux</code><a class="headerlink" href="#oopinterface.QGField.convergence_zonal_advective_flux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the convergence of zonal advective flux, i.e. -div(F1+F2+F3) in equation 3 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.divergence_eddy_momentum_flux">
-<em class="property">property </em><code class="sig-name descname">divergence_eddy_momentum_flux</code><a class="headerlink" href="#oopinterface.QGField.divergence_eddy_momentum_flux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the divergence of eddy momentum flux, i.e. (II) in equation 2 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.get_latitude_dim">
-<code class="sig-name descname">get_latitude_dim</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.get_latitude_dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.get_latitude_dim" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the latitude dimension of the input data.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.interpolate_fields">
-<code class="sig-name descname">interpolate_fields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/oopinterface.html#QGField.interpolate_fields"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#oopinterface.QGField.interpolate_fields" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,
-and compute QGPV on the same grids. This returns named tuple called “Interpolated_fields” that consists of
-5 elements as listed below.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p><ul class="simple">
-<li><p><strong>QGPV</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of quasi-geostrophic potential vorticity (QGPV) with dimension = [kmax, nlat, nlon]</p></li>
-<li><p><strong>U</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated zonal wind with dimension = [kmax, nlat, nlon]</p></li>
-<li><p><strong>V</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated meridional wind with dimension = [kmax, nlat, nlon]</p></li>
-<li><p><strong>Theta</strong> (<em>numpy.ndarray</em>) – Three-dimensional array of interpolated potential temperature with dimension = [kmax, nlat, nlon]</p></li>
-<li><p><strong>Static_stability</strong> (<em>numpy.array</em>) – One-dimension array of interpolated static stability with dimension = kmax</p></li>
-</ul>
-</p>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">interpolated_fields</span> <span class="o">=</span> <span class="n">test_object</span><span class="o">.</span><span class="n">interpolate_fields</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">interpolated_fields</span><span class="o">.</span><span class="n">QGPV</span>  <span class="c1"># This is to access the QGPV field</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.interpolated_theta">
-<em class="property">property </em><code class="sig-name descname">interpolated_theta</code><a class="headerlink" href="#oopinterface.QGField.interpolated_theta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Potential temperature on the regular pseudoheight grids.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.interpolated_u">
-<em class="property">property </em><code class="sig-name descname">interpolated_u</code><a class="headerlink" href="#oopinterface.QGField.interpolated_u" title="Permalink to this definition">¶</a></dt>
-<dd><p>Zonal wind on the regular pseudoheight grids.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.interpolated_v">
-<em class="property">property </em><code class="sig-name descname">interpolated_v</code><a class="headerlink" href="#oopinterface.QGField.interpolated_v" title="Permalink to this definition">¶</a></dt>
-<dd><p>Meridional wind on the regular pseudoheight grids.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.lwa">
-<em class="property">property </em><code class="sig-name descname">lwa</code><a class="headerlink" href="#oopinterface.QGField.lwa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Three-dimensional array of barotropic local wave activity</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.lwa_baro">
-<em class="property">property </em><code class="sig-name descname">lwa_baro</code><a class="headerlink" href="#oopinterface.QGField.lwa_baro" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of barotropic local wave activity (with cosine weighting).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.meridional_heat_flux">
-<em class="property">property </em><code class="sig-name descname">meridional_heat_flux</code><a class="headerlink" href="#oopinterface.QGField.meridional_heat_flux" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of the low-level meridional heat flux, i.e. (III) in equation 2 of NH18</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.ptref">
-<em class="property">property </em><code class="sig-name descname">ptref</code><a class="headerlink" href="#oopinterface.QGField.ptref" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reference state of potential temperature (Theta_ref).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.qgpv">
-<em class="property">property </em><code class="sig-name descname">qgpv</code><a class="headerlink" href="#oopinterface.QGField.qgpv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Quasi-geostrophic potential vorticity on the regular pseudoheight grids.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.qref">
-<em class="property">property </em><code class="sig-name descname">qref</code><a class="headerlink" href="#oopinterface.QGField.qref" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reference state of QGPV (Qref).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.static_stability">
-<em class="property">property </em><code class="sig-name descname">static_stability</code><a class="headerlink" href="#oopinterface.QGField.static_stability" title="Permalink to this definition">¶</a></dt>
-<dd><p>The interpolated static stability.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.u_baro">
-<em class="property">property </em><code class="sig-name descname">u_baro</code><a class="headerlink" href="#oopinterface.QGField.u_baro" title="Permalink to this definition">¶</a></dt>
-<dd><p>Two-dimensional array of barotropic zonal wind (without cosine weighting).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="oopinterface.QGField.uref">
-<em class="property">property </em><code class="sig-name descname">uref</code><a class="headerlink" href="#oopinterface.QGField.uref" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reference state of zonal wind (Uref).</p>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-barotropic_field"></span><dl class="class">
-<dt id="barotropic_field.BarotropicField">
-<em class="property">class </em><code class="sig-prename descclassname">barotropic_field.</code><code class="sig-name descname">BarotropicField</code><span class="sig-paren">(</span><em class="sig-param">xlon</em>, <em class="sig-param">ylat</em>, <em class="sig-param">pv_field</em>, <em class="sig-param">area=None</em>, <em class="sig-param">dphi=None</em>, <em class="sig-param">n_partitions=None</em>, <em class="sig-param">planet_radius=6378000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/barotropic_field.html#BarotropicField"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#barotropic_field.BarotropicField" title="Permalink to this definition">¶</a></dt>
-<dd><p>An object that deals with barotropic (2D) wind and/or PV fields</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>xlon</strong> (<em>np.array</em>) – Longitude array in degree with dimension = nlon.</p></li>
-<li><p><strong>ylat</strong> (<em>np.array</em>) – Latitude array in degree with dimension = nlat.</p></li>
-<li><p><strong>area</strong> (<em>np.ndarray</em>) – Differential area at each lon-lat grid points with dimension (nlat,nlon). If ‘area=None’: it will be initiated as area of uniform grid (in degree) on a spherical surface. Dimension = [nlat, nlon]</p></li>
-<li><p><strong>dphi</strong> (<em>np.array</em>) – Differential length element along the lat grid with dimension = nlat.</p></li>
-<li><p><strong>pv_field</strong> (<em>np.ndarray</em>) – Absolute vorticity field with dimension [nlat x nlon]. If ‘pv_field=None’: pv_field is expected to be computed with u,v,t field.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="method">
-<dt id="barotropic_field.BarotropicField.equivalent_latitudes">
-<em class="property">property </em><code class="sig-name descname">equivalent_latitudes</code><a class="headerlink" href="#barotropic_field.BarotropicField.equivalent_latitudes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the computd quivalent latitude with the <em>pv_field</em> stored in the object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>An numpy array with dimension (nlat) of equivalent latitude array.</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">eqv_lat</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">equivalent_latitudes</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="barotropic_field.BarotropicField.lwa">
-<em class="property">property </em><code class="sig-name descname">lwa</code><a class="headerlink" href="#barotropic_field.BarotropicField.lwa" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the finite-amplitude local wave activity based on the <em>equivalent_latitudes</em> and the <em>pv_field</em> stored in the object.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p></p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>An 2-D numpy array with dimension [nlat,nlon] of local wave activity values.</p>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">barofield1</span> <span class="o">=</span> <span class="n">BarotropicField</span><span class="p">(</span><span class="n">xlon</span><span class="p">,</span> <span class="n">ylat</span><span class="p">,</span> <span class="n">pv_field</span><span class="o">=</span><span class="n">abs_vorticity</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lwa</span> <span class="o">=</span> <span class="n">barofield1</span><span class="o">.</span><span class="n">lwa</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-</div>
+<span class="target" id="module-barotropic_field"></span></div>
 
 
            </div>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="Basis Functions.html" class="btn btn-neutral float-right" title="Basis Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="index.html" class="btn btn-neutral float-left" title="hn2016_falwa: Finite-amplitude local wave activity" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="Basis%20Functions.html" class="btn btn-neutral float-right" title="Basis Functions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="hn2016_falwa: Finite-amplitude local wave activity" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2020, Clare S. Y. Huang
+        &#169; Copyright 2020, Clare S. Y. Huang.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
@@ -515,7 +201,6 @@ and compute QGPV on the same grids. This returns named tuple called “Interpola
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

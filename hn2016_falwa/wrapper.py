@@ -1,5 +1,5 @@
 import numpy as np
-from hn2016_falwa.constant import EARTH_RADIUS
+from .constant import EARTH_RADIUS
 
 
 def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS):
