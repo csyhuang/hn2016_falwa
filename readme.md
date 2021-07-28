@@ -47,7 +47,7 @@ Users are strongly adviced to use only the object-oriented interface.
 
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
-There are two classes in the interface, *QGField* and *BarotropicField*. Please refer to the example/ directory:
+There are two classes with object-oriented interface: *QGField* and *BarotropicField*. Please refer to the example/ directory:
 
 Sample Script | Description
 ------------- | -------------

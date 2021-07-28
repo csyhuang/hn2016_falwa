@@ -39,11 +39,9 @@ Quick start
 The jupyter notebook in `examples/nh2018_science` demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018).
 To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
 
-THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute:
+THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute::
 
-```bash
-conda env create -f environment.yml
-```
+ conda env create -f environment.yml
 
 Developer v.s. Object-oriented Interfaces
 -----------------------------------------
@@ -54,15 +52,11 @@ Users are strongly adviced to use only the object-oriented interface.
 
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
-There are two classes in the interface, *QGField* and *BarotropicField*. Please refer to the example/ directory:
+There are two classes with object-oriented interface: *QGField* and *BarotropicField*. Please refer to the **sample scripts** for their usage:
 
-+---------------------+-------------------+
-| Sample Script       |  Description      |
-+---------------------+-------------------+
-| nh2018_science/demo_script_for_nh2018.ipynb | Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.|
-+---------+---------+
-| simple/oopinterface_example_BarotropicField.ipynb | Same as *Example_barotropic.ipynb*. |
-+---------+---------+
+* nh2018_science/demo_script_for_nh2018.ipynb: Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
+
+* simple/oopinterface_example_BarotropicField.ipynb: Compute equivalent latitude and barotropic wave activity.
 
 The **developer interface**  contains separate functions that users can alter the inputs more flexibly. Functions 
 are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). The 
@@ -79,10 +73,12 @@ are added upon users' request on new functionalities to test hypotheses (also se
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
 
+
 .. toctree::
    :maxdepth: 2
 
    Object Oriented Interface
+   Barotropic Field
    Basis Functions
    Utility Functions
    Wrapper Functions

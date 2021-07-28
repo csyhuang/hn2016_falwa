@@ -2,8 +2,8 @@ import numpy as np
 import warnings
 from scipy.interpolate import interp1d
 
-from . import utilities
-from .constant import *
+from hn2016_falwa import utilities
+from hn2016_falwa.constant import *
 from interpolate_fields import interpolate_fields
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes

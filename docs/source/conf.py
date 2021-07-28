@@ -18,8 +18,11 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../hn2016_falwa'))
-import sphinx_rtd_theme
+# Need to fix the issue below
+sys.path.insert(0, os.path.abspath('../../hn2016_falwa/'))
+sys.path.insert(0, os.path.abspath('../../'))
+
+# import sphinx_rtd_theme
 
 
 autodoc_mock_imports = ["interpolate_fields",
