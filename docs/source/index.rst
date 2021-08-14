@@ -68,8 +68,6 @@ are added upon users' request on new functionalities to test hypotheses (also se
 
 * The **utility functions** compute general quantities, such as static stability or quasi-geostrophic potential vorticity that are not specific to the finite-amplitude wave theory.   
 
-* The **beta-version functions** include utilities that are not fully documented but has been used in research.  
-
 The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
 
 

@@ -1,3 +1,6 @@
+import warnings
+
+
 def input_jk_output_index(j,k,kmax):
     return j*(kmax) + k
 
@@ -76,7 +79,12 @@ def solve_uref_both_bc(tstamp, zmum, FAWA_cos, ylat, ephalf2, Delta_PT,
 
     """
 
-
+    warnings.warn(
+        """The function solve_uref_both_bc is no longer maintained and will be deprecated.
+        Please use the class oopinterface.QGField for the computation of reference states.
+        """,
+        DeprecationWarning
+    )
     # zm_PT = zonal mean potential temperature
 
     # Import necessary modules
