@@ -27,4 +27,4 @@ jobs:
     - name: Upload Coverage to Codecov
       run: |
         bash <(curl -s https://codecov.io/bash)
-      #uses: codecov/codecov-action@v2
+      #uses: codecov/codecov-action@v2 # failed to generate report with this command
