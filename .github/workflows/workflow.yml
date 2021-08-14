@@ -23,6 +23,6 @@ jobs:
         sudo apt-get install gfortran
         pip install numpy
         pip install scipy
-        coverage run python setup.py pytest
+        coverage run setup.py pytest
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v1
