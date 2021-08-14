@@ -1,4 +1,4 @@
-## Python Library: hn2016_falwa (v0.4.1)
+## Python Library: hn2016_falwa (v0.5.0)
 
 [![Build Status](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)
 
@@ -21,9 +21,16 @@ cd hn2016_falwa
 python setup.py develop
 ```
 
-To incorporate updates, pull the new version of the code by:
+To incorporate updates, pull the new version of the code from GitHub by:
 ```
 git pull
+```
+
+If there are updates in the Fortran modules in the new commits, please re-compile them:
+```
+python setup develop -u
+python setup develop
+pytest # to check if the package can be run properly
 ```
 
 ## Quick start

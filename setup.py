@@ -34,7 +34,7 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
 
 setup(
     name='hn2016_falwa',
-    version='0.4.1',
+    version='0.5.0',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/csyhuang/hn2016_falwa',
