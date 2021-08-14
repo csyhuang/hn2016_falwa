@@ -6,6 +6,12 @@ python:
   - "3.6"      # current default Python on Travis CI
   - "3.7"
 
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install codecov
+
 install:
   - pip install --upgrade pip setuptools wheel
   - sudo apt-get install python-numpy python-scipy gfortran
@@ -15,6 +21,7 @@ install:
 
 # command to run tests
 script:
-  - python setup.py pytest
+  - pytest
 
-after_success: pip install codecov && codecov
+after_success:
+  - codecov # submit coverage
