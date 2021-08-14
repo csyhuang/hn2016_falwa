@@ -20,7 +20,7 @@ jobs:
         pip install coverage
         pip install -U pytest
         pip install --upgrade pip setuptools wheel
-        sudo apt-get install python-numpy python-scipy gfortran
+        sudo apt-get install gfortran
         pip install numpy
         pip install scipy
         coverage run -m pytest
