@@ -1,6 +1,7 @@
 import numpy as np
 from math import pi, exp
 
+
 def static_stability(
     height,
     area,
