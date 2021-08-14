@@ -10,18 +10,16 @@ before_install:
   - python --version
   - pip install -U pip
   - pip install -U pytest
-  - pip install codecov
 
 install:
   - pip install --upgrade pip setuptools wheel
   - sudo apt-get install python-numpy python-scipy gfortran
   - pip install numpy
   - pip install scipy
-  - pip install coveralls
 
 # command to run tests
 script:
   - python setup.py pytest
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+#after_success:
+#  - bash <(curl -s https://codecov.io/bash)
