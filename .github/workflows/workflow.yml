@@ -1,20 +1,3 @@
-#on: [push, pull_request]
-#
-#jobs:
-#  run:
-#    runs-on: ubuntu-latest
-#    env:
-#      OS: ubuntu-latest
-#      PYTHON: '3.7'
-#    steps:
-#      # (Other steps go here)
-#      - name: "Upload coverage to Codecov"
-#        uses: codecov/codecov-action@v2
-#        with:
-#          fail_ci_if_error: true
-#          verbose: true # optional (default = false)
-
-
 name: CodeCov
 on: [push, pull_request]
 jobs:
@@ -38,4 +21,3 @@ jobs:
         coverage run -m unittest
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v1
-      with:
