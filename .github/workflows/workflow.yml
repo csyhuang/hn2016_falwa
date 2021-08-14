@@ -25,4 +25,6 @@ jobs:
         pip install scipy
         coverage run setup.py pytest
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
+      run: |
+        bash <(curl -s https://codecov.io/bash)
+      #uses: codecov/codecov-action@v2
