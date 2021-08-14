@@ -2,13 +2,7 @@ import numpy as np
 from math import pi, exp
 
 
-def static_stability(
-    height,
-    area,
-    theta,
-    s_et=None,
-    n_et=None
-):
+def static_stability(height, area, theta, s_et=None, n_et=None):
     """
     The function "static_stability" computes the vertical gradient (z-derivative)
     of hemispheric-averaged potential temperature, i.e. d\tilde{theta}/dz in the def-
