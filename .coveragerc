@@ -1,2 +1,7 @@
 [run]
 source=hn2016_falwa
+
+[report]
+show_missing = True
+omit =
+    hn2016_falwa/legacy/*
