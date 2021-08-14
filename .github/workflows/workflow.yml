@@ -19,6 +19,10 @@ jobs:
       run: |
         pip install coverage
         pip install -U pytest
+        pip install --upgrade pip setuptools wheel
+        sudo apt-get install python-numpy python-scipy gfortran
+        pip install numpy
+        pip install scipy
         coverage run -m pytest
     - name: Upload Coverage to Codecov
       uses: codecov/codecov-action@v1
