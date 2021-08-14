@@ -21,7 +21,7 @@ install:
 
 # command to run tests
 script:
-  - pytest
+  - python setup.py pytest
 
 after_success:
   - codecov # submit coverage
