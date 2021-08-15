@@ -2,7 +2,7 @@ from math import pi
 
 import numpy as np
 
-import basis
+from hn2016_falwa import basis
 
 
 class BarotropicField(object):
