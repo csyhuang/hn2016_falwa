@@ -1,5 +1,3 @@
-import matplotlib.pyplot as plt
-
 import numpy as np
 
 from hn2016_falwa.barotropic_field import BarotropicField
