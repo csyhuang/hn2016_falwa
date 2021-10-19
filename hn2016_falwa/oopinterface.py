@@ -164,9 +164,11 @@ class QGField(object):
 
         # Modification on Oct 19, 2021 - deprecation of prefactor (it should be computed from kmax and dz)
         if prefactor is not None:
-            warnings.warn("The optional input prefactor will be deprecated since it can be determined directly from " +
-                          "kmax and dz. Given your input kmax = {kmax} and dz = {dz}, ".format(kmax=self.kmax, dz=self.dz) +
-                          "the computed normalization prefactor is {prefactor}".format(prefactor=self.prefactor))
+            warnings.warn(
+                "The optional input prefactor will be deprecated since it can be determined directly from " +
+                "kmax and dz. Given your input kmax = {kmax} and dz = {dz}, ".format(kmax=self.kmax, dz=self.dz) +
+                "the computed normalization prefactor is {prefactor}. ".format(prefactor=self.prefactor) +
+                "Your input value {input} would be ignored.".format(input=prefactor))
 
         # === Variables that will be computed in methods ===
         self._qgpv_temp = None
