@@ -1,5 +1,6 @@
-import numpy as np
+import math
 import warnings
+import numpy as np
 from scipy.interpolate import interp1d
 
 from hn2016_falwa import utilities
@@ -44,8 +45,6 @@ class QGField(object):
            Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
     dz : float, optional
            Size of uniform pseudoheight grids (in meters).
-    prefactor : float, optional
-           Vertical air density summed over height.
     npart : int, optional
            Number of partitions used to compute equivalent latitude.
            If not initialized, it will be set to nlat.
@@ -72,12 +71,9 @@ class QGField(object):
 
     """
 
-    def __init__(self, xlon, ylat, plev,
-                 u_field, v_field, t_field,
-                 kmax=49, maxit=100000, dz=1000., prefactor=6500.,
-                 npart=None, tol=1.e-5, rjac=0.95,
-                 scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS):
+    def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
+                 tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, prefactor=None):
 
         """
         Create a QGField object.
@@ -155,7 +151,6 @@ class QGField(object):
         self.kmax = kmax
         self.maxit = maxit
         self.dz = dz
-        self.prefactor = prefactor
         self.tol = tol
         self.rjac = rjac
 
@@ -165,6 +160,15 @@ class QGField(object):
         self.dry_gas_constant = dry_gas_constant
         self.omega = omega
         self.planet_radius = planet_radius
+        self._compute_prefactor()  # Compute normalization prefactor
+
+        # Modification on Oct 19, 2021 - deprecation of prefactor (it should be computed from kmax and dz)
+        if prefactor is not None:
+            warnings.warn(
+                "The optional input prefactor will be deprecated since it can be determined directly from " +
+                "kmax and dz. Given your input kmax = {kmax} and dz = {dz}, ".format(kmax=self.kmax, dz=self.dz) +
+                "the computed normalization prefactor is {prefactor}. ".format(prefactor=self.prefactor) +
+                "Your input value {input} would be ignored.".format(input=prefactor))
 
         # === Variables that will be computed in methods ===
         self._qgpv_temp = None
@@ -199,6 +203,16 @@ class QGField(object):
         self._u_baro = None
         self._lwa = None
         self._divergence_eddy_momentum_flux = None
+
+    def _compute_prefactor(self):
+        """
+        Private function. Compute prefactor for normalization by evaluating
+            int^{z=kmax*dz}_0 e^{-z/H} dz
+        using rectangular rule consistent with the integral evaluation in compute_lwa_and_barotropic_fluxes.f90.
+        TODO: evaluate numerical integration scheme used in the fortran module.
+        """
+        self.prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+        return self.prefactor
 
     def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
