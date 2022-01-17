@@ -1,12 +1,12 @@
 SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height, &
-                              aa, omega, dz, hh, rr, cp, pv, ut, vt, theta, stat)
+                              aa, omega, dz, hh, rr, cp, pv, ut, vt, avort, theta, stat)
 
    
     INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax
     REAL, INTENT(IN) :: uu(nlon,nlat,nlev), vv(nlon,nlat,nlev), temp(nlon,nlat,nlev), &
                         plev(nlev), height(kmax)
     REAL, INTENT(in) :: aa, omega, dz,hh, rr, cp
-    REAL, INTENT(out) :: pv(nlon,nlat,kmax), ut(nlon,nlat,kmax), vt(nlon,nlat,kmax)
+    REAL, INTENT(out) :: pv(nlon,nlat,kmax), ut(nlon,nlat,kmax), vt(nlon,nlat,kmax), avort(nlon,nlat,kmax)
     REAL, INTENT(out) :: theta(nlon,nlat,kmax), stat(kmax)
 
 
@@ -18,7 +18,7 @@ SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height
     REAL ::  xlon(nlon),ylat(nlat)
     REAL ::  t0(kmax),zlev(nlev)
     REAL ::  st(nlon,nlat),zmst(nlat)
-    REAL ::  avort(nlon,nlat,kmax),zmav(nlat,kmax)
+    REAL ::  zmav(nlat,kmax)
     REAL ::  zmpv(nlat,kmax)
     REAL :: rkappa, pi, dphi
 

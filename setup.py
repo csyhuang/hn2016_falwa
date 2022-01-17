@@ -31,6 +31,29 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
                  sources=['hn2016_falwa/compute_lwa_and_barotropic_fluxes.f90'],
                  f2py_options=['--quiet'])
 
+ext4 = Extension(name='interpolate_fields_direct_inv',
+                 sources=['hn2016_falwa/interpolate_fields_dirinv.f90'],
+                 f2py_options=['--quiet'])
+
+ext5 = Extension(name='compute_qref_and_fawa_first',
+                 sources=['hn2016_falwa/compute_qref_and_fawa_first.f90'],
+                 f2py_options=['--quiet'])
+
+ext6 = Extension(name='matrix_b4_inversion',
+                 sources=['hn2016_falwa/matrix_b4_inversion.f90'],
+                 f2py_options=['--quiet'])
+
+ext7 = Extension(name='matrix_after_inversion',
+                 sources=['hn2016_falwa/matrix_after_inversion.f90'],
+                 f2py_options=['--quiet'])
+
+ext8 = Extension(name='upward_sweep',
+                 sources=['hn2016_falwa/upward_sweep.f90'],
+                 f2py_options=['--quiet'])
+
+ext9 = Extension(name='compute_flux_dirinv',
+                 sources=['hn2016_falwa/compute_flux_dirinv.f90'],
+                 f2py_options=['--quiet'])
 
 setup(
     name='hn2016_falwa',
@@ -44,6 +67,6 @@ setup(
     packages=find_packages(),
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    ext_modules=[ext1, ext2, ext3],
+    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
     zip_safe=False
 )

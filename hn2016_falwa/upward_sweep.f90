@@ -1,0 +1,116 @@
+! *** Copying from lines 374-442 from era4004n.f90 ***
+
+SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_over_cor, u, tref, qref, a, om, dz, h, rr, cp)
+
+  INTEGER, INTENT(IN) :: jmax, kmax, nd, nnd, jb, jd
+  REAL, INTENT(IN) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1),ckref(nd,kmax),tb(kmax),qref_over_cor(nd,kmax)
+  REAL, INTENT(IN) :: rr, cp
+  REAL, INTENT(INOUT) :: u(jd,kmax), tref(jd,kmax)
+  REAL, INTENT(OUT) :: qref(nd,kmax)
+
+!  integer,parameter :: imax = 360, JMAX = 181, KMAX = 97
+!  integer,parameter :: nd = 91,nnd=181
+!  integer,parameter :: jb = 5   ! lower bounding latitude
+!  integer,parameter :: jd = 86  ! nd - lower bounding latitude
+
+!  common /array/ pv(imax,jmax,kmax),pv2(imax,jmax)
+!  common /brray/ uu(imax,jmax,kmax)
+!  common /bbray/ vort(imax,jmax,kmax),vort2(imax,jmax)
+!  common /bcray/ pt(imax,jmax,kmax)
+!  common /bdray/ stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
+!  common /crray/ qn(nnd),an(nnd),aan(nnd)
+  real :: tg(kmax)
+  real :: pjk(jd-2,kmax)
+!  common /frray/ alat(nd),phi(nd),z(kmax),cbar(nd,kmax)
+  real :: tj(jd-2),rj(jd-2)
+  real :: qjj(jd-2,jd-2),cjj(jd-2,jd-2)
+  real :: xjj(jd-2,jd-2),yj(jd-2)
+!  real :: djj(jd-2,jd-2)
+  real :: sjj(jd-2,jd-2)
+  real :: pj(jd-2)
+
+!  common /krray/ fawa(nd,kmax)
+!  common /jrray/ qbar(nd,kmax),ubar(nd,kmax),tbar(nd,kmax)
+!  integer :: md(12),ipiv(jd-2)
+
+  rkappa = rr/cp
+  pi = acos(-1.)
+  dp = pi/180.
+
+
+  pjk(:,1) = 0.
+  do k = 1,kmax-1
+    pj(:) = pjk(:,k)
+    sjj(:,:) = sjk(:,:,k)
+    tj(:) = tjk(:,k)
+
+    do i = 1,jd-2
+      yj(i) = 0.
+      do kk = 1,jd-2
+        yj(i) = yj(i)+sjj(i,kk)*pj(kk)
+      enddo
+      pjk(i,k+1) = yj(i)+tj(i)
+    enddo
+    !        call gemv(sjj,pj,yj)
+    !        pjk(:,k+1) = yj(:) + tj(:)
+  enddo
+
+  ! **** Recover u *****
+  do k = 1,kmax
+    do j = 2,jd-1
+      u(j,k) = pjk(j-1,k)
+    enddo
+  enddo
+
+  ! *** Corner boundary conditions ***
+  u(1,1) = 0.
+  u(jd,1) = 0.
+  !        u(1,kmax) = ubar(1+jb,kmax)*cos(dp*float(jb))
+  u(1,kmax) = ckref(1+jb,kmax)/(2.*pi*a)-om*a*cos(dp*float(jb))
+  u(jd,kmax) = 0.
+
+  ! *** Divide by cos phi to revover Uref ****
+  do jj = jb+1,nd-1
+    j = jj-jb
+    phi0 = dp*float(jj-1)
+    u(j,:) = u(j,:)/cos(phi0)
+  enddo
+  u(jd,:) = 2.*u(jd-1,:)-u(jd-2,:)
+
+  ! ******** compute tref *******
+  qref(:, :) = qref_over_cor(:, :)  ! modify for f2py wrapping purpose
+  do k = 2,96
+    t00 = 0.
+    zz = dz*float(k-1)
+    tref(1,k) = t00
+    tref(2,k) = t00
+    do j = 2,jd-1
+      phi0 = dp*float(j-1+jb)
+      cor = 2.*om*sin(phi0)
+      uz = (u(j,k+1)-u(j,k-1))/(2.*dz)
+      ty = -cor*uz*a*h*exp(rkappa*zz/h)
+      ty = ty/rr
+      tref(j+1,k) = tref(j-1,k)+2.*ty*dp
+      qref(j-1+jb,k) = qref_over_cor(j-1+jb,k)*sin(phi0)
+    enddo
+!    do j = jd, nd  ! Add after checking code
+!      qref(j-1,k) = qref_over_cor(j-1,k)*sin(dp*float(j-1))
+!    end do
+!    qref(nd,k) = 2 * qref(nd-1,k) - qref(nd-2,k)  ! Linear interpolation
+
+    tg(k) = 0.
+    wt = 0.
+    do jj = 6,91
+      j = jj-5
+      phi0 = dp*float(jj-1)
+      tg(k) = tg(k)+cos(phi0)*tref(j,k)
+      wt = wt + cos(phi0)
+    enddo
+    tg(k) = tg(k)/wt
+    tres = tb(k)-tg(k)
+    tref(:,k) = tref(:,k)+tres
+  enddo
+  tref(:,1) = tref(:,2)-tb(2)+tb(1)
+  tref(:,97) = tref(:,96)-tb(96)+tb(97)
+
+END SUBROUTINE upward_sweep
