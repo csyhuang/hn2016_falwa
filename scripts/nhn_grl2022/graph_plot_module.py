@@ -262,7 +262,6 @@ def plot_figure1d_2a(t_filename):
 
 
 def plot_figure3_and_S1(lwa_flux_filename):
-
     ncin1 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
 
     lwa = ncin1.variables['lwa']
@@ -296,6 +295,7 @@ def plot_figure3_and_S1(lwa_flux_filename):
     plt.xlim(140, 280)
     plt.ylim(10, 80)
     plt.title('Column LWA Change  00 UTC 20 - 26 June 2021')
+    #plot.xlabel('Longitude')
     plt.ylabel('Latitude', fontsize=22)
     ax5.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
     ax5.coastlines(alpha = 0.7)
@@ -309,22 +309,25 @@ def plot_figure3_and_S1(lwa_flux_filename):
     ott = ax5.contourf(x,y,zs,levels=cl2,transform=ccrs.PlateCarree(),cmap='rainbow')
     fig.colorbar(ott,ax=ax5,label='LWA (m/s)')
     plt.savefig('dLWA_0.png', bbox_inches='tight', dpi =600)
-    plt.close()
-
-    lwa_flux_filename = lwa_flux_filename #"2021_06_ua1_N.nc"
-    filename2 = lwa_flux_filename #"2021_06_ua2_N.nc"
-    filename3 = lwa_flux_filename #"2021_06_ep1_N.nc"
-    filename4 = lwa_flux_filename #"2021_06_ep2_N.nc"
-    filename5 = lwa_flux_filename #"2021_06_ep3_N.nc"
-    filename6 = lwa_flux_filename #"2021_06_ep4_N.nc"
 
     ncin1 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
     ua1 = ncin1.variables['ua1']
-    ua2 = ncin1.variables['ua2']
-    ep1 = ncin1.variables['ep1']
-    ep2 = ncin1.variables['ep2']
-    ep3 = ncin1.variables['ep3']
-    ep4 = np.array(ncin1.variables['ep4'])
+    ua1 = (np.array(ua1))
+    ncin2 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
+    ua2 = ncin2.variables['ua2']
+    ua2 = (np.array(ua2))
+    ncin3 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
+    ep1 = ncin3.variables['ep1']
+    ep1 = (np.array(ep1))
+    ncin4 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
+    ep2 = ncin4.variables['ep2']
+    ep2 = (np.array(ep2))
+    ncin5 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
+    ep3 = ncin5.variables['ep3']
+    ep3 = (np.array(ep3))
+    ncin6 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
+    ep4 = ncin6.variables['ep4']
+    ep4 = (np.array(ep4))
 
     f1 = np.zeros((91,360))
     f2 = np.zeros((91,360))
@@ -436,7 +439,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
     fig.colorbar(ott,ax=ax6,label='(m/s)')
     ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
     plt.savefig('divFx+Fy_0.png', bbox_inches='tight', dpi =600)
-    plt.close()
 
     cl1 = np.arange(-200,220,20)
     x = np.arange(0,360)
@@ -444,7 +446,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure(figsize=(10, 5))
     ax6 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    #ax6 = fig.add_subplot(1,1,1)
     plt.xlim(0, 360)
     plt.ylim(10, 80)
     plt.title('Integrated column -div Fy   20 - 26 June 2021')
@@ -463,7 +464,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
     fig.colorbar(ott,ax=ax6,label='(m/s)')
     ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
     plt.savefig('divFy_0.png', bbox_inches='tight', dpi =600)
-    plt.close()
 
     cl1 = np.arange(-200,220,20)
     x = np.arange(0,360)
@@ -474,8 +474,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
     plt.xlim(0, 360)
     plt.ylim(10, 80)
     plt.title('Integrated low-level source   20 - 26 June 2021')
-    #plot.xlabel('Longitude')
-    #plot.ylabel('Latitude')
     ax6.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
     ax6.coastlines(alpha = 0.7)
     ax6.set_aspect('auto', adjustable=None)
@@ -488,7 +486,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
     ott = ax6.contourf(x,y,z3s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
     fig.colorbar(ott,ax=ax6,label='(m/s)')
     plt.savefig('EP4_0.png', bbox_inches='tight', dpi =600)
-    plt.close()
 
     cl1 = np.arange(-200,220,20)
     x = np.arange(0,360)
@@ -511,7 +508,7 @@ def plot_figure3_and_S1(lwa_flux_filename):
     fig.colorbar(ott,ax=ax6,label='(m/s)')
     ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
     plt.savefig('Residual_0.png', bbox_inches='tight', dpi =600)
-    plt.close()
+    plt.close("all")
 
 
 def plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename):
@@ -1086,3 +1083,5 @@ def plot_figure5(lwa_flux_filename):
     ott = plt.plot(x, gm, color='red', alpha = 0.5)
     ott = plt.plot(x, gm2, 'r--', alpha = 0.5)
     plt.savefig('dLWAp.png', bbox_inches='tight', dpi =600)
+
+

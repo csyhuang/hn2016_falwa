@@ -79,7 +79,7 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
 
   ! ******** compute tref *******
   qref(:, :) = qref_over_cor(:, :)  ! modify for f2py wrapping purpose
-  do k = 2,kmax-1
+  do k = 2,96
     t00 = 0.
     zz = dz*float(k-1)
     tref(1,k) = t00
@@ -91,16 +91,17 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
       ty = -cor*uz*a*h*exp(rkappa*zz/h)
       ty = ty/rr
       tref(j+1,k) = tref(j-1,k)+2.*ty*dp
+      qref(j-1+jb,k) = qref_over_cor(j-1+jb,k)*sin(phi0)
     enddo
-    do j = 1,nd
-      phi0 = dp*float(j-1)
-      qref(j,k) = qref(j,k)*sin(phi0)
-    enddo
+!    do j = jd, nd  ! Add after checking code
+!      qref(j-1,k) = qref_over_cor(j-1,k)*sin(dp*float(j-1))
+!    end do
+!    qref(nd,k) = 2 * qref(nd-1,k) - qref(nd-2,k)  ! Linear interpolation
 
     tg(k) = 0.
     wt = 0.
-    do jj = jb+1,nd
-      j = jj-jb
+    do jj = 6,91
+      j = jj-5
       phi0 = dp*float(jj-1)
       tg(k) = tg(k)+cos(phi0)*tref(j,k)
       wt = wt + cos(phi0)
@@ -110,6 +111,6 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
     tref(:,k) = tref(:,k)+tres
   enddo
   tref(:,1) = tref(:,2)-tb(2)+tb(1)
-  tref(:,kmax) = tref(:,kmax-1)-tb(kmax-1)+tb(kmax)
+  tref(:,97) = tref(:,96)-tb(96)+tb(97)
 
 END SUBROUTINE upward_sweep
