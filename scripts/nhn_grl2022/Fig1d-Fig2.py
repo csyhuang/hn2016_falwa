@@ -1,3 +1,4 @@
+# This is not used now. (March 16)
 #This script reads in netCDF data for ERA5
 from netCDF4 import Dataset 
 import numpy as np
@@ -9,7 +10,7 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 # read netCDF files
 #-----------------
 
-data_dir = "grl2022_data/"
+data_dir = "grl2021_data/"
 filename1 = data_dir + "2021_06_t.nc"
 
 ncin1 = Dataset(filename1, 'r', format='NETCDF4')

@@ -5,7 +5,7 @@ from hn2016_falwa.oopinterface import QGField
 import datetime as dt
 import matplotlib.pyplot as plt
 
-data_dir = "grl2022_data/"
+data_dir = "grl2021_data/"
 
 # --- Load the zonal wind and QGPV at 240hPa --- #
 u_file = Dataset(data_dir + '2021_06_u.nc', mode='r')

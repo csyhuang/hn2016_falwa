@@ -9,9 +9,9 @@ from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 # read netCDF files
 #-----------------
 
-data_dir = "grl2022_data/"
+data_dir = "grl2021_data/"
 # filename0 = data_dir + "2021_06_LWAb_N.nc"
-filename0 = "2021-06-01_to_2021-06-30_output3.nc"
+filename0 = "2021-06-01_to_2021-06-30_output.nc"
 
 ncin1 = Dataset(filename0, 'r', format='NETCDF4')
 
@@ -64,12 +64,12 @@ fig.colorbar(ott,ax=ax5,label='LWA (m/s)')
 plot.savefig('dLWA.png',bbox_inches='tight',dpi =600)
 #plot.show()
 
-filename1 = "2021-06-01_to_2021-06-30_output3.nc"
-filename2 = "2021-06-01_to_2021-06-30_output3.nc"
-filename3 = "2021-06-01_to_2021-06-30_output3.nc"
-filename4 = "2021-06-01_to_2021-06-30_output3.nc"
-filename5 = "2021-06-01_to_2021-06-30_output3.nc"
-filename6 = "2021-06-01_to_2021-06-30_output3.nc"
+filename1 = "2021-06-01_to_2021-06-30_output.nc"
+filename2 = "2021-06-01_to_2021-06-30_output.nc"
+filename3 = "2021-06-01_to_2021-06-30_output.nc"
+filename4 = "2021-06-01_to_2021-06-30_output.nc"
+filename5 = "2021-06-01_to_2021-06-30_output.nc"
+filename6 = "2021-06-01_to_2021-06-30_output.nc"
 
 # filename1 = data_dir + "2021_06_ua1_N.nc"
 # filename2 = data_dir + "2021_06_ua2_N.nc"

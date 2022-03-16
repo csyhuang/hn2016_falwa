@@ -57,7 +57,7 @@
          z(k) = dz*float(k-1)
         enddo
 
-        do m = 2021,2021
+        do m = 1979,2020
 
         md(1) = 31
         md(2) = 28
@@ -89,7 +89,7 @@
         write(fy,266) m
  266    format(i4)
 
-        do n = 10,10
+        do n = 1,12
          fn = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGPV'
          fu = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGU'
          ft = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGT'
@@ -418,13 +418,16 @@
            tref(1,k) = t00
            tref(2,k) = t00
          do j = 2,jd-1
-           phi0 = dp*float(j-1)
+           phi0 = dp*float(j-1+jb)
            cor = 2.*om*sin(phi0)  
            uz = (u(j,k+1)-u(j,k-1))/(2.*dz)
            ty = -cor*uz*a*h*exp(rkappa*zz/h)
            ty = ty/r
            tref(j+1,k) = tref(j-1,k)+2.*ty*dp
-           qref(j-1,k) = qref(j-1,k)*sin(phi0)
+         enddo
+         do j = 1,nd
+           phi0 = dp*float(j-1)
+           qref(j,k) = qref(j,k)*sin(phi0)
          enddo
             tg(k) = 0.
             wt = 0.
