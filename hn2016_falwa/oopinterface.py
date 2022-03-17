@@ -2,10 +2,18 @@ import math
 import warnings
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.linalg.lapack import dgetrf, dgetri
 
 from hn2016_falwa import utilities
 from hn2016_falwa.constant import *
 from interpolate_fields import interpolate_fields
+from interpolate_fields_direct_inv import interpolate_fields_direct_inv
+from compute_qref_and_fawa_first import compute_qref_and_fawa_first
+from matrix_b4_inversion import matrix_b4_inversion
+from matrix_after_inversion import matrix_after_inversion
+from upward_sweep import upward_sweep
+from compute_flux_dirinv import compute_flux_dirinv
+
 from compute_reference_states import compute_reference_states
 from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
@@ -63,7 +71,10 @@ class QGField(object):
     planet_radius : float, optional
            Radius of the planet in meters.
            Default = 6.378e+6 (Earth's radius).
-
+    eq_boundary_index: int, optional
+           The improved inversion algorithm of reference states allow modification of equatorward boundary
+           to be the absolute vorticity. This parameter specify the location of grid point (from equator)
+           which will be used as boundary. Default = 5.
 
     Examples
     --------
@@ -73,7 +84,7 @@ class QGField(object):
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, prefactor=None):
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, prefactor=None, eq_boundary_index=5):
 
         """
         Create a QGField object.
@@ -153,6 +164,7 @@ class QGField(object):
         self.dz = dz
         self.tol = tol
         self.rjac = rjac
+        self.eq_boundary_index = eq_boundary_index
 
         # === Constants ===
         self.scale_height = scale_height
@@ -174,8 +186,17 @@ class QGField(object):
         self._qgpv_temp = None
         self._interpolated_u_temp = None
         self._interpolated_v_temp = None
+        self._interpolated_avort_temp = None
         self._interpolated_theta_temp = None
         self._static_stability = None
+        self._static_stability_n = None
+        self._static_stability_s = None
+        self._tn0 = None
+        self._ts0 = None
+
+        # === Temporary solution for direct inv routine
+        self._f_qref, self._f_u, self._f_tref, self._f_ubar, self._f_tbar, self._f_fawa, self._f_ckref = \
+            None, None, None, None, None, None, None
 
         # Computation from computer_reference_states
         self._qref_stemp = None
@@ -204,6 +225,14 @@ class QGField(object):
         self._lwa = None
         self._divergence_eddy_momentum_flux = None
 
+        # Temporary solution for GRL computation
+        self._ua1baro_nhem = None
+        self._ua2baro_nhem = None
+        self._ep1baro_nhem = None
+        self._ep2baro_nhem = None
+        self._ep3baro_nhem = None
+        self._ep4_nhem = None
+
     def _compute_prefactor(self):
         """
         Private function. Compute prefactor for normalization by evaluating
@@ -211,8 +240,11 @@ class QGField(object):
         using rectangular rule consistent with the integral evaluation in compute_lwa_and_barotropic_fluxes.f90.
         TODO: evaluate numerical integration scheme used in the fortran module.
         """
-        self.prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
-        return self.prefactor
+        self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+
+    @property
+    def prefactor(self):
+        return self._prefactor
 
     def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
@@ -417,6 +449,7 @@ class QGField(object):
             self._qgpv_temp, \
                 self._interpolated_u_temp, \
                 self._interpolated_v_temp, \
+                self._interpolated_avort_temp, \
                 self._interpolated_theta_temp, \
                 self._static_stability = \
                 interpolate_fields(
@@ -440,7 +473,7 @@ class QGField(object):
                 self._interpolated_theta_temp, 0, 2
             )
 
-        # Construct a named tuple
+        # Construct a named tuple # TODO: add absolute vorticity here? But only after testing
         Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
         interpolated_fields = Interpolated_fields(
             self.qgpv,
@@ -626,6 +659,14 @@ class QGField(object):
                 self._uref_ntemp,
                 self._ptref_ntemp)
 
+        # === Access barotropic components of ua1, ua2, ep1, ep2, ep3, ep4: for the use of nhn GLR paper only ===
+        self._ua1baro_nhem = ua1baro_nhem
+        self._ua2baro_nhem = ua2baro_nhem
+        self._ep1baro_nhem = ep1baro_nhem
+        self._ep2baro_nhem = ep2baro_nhem
+        self._ep3baro_nhem = ep3baro_nhem
+        self._ep4_nhem = ep4_nhem
+
         # === Compute barotropic flux terms (SHem) ===
         if not northern_hemisphere_results_only:
             lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
@@ -726,6 +767,167 @@ class QGField(object):
             self.adv_flux_f1, self.adv_flux_f2, self.adv_flux_f3, self.convergence_zonal_advective_flux,
             self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa)
         return lwa_and_fluxes
+
+    # *** Added in Release 0.6.0 ***
+    # The following internal functions are used to compute results in NHN (2022, GRL):
+    # - _interpolate_field_dirinv
+    # - _compute_qref_fawa_and_bc
+    # - _compute_lwa_flux_dirinv
+    # They will be refactored in the upcoming releases.
+    def _interpolate_field_dirinv(self):
+        """
+        Added for NHN 2022 GRL
+        :return:
+        """
+        self._qgpv_temp, \
+        self._interpolated_u_temp, \
+        self._interpolated_v_temp, \
+        self._interpolated_avort_temp, \
+        self._interpolated_theta_temp, \
+        self._static_stability_n, \
+        self._static_stability_s,\
+        self._tn0, self._ts0 = \
+            interpolate_fields_direct_inv(
+                self.kmax,
+                self.nlat // 2 + self.nlat % 2,
+                np.swapaxes(self.u_field, 0, 2),
+                np.swapaxes(self.v_field, 0, 2),
+                np.swapaxes(self.t_field, 0, 2),
+                self.plev,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp)
+
+        self._check_nan("self._qgpv_temp", self._qgpv_temp)
+        self._check_nan("self._interpolated_u_temp", self._interpolated_u_temp)
+        self._check_nan("self._interpolated_v_temp", self._interpolated_v_temp)
+        self._check_nan("self._interpolated_avort_temp", self._interpolated_avort_temp)
+        self._check_nan("self._interpolated_theta_temp", self._interpolated_theta_temp)
+        self._check_nan("self._static_stability_n", self._static_stability_n)
+        self._check_nan("self._static_stability_s", self._static_stability_s)
+        self._check_nan("self._tn0", self._tn0)
+        self._check_nan("self._ts0", self._ts0)
+
+        return self._qgpv_temp, self._interpolated_u_temp, self._interpolated_v_temp,  self._interpolated_avort_temp, \
+        self._interpolated_theta_temp, self._static_stability_n, self._static_stability_s, self._tn0, self._ts0
+
+    @staticmethod
+    def _check_nan(name, var):
+        nan_num = np.count_nonzero(np.isnan(var))
+        if nan_num > 0:
+            print(f"num of nan in {name}: {np.count_nonzero(np.isnan(var))}.")
+
+    def _compute_qref_fawa_and_bc(self):
+        """
+        Added for NHN 2022 GRL
+        :return:
+        """
+        # ans = compute_qref_and_fawa_first(
+            # pv, uu, vort, pt, tn0, ts0, statn, stats, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
+        ans = compute_qref_and_fawa_first(
+            pv=self._qgpv_temp,
+            uu=self._interpolated_u_temp,
+            vort=self._interpolated_avort_temp,
+            pt=self._interpolated_theta_temp,
+            tn0=self._tn0,
+            ts0=self._ts0,
+            statn=self._static_stability_n,
+            stats=self._static_stability_s,
+            nd=self.nlat//2 + self.nlat % 2,  # 91
+            nnd=self.nlat,                    # 181
+            jb=self.eq_boundary_index,        # 5
+            jd=self.nlat//2 + self.nlat % 2 - self.eq_boundary_index,  # 86 TODO fix its formula
+            a=self.planet_radius,
+            omega=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp)
+
+        qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
+
+        self._check_nan("qref_over_cor", qref_over_cor)
+        self._check_nan("u", u)
+        self._check_nan("ubar", ubar)
+        self._check_nan("tbar", tbar)
+        self._check_nan("fawa", fawa)
+        self._check_nan("ckref", ckref)
+        self._check_nan("tjk", tjk)
+        self._check_nan("sjk", sjk)
+
+        for k in range(self.kmax-1, 1, -1):  # Fortran indices
+            ans = matrix_b4_inversion(
+                k=k,
+                jmax=self.nlat,
+                jb=self.eq_boundary_index,  # 5
+                jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,  # 86
+                z=np.arange(0, self.kmax*self.dz, self.dz),
+                statn=self._static_stability_n,
+                qref=qref_over_cor,
+                ckref=ckref,
+                a=self.planet_radius,
+                om=self.omega,
+                dz=self.dz,
+                h=self.scale_height,
+                rr=self.dry_gas_constant,
+                cp=self.cp,
+                u=u,
+                sjk=sjk,
+                tjk=tjk)
+            qjj, djj, cjj, rj, tj = ans
+
+            # TODO: The inversion algorithm  is the bottleneck of the computation
+            # SciPy is very slow compared to MKL in Fortran...
+            lu, piv, info = dgetrf(qjj)
+            qjj, info = dgetri(lu, piv)
+
+            _ = matrix_after_inversion(
+                k=k,
+                jb=self.eq_boundary_index,
+                qjj=qjj,
+                djj=djj,
+                cjj=cjj,
+                tj=tj,
+                rj=rj,
+                sjk=sjk,
+                tjk=tjk)
+
+        tref, qref = upward_sweep(
+            jmax=self.nlat,
+            nnd=self.nlat,
+            jb=self.eq_boundary_index,
+            sjk=sjk,
+            tjk=tjk,
+            ckref=ckref,
+            tb=self._tn0,
+            qref_over_cor=qref_over_cor,
+            u=u,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp)
+
+        return qref, u, tref, fawa, ubar, tbar  # uref = u
+
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref, fawa, ubar, tbar):
+        """
+        Added for NHN 2022 GRL
+        :return:
+        """
+        ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
+                                  pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,
+                                  statn=self._static_stability_n, stats=self._static_stability_s,
+                                  qref=qref, uref=uref, tref=tref, fawa=fawa, ubar=ubar, tbar=tbar,
+                                  nnd=self.nlat, jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+                                  dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
+                                  prefac=self.prefactor)
+        # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
+        return ans
 
     @property
     def qgpv(self):
