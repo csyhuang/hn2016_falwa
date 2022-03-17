@@ -1,5 +1,5 @@
 SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats, imax, JMAX, kmax, nd, nnd, jb, jd, &
-        qref,u,tref,ubar,tbar,fawa,ckref,tjk,sjk)
+        qref,u,ubar,tbar,fawa,ckref,tjk,sjk)
 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
@@ -7,7 +7,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),&
           stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
-  REAL, INTENT(OUT) :: qref(nd,kmax),u(jd,kmax),tref(jd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
+  REAL, INTENT(OUT) :: qref(nd,kmax),u(jd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
           tjk(jd-2,kmax-1),sjk(jd-2,jd-2,kmax-1)
 
   !   **** take QG analysis and compute Q_ref and invert for U_ref & Theta_ref for NH (Direct solver) ***

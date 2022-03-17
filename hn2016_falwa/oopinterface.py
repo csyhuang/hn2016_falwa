@@ -540,12 +540,11 @@ class QGField(object):
             nnd=181,
             jb=5,
             jd=86)
-        qref_over_cor, u, tref, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
+        qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
 
         print("Line 535")
         self._check_nan("qref_over_cor", qref_over_cor)
         self._check_nan("u", u)
-        self._check_nan("tref", tref)
         self._check_nan("ubar", ubar)
         self._check_nan("tbar", tbar)
         self._check_nan("fawa", fawa)
@@ -607,8 +606,10 @@ class QGField(object):
                 sjk=sjk,
                 tjk=tjk)
         # print(f"k = {k}. Run till here so far")
+        print("Line 609: sjk.shape = ", sjk.shape)
+        print("Line 610: u.shape = ", u.shape)
 
-        qref, tref = upward_sweep(
+        tref, qref = upward_sweep(
             jmax=self.nlat,
             nnd=self.nlat,
             jb=5,
@@ -624,6 +625,10 @@ class QGField(object):
             h=self.scale_height,
             rr=self.dry_gas_constant,
             cp=self.cp)
+        print(f"qref.shape = {qref.shape}")
+        print(f"tref.shape = {tref.shape}")
+        print("tref = ")
+        print(tref)
 
         return qref, u, tref, fawa, ubar, tbar  # uref = u
 
@@ -779,31 +784,31 @@ class QGField(object):
         # TODO: static stability in southern hemisphere has nan values?!
         return interpolated_fields
 
-    def compute_reference_states_direct_inversion(self, northern_hemisphere_results_only=True):
-        """
-        Direct inversion algorithm for NHN GRL 2022
-        """
-
-        ans = compute_qref_fawa_and_bc(
-            5,
-            91,
-            91 - 5,
-            self._qgpv_temp,
-            self._interpolated_u_temp,
-            self._interpolated_avort_temp,
-            self._interpolated_theta_temp,
-            self._static_stability_n,
-            self._tn0,
-            self.planet_radius,
-            self.omega,
-            self.dz,
-            self.tol,  # can remove
-            self.scale_height,
-            self.dry_gas_constant)
-
-        self._f_qref, self._f_u, self._f_tref, self._f_ubar, self._f_tbar, self._f_fawa, self._f_ckref = ans
-
-        return ans
+    # def compute_reference_states_direct_inversion(self, northern_hemisphere_results_only=True):
+    #     """
+    #     Direct inversion algorithm for NHN GRL 2022
+    #     """
+    #
+    #     ans = compute_qref_fawa_and_bc(
+    #         5,
+    #         91,
+    #         91 - 5,
+    #         self._qgpv_temp,
+    #         self._interpolated_u_temp,
+    #         self._interpolated_avort_temp,
+    #         self._interpolated_theta_temp,
+    #         self._static_stability_n,
+    #         self._tn0,
+    #         self.planet_radius,
+    #         self.omega,
+    #         self.dz,
+    #         self.tol,  # can remove
+    #         self.scale_height,
+    #         self.dry_gas_constant)
+    #
+    #     self._f_qref, self._f_u, self._f_tref, self._f_ubar, self._f_tbar, self._f_fawa, self._f_ckref = ans
+    #
+    #     return ans
 
     # def _compute_reference_states_direct_inversion_wrapper(self, qgpv, u, theta):
     #     return compute_reference_states(
