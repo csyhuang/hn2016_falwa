@@ -71,7 +71,10 @@ class QGField(object):
     planet_radius : float, optional
            Radius of the planet in meters.
            Default = 6.378e+6 (Earth's radius).
-
+    eq_boundary_index: int, optional
+           The improved inversion algorithm of reference states allow modification of equatorward boundary
+           to be the absolute vorticity. This parameter specify the location of grid point (from equator)
+           which will be used as boundary. Default = 5.
 
     Examples
     --------
@@ -81,7 +84,7 @@ class QGField(object):
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, prefactor=None):
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, prefactor=None, eq_boundary_index=5):
 
         """
         Create a QGField object.
@@ -161,6 +164,7 @@ class QGField(object):
         self.dz = dz
         self.tol = tol
         self.rjac = rjac
+        self.eq_boundary_index = eq_boundary_index
 
         # === Constants ===
         self.scale_height = scale_height
@@ -236,8 +240,11 @@ class QGField(object):
         using rectangular rule consistent with the integral evaluation in compute_lwa_and_barotropic_fluxes.f90.
         TODO: evaluate numerical integration scheme used in the fortran module.
         """
-        self.prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
-        return self.prefactor
+        self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+
+    @property
+    def prefactor(self):
+        return self._prefactor
 
     def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
@@ -829,10 +836,10 @@ class QGField(object):
             ts0=self._ts0,
             statn=self._static_stability_n,
             stats=self._static_stability_s,
-            nd=91,
-            nnd=181,
-            jb=5,
-            jd=86,
+            nd=self.nlat//2 + self.nlat % 2,  # 91
+            nnd=self.nlat,                    # 181
+            jb=self.eq_boundary_index,        # 5
+            jd=self.nlat//2 + self.nlat % 2 - self.eq_boundary_index,  # 86 TODO fix its formula
             a=self.planet_radius,
             omega=self.omega,
             dz=self.dz,
@@ -856,8 +863,8 @@ class QGField(object):
             ans = matrix_b4_inversion(
                 k=k,
                 jmax=self.nlat,
-                jb=5,
-                jd=86,
+                jb=self.eq_boundary_index,  # 5
+                jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,  # 86
                 z=np.arange(0, self.kmax*self.dz, self.dz),
                 statn=self._static_stability_n,
                 qref=qref_over_cor,
@@ -880,7 +887,7 @@ class QGField(object):
 
             _ = matrix_after_inversion(
                 k=k,
-                jb=5,
+                jb=self.eq_boundary_index,
                 qjj=qjj,
                 djj=djj,
                 cjj=cjj,
@@ -892,7 +899,7 @@ class QGField(object):
         tref, qref = upward_sweep(
             jmax=self.nlat,
             nnd=self.nlat,
-            jb=5,
+            jb=self.eq_boundary_index,
             sjk=sjk,
             tjk=tjk,
             ckref=ckref,
@@ -917,8 +924,9 @@ class QGField(object):
                                   pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,
                                   statn=self._static_stability_n, stats=self._static_stability_s,
                                   qref=qref, uref=uref, tref=tref, fawa=fawa, ubar=ubar, tbar=tbar,
-                                  nnd=self.nlat, jb=5, a=self.planet_radius, om=self.omega, dz=self.dz,
-                                  h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp, prefac=6745.348)
+                                  nnd=self.nlat, jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+                                  dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
+                                  prefac=self.prefactor)
         # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
         return ans
 
