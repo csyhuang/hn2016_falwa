@@ -81,8 +81,8 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
 
     tg(k) = 0.
     wt = 0.
-    do jj = 6,91
-      j = jj-5
+    do jj = jb+1,nd
+      j = jj-jb
       phi0 = dp*float(jj-1)
       tg(k) = tg(k)+cos(phi0)*tref(j,k)
       wt = wt + cos(phi0)

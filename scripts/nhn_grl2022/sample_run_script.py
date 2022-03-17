@@ -67,7 +67,7 @@ nd = nlat//2+1                      # (one plus) index of latitude grid point wi
 
 
 # --- Outputing files ---
-output_fname = '2021-06-01_to_2021-06-30_output_b8e1c4.nc'
+output_fname = '2021-06-01_to_2021-06-30_output_92901f5.nc'
 print(output_fname)
 
 # --- Generate analysis results ---

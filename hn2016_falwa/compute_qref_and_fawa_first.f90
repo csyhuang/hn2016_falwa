@@ -30,17 +30,6 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
   REAL :: djj(jd-2,jd-2),sjj(jd-2,jd-2)
   REAL :: pjk(jd-2,kmax),pj(jd-2)
   REAL :: qbar(nd,kmax)
-  !integer :: md(12),ipiv(jd-2)
-
-  character*35 fn,fn0,fn1
-  character*34 fu
-  character*34 ft
-  character*4  fn2(12),fy,fy1,fy2
-  character*18 f1,f2
-  character*19 f3
-  character*36 fv
-  character*38 fr
-
 
   pi = acos(-1.)
   dp = pi/float(jmax-1)

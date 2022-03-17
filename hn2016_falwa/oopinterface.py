@@ -849,7 +849,6 @@ class QGField(object):
 
         qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
 
-        print("Line 535")
         self._check_nan("qref_over_cor", qref_over_cor)
         self._check_nan("u", u)
         self._check_nan("ubar", ubar)
