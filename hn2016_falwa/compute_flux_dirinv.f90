@@ -1,11 +1,13 @@
 SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fawa,ubar,tbar,&
-        imax, JMAX, kmax, nd, nnd, jb, jd,&
+        imax, JMAX, kmax, nd, nnd, jb, jd, &
+        a, om, dz, h, rr, cp, prefac,&
         astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2)
 
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax),&
           tn0(kmax),ts0(kmax),statn(kmax),stats(kmax),qref(nd,kmax),uref(jd,kmax),tref(jd,kmax),&
           fawa(nd,kmax),ubar(nd,kmax),tbar(nd,kmax)
+  REAL, INTENT(IN) :: a, om, dz, h, rr, cp, prefac
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
           ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
 
@@ -16,14 +18,15 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   REAL :: z(kmax)
   REAL :: u(nd,kmax)
 
-  a = 6378000.
+  !a = 6378000.
   pi = acos(-1.)
-  om = 7.29e-5
-  dp = pi/180.
-  dz = 500.
-  h = 7000.
-  r = 287.
-  rkappa = r/1004.
+  !om = 7.29e-5
+  dp = pi/float(jmax-1)
+  !dz = 500.
+  !h = 7000.
+  !r = 287.
+  rkappa = rr/cp
+  !prefac = 6745.348
 
   ! *** Default values for boundary ***
   !jb = 5
@@ -48,7 +51,7 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   ep2baro(:,:) = 0.
   ep3baro(:,:) = 0.
   ep4(:,:) = 0.
-  dc = dz/6745.348
+  dc = dz/prefac
 
   do k = 2,96
     zk = dz*float(k-1)
@@ -82,7 +85,7 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
         ep1(i,j) = ep1(i,j)+0.5*vv(i,j+90,k)**2    !F3a+b
         ep11 = 0.5*(pt(i,j+90,k)-tref(j-5,k))**2         !F3c
         zz = dz*float(k-1)
-        ep11 = ep11*(r/h)*exp(-rkappa*zz/h)
+        ep11 = ep11*(rr/h)*exp(-rkappa*zz/h)
         ep11 = ep11*2.*dz/(tg(k+1)-tg(k-1))
         ep1(i,j) = ep1(i,j)-ep11                   !F3
         phip = dp*float(j)
@@ -101,7 +104,7 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
 
         ! low-level meridional eddy heat flux
         if(k.eq.2) then     ! (26) of SI-HN17
-          ep41 = 2.*om*sin0*cos0*dz/6745.348       ! prefactor
+          ep41 = 2.*om*sin0*cos0*dz/prefac       ! prefactor
           ep42 = exp(-dz/h)*vv(i,j+90,2)*(pt(i,j+90,2)-tref(j-5,2))
           ep42 = ep42/(tg(3)-tg(1))
           ep43 = vv(i,j+90,1)*(pt(i,j+90,1)-tref(j-5,1))

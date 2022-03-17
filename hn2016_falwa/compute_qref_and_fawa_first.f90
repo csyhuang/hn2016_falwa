@@ -1,12 +1,12 @@
 SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats, imax, JMAX, kmax, nd, nnd, jb, jd, &
-        aa, omega, dz, h, rr, cp, &
+        a, omega, dz, h, rr, cp, &
         qref,u,ubar,tbar,fawa,ckref,tjk,sjk)
 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
 
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
-  REAL, INTENT(in) :: aa, omega, dz, h, rr, cp
+  REAL, INTENT(in) :: a, omega, dz, h, rr, cp
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),&
           stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
   REAL, INTENT(OUT) :: qref(nd,kmax),u(jd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
@@ -44,7 +44,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
 
   pi = acos(-1.)
   dp = pi/float(jmax-1)
-  rkappa = r/cp
+  rkappa = rr/cp
 
   do nn = 1,nd
     phi(nn) = dp*float(nn-1)

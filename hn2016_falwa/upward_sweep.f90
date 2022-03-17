@@ -4,7 +4,7 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
 
   INTEGER, INTENT(IN) :: jmax, kmax, nd, nnd, jb, jd
   REAL, INTENT(IN) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1),ckref(nd,kmax),tb(kmax),qref_over_cor(nd,kmax)
-  REAL, INTENT(IN) :: rr, cp
+  REAL, INTENT(IN) :: a, om, dz, h, rr, cp
   REAL, INTENT(INOUT) :: u(jd,kmax)
   REAL, INTENT(OUT) :: qref(nd,kmax), tref(jd,kmax)
   real :: tg(kmax)

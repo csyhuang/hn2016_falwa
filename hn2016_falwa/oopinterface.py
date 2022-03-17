@@ -818,6 +818,8 @@ class QGField(object):
         Added for NHN 2022 GRL
         :return:
         """
+        # ans = compute_qref_and_fawa_first(
+            # pv, uu, vort, pt, tn0, ts0, statn, stats, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
         ans = compute_qref_and_fawa_first(
             pv=self._qgpv_temp,
             uu=self._interpolated_u_temp,
@@ -830,7 +832,14 @@ class QGField(object):
             nd=91,
             nnd=181,
             jb=5,
-            jd=86)
+            jd=86,
+            aa=self.planet_radius,
+            omega=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp)
+
         qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
 
         print("Line 535")
@@ -908,7 +917,8 @@ class QGField(object):
                                   pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,
                                   statn=self._static_stability_n, stats=self._static_stability_s,
                                   qref=qref, uref=uref, tref=tref, fawa=fawa, ubar=ubar, tbar=tbar,
-                                  nnd=self.nlat, jb=5)
+                                  nnd=self.nlat, jb=5, a=self.planet_radius, om=self.omega, dz=self.dz,
+                                  h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp, prefac=6745.348)
         # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
         return ans
 
