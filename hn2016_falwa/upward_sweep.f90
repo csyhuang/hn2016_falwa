@@ -17,7 +17,7 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
 
   rkappa = rr/cp
   pi = acos(-1.)
-  dp = pi/180.
+  dp = pi/float(jmax-1)
 
 
   pjk(:,1) = 0.
@@ -61,7 +61,7 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
 
   ! ******** compute tref *******
   qref(:, :) = qref_over_cor(:, :)  ! modify for f2py wrapping purpose
-  do k = 2,96
+  do k = 2,kmax-1
     t00 = 0.
     zz = dz*float(k-1)
     tref(1,k) = t00
@@ -92,6 +92,6 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
     tref(:,k) = tref(:,k)+tres
   enddo
   tref(:,1) = tref(:,2)-tb(2)+tb(1)
-  tref(:,97) = tref(:,96)-tb(96)+tb(97)
+  tref(:,kmax) = tref(:,kmax-1)-tb(kmax-1)+tb(kmax)
 
 END SUBROUTINE upward_sweep

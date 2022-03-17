@@ -1,10 +1,12 @@
 SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats, imax, JMAX, kmax, nd, nnd, jb, jd, &
+        aa, omega, dz, h, rr, cp, &
         qref,u,ubar,tbar,fawa,ckref,tjk,sjk)
 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
 
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
+  REAL, INTENT(in) :: aa, omega, dz, h, rr, cp
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),&
           stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
   REAL, INTENT(OUT) :: qref(nd,kmax),u(jd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
@@ -39,14 +41,10 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
   character*36 fv
   character*38 fr
 
-  a = 6378000.
+
   pi = acos(-1.)
-  om = 7.29e-5
-  dp = pi/180.
-  dz = 500.
-  h = 7000.
-  r = 287.
-  rkappa = r/1004.
+  dp = pi/float(jmax-1)
+  rkappa = r/cp
 
   do nn = 1,nd
     phi(nn) = dp*float(nn-1)
@@ -57,62 +55,6 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
     z(k) = dz*float(k-1)
   enddo
 
-!  do m = 2021,2021
-!
-!  md(1) = 31
-!  md(2) = 28
-!  if(mod(m,4).eq.0) md(2) = 29
-!  md(3) = 31
-!  md(4) = 30
-!  md(5) = 31
-!  md(6) = 30
-!  md(7) = 31
-!  md(8) = 31
-!  md(9) = 30
-!  md(10) = 31
-!  md(11) = 30
-!  md(12) = 31
-!
-!  fn2(1) = '_01_'
-!  fn2(2) = '_02_'
-!  fn2(3) = '_03_'
-!  fn2(4) = '_04_'
-!  fn2(5) = '_05_'
-!  fn2(6) = '_06_'
-!  fn2(7) = '_07_'
-!  fn2(8) = '_08_'
-!  fn2(9) = '_09_'
-!  fn2(10) = '_10_'
-!  fn2(11) = '_11_'
-!  fn2(12) = '_12_'
-!
-!  write(fy,266) m
-!  266    format(i4)
-!
-!  do n = 10,10
-!  fn = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGPV'
-!  fu = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGU'
-!  ft = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGT'
-!  fr = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGREF_N'
-!  fv = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QVORT'
-!  write(6,*) fn,md(n)
-!  open(35,file =fn,  &
-!  form='unformatted',status = 'old')
-!  open(36,file =fu,  &
-!  form='unformatted',status = 'old')
-!  open(37,file =ft,  &
-!  form='unformatted',status = 'old')
-!  open(38,file =fr,  &
-!  form='unformatted',status = 'new')
-!  open(39,file =fv,  &
-!  form='unformatted',status = 'old')
-  ! ********************** Analysis starts here **********************
-!  do mm = 1,md(n)*4
-
-!  read(35) pv
-!  read(36) uu
-!  read(39) vort
-!  read(37) pt,tn0,ts0,statn,stats
 
   ! **** Zonal-mean field ****
   do j = 91,jmax
@@ -247,214 +189,4 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
     tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*om*sin0*dp*h*a)
     sjk(j-1,j-1,kmax-1) = 1.
   enddo
-! *** REFACTOR: COMMENT OUT ALL BELOW ***
-!  ! **** Evaluate Eqs. 22-23 downward ***
-!
-!  do k = kmax-1,2,-1
-!  zp = 0.5*(z(k+1)+z(k))
-!  zm = 0.5*(z(k-1)+z(k))
-!  statp = 0.5*(statn(k+1)+statn(k))
-!  statm = 0.5*(statn(k-1)+statn(k))
-!  cjj(:,:) = 0.
-!  djj(:,:) = 0.
-!  qjj(:,:) = 0.
-!  sjj(:,:) = sjk(:,:,k)
-!  tj(:) = tjk(:,k)
-!  do jj = jb+2,90
-!  j = jj - jb
-!  phi0 = float(jj-1)*dp
-!  phip = (float(jj)-0.5)*dp
-!  phim = (float(jj)-1.5)*dp
-!  cos0 = cos(phi0)
-!  cosp = cos(phip)
-!  cosm = cos(phim)
-!  sin0 = sin(phi0)
-!  sinp = sin(phip)
-!  sinm = sin(phim)
-!
-!  fact = 4.*om*om*h*a*a*sin0*dp*dp/(dz*dz*r*cos0)
-!  amp = exp(-zp/h)*exp(rkappa*zp/h)/statp
-!  amp = amp*fact*exp(z(k)/h)
-!  amm = exp(-zm/h)*exp(rkappa*zm/h)/statm
-!  amm = amm*fact*exp(z(k)/h)
-!
-!  ! ***** Specify A, B, C, D, E, F (Eqs. 4-9) *****
-!  ajk = 1./(sinp*cosp)
-!  bjk = 1./(sinm*cosm)
-!  cjk = amp
-!  djk = amm
-!  ejk = ajk+bjk+cjk+djk
-!  fjk = -0.5*a*dp*(qref(jj+1,k)-qref(jj-1,k))
-!
-!  ! ***** Specify rk (Eq. 15) ****
-!
-!  ! **** North-south boundary conditions ****
-!  u(jd,k) = 0.
-!  phi0 = dp*float(jb)
-!  !        u(1,k) = ubar(jb+1,k)*cos(phi0)
-!  u(1,k) = ckref(jb+1,k)/(2.*pi*a)-om*a*cos(phi0)
-!
-!  rj(j-1) = fjk
-!  if(j.eq.2) rj(j-1) = fjk - bjk*u(1,k)
-!  if(j.eq.jd-1) rj(j-1) = fjk - ajk*u(jd,k)
-!
-!  ! ***** Specify Ck & Dk (Eqs. 18-19) *****
-!  cjj(j-1,j-1) = cjk
-!  djj(j-1,j-1) = djk
-!
-!  ! **** Specify Qk (Eq. 17) *****
-!  qjj(j-1,j-1) = -ejk
-!  if(j-1.ge.1.and.j-1.lt.jd-2) then
-!  qjj(j-1,j) = ajk
-!  endif
-!  if(j-1.gt.1.and.j-1.le.jd-2) then
-!  qjj(j-1,j-2) = bjk
-!  endif
-!  enddo
-!
-!  ! **** Compute Qk + Ck Sk *******
-!  do i = 1,jd-2
-!  do j = 1,jd-2
-!  xjj(i,j) = 0.
-!  do kk = 1,jd-2
-!  xjj(i,j) = xjj(i,j)+cjj(i,kk)*sjj(kk,j)
-!  enddo
-!  qjj(i,j) = qjj(i,j)+xjj(i,j)
-!  enddo
-!  enddo
-!  !         call gemm(cjj,sjj,xjj)
-!  !         qjj(:,:) = qjj(:,:)+xjj(:,:)
-!
-!  ! **** Invert (Qk + Ck Sk) ********
-!  call getrf(qjj,ipiv)
-!  call getri(qjj,ipiv)
-!
-!  ! **** Evaluate Eq. 22 ****
-!  do i = 1,jd-2
-!  do j = 1,jd-2
-!  xjj(i,j) = 0.
-!  do kk = 1,jd-2
-!  xjj(i,j) = xjj(i,j)+qjj(i,kk)*djj(kk,j)
-!  enddo
-!  sjk(i,j,k-1) = -xjj(i,j)
-!  enddo
-!  enddo
-!
-!  !         call gemm(qjj,djj,xjj)
-!  !         sjk(:,:,k-1) = -xjj(:,:)
-!
-!  !  **** Evaluate rk - Ck Tk ****
-!  do i = 1,jd-2
-!  yj(i) = 0.
-!  do kk = 1,jd-2
-!  yj(i) = yj(i)+cjj(i,kk)*tj(kk)
-!  enddo
-!  yj(i) =  rj(i)-yj(i)
-!  enddo
-!
-!  !         call gemv(cjj,tj,yj)
-!  !         yj(:) = rj(:)-yj(:)
-!  !         call gemv(qjj,yj,tj)
-!  !         tjk(:,k-1) = tj(:)
-!
-!
-!  ! ***** Evaluate Eq. 23 *******
-!  do i = 1,jd-2
-!  tj(i) = 0.
-!  do kk = 1,jd-2
-!  tj(i) = tj(i)+qjj(i,kk)*yj(kk)
-!  enddo
-!  tjk(i,k-1) = tj(i)
-!  enddo
-!
-!  enddo
-!
-!  ! ***** upward sweep (Eq. 20) ****
-!
-!  pjk(:,1) = 0.
-!  do k = 1,kmax-1
-!  pj(:) = pjk(:,k)
-!  sjj(:,:) = sjk(:,:,k)
-!  tj(:) = tjk(:,k)
-!
-!  do i = 1,jd-2
-!  yj(i) = 0.
-!  do kk = 1,jd-2
-!  yj(i) = yj(i)+sjj(i,kk)*pj(kk)
-!  enddo
-!  pjk(i,k+1) = yj(i)+tj(i)
-!  enddo
-!  !        call gemv(sjj,pj,yj)
-!  !        pjk(:,k+1) = yj(:) + tj(:)
-!  enddo
-!
-!  ! **** Recover u *****
-!  do k = 1,kmax
-!  do j = 2,jd-1
-!  u(j,k) = pjk(j-1,k)
-!  enddo
-!  enddo
-!
-!  ! *** Corner boundary conditions ***
-!  u(1,1) = 0.
-!  u(jd,1) = 0.
-!  !        u(1,kmax) = ubar(1+jb,kmax)*cos(dp*float(jb))
-!  u(1,kmax) = ckref(1+jb,kmax)/(2.*pi*a)-om*a*cos(dp*float(jb))
-!  u(jd,kmax) = 0.
-!
-!  ! *** Divide by cos phi to revover Uref ****
-!  do jj = jb+1,nd-1
-!  j = jj-jb
-!  phi0 = dp*float(jj-1)
-!  u(j,:) = u(j,:)/cos(phi0)
-!  enddo
-!  u(jd,:) = 2.*u(jd-1,:)-u(jd-2,:)
-!
-!  ! ******** compute tref *******
-!
-!  do k = 2,96
-!  t00 = 0.
-!  zz = dz*float(k-1)
-!  tref(1,k) = t00
-!  tref(2,k) = t00
-!  do j = 2,jd-1
-!  phi0 = dp*float(j-1)
-!  cor = 2.*om*sin(phi0)
-!  uz = (u(j,k+1)-u(j,k-1))/(2.*dz)
-!  ty = -cor*uz*a*h*exp(rkappa*zz/h)
-!  ty = ty/r
-!  tref(j+1,k) = tref(j-1,k)+2.*ty*dp
-!  qref(j-1,k) = qref(j-1,k)*sin(phi0)
-!  enddo
-!  tg(k) = 0.
-!  wt = 0.
-!  do jj = 6,91
-!  j = jj-5
-!  phi0 = dp*float(jj-1)
-!  tg(k) = tg(k)+cos(phi0)*tref(j,k)
-!  wt = wt + cos(phi0)
-!  enddo
-!  tg(k) = tg(k)/wt
-!  tres = tb(k)-tg(k)
-!  tref(:,k) = tref(:,k)+tres
-!  enddo
-!  tref(:,1) = tref(:,2)-tb(2)+tb(1)
-!  tref(:,97) = tref(:,96)-tb(96)+tb(97)
-!
-!  write(38) qref,u,tref,fawa,ubar,tbar
-!
-!  write(6,*) m,n,mm
-!
-!  ! ********************************
-!  enddo
-!
-!  close(35)
-!  close(36)
-!  close(37)
-!  close(38)
-!  ! ********************** Analysis ends here **********************
-!  enddo
-!  enddo
-!
-!  stop
 END

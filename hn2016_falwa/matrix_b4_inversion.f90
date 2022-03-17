@@ -19,7 +19,7 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,&
 
   rkappa = rr/cp
   pi = acos(-1.)
-  dp = pi/180.
+  dp = pi/float(jmax-1)
 
   zp = 0.5*(z(k+1)+z(k))
   zm = 0.5*(z(k-1)+z(k))

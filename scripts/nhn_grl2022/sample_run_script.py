@@ -1,3 +1,8 @@
+"""
+This script reproduces analysis results from Neal et al. GRL 2022
+'The 2021 Pacific Northwest heat wave and associated blocking: Meteorology and the role of an
+upstream cyclone as a diabatic source of wave activity'
+"""
 import os
 import sys
 import numpy as np
@@ -99,7 +104,6 @@ if to_generate_data:
     ep4 = output_file.createVariable('ep4', np.dtype('float32').char, ('time', 'latitude', 'longitude'))
     ep4.units = 'm/s'
 
-
     # --- Compute LWA + fluxes and save the data into netCDF file ---
     for tstep in range(ntimes):  # or ntimes
 
@@ -130,7 +134,9 @@ if to_generate_data:
 
 # --- Graph plotting for GRL2021 ---
 
-# Location of data files
+# *** Location of data files ***
+# These data files consist of fields with 6-hour time resolution and 1 deg space resolution in both latitude
+# and longitude.
 data_dir = "grl2021_data/"
 z_filename = data_dir + "2021_06_z.nc"     # geopotential height
 u_filename = data_dir + "2021_06_u.nc"     # u
@@ -145,12 +151,12 @@ sp_filename = data_dir + "2021_06_sp.nc"   # sea level pressure (hPa)
 lwa_flux_filename = output_fname
 
 # Execute graph plotting functions
-# plot_figure1a(z_filename, u_filename, v_filename)
-# plot_figure1b(t_filename)
-# plot_figure1c(t2m_filename)
-# plot_figure1d_2a(t_filename)
+plot_figure1a(z_filename, u_filename, v_filename)
+plot_figure1b(t_filename)
+plot_figure1c(t2m_filename)
+plot_figure1d_2a(t_filename)
 plot_figure3_and_S1(lwa_flux_filename)
-# plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
-# plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
+plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
+plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
 plot_figure4(lwa_flux_filename)
 plot_figure5(lwa_flux_filename)
