@@ -1,5 +1,3 @@
-! *** Copying from lines 333-368 from era4004n.f90 ***
-
 SUBROUTINE matrix_after_inversion(k,kmax,jb,jd,qjj,djj,cjj,tj,rj,sjk,tjk)
 
   INTEGER, INTENT(in) :: k, kmax, jb, jd

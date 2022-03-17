@@ -1,5 +1,3 @@
-! *** Copying from lines 374-442 from era4004n.f90 ***
-
 SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_over_cor, u, tref, qref, a, om, dz, h, rr, cp)
 
   INTEGER, INTENT(IN) :: jmax, kmax, nd, nnd, jb, jd

@@ -66,7 +66,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     url='https://github.com/csyhuang/hn2016_falwa',
     author='Clare S. Y. Huang',
-    author_email='csyhuang@uchicago.edu',
+    author_email='csyhuang@protonmail.com',
     license='MIT',
     packages=find_packages(),
     setup_requires=['pytest-runner'],

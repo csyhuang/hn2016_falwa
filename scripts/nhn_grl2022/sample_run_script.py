@@ -67,8 +67,8 @@ nd = nlat//2+1                      # (one plus) index of latitude grid point wi
 
 
 # --- Outputing files ---
-output_fname = '2021-06-01_to_2021-06-30_output_92901f5.nc'
-print(output_fname)
+output_fname = '2021-06-01_to_2021-06-30_output.nc'
+print(f"output_fname: {output_fname}")
 
 # --- Generate analysis results ---
 if to_generate_data:
@@ -109,7 +109,7 @@ if to_generate_data:
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
 
-        qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz)
+        qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
 
         qgpv_temp, interpolated_u_temp, interpolated_v_temp, interpolated_avort_temp, interpolated_theta_temp, \
         static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_field_dirinv()

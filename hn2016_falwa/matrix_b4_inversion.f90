@@ -1,5 +1,3 @@
-! *** Copying from lines 254-324 from era4004n.f90 ***
-
 SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,&
         a, om, dz, h, rr, cp, &
         qjj,djj,cjj,rj,tj,u,sjk,tjk)
