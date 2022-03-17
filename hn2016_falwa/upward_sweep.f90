@@ -91,7 +91,10 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
       ty = -cor*uz*a*h*exp(rkappa*zz/h)
       ty = ty/rr
       tref(j+1,k) = tref(j-1,k)+2.*ty*dp
-      qref(j-1+jb,k) = qref_over_cor(j-1+jb,k)*sin(phi0)
+    enddo
+    do j = 1,nd
+      phi0 = dp*float(j-1)
+      qref(j,k) = qref_over_cor(j,k)*sin(phi0)
     enddo
 
     tg(k) = 0.
