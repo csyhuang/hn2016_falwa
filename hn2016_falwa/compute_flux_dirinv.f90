@@ -1,12 +1,11 @@
 SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fawa,ubar,tbar,&
-        imax, jmax, kmax, nd, nnd, jb, jd, aa, omega, dz, hh, rr, cp, prefac, &
+        imax, JMAX, kmax, nd, nnd, jb, jd,&
         astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2)
 
-  INTEGER, INTENT(IN) :: imax, jmax, kmax, nd, nnd, jb, jd
+  INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax),&
           tn0(kmax),ts0(kmax),statn(kmax),stats(kmax),qref(nd,kmax),uref(jd,kmax),tref(jd,kmax),&
           fawa(nd,kmax),ubar(nd,kmax),tbar(nd,kmax)
-  REAL, INTENT(in) :: aa, omega, dz, hh, rr, cp, prefac
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
           ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
 
@@ -17,13 +16,16 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   REAL :: z(kmax)
   REAL :: u(nd,kmax)
 
+  a = 6378000.
   pi = acos(-1.)
-  dp = pi/float(jmax-1)
-  rkappa = rr/cp
-
+  om = 7.29e-5
+  dp = pi/180.
+  dz = 500.
+  h = 7000.
+  r = 287.
+  rkappa = r/1004.
 
   ! *** Default values for boundary ***
-  !prefac = 6745.348
   !jb = 5
   !jd = 86 ! nd - lower bounding latitude
 
@@ -46,9 +48,9 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   ep2baro(:,:) = 0.
   ep3baro(:,:) = 0.
   ep4(:,:) = 0.
-  dc = dz/prefac
+  dc = dz/6745.348
 
-  do k = 2,kmax-1
+  do k = 2,96
     zk = dz*float(k-1)
     do i = 1,imax
       do j = 6,nd-1            ! 5N and higher latitude
@@ -80,7 +82,7 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
         ep1(i,j) = ep1(i,j)+0.5*vv(i,j+90,k)**2    !F3a+b
         ep11 = 0.5*(pt(i,j+90,k)-tref(j-5,k))**2         !F3c
         zz = dz*float(k-1)
-        ep11 = ep11*(r/hh)*exp(-rkappa*zz/hh)
+        ep11 = ep11*(r/h)*exp(-rkappa*zz/h)
         ep11 = ep11*2.*dz/(tg(k+1)-tg(k-1))
         ep1(i,j) = ep1(i,j)-ep11                   !F3
         phip = dp*float(j)
@@ -99,8 +101,8 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
 
         ! low-level meridional eddy heat flux
         if(k.eq.2) then     ! (26) of SI-HN17
-          ep41 = 2.*om*sin0*cos0*dz/prefac       ! prefactor
-          ep42 = exp(-dz/hh)*vv(i,j+90,2)*(pt(i,j+90,2)-tref(j-5,2))
+          ep41 = 2.*om*sin0*cos0*dz/6745.348       ! prefactor
+          ep42 = exp(-dz/h)*vv(i,j+90,2)*(pt(i,j+90,2)-tref(j-5,2))
           ep42 = ep42/(tg(3)-tg(1))
           ep43 = vv(i,j+90,1)*(pt(i,j+90,1)-tref(j-5,1))
           ep43 = 0.5*ep43/(tg(2)-tg(1))
@@ -112,15 +114,15 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
     ! ******** Column average: (25) of SI-HN17 ********
 
     astarbaro(:,:) = astarbaro(:,:)+(astar1(:,:,k)    &
-    + astar2(:,:,k))*exp(-zk/hh)*dc
-    ua1baro(:,:) = ua1baro(:,:)+ua1(:,:)*exp(-zk/hh)*dc
-    ua2baro(:,:) = ua2baro(:,:)+ua2(:,:)*exp(-zk/hh)*dc
-    ep1baro(:,:) = ep1baro(:,:)+ep1(:,:)*exp(-zk/hh)*dc
-    ep2baro(:,:) = ep2baro(:,:)+ep2(:,:)*exp(-zk/hh)*dc
-    ep3baro(:,:) = ep3baro(:,:)+ep3(:,:)*exp(-zk/hh)*dc
+    + astar2(:,:,k))*exp(-zk/h)*dc
+    ua1baro(:,:) = ua1baro(:,:)+ua1(:,:)*exp(-zk/h)*dc
+    ua2baro(:,:) = ua2baro(:,:)+ua2(:,:)*exp(-zk/h)*dc
+    ep1baro(:,:) = ep1baro(:,:)+ep1(:,:)*exp(-zk/h)*dc
+    ep2baro(:,:) = ep2baro(:,:)+ep2(:,:)*exp(-zk/h)*dc
+    ep3baro(:,:) = ep3baro(:,:)+ep3(:,:)*exp(-zk/h)*dc
     do j = 6,nd  ! ### yet to be multiplied by cosine
-      ubaro(:,j) = ubaro(:,j)+uu(:,j+90,k)*exp(-zk/hh)*dc
-      urefbaro(j) = urefbaro(j)+uref(j-5,k)*exp(-zk/hh)*dc
+      ubaro(:,j) = ubaro(:,j)+uu(:,j+90,k)*exp(-zk/h)*dc
+      urefbaro(j) = urefbaro(j)+uref(j-5,k)*exp(-zk/h)*dc
     enddo
   enddo
 
