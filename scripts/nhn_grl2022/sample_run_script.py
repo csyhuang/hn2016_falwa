@@ -67,8 +67,10 @@ nd = nlat//2+1                      # (one plus) index of latitude grid point wi
 
 
 # --- Outputing files ---
-output_fname = '2021-06-01_to_2021-06-30_output_489900.nc'
+output_fname = '2021-06-01_to_2021-06-30_output_b8e1c4.nc'
 print(output_fname)
+
+# --- Generate analysis results ---
 if to_generate_data:
     output_file = Dataset(output_fname, 'w')
     output_file.createDimension('latitude',nlat//2+1)
@@ -145,12 +147,12 @@ sp_filename = data_dir + "2021_06_sp.nc"   # sea level pressure (hPa)
 lwa_flux_filename = output_fname
 
 # Execute graph plotting functions
-# plot_figure1a(z_filename, u_filename, v_filename)
-# plot_figure1b(t_filename)
-# plot_figure1c(t2m_filename)
-# plot_figure1d_2a(t_filename)
+plot_figure1a(z_filename, u_filename, v_filename)
+plot_figure1b(t_filename)
+plot_figure1c(t2m_filename)
+plot_figure1d_2a(t_filename)
 plot_figure3_and_S1(lwa_flux_filename)
-# plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
-# plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
+plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
+plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
 plot_figure4(lwa_flux_filename)
 plot_figure5(lwa_flux_filename)
