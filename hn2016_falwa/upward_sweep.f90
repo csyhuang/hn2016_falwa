@@ -93,10 +93,6 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
       tref(j+1,k) = tref(j-1,k)+2.*ty*dp
       qref(j-1+jb,k) = qref_over_cor(j-1+jb,k)*sin(phi0)
     enddo
-!    do j = jd, nd  ! Add after checking code
-!      qref(j-1,k) = qref_over_cor(j-1,k)*sin(dp*float(j-1))
-!    end do
-!    qref(nd,k) = 2 * qref(nd-1,k) - qref(nd-2,k)  ! Linear interpolation
 
     tg(k) = 0.
     wt = 0.
