@@ -20,9 +20,6 @@ SUBROUTINE matrix_after_inversion(k,kmax,jb,jd,qjj,djj,cjj,tj,rj,sjk,tjk)
     enddo
   enddo
 
-  !         call gemm(qjj,djj,xjj)
-  !         sjk(:,:,k-1) = -xjj(:,:)
-
   !  **** Evaluate rk - Ck Tk ****
   do i = 1,jd-2
     yj(i) = 0.
@@ -31,12 +28,6 @@ SUBROUTINE matrix_after_inversion(k,kmax,jb,jd,qjj,djj,cjj,tj,rj,sjk,tjk)
     enddo
     yj(i) =  rj(i)-yj(i)
   enddo
-
-  !         call gemv(cjj,tj,yj)
-  !         yj(:) = rj(:)-yj(:)
-  !         call gemv(qjj,yj,tj)
-  !         tjk(:,k-1) = tj(:)
-
 
   ! ***** Evaluate Eq. 23 *******
   do i = 1,jd-2

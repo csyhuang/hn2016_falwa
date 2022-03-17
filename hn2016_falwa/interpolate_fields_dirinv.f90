@@ -26,15 +26,9 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
    character*3 :: mn(12)
    character*8 :: yr
 
-!   dz = 500.
-!   cp = 1004.
-!   rr = 287.
    rkappa = rr/cp
    pi = acos(-1.)
-!   omega = 7.29e-5
-!   aa = 6378000.
    dphi = pi/float(nlat-1)
-!   hh = 7000.
 
 ! ====== Assign pseudoheight =====
 

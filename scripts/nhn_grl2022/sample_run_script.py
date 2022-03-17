@@ -62,12 +62,12 @@ npart = nlat                        # number of partitions to construct the equi
 maxits = 100000                     # maximum number of iteration in the SOR solver to solve for reference state
 tol = 1.e-5                         # tolerance that define convergence of solution
 rjac = 0.95                         # spectral radius of the Jacobi iteration in the SOR solver.
-jd = nlat//2+1                      # (one plus) index of latitude grid point with value 0 deg
+nd = nlat//2+1                      # (one plus) index of latitude grid point with value 0 deg
                                     # This is to be input to fortran code. The index convention is different.
 
 
 # --- Outputing files ---
-output_fname = '2021-06-01_to_2021-06-30_output_change.nc'
+output_fname = '2021-06-01_to_2021-06-30_output_70d5ef.nc'
 print(output_fname)
 if to_generate_data:
     output_file = Dataset(output_fname, 'w')

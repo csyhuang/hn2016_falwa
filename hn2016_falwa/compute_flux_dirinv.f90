@@ -9,34 +9,12 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
           ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
 
-!  read(35) pv
-!            read(36) uu
-!            read(39) vv
-!            read(37) pt,tn0,ts0,statn,stats
-!            read(40) qref,uref,tref,fawa,ubar,tbar
-!   **** take QGPV and compute LWA and fluxes for 
-!   NH ***
-!   Only barotropic fluxes are saved
-
-        !integer,parameter :: imax = 360, JMAX = 181, KMAX = 97
-        !integer,parameter :: nd = 91,nnd=181,jd = 86
   REAL :: tb(kmax),tg(kmax)
   REAL :: ua1(imax,nd),ua2(imax,nd),ep1(imax,nd)
   REAL :: ep2(imax,nd),ep3(imax,nd)
   REAL :: qe(imax,nd),ue(imax,nd)
   REAL :: z(kmax)
   REAL :: u(nd,kmax)
-        !integer :: md(12)
-
-!        character*35 fn,fn0,fn1
-!        character*34 fu
-!        character*34 ft,fv
-!        character*38 fx
-!        character*4  fn2(12),fy,fy1,fy2
-!        character*18 f1,f2
-!        character*19 f3
-!        character*36 fr
-!        character*37 fm
 
   a = 6378000.
   pi = acos(-1.)
@@ -47,75 +25,15 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
   r = 287.
   rkappa = r/1004.
 
+  ! *** Default values for boundary ***
+  !jb = 5
+  !jd = 86 ! nd - lower bounding latitude
+
   do k = 1,kmax
    z(k) = dz*float(k-1)
   enddo
 
-!        do m = 2021,2021
 
-!        md(1) = 31
-!        md(2) = 28
-!         if(mod(m,4).eq.0) md(2) = 29
-!        md(3) = 31
-!        md(4) = 30
-!        md(5) = 31
-!        md(6) = 30
-!        md(7) = 31
-!        md(8) = 31
-!        md(9) = 30
-!        md(10) = 31
-!        md(11) = 30
-!        md(12) = 31
-!
-!        fn2(1) = '_01_'
-!        fn2(2) = '_02_'
-!        fn2(3) = '_03_'
-!        fn2(4) = '_04_'
-!        fn2(5) = '_05_'
-!        fn2(6) = '_06_'
-!        fn2(7) = '_07_'
-!        fn2(8) = '_08_'
-!        fn2(9) = '_09_'
-!        fn2(10) = '_10_'
-!        fn2(11) = '_11_'
-!        fn2(12) = '_12_'
-!
-!        write(fy,266) m
-! 266    format(i4)
-
-!        do n = 10,10
-!         fn = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGPV'
-!         fu = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGU'
-!         ft = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGT'
-!         fv = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGV'
-!         fx = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'QGREF_N'
-!         fr = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'LWA_N'
-!         fm = '/data2/nnn/ERA5/'//fy//'/'//fy//fn2(n)//'BARO_N'
-!         write(6,*) fn,md(n)
-!        open(35,file =fn,  &
-!                form='unformatted',status = 'old')
-!        open(36,file =fu,  &
-!                form='unformatted',status = 'old')
-!        open(37,file =ft,  &
-!                form='unformatted',status = 'old')
-!        open(38,file =fr,  &
-!                form='unformatted',status = 'new')
-!        open(39,file =fv,  &
-!                form='unformatted',status = 'old')
-!        open(40,file =fx,  &
-!                form='unformatted',status = 'old')
-!        open(41,file =fm,  &
-!                form='unformatted',status = 'new')
-
-!          do mm = 1,md(n)*4
-
-!            read(35) pv
-!            read(36) uu
-!            read(39) vv
-!            read(37) pt,tn0,ts0,statn,stats
-!            read(40) qref,uref,tref,fawa,ubar,tbar
-
-         
 ! **** hemispheric-mean potential temperature ****
   tg(:) = tn0(:)
 
@@ -207,34 +125,5 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fa
       urefbaro(j) = urefbaro(j)+uref(j-5,k)*exp(-zk/h)*dc
     enddo
   enddo
-
-
-!      write(6,*) dh
-
-!       write(41) astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,&
-!                 ep2baro,&
-!                 ep3baro,ep4
-!
-!       write(38) astar1,astar2
-
-! ********************************
-
-
-!     write(6,*)  fy,n,mm
-
-! ********************************
-!          enddo
-
-!        close(35)
-!        close(36)
-!        close(37)
-!        close(38)
-!        close(39)
-!        close(40)
-!        close(41)
-
-!        enddo
-!        enddo
-
 
 END SUBROUTINE

@@ -14,7 +14,6 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,&
   REAL :: qn(jmax),an(jmax),aan(jmax),tb(kmax),tg(kmax)
   REAL :: cn(jmax),ccn(jmax),tref(jd,kmax)
   REAL :: alat(nd),phi(nd),cbar(nd,kmax)
-!  REAL :: tj(jd-2)
   REAL :: xjj(jd-2,jd-2)
   REAL :: sjj(jd-2,jd-2)
 

@@ -5,33 +5,15 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_o
   INTEGER, INTENT(IN) :: jmax, kmax, nd, nnd, jb, jd
   REAL, INTENT(IN) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1),ckref(nd,kmax),tb(kmax),qref_over_cor(nd,kmax)
   REAL, INTENT(IN) :: rr, cp
-  REAL, INTENT(INOUT) :: u(jd,kmax), tref(jd,kmax)
-  REAL, INTENT(OUT) :: qref(nd,kmax)
-
-!  integer,parameter :: imax = 360, JMAX = 181, KMAX = 97
-!  integer,parameter :: nd = 91,nnd=181
-!  integer,parameter :: jb = 5   ! lower bounding latitude
-!  integer,parameter :: jd = 86  ! nd - lower bounding latitude
-
-!  common /array/ pv(imax,jmax,kmax),pv2(imax,jmax)
-!  common /brray/ uu(imax,jmax,kmax)
-!  common /bbray/ vort(imax,jmax,kmax),vort2(imax,jmax)
-!  common /bcray/ pt(imax,jmax,kmax)
-!  common /bdray/ stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
-!  common /crray/ qn(nnd),an(nnd),aan(nnd)
+  REAL, INTENT(INOUT) :: u(jd,kmax)
+  REAL, INTENT(OUT) :: qref(nd,kmax), tref(jd,kmax)
   real :: tg(kmax)
   real :: pjk(jd-2,kmax)
-!  common /frray/ alat(nd),phi(nd),z(kmax),cbar(nd,kmax)
   real :: tj(jd-2),rj(jd-2)
   real :: qjj(jd-2,jd-2),cjj(jd-2,jd-2)
   real :: xjj(jd-2,jd-2),yj(jd-2)
-!  real :: djj(jd-2,jd-2)
   real :: sjj(jd-2,jd-2)
   real :: pj(jd-2)
-
-!  common /krray/ fawa(nd,kmax)
-!  common /jrray/ qbar(nd,kmax),ubar(nd,kmax),tbar(nd,kmax)
-!  integer :: md(12),ipiv(jd-2)
 
   rkappa = rr/cp
   pi = acos(-1.)

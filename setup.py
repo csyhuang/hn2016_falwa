@@ -31,6 +31,7 @@ ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
                  sources=['hn2016_falwa/compute_lwa_and_barotropic_fluxes.f90'],
                  f2py_options=['--quiet'])
 
+# *** Extensions 4-9 are used by the direct inversion algorithm ***
 ext4 = Extension(name='interpolate_fields_direct_inv',
                  sources=['hn2016_falwa/interpolate_fields_dirinv.f90'],
                  f2py_options=['--quiet'])

@@ -608,7 +608,7 @@ class QGField(object):
                 tjk=tjk)
         # print(f"k = {k}. Run till here so far")
 
-        qref = upward_sweep(
+        qref, tref = upward_sweep(
             jmax=self.nlat,
             nnd=self.nlat,
             jb=5,
@@ -618,7 +618,6 @@ class QGField(object):
             tb=self._tn0,
             qref_over_cor=qref_over_cor,
             u=u,
-            tref=tref,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,
