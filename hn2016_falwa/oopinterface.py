@@ -833,7 +833,7 @@ class QGField(object):
             nnd=181,
             jb=5,
             jd=86,
-            aa=self.planet_radius,
+            a=self.planet_radius,
             omega=self.omega,
             dz=self.dz,
             h=self.scale_height,

@@ -67,7 +67,7 @@ nd = nlat//2+1                      # (one plus) index of latitude grid point wi
 
 
 # --- Outputing files ---
-output_fname = '2021-06-01_to_2021-06-30_output_aa0985.nc'
+output_fname = '2021-06-01_to_2021-06-30_output_489900.nc'
 print(output_fname)
 if to_generate_data:
     output_file = Dataset(output_fname, 'w')

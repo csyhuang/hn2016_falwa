@@ -184,9 +184,9 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
     phi0 = float(jj-1)*dp
     cos0 = cos(phi0)
     sin0 = sin(phi0)
-    tjk(j-1,kmax-1) = -dz*r*cos0*exp(-z(kmax-1)*rkappa/h)
+    tjk(j-1,kmax-1) = -dz*rr*cos0*exp(-z(kmax-1)*rkappa/h)
     tjk(j-1,kmax-1) = tjk(j-1,kmax-1)*(tbar(j+1,kmax)-tbar(j-1,kmax))
-    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*om*sin0*dp*h*a)
+    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*omega*sin0*dp*h*a)
     sjk(j-1,j-1,kmax-1) = 1.
   enddo
 END
