@@ -78,6 +78,6 @@ are added upon users' request on new functionalities to test hypotheses (also se
 
 ## Inquiries / Issues reporting
 
-- If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) or email me(csyhuang at uchicago.edu) such that I can keep you updated of any changes made.
+- If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) or email me(csyhuang@protonmail.com) such that I can keep you updated of any changes made.
 - If you encounter *coding issues/bugs* when using the package, please create an [Issue ticket](https://github.com/csyhuang/hn2016_falwa/issues).
-- If you have scientific questions, please contact Clare S. Y. Huang via email(csyhuang at uchicago.edu).
+- If you have scientific questions, please contact Clare S. Y. Huang via email(csyhuang@protonmail.com).
