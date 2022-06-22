@@ -474,3 +474,61 @@ class QGDataset:
             attrs=self.attrs
         )
 
+
+def _is_equator(x):
+    return abs(x) < 1.0e-4
+
+def hemisphere_to_globe(ds, var_names=None):
+    """Create a global dataset from a hemispheric one.
+
+    Takes data from the given hemisphere, mirrors it to the other hemisphere
+    and combines both hemispheres into a global dataset.
+
+    If the meridional wind component is found in the dataset, its values will
+    be negated. This results in identical fields of local wave activity on both
+    hemispheres (since absolute vorticity is also the same except for the
+    sign), making it possible to use `northern_hemisphere_only` in the methods
+    of :py:class:`QGDataset` even if only southern hemisphere data is
+    available. Discontinuities in the meridional wind and derived fields arise
+    due to this at the equator but they generally have only a small effect on
+    the outputs.
+
+    .. versionadded:: 0.7.0
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Input dataset. Must contain the equator (0° latitude).
+    var_names : dict, optional
+         The names of the latitude and meridional wind fields are automatically detected.
+         If the auto-detection of the latitude coordinate and/or the meridional
+         wind component fails, provide a lookup table that maps `ylat`,
+         and/or `v` to the names used in the dataset.
+
+    Returns
+    -------
+    xarray.Dataset
+    """
+    # Determine if the northern or southern hemisphere is present
+    ylat_name = _get_name(ds, NAMES_YLAT, var_names)
+    eq0 = _is_equator(ds[ylat_name][0])
+    assert eq0 or _is_equator(ds[ylat_name][-1]), (
+        "equator not found on the hemisphere; "
+        "make sure latitudes either begin or end with 0° latitude"
+    )
+    # Flip the data along ylat and omit the equator which should not appear
+    # twice in the output
+    flipped_noeq = slice(None, 0, -1) if eq0 else slice(-2, None, -1)
+    sd = ds.reindex({ ylat_name: ds[ylat_name][flipped_noeq] })
+    # Latitudes are now on the other hemisphere
+    sd[ylat_name] = -sd[ylat_name]
+    # Also flip the meridional wind (if present in the dataset). This results
+    # in mirrored LWA fields on both hemispheres, the discontinuities this
+    # creates on the equator are acceptable.
+    try:
+        v_name = _get_name(ds, NAMES_V, var_names)
+        sd[v_name] = -sd[v_name]
+    except KeyError:
+        pass
+    # Assemble global dataset
+    return xr.concat([sd, ds] if eq0 else [ds, sd], dim=ylat_name)
