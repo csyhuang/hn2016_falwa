@@ -12,14 +12,20 @@ def is_monotonically_ascending(arr):
 def is_monotonically_descending(arr):
     return np.all(np.argsort(arr) == np.arange(arr.size-1, -1, -1))
 
-
+# Coordinate name lookup
 NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa"]
 NAMES_YLAT = ["ylat", "lat", "latitude"]
 NAMES_XLON = ["xlon", "lon", "longitude"]
-
+NAMES_TIME = ["time", "date", "datetime"]
+# Wind and temperature name lookup
 NAMES_U = ["u", "U"]
 NAMES_V = ["v", "V"]
 NAMES_T = ["t", "T"]
+# Budget terms name lookup
+NAMES_LWA  = ["lwa_baro"]
+NAMES_CZAF = ["convergence_zonal_advective_flux"]
+NAMES_DEMF = ["divergence_eddy_momentum_flux"]
+NAMES_MHF  = ["meridional_heat_flux"]
 
 def _get_name(ds, names, user_name=None):
     if user_name is not None and user_name in ds:
@@ -473,6 +479,79 @@ class QGDataset:
             },
             attrs=self.attrs
         )
+
+
+def integrate_budget(ds, var_names=None):
+    """Compute the integrated LWA budget terms for the given data.
+
+    Integrates the LWA tendencies from equation (2) of `NH18
+    <https://doi.org/10.1126/science.aat0721>`_ in time (over the time interval
+    covered by in the input data). The residual (term IV) is determined by
+    subtracting terms (I), (II) and (II) from the LWA difference between the
+    last and first time step in the data. Uses
+    :py:meth:`xarray.DataArray.integrate` for the time integration of the
+    tendencies.
+
+    See :py:meth:`QGDataset.compute_lwa_and_barotropic_fluxes`, which computes
+    all required tendency terms as well as the LWA fields.
+
+    .. versionadded:: 0.6.1
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Input dataset containing the budget tendencies for the time integration
+        interval.
+    var_names : dict, optional
+        The names of LWA and the tendency term variables are automatically
+        detected. If the auto-detection fails, provide a lookup table that maps
+        `time`, `lwa_baro`, `convergence_zonal_advective_flux`,
+        `divergence_eddy_momentum_flux`, and/or `meridional_heat_flux` to the
+        names used in the input dataset.
+
+    Returns
+    -------
+    xarray.Dataset
+
+    Example
+    -------
+    >>> qgds = QGDataset(data)
+    >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
+    >>> compute_budget(terms.isel({ "time": slice(5, 10) }))
+    """
+    name_time = _get_name(ds, NAMES_TIME, var_names.get("time", None))
+    name_lwa  = _get_name(ds, NAMES_LWA,  var_names.get("lwa_baro", None))
+    name_czaf = _get_name(ds, NAMES_CZAF, var_names.get("convergence_zonal_advective_flux", None))
+    name_demf = _get_name(ds, NAMES_DEMF, var_names.get("divergence_eddy_momentum_flux", None))
+    name_mhf  = _get_name(ds, NAMES_MHF,  var_names.get("meridional_heat_flux", None))
+    # Integration time interval covered by the data
+    start = ds[var_time].values[0]
+    stop = ds[var_time].values[-1]
+    # Determine the change in LWA over the time interval
+    dlwa = ds[name_lwa].sel({ var_time: stop }) - ds[name_lwa].sel({ var_time: start })
+    # Integrate the known tendencies in time
+    czaf = ds[name_czaf].integrate(coord=var_time, datetime_unit="s")
+    demf = ds[name_demf].integrate(coord=var_time, datetime_unit="s")
+    mhf  = ds[name_mhf].integrate(coord=var_time, datetime_unit="s")
+    # Compute the residual from the difference between the explicitly computed
+    # budget terms and the actual change in LWA
+    res  = dlwa - czaf - demf - mhf
+    # Include all 5 integrated budget terms in the output
+    data_vars = {
+        "delta_lwa": dlwa,
+        "integrated_convergence_zonal_advective_flux": czaf,
+        "integrated_divergence_eddy_momentum_flux": demf,
+        "integrated_meridional_heat_flux": mhf,
+        "residual": res
+    }
+    # Copy attributes from original dataset and add information about
+    # integration interval (start and end timestamps as well as integration
+    # time interval in seconds)
+    attrs = dict(ds.attrs)
+    attrs["integration_start"] = str(start)
+    attrs["integration_stop"] = str(stop)
+    attrs["integration_seconds"] = (stop - start) / np.timedelta64(1000000000)
+    return xr.Dataset(data_vars, ds.coords, attrs)
 
 
 def _is_equator(x):
