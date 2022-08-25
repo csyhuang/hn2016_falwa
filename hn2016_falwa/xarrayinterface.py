@@ -55,23 +55,23 @@ class QGDataset:
     Datasets for convenience. All calculations are performed by the QGField
     routines.
 
-    .. versionadded:: 0.7.0
+    .. versionadded:: 0.6.1
 
     Parameters
     ----------
     ds : xarray.Dataset
-         Input dataset. Must contain 3D fields of zonal wind, meridional wind
-         and temperature. The 3D fields's dimensions must end with height,
-         latitude and longitude. Other dimensions (e.g. time, ensemble member
-         id) are preserved in the output datasets.
+        Input dataset. Must contain 3D fields of zonal wind, meridional wind
+        and temperature. The 3D fields's dimensions must end with height,
+        latitude and longitude. Other dimensions (e.g. time, ensemble member
+        id) are preserved in the output datasets.
     qgfield_args : tuple, optional
-         Positional arguments given to the QGField constructor.
+        Positional arguments given to the QGField constructor.
     qgfield_kwargs : dict, optional
-         Keyword arguments given to the QGField constructor.
+        Keyword arguments given to the QGField constructor.
     var_names : dict, optional
-         If the auto-detection of variable or coordinate names fails, provide
-         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t`
-         to the names used in the dataset.
+        If the auto-detection of variable or coordinate names fails, provide
+        a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
+        the names used in the dataset.
 
     Example
     -------
@@ -493,17 +493,17 @@ def hemisphere_to_globe(ds, var_names=None):
     due to this at the equator but they generally have only a small effect on
     the outputs.
 
-    .. versionadded:: 0.7.0
+    .. versionadded:: 0.6.1
 
     Parameters
     ----------
     ds : xarray.Dataset
         Input dataset. Must contain the equator (0° latitude).
     var_names : dict, optional
-         The names of the latitude and meridional wind fields are automatically detected.
-         If the auto-detection of the latitude coordinate and/or the meridional
-         wind component fails, provide a lookup table that maps `ylat`,
-         and/or `v` to the names used in the dataset.
+        The names of the latitude and meridional wind fields are automatically
+        detected. If the auto-detection of the latitude coordinate and/or the
+        meridional wind component fails, provide a lookup table that maps
+        `ylat`, and/or `v` to the names used in the dataset.
 
     Returns
     -------
