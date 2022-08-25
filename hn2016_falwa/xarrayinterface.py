@@ -13,27 +13,33 @@ def is_monotonically_descending(arr):
     return np.all(np.argsort(arr) == np.arange(arr.size-1, -1, -1))
 
 # Coordinate name lookup
-NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa"]
-NAMES_YLAT = ["ylat", "lat", "latitude"]
-NAMES_XLON = ["xlon", "lon", "longitude"]
-NAMES_TIME = ["time", "date", "datetime"]
+_NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa"]
+_NAMES_YLAT = ["ylat", "lat", "latitude"]
+_NAMES_XLON = ["xlon", "lon", "longitude"]
+_NAMES_TIME = ["time", "date", "datetime"]
 # Wind and temperature name lookup
-NAMES_U = ["u", "U"]
-NAMES_V = ["v", "V"]
-NAMES_T = ["t", "T"]
+_NAMES_U = ["u", "U"]
+_NAMES_V = ["v", "V"]
+_NAMES_T = ["t", "T"]
 # Budget terms name lookup
-NAMES_LWA  = ["lwa_baro"]
-NAMES_CZAF = ["convergence_zonal_advective_flux"]
-NAMES_DEMF = ["divergence_eddy_momentum_flux"]
-NAMES_MHF  = ["meridional_heat_flux"]
+_NAMES_LWA  = ["lwa_baro"]
+_NAMES_CZAF = ["convergence_zonal_advective_flux"]
+_NAMES_DEMF = ["divergence_eddy_momentum_flux"]
+_NAMES_MHF  = ["meridional_heat_flux"]
 
-def _get_name(ds, names, user_name=None):
-    if user_name is not None and user_name in ds:
-        return user_name
+def _get_name(ds, names, user_names=None):
+    # If the first name from the list of defaults is in the user-provided
+    # dictionary, use the name provided there
+    if user_names is not None and names[0] in user_names:
+        name = user_names[names[0]]
+        if name not in ds:
+            raise KeyError(f"specified variable '{name}' not found")
+        return name
+    # Else, search in default list of names
     for name in names:
         if name in ds:
             return name
-    raise KeyError(f"no matching coordinate for '{names[0]}' found")
+    raise KeyError(f"no matching variable for '{names[0]}' found")
 
 def _map_collect(f, xs, names, postprocess=None):
     out = { name: [] for name in names }
@@ -92,13 +98,13 @@ class QGDataset:
         self._qgfield_args   = list() if qgfield_args   is None else qgfield_args
         self._qgfield_kwargs = dict() if qgfield_kwargs is None else qgfield_kwargs
         # Find names of spatial coordinates
-        self._plev_name = _get_name(ds, NAMES_PLEV, var_names.get("plev", None))
-        self._ylat_name = _get_name(ds, NAMES_YLAT, var_names.get("ylat", None))
-        self._xlon_name = _get_name(ds, NAMES_XLON, var_names.get("xlon", None))
+        self._plev_name = _get_name(ds, _NAMES_PLEV, var_names)
+        self._ylat_name = _get_name(ds, _NAMES_YLAT, var_names)
+        self._xlon_name = _get_name(ds, _NAMES_XLON, var_names)
         # Find names of wind and temperature fields
-        self._u_name = _get_name(ds, NAMES_U, var_names.get("u", None))
-        self._v_name = _get_name(ds, NAMES_V, var_names.get("v", None))
-        self._t_name = _get_name(ds, NAMES_T, var_names.get("t", None))
+        self._u_name = _get_name(ds, _NAMES_U, var_names)
+        self._v_name = _get_name(ds, _NAMES_V, var_names)
+        self._t_name = _get_name(ds, _NAMES_T, var_names)
         # Shorthands for data arrays
         plev = ds[self._plev_name]
         ylat = ds[self._ylat_name]
@@ -519,20 +525,20 @@ def integrate_budget(ds, var_names=None):
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
     >>> compute_budget(terms.isel({ "time": slice(5, 10) }))
     """
-    name_time = _get_name(ds, NAMES_TIME, var_names.get("time", None))
-    name_lwa  = _get_name(ds, NAMES_LWA,  var_names.get("lwa_baro", None))
-    name_czaf = _get_name(ds, NAMES_CZAF, var_names.get("convergence_zonal_advective_flux", None))
-    name_demf = _get_name(ds, NAMES_DEMF, var_names.get("divergence_eddy_momentum_flux", None))
-    name_mhf  = _get_name(ds, NAMES_MHF,  var_names.get("meridional_heat_flux", None))
+    name_time = _get_name(ds, _NAMES_TIME, var_names)
+    name_lwa  = _get_name(ds, _NAMES_LWA,  var_names)
+    name_czaf = _get_name(ds, _NAMES_CZAF, var_names)
+    name_demf = _get_name(ds, _NAMES_DEMF, var_names)
+    name_mhf  = _get_name(ds, _NAMES_MHF,  var_names)
     # Integration time interval covered by the data
-    start = ds[var_time].values[0]
-    stop = ds[var_time].values[-1]
+    start = ds[name_time].values[0]
+    stop = ds[name_time].values[-1]
     # Determine the change in LWA over the time interval
-    dlwa = ds[name_lwa].sel({ var_time: stop }) - ds[name_lwa].sel({ var_time: start })
+    dlwa = ds[name_lwa].sel({ name_time: stop }) - ds[name_lwa].sel({ name_time: start })
     # Integrate the known tendencies in time
-    czaf = ds[name_czaf].integrate(coord=var_time, datetime_unit="s")
-    demf = ds[name_demf].integrate(coord=var_time, datetime_unit="s")
-    mhf  = ds[name_mhf].integrate(coord=var_time, datetime_unit="s")
+    czaf = ds[name_czaf].integrate(coord=name_time, datetime_unit="s")
+    demf = ds[name_demf].integrate(coord=name_time, datetime_unit="s")
+    mhf  = ds[name_mhf].integrate(coord=name_time, datetime_unit="s")
     # Compute the residual from the difference between the explicitly computed
     # budget terms and the actual change in LWA
     res  = dlwa - czaf - demf - mhf
@@ -589,7 +595,7 @@ def hemisphere_to_globe(ds, var_names=None):
     xarray.Dataset
     """
     # Determine if the northern or southern hemisphere is present
-    ylat_name = _get_name(ds, NAMES_YLAT, var_names)
+    ylat_name = _get_name(ds, _NAMES_YLAT, var_names)
     eq0 = _is_equator(ds[ylat_name][0])
     assert eq0 or _is_equator(ds[ylat_name][-1]), (
         "equator not found on the hemisphere; "
@@ -605,7 +611,7 @@ def hemisphere_to_globe(ds, var_names=None):
     # in mirrored LWA fields on both hemispheres, the discontinuities this
     # creates on the equator are acceptable.
     try:
-        v_name = _get_name(ds, NAMES_V, var_names)
+        v_name = _get_name(ds, _NAMES_V, var_names)
         sd[v_name] = -sd[v_name]
     except KeyError:
         pass
