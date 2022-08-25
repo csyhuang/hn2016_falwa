@@ -6,11 +6,14 @@ from . import __version__
 from .oopinterface import QGField
 
 
-def is_monotonically_ascending(arr):
-    return np.all(np.argsort(arr) == np.arange(arr.size))
+def _is_ascending(arr):
+    return np.all(np.diff(arr) > 0)
 
-def is_monotonically_descending(arr):
-    return np.all(np.argsort(arr) == np.arange(arr.size-1, -1, -1))
+def _is_descending(arr):
+    return np.all(np.diff(arr) < 0)
+
+def _is_equator(x):
+    return abs(x) < 1.0e-4
 
 # Coordinate name lookup
 _NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa"]
@@ -134,12 +137,12 @@ class QGDataset:
         flip = []
         # Ensure that ylat is ascending
         ylat = ylat.values
-        if not is_monotonically_ascending(ylat):
+        if not _is_ascending(ylat):
             ylat = np.flip(ylat)
             flip.append(-2)
         # Ensure that plev is descending
         plev = plev.values
-        if not is_monotonically_descending(plev):
+        if not _is_descending(plev):
             plev = np.flip(plev)
             flip.append(-3)
         # Ordering of xlon doesn't matter here
@@ -559,9 +562,6 @@ def integrate_budget(ds, var_names=None):
     attrs["integration_seconds"] = (stop - start) / np.timedelta64(1000000000)
     return xr.Dataset(data_vars, ds.coords, attrs)
 
-
-def _is_equator(x):
-    return abs(x) < 1.0e-4
 
 def hemisphere_to_globe(ds, var_names=None):
     """Create a global dataset from a hemispheric one.
