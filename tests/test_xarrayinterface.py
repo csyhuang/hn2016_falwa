@@ -8,6 +8,81 @@ from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equa
 from hn2016_falwa.xarrayinterface import _get_name, _map_collect
 
 
+def _generate_test_dataset(**additional_coords):
+    from .test_oopinterface import xlon, ylat, plev, u_field, v_field, t_field
+    dims = ("plev", "ylat", "xlon")
+    return xr.Dataset(
+        data_vars={ "u": (dims, u_field), "v": (dims, v_field), "t": (dims, t_field) },
+        coords={ "plev": plev, "ylat": ylat, "xlon": xlon, **additional_coords }
+    )
+
+def test_qgdataset():
+    data = _generate_test_dataset()
+    qgds = QGDataset(data)
+    # Make sure all computation functions run
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
+    qgds.compute_lwa_and_barotropic_fluxes()
+
+def test_qgdataset_flips_ylat():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({ "ylat": data["ylat"][::-1] })).interpolate_fields()
+    assert np.allclose(interp1["ylat"], interp2["ylat"])
+
+def test_qgdataset_flips_plev():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({ "plev": data["plev"][::-1] })).interpolate_fields()
+    assert np.allclose(interp1["height"], interp2["height"])
+
+def test_qgdataset_rejects_incomplete():
+    data = _generate_test_dataset()
+    for var in data:
+        with pytest.raises(KeyError):
+            QGDataset(data.drop_vars([var]))
+
+def test_qgdataset_rejects_transposed():
+    data = _generate_test_dataset()
+    with pytest.raises(AssertionError):
+        QGDataset(data.transpose("xlon", "plev", "ylat"))
+    with pytest.raises(AssertionError):
+        QGDataset(data.transpose("ylat", "xlon", "plev"))
+
+def test_qgdataset_4d():
+    data = xr.concat([_generate_test_dataset(time=t) for t in range(3)], dim="time")
+    qgds = QGDataset(data)
+    interp = qgds.interpolate_fields()
+    # Verify that time dimension is preserved
+    assert "time" in interp.coords
+    assert interp["interpolated_u"].dims == ("time", "height", "ylat", "xlon")
+    assert interp["interpolated_u"].shape == (
+        data["time"].size,
+        qgds.attrs["kmax"],
+        data["ylat"].size,
+        data["xlon"].size
+    )
+
+def test_qgdataset_5d():
+    data = xr.concat([
+        xr.concat([_generate_test_dataset(time=t, number=n) for t in range(3)], dim="time")
+        for n in range(4)
+    ], dim="number")
+    qgds = QGDataset(data)
+    interp = qgds.interpolate_fields()
+    # Verify that additional dimensions are preserved
+    assert "time" in interp.coords
+    assert "number" in interp.coords
+    assert interp["interpolated_u"].dims == ("number", "time", "height", "ylat", "xlon")
+    assert interp["interpolated_u"].shape == (
+        data["number"].size,
+        data["time"].size,
+        qgds.attrs["kmax"],
+        data["ylat"].size,
+        data["xlon"].size
+    )
+
+
 def test_is_ascending():
     assert _is_ascending([4])
     assert _is_ascending([0, 1, 2, 3, 4, 5])
@@ -58,10 +133,10 @@ def test_get_name():
 
 def test_map_collect():
     out = _map_collect(
-        lambda x: (x, x*2, x**2),
-        [i * np.ones(3) for i in range(4)],
-        ["foo", "bar", "baz"],
-        np.asarray
+        lambda x: (x, x*2, x**2), # function with 3 return values
+        [i * np.ones(3) for i in range(4)], # applied to 4 numpy arrays
+        ["foo", "bar", "baz"], # collect return values under these names
+        np.asarray # and convert each collected output to a numpy array
     )
     assert out["foo"].shape == (4, 3)
     assert out["bar"].shape == (4, 3)
