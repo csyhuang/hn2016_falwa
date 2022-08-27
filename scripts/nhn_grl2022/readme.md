@@ -23,10 +23,10 @@ all the figures in the paper.
 
 Note that there is a difference in computing reference state in this most recent manuscript. In the past, and also 
 the analysis in NH18 Science, we used equator as the latitudinal boundary. In this current version of the script 
-(release 0.6.0), we use absolute vorticity at 5°N as boundary condition such that the solution is no longer sensitive 
+(release 0.6.1), we use absolute vorticity at 5°N as boundary condition such that the solution is no longer sensitive 
 to fields at the equator, which improves the quality of the analysis.
 
-We are in a hurry submitting the manuscript, so this version of code (v0.6.0) has not been properly refactored yet. 
+We are in a hurry submitting the manuscript, so this version of code (v0.6.1) has not been properly refactored yet. 
 If you have any questions, please [submit an issue](https://github.com/csyhuang/hn2016_falwa/issues) or email me. 
 I'll get back ASAP.
 

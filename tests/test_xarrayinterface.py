@@ -1,7 +1,10 @@
 import pytest
 
 import numpy as np
-import xarray as xr
+try:
+    import xarray as xr
+except ImportError:
+    pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
