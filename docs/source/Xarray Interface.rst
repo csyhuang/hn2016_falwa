@@ -15,4 +15,3 @@ A wrapper to manage multiple :py:class:`.oopinterface.QGField` objects, with
 
 .. automodule:: xarrayinterface
    :members:
-
