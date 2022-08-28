@@ -13,6 +13,6 @@ A wrapper to manage multiple :py:class:`.oopinterface.QGField` objects, with
     where progress on memory optimization is tracked.
 
 
-.. automodule:: hn2016_falwa.xarrayinterface
+.. automodule:: xarrayinterface
    :members:
 
