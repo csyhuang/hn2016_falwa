@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../hn2016_f
 
 
 autodoc_mock_imports = [
+    "hn2016_falwa",
     "interpolate_fields",
     "compute_reference_states",
     "compute_lwa_and_barotropic_fluxes",
