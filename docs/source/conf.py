@@ -27,7 +27,14 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 autodoc_mock_imports = ["interpolate_fields",
                         "compute_reference_states",
-                        "compute_lwa_and_barotropic_fluxes"]
+                        "compute_lwa_and_barotropic_fluxes",
+                        "compute_flux_dirinv",
+                        "compute_qref_and_fawa_first",
+                        "compute_reference_states",
+                        "interpolate_fields_direct_inv",
+                        "matrix_after_inversion",
+                        "matrix_b4_inversion",
+                        "upward_sweep"]
 
 
 # -- General configuration ------------------------------------------------
@@ -43,7 +50,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.imgmath',
               'sphinx.ext.viewcode',
               'sphinx.ext.napoleon',
-              'sphinx_rtd_theme',]
+              'sphinx_rtd_theme']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
