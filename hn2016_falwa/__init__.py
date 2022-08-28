@@ -1,3 +1,12 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: __init__.py
+Author: Clare Huang, Christopher Polster
+Created on: 2016/7/21
+Description: Import all f2py modules and indicate package version
+-------------------------------------------------------------------------------------------------------------------
+"""
+
 __version__ = "0.6.1"
 from .interpolate_fields import interpolate_fields
 from .interpolate_fields_direct_inv import interpolate_fields_direct_inv

@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: oopinterface.py
+Author: Clare Huang
+Created on: 2017/8/4
+Description: Contains the QGField object to compute reference state, LWA and fluxes using pressure-level data (T,U,V)
+-------------------------------------------------------------------------------------------------------------------
+"""
 import math
 import warnings
 import numpy as np
@@ -770,7 +778,8 @@ class QGField(object):
     def _interpolate_field_dirinv(self):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         self._qgpv_temp, \
         self._interpolated_u_temp, \
@@ -816,7 +825,8 @@ class QGField(object):
     def _compute_qref_fawa_and_bc(self):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         # ans = compute_qref_and_fawa_first(
             # pv, uu, vort, pt, tn0, ts0, statn, stats, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
@@ -910,7 +920,8 @@ class QGField(object):
     def _compute_lwa_flux_dirinv(self, qref, uref, tref, fawa, ubar, tbar):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
                                   pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,

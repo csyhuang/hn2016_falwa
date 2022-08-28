@@ -101,7 +101,6 @@ if to_generate_data:
     ep4 = output_file.createVariable('ep4', np.dtype('float32').char, ('time', 'latitude', 'longitude'))
     ep4.units = 'm/s'
 
-
     # --- Compute LWA + fluxes and save the data into netCDF file ---
     for tstep in range(ntimes):  # or ntimes
 
