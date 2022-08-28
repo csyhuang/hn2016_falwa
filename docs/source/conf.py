@@ -25,7 +25,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../hn2016_f
 # import sphinx_rtd_theme
 
 
-autodoc_mock_imports = []
+autodoc_mock_imports = [
+    "hn2016_falwa",
+    "interpolate_fields",
+    "compute_reference_states",
+    "compute_lwa_and_barotropic_fluxes",
+    "compute_flux_dirinv",
+    "compute_qref_and_fawa_first",
+    "compute_reference_states",
+    "interpolate_fields_direct_inv",
+    "matrix_after_inversion",
+    "matrix_b4_inversion",
+    "upward_sweep"]
 
 
 # -- General configuration ------------------------------------------------
