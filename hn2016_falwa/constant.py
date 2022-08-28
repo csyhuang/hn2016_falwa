@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: constant.py
+Author: Clare Huang
+Created on: 2019/9/15
+Description: Define physical constants
+-------------------------------------------------------------------------------------------------------------------
+"""
 P0 = 1000.  # Ground pressure level. Unit: hPa
 SCALE_HEIGHT = 7000.  # Unit: m
 CP = 1004. # specific heat at constant pressure for air (cp) = 1004 J/kg-K

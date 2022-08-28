@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: wrapper.py
+Author: Clare Huang
+Created on: 2017/11/20
+Description: Contains wrapper of functions (more to update)
+-------------------------------------------------------------------------------------------------------------------
+"""
 import numpy as np
 from hn2016_falwa.constant import EARTH_RADIUS
 
