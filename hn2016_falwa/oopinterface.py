@@ -829,16 +829,13 @@ class QGField(object):
         .. versionadded:: 0.6.0
         """
         # ans = compute_qref_and_fawa_first(
-            # pv, uu, vort, pt, tn0, ts0, statn, stats, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
+            # pv, uu, vort, pt, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
         ans = compute_qref_and_fawa_first(
             pv=self._qgpv_temp,
             uu=self._interpolated_u_temp,
             vort=self._interpolated_avort_temp,
             pt=self._interpolated_theta_temp,
             tn0=self._tn0,
-            ts0=self._ts0,
-            statn=self._static_stability_n,
-            stats=self._static_stability_s,
             nd=self.nlat//2 + self.nlat % 2,  # 91
             nnd=self.nlat,                    # 181
             jb=self.eq_boundary_index,        # 5
@@ -877,7 +874,6 @@ class QGField(object):
                 h=self.scale_height,
                 rr=self.dry_gas_constant,
                 cp=self.cp,
-                u=u,
                 sjk=sjk,
                 tjk=tjk)
             qjj, djj, cjj, rj, tj = ans
@@ -900,7 +896,6 @@ class QGField(object):
 
         tref, qref = upward_sweep(
             jmax=self.nlat,
-            nnd=self.nlat,
             jb=self.eq_boundary_index,
             sjk=sjk,
             tjk=tjk,
