@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: oopinterface.py
+Author: Clare Huang
+Created on: 2017/8/4
+Description: Contains the QGField object to compute reference state, LWA and fluxes using pressure-level data (T,U,V)
+-------------------------------------------------------------------------------------------------------------------
+"""
 import math
 import warnings
 import numpy as np
@@ -6,16 +14,9 @@ from scipy.linalg.lapack import dgetrf, dgetri
 
 from hn2016_falwa import utilities
 from hn2016_falwa.constant import *
-from interpolate_fields import interpolate_fields
-from interpolate_fields_direct_inv import interpolate_fields_direct_inv
-from compute_qref_and_fawa_first import compute_qref_and_fawa_first
-from matrix_b4_inversion import matrix_b4_inversion
-from matrix_after_inversion import matrix_after_inversion
-from upward_sweep import upward_sweep
-from compute_flux_dirinv import compute_flux_dirinv
-
-from compute_reference_states import compute_reference_states
-from compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
+from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
+    compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
 
 
@@ -777,7 +778,8 @@ class QGField(object):
     def _interpolate_field_dirinv(self):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         self._qgpv_temp, \
         self._interpolated_u_temp, \
@@ -823,19 +825,17 @@ class QGField(object):
     def _compute_qref_fawa_and_bc(self):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         # ans = compute_qref_and_fawa_first(
-            # pv, uu, vort, pt, tn0, ts0, statn, stats, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
+            # pv, uu, vort, pt, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
         ans = compute_qref_and_fawa_first(
             pv=self._qgpv_temp,
             uu=self._interpolated_u_temp,
             vort=self._interpolated_avort_temp,
             pt=self._interpolated_theta_temp,
             tn0=self._tn0,
-            ts0=self._ts0,
-            statn=self._static_stability_n,
-            stats=self._static_stability_s,
             nd=self.nlat//2 + self.nlat % 2,  # 91
             nnd=self.nlat,                    # 181
             jb=self.eq_boundary_index,        # 5
@@ -847,10 +847,9 @@ class QGField(object):
             rr=self.dry_gas_constant,
             cp=self.cp)
 
-        qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
+        qref_over_cor, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
 
         self._check_nan("qref_over_cor", qref_over_cor)
-        self._check_nan("u", u)
         self._check_nan("ubar", ubar)
         self._check_nan("tbar", tbar)
         self._check_nan("fawa", fawa)
@@ -874,7 +873,6 @@ class QGField(object):
                 h=self.scale_height,
                 rr=self.dry_gas_constant,
                 cp=self.cp,
-                u=u,
                 sjk=sjk,
                 tjk=tjk)
             qjj, djj, cjj, rj, tj = ans
@@ -886,7 +884,6 @@ class QGField(object):
 
             _ = matrix_after_inversion(
                 k=k,
-                jb=self.eq_boundary_index,
                 qjj=qjj,
                 djj=djj,
                 cjj=cjj,
@@ -895,16 +892,14 @@ class QGField(object):
                 sjk=sjk,
                 tjk=tjk)
 
-        tref, qref = upward_sweep(
+        tref, qref, u = upward_sweep(
             jmax=self.nlat,
-            nnd=self.nlat,
             jb=self.eq_boundary_index,
             sjk=sjk,
             tjk=tjk,
             ckref=ckref,
             tb=self._tn0,
             qref_over_cor=qref_over_cor,
-            u=u,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,
@@ -914,16 +909,16 @@ class QGField(object):
 
         return qref, u, tref, fawa, ubar, tbar  # uref = u
 
-    def _compute_lwa_flux_dirinv(self, qref, uref, tref, fawa, ubar, tbar):
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """
         Added for NHN 2022 GRL
-        :return:
+
+        .. versionadded:: 0.6.0
         """
         ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-                                  pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,
-                                  statn=self._static_stability_n, stats=self._static_stability_s,
-                                  qref=qref, uref=uref, tref=tref, fawa=fawa, ubar=ubar, tbar=tbar,
-                                  nnd=self.nlat, jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+                                  pt=self._interpolated_theta_temp, tn0=self._tn0,
+                                  qref=qref, uref=uref, tref=tref,
+                                  jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
                                   dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
                                   prefac=self.prefactor)
         # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans

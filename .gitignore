@@ -1,0 +1,15 @@
+__pycache__/
+.DS_Store
+.cache/
+.eggs/
+.ipynb_checkpoints/
+*.pyc
+*.nc
+*.so
+build/
+hn2016_falwa.egg-info/
+examples/.ipynb_checkpoints/
+*.gcno
+*.gcda
+*.gcov
+.coverage

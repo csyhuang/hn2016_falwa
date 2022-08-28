@@ -1,7 +1,4 @@
 numpy
 scipy
-matplotlib
-ecmwf-api-client
-netcdf4
 pytest
-jupyterlab
+xarray[Xarray]

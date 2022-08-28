@@ -1,15 +1,13 @@
-SUBROUTINE upward_sweep(jmax, kmax, nd, nnd, jb, jd, sjk, tjk, ckref, tb, qref_over_cor, u, tref, qref, a, om, dz, h, rr, cp)
+SUBROUTINE upward_sweep(jmax, kmax, nd, jb, jd, sjk, tjk, ckref, tb, qref_over_cor, tref, qref, u, a, om, dz, h, rr, cp)
 
-  INTEGER, INTENT(IN) :: jmax, kmax, nd, nnd, jb, jd
+  INTEGER, INTENT(IN) :: jmax, kmax, nd, jb, jd
   REAL, INTENT(IN) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1),ckref(nd,kmax),tb(kmax),qref_over_cor(nd,kmax)
   REAL, INTENT(IN) :: a, om, dz, h, rr, cp
-  REAL, INTENT(INOUT) :: u(jd,kmax)
-  REAL, INTENT(OUT) :: qref(nd,kmax), tref(jd,kmax)
+  REAL, INTENT(OUT) :: qref(nd,kmax), tref(jd,kmax), u(jd,kmax)
   real :: tg(kmax)
   real :: pjk(jd-2,kmax)
-  real :: tj(jd-2),rj(jd-2)
-  real :: qjj(jd-2,jd-2),cjj(jd-2,jd-2)
-  real :: xjj(jd-2,jd-2),yj(jd-2)
+  real :: tj(jd-2)
+  real :: yj(jd-2)
   real :: sjj(jd-2,jd-2)
   real :: pj(jd-2)
 

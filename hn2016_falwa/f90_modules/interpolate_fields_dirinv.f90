@@ -11,20 +11,13 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
   REAL, INTENT(out) :: tq(nlon,nlat,kmax), statn(kmax), stats(kmax), tn0(kmax), ts0(kmax)
 
    real ::  tzd(nlat,kmax)
-   real ::  xlon(nlon),ylat(nlat)
    real ::  height(kmax)
    real ::  zlev(nlev)
    real ::  st(nlon,nlat),zmst(nlat)
-   real ::  tt0(nlon,nlat,kmax)
    real ::  zmav(nlat,kmax)
    real ::  zmpv(nlat,kmax)
-   integer :: dsadata,mm(12),inverse(12,nlev)
    integer :: k0(kmax),kp(kmax)
    real :: dd2(kmax),dd1(kmax),pks(kmax)
-   character*5 :: yy
-   character*4 :: y0(44),y00
-   character*3 :: mn(12)
-   character*8 :: yr
 
    rkappa = rr/cp
    pi = acos(-1.)

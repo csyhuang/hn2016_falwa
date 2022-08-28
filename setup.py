@@ -23,54 +23,57 @@ LONG_DESCRIPTION =\
     """
 
 ext1 = Extension(name='interpolate_fields',
-                 sources=['hn2016_falwa/interpolate_fields.f90'],
+                 sources=['hn2016_falwa/f90_modules/interpolate_fields.f90'],
                  f2py_options=['--quiet'])
 
 ext2 = Extension(name='compute_reference_states',
-                 sources=['hn2016_falwa/compute_reference_states.f90'],
+                 sources=['hn2016_falwa/f90_modules/compute_reference_states.f90'],
                  f2py_options=['--quiet'])
 
 ext3 = Extension(name='compute_lwa_and_barotropic_fluxes',
-                 sources=['hn2016_falwa/compute_lwa_and_barotropic_fluxes.f90'],
+                 sources=['hn2016_falwa/f90_modules/compute_lwa_and_barotropic_fluxes.f90'],
                  f2py_options=['--quiet'])
 
 # *** Extensions 4-9 are used by the direct inversion algorithm ***
 ext4 = Extension(name='interpolate_fields_direct_inv',
-                 sources=['hn2016_falwa/interpolate_fields_dirinv.f90'],
+                 sources=['hn2016_falwa/f90_modules/interpolate_fields_dirinv.f90'],
                  f2py_options=['--quiet'])
 
 ext5 = Extension(name='compute_qref_and_fawa_first',
-                 sources=['hn2016_falwa/compute_qref_and_fawa_first.f90'],
+                 sources=['hn2016_falwa/f90_modules/compute_qref_and_fawa_first.f90'],
                  f2py_options=['--quiet'])
 
 ext6 = Extension(name='matrix_b4_inversion',
-                 sources=['hn2016_falwa/matrix_b4_inversion.f90'],
+                 sources=['hn2016_falwa/f90_modules/matrix_b4_inversion.f90'],
                  f2py_options=['--quiet'])
 
 ext7 = Extension(name='matrix_after_inversion',
-                 sources=['hn2016_falwa/matrix_after_inversion.f90'],
+                 sources=['hn2016_falwa/f90_modules/matrix_after_inversion.f90'],
                  f2py_options=['--quiet'])
 
 ext8 = Extension(name='upward_sweep',
-                 sources=['hn2016_falwa/upward_sweep.f90'],
+                 sources=['hn2016_falwa/f90_modules/upward_sweep.f90'],
                  f2py_options=['--quiet'])
 
 ext9 = Extension(name='compute_flux_dirinv',
-                 sources=['hn2016_falwa/compute_flux_dirinv.f90'],
+                 sources=['hn2016_falwa/f90_modules/compute_flux_dirinv.f90'],
                  f2py_options=['--quiet'])
 
 setup(
     name='hn2016_falwa',
-    version='0.6.0',
+    version='0.6.1',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
     url='https://github.com/csyhuang/hn2016_falwa',
     author='Clare S. Y. Huang',
     author_email='csyhuang@protonmail.com',
     license='MIT',
-    packages=find_packages(),
+    package_dir={"": "hn2016_falwa"},
+    packages=find_packages(where="hn2016_falwa"),
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
+    extras_require={"Xarray": ["xarray"]},
+    test_suite="tests",
     ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
     zip_safe=False
 )

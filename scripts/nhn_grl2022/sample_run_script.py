@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: sample_run_script.py
+Author: Clare Huang
+Created on: 2022/3/16
+Description: Sample script to reproduce plots in Neal et al (2022, GRL)
+-------------------------------------------------------------------------------------------------------------------
+"""
 import os
 import sys
 import numpy as np
@@ -101,7 +109,6 @@ if to_generate_data:
     ep4 = output_file.createVariable('ep4', np.dtype('float32').char, ('time', 'latitude', 'longitude'))
     ep4.units = 'm/s'
 
-
     # --- Compute LWA + fluxes and save the data into netCDF file ---
     for tstep in range(ntimes):  # or ntimes
 
@@ -117,7 +124,7 @@ if to_generate_data:
         qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
 
         astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
-            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref, fawa, ubar, tbar)
+            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
 
         lwa_baro[tstep, :, :] = np.swapaxes(astarbaro, 0, 1)
         ua1[tstep, :, :] = np.swapaxes(ua1baro, 0, 1)

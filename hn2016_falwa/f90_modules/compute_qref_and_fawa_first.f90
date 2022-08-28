@@ -1,15 +1,14 @@
-SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats, imax, JMAX, kmax, nd, nnd, jb, jd, &
+SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, nd, nnd, jb, jd, &
         a, omega, dz, h, rr, cp, &
-        qref,u,ubar,tbar,fawa,ckref,tjk,sjk)
+        qref, ubar, tbar, fawa, ckref, tjk, sjk)
 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
 
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
   REAL, INTENT(in) :: a, omega, dz, h, rr, cp
-  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),&
-          stats(kmax),statn(kmax),ts0(kmax),tn0(kmax)
-  REAL, INTENT(OUT) :: qref(nd,kmax),u(jd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
+  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),tn0(kmax)
+  REAL, INTENT(OUT) :: qref(nd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
           tjk(jd-2,kmax-1),sjk(jd-2,jd-2,kmax-1)
 
   !   **** take QG analysis and compute Q_ref and invert for U_ref & Theta_ref for NH (Direct solver) ***
@@ -21,14 +20,9 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, ts0, statn, stats,
 
   REAL :: pv2(imax,jmax)
   REAL :: vort2(imax,jmax)
-  REAL :: qn(nnd),an(nnd),aan(nnd),tb(kmax),tg(kmax)
+  REAL :: qn(nnd),an(nnd),aan(nnd),tb(kmax)
   REAL :: cn(nnd),ccn(nnd),cref(nd,kmax)
   REAL :: alat(nd),phi(nd),z(kmax),cbar(nd,kmax)
-  REAL :: tj(jd-2),rj(jd-2)
-  REAL :: qjj(jd-2,jd-2),cjj(jd-2,jd-2)
-  REAL :: xjj(jd-2,jd-2),yj(jd-2)
-  REAL :: djj(jd-2,jd-2),sjj(jd-2,jd-2)
-  REAL :: pjk(jd-2,kmax),pj(jd-2)
   REAL :: qbar(nd,kmax)
 
   pi = acos(-1.)
