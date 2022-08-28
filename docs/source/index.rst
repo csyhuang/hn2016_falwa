@@ -82,6 +82,7 @@ The **object-oriented interface** is an easy-to-use interface that takes in the 
    :maxdepth: 2
 
    Object Oriented Interface
+   Xarray Interface
    Barotropic Field
    Basis Functions
    Utility Functions
