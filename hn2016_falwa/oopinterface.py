@@ -1,11 +1,3 @@
-"""
--------------------------------------------------------------------------------------------------------------------
-File name: oopinterface.py
-Author: Clare Huang
-Created on: 2017/8/4
-Description: Contains the QGField object to compute reference state, LWA and fluxes using pressure-level data (T,U,V)
--------------------------------------------------------------------------------------------------------------------
-"""
 import math
 import warnings
 import numpy as np

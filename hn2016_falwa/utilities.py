@@ -1,11 +1,3 @@
-"""
--------------------------------------------------------------------------------------------------------------------
-File name: utilities.py
-Author: Clare Huang
-Created on: 2017/11/20
-Description: Contains utility functions used by other modules
--------------------------------------------------------------------------------------------------------------------
-"""
 import numpy as np
 from math import pi, exp
 

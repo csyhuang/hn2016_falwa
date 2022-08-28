@@ -1,11 +1,3 @@
-"""
--------------------------------------------------------------------------------------------------------------------
-File name: barotropic_field.py
-Author: Clare Huang
-Created on: 2020/2/19
-Description: Contains the class BarotropicField to compute barotropic LWA and reference state
--------------------------------------------------------------------------------------------------------------------
-"""
 from math import pi
 
 import numpy as np
