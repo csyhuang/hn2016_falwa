@@ -769,7 +769,7 @@ class QGField(object):
             self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa)
         return lwa_and_fluxes
 
-    # *** Added in Release 0.6.1 ***
+    # *** Added in Release 0.6.0 ***
     # The following internal functions are used to compute results in NHN (2022, GRL):
     # - _interpolate_field_dirinv
     # - _compute_qref_fawa_and_bc
