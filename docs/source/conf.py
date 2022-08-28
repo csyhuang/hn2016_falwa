@@ -19,22 +19,23 @@
 import os
 import sys
 # Need to fix the issue below
-sys.path.insert(0, os.path.abspath('../../hn2016_falwa/'))
-sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "../../")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "../../hn2016_falwa/")
 
 # import sphinx_rtd_theme
 
 
-autodoc_mock_imports = ["interpolate_fields",
-                        "compute_reference_states",
-                        "compute_lwa_and_barotropic_fluxes",
-                        "compute_flux_dirinv",
-                        "compute_qref_and_fawa_first",
-                        "compute_reference_states",
-                        "interpolate_fields_direct_inv",
-                        "matrix_after_inversion",
-                        "matrix_b4_inversion",
-                        "upward_sweep"]
+autodoc_mock_imports = [
+    "interpolate_fields",
+    "compute_reference_states",
+    "compute_lwa_and_barotropic_fluxes",
+    "compute_flux_dirinv",
+    "compute_qref_and_fawa_first",
+    "compute_reference_states",
+    "interpolate_fields_direct_inv",
+    "matrix_after_inversion",
+    "matrix_b4_inversion",
+    "upward_sweep"]
 
 
 # -- General configuration ------------------------------------------------
