@@ -116,7 +116,7 @@ if to_generate_data:
         qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
 
         astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
-            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref, fawa, ubar, tbar)
+            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
 
         lwa_baro[tstep, :, :] = np.swapaxes(astarbaro, 0, 1)
         ua1[tstep, :, :] = np.swapaxes(ua1baro, 0, 1)

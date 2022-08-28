@@ -1,22 +1,20 @@
-SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,ts0,statn,stats,qref,uref,tref,fawa,ubar,tbar,&
-        imax, JMAX, kmax, nd, nnd, jb, jd, &
+SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,qref,uref,tref,&
+        imax, JMAX, kmax, nd, jb, jd, &
         a, om, dz, h, rr, cp, prefac,&
         astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2)
 
-  INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
+  INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, jb, jd
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax),&
-          tn0(kmax),ts0(kmax),statn(kmax),stats(kmax),qref(nd,kmax),uref(jd,kmax),tref(jd,kmax),&
-          fawa(nd,kmax),ubar(nd,kmax),tbar(nd,kmax)
+          tn0(kmax),qref(nd,kmax),uref(jd,kmax),tref(jd,kmax)
   REAL, INTENT(IN) :: a, om, dz, h, rr, cp, prefac
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
           ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
 
-  REAL :: tb(kmax),tg(kmax)
+  REAL :: tg(kmax)
   REAL :: ua1(imax,nd),ua2(imax,nd),ep1(imax,nd)
   REAL :: ep2(imax,nd),ep3(imax,nd)
   REAL :: qe(imax,nd),ue(imax,nd)
   REAL :: z(kmax)
-  REAL :: u(nd,kmax)
 
   !a = 6378000.
   pi = acos(-1.)

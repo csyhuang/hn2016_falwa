@@ -445,14 +445,8 @@ class QGDataset:
         # Call _compute_lwa_flux_dirinv on all QGField objects, use the monkey
         # patched attributes added in _compute_qref_fawa_and_bc
         out_fields = _map_collect(
-            lambda field: field._compute_lwa_flux_dirinv(
-                qref=field._temp_dirinv_qref,
-                uref=field._temp_dirinv_u,
-                tref=field._temp_dirinv_tref,
-                fawa=field._temp_dirinv_fawa,
-                ubar=field._temp_dirinv_ubar,
-                tbar=field._temp_dirinv_tbar
-            ),
+            lambda field: field._compute_lwa_flux_dirinv(qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u,
+                                                         tref=field._temp_dirinv_tref),
             self._fields,
             ["astarbaro", "ubaro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
                 "ep2baro", "ep3baro", "ep4", "astar1", "astar2"],

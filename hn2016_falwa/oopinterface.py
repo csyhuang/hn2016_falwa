@@ -912,17 +912,16 @@ class QGField(object):
 
         return qref, u, tref, fawa, ubar, tbar  # uref = u
 
-    def _compute_lwa_flux_dirinv(self, qref, uref, tref, fawa, ubar, tbar):
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """
         Added for NHN 2022 GRL
 
         .. versionadded:: 0.6.0
         """
         ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-                                  pt=self._interpolated_theta_temp, tn0=self._tn0, ts0=self._ts0,
-                                  statn=self._static_stability_n, stats=self._static_stability_s,
-                                  qref=qref, uref=uref, tref=tref, fawa=fawa, ubar=ubar, tbar=tbar,
-                                  nnd=self.nlat, jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+                                  pt=self._interpolated_theta_temp, tn0=self._tn0,
+                                  qref=qref, uref=uref, tref=tref,
+                                  jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
                                   dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
                                   prefac=self.prefactor)
         # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
