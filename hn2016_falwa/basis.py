@@ -1,10 +1,7 @@
 """
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------
 File name: basis.py
 Author: Clare Huang
-Created on: 2017/11/20
-Description: Contains basic functions that are involved in the computation of equivalent latitude and LWA
--------------------------------------------------------------------------------------------------------------------
 """
 import numpy as np
 from math import pi

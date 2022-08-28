@@ -1,17 +1,14 @@
 """
--------------------------------------------------------------------------------------------------------------------
+------------------------------------------
 File name: xarrayinterface.py
 Author: Christopher Polster
-Created on: 2022/6/22
-Description: Xarray interface of QGField that computes reference states, LWA and fluxes
--------------------------------------------------------------------------------------------------------------------
 """
 import functools
 import numpy as np
 import xarray as xr
 
-from . import __version__
-from .oopinterface import QGField
+from hn2016_falwa import __version__
+from hn2016_falwa.oopinterface import QGField
 
 
 def _is_ascending(arr):
