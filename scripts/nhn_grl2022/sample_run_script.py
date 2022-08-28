@@ -1,3 +1,11 @@
+"""
+-------------------------------------------------------------------------------------------------------------------
+File name: sample_run_script.py
+Author: Clare Huang
+Created on: 2022/3/16
+Description: Sample script to reproduce plots in Neal et al (2022, GRL)
+-------------------------------------------------------------------------------------------------------------------
+"""
 import os
 import sys
 import numpy as np

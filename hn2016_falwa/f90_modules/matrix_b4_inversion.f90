@@ -1,13 +1,13 @@
 SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,&
         a, om, dz, h, rr, cp, &
-        qjj,djj,cjj,rj,tj,u,sjk,tjk)
+        qjj,djj,cjj,rj,tj,sjk,tjk)
 
   integer, INTENT(in) :: k, jmax, kmax, nd, jb, jd
   REAL, INTENT(in) :: z(kmax),statn(kmax),qref(nd,kmax),ckref(nd,kmax)
   REAL, INTENT(in) :: a, om, dz, h, rr, cp
-  REAL, INTENT(OUT) :: qjj(jd-2,jd-2),djj(jd-2,jd-2),cjj(jd-2,jd-2),rj(jd-2),tj(jd-2),u(jd,kmax)
+  REAL, INTENT(OUT) :: qjj(jd-2,jd-2),djj(jd-2,jd-2),cjj(jd-2,jd-2),rj(jd-2),tj(jd-2)
   REAL, INTENT(INOUT) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1)
-  REAL :: xjj(jd-2,jd-2)
+  REAL :: xjj(jd-2,jd-2), u(jd,kmax)
   REAL :: sjj(jd-2,jd-2)
 
   rkappa = rr/cp

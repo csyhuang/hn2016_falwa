@@ -847,10 +847,9 @@ class QGField(object):
             rr=self.dry_gas_constant,
             cp=self.cp)
 
-        qref_over_cor, u, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
+        qref_over_cor, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
 
         self._check_nan("qref_over_cor", qref_over_cor)
-        self._check_nan("u", u)
         self._check_nan("ubar", ubar)
         self._check_nan("tbar", tbar)
         self._check_nan("fawa", fawa)
@@ -885,7 +884,6 @@ class QGField(object):
 
             _ = matrix_after_inversion(
                 k=k,
-                jb=self.eq_boundary_index,
                 qjj=qjj,
                 djj=djj,
                 cjj=cjj,
@@ -894,7 +892,7 @@ class QGField(object):
                 sjk=sjk,
                 tjk=tjk)
 
-        tref, qref = upward_sweep(
+        tref, qref, u = upward_sweep(
             jmax=self.nlat,
             jb=self.eq_boundary_index,
             sjk=sjk,
@@ -902,7 +900,6 @@ class QGField(object):
             ckref=ckref,
             tb=self._tn0,
             qref_over_cor=qref_over_cor,
-            u=u,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,

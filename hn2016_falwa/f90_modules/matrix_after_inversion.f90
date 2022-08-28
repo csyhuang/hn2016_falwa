@@ -1,6 +1,6 @@
-SUBROUTINE matrix_after_inversion(k,kmax,jb,jd,qjj,djj,cjj,tj,rj,sjk,tjk)
+SUBROUTINE matrix_after_inversion(k,kmax,jd,qjj,djj,cjj,tj,rj,sjk,tjk)
 
-  INTEGER, INTENT(in) :: k, kmax, jb, jd
+  INTEGER, INTENT(in) :: k, kmax, jd
   REAL, INTENT(in) :: qjj(jd-2,jd-2),djj(jd-2,jd-2),cjj(jd-2,jd-2),rj(jd-2)
   REAL, INTENT(INOUT) :: sjk(jd-2,jd-2,kmax-1),tjk(jd-2,kmax-1),tj(jd-2)  ! Note that tj is not used in subsequent modules
 
