@@ -61,7 +61,9 @@ def _map_collect(f, xs, names, postprocess=None):
 
 
 class QGDataset:
-    """A wrapper for multiple QGField objects with xarray in- and output
+    """A wrapper for multiple QGField objects with xarray in- and output.
+    It uses the direct inversion algorithm to compute reference state as
+    in Neal et al, 2022 GRL.
 
     Examines the given dataset and tries to extract `u`, `v`, and `T` fields
     based on the names of coordinates in the dataset. For each combination of
