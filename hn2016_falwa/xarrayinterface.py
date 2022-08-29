@@ -61,7 +61,7 @@ def _map_collect(f, xs, names, postprocess=None):
 
 
 class QGDataset:
-    """A wrapper for multiple QGField objects with xarray in- and output
+    """A wrapper for multiple QGField objects with xarray in- and output.
 
     Examines the given dataset and tries to extract `u`, `v`, and `T` fields
     based on the names of coordinates in the dataset. For each combination of
