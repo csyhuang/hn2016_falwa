@@ -46,18 +46,18 @@ def test_qgfield():
     assert (kmax, nlat, nlon) == interpolated_theta.shape
     assert (kmax,) == static_stability.shape
 
-    assert (interpolated_u[1:-1, :, :].max() <= u_field.max()) & \
-           (interpolated_u[1:-1, :, :].max() >= u_field.min())
-    assert (interpolated_u[1:-1, :, :].min() <= u_field.max()) & \
-           (interpolated_u[1:-1, :, :].min() >= u_field.min())
-    assert (interpolated_v[1:-1, :, :].max() <= v_field.max()) & \
-           (interpolated_v[1:-1, :, :].max() >= v_field.min())
-    assert (interpolated_v[1:-1, :, :].min() <= v_field.max()) & \
-           (interpolated_v[1:-1, :, :].min() >= v_field.min())
-    assert (interpolated_theta[1:-1, :, :].max() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, :, :].max() >= theta_field.min())
-    assert (interpolated_theta[1:-1, :, :].min() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, :, :].min() >= theta_field.min())
+    assert (interpolated_u[1:-1, :, :].max() <= np.max(u_field)) & \
+           (interpolated_u[1:-1, :, :].max() >= np.min(u_field))
+    assert (interpolated_u[1:-1, :, :].min() <= np.max(u_field)) & \
+           (interpolated_u[1:-1, :, :].min() >= np.min(u_field))
+    assert (interpolated_v[1:-1, :, :].max() <= np.max(v_field)) & \
+           (interpolated_v[1:-1, :, :].max() >= np.min(v_field))
+    assert (interpolated_v[1:-1, :, :].min() <= np.max(v_field)) & \
+           (interpolated_v[1:-1, :, :].min() >= np.min(v_field))
+    assert (interpolated_theta[1:-1, :, :].max() <= np.max(theta_field)) & \
+           (interpolated_theta[1:-1, :, :].max() >= np.min(theta_field))
+    assert (interpolated_theta[1:-1, :, :].min() <= np.max(theta_field)) & \
+           (interpolated_theta[1:-1, :, :].min() >= np.min(theta_field))
     assert 0 == np.isnan(qgpv).sum()
     assert 0 == (qgpv == float('Inf')).sum()
 
@@ -85,6 +85,29 @@ def test_qgfield():
     assert lwa_and_fluxes.lwa_baro.shape == (nlat // 2 + 1, nlon)
     assert lwa_and_fluxes.u_baro.shape == (nlat // 2 + 1, nlon)
     assert lwa_and_fluxes.lwa.shape == (kmax, nlat // 2 + 1, nlon)
+
+    # Check values at midlatitudes, maybe an average of 30-60 deg
+    np.testing.assert_allclose(
+        lwa_and_fluxes.lwa_baro[20:40, :].mean(axis=-1), np.array([
+            19.630522, 21.613638, 23.790615, 25.932142, 28.172373, 30.730598, 33.59619, 36.23143, 38.318214, 40.161243,
+            42.13259, 44.062523, 45.303726, 45.888157, 46.33659, 46.821716, 46.8923, 46.248104, 45.019547, 43.42369]))
+    np.testing.assert_allclose(
+            lwa_and_fluxes.convergence_zonal_advective_flux[20:40, :].mean(axis=-1), np.array([
+            -3.1044087e-11,  6.2088175e-11,  1.2417635e-10,  3.7252904e-10, -2.4835270e-10, -4.9670540e-10,
+            4.9670540e-10,  2.4835270e-10, -4.9670540e-10,  2.4835270e-10,  0.0000000e+00, -2.4835270e-10,
+            0.0000000e+00, -3.7252904e-10,  0.0000000e+00,  4.3461720e-10, -1.2417635e-10, -6.2088175e-11,
+            -6.2088175e-11,  0.0000000e+00]))
+    np.testing.assert_allclose(
+            lwa_and_fluxes.divergence_eddy_momentum_flux[20:40, :].mean(axis=-1), np.array([
+            -2.2570301e-05, -2.8451257e-05, -2.9262947e-05, -2.8393277e-05, -2.9864797e-05, -2.2408391e-05,
+            -1.0323224e-05, -4.6490186e-06, -4.2525276e-06, -7.1944960e-06, -7.4287032e-06, -4.9857044e-06,
+            4.3337060e-08,  8.8701499e-06,  2.3440634e-05,  3.6787940e-05, 3.2258329e-05,  1.3415046e-05,
+            -1.8538121e-07,  4.2510374e-06]))
+    np.testing.assert_allclose(
+        lwa_and_fluxes.meridional_heat_flux[20:40, :].mean(axis=-1), np.array([
+            1.1194464e-05, 1.6376511e-05, 2.3858540e-05, 3.2586056e-05, 3.9103314e-05, 4.2148498e-05, 4.5597390e-05,
+            5.1362793e-05, 5.7720707e-05, 6.1747254e-05, 6.7472894e-05, 7.2880815e-05, 6.9412905e-05, 6.0302500e-05,
+            5.6556517e-05, 5.2262596e-05, 4.7150170e-05, 4.1664603e-05, 3.7316819e-05, 3.1581640e-05]))
 
 
 def test_qgfield_full_globe():
@@ -185,23 +208,23 @@ def test_interpolate_fields_even_grids():
 
     # Check that at the interior grid points, the interpolated fields
     # are bounded
-    assert (interpolated_u[1:-1, 1:-1, 1:-1].max() <= u_field.max()) & \
-           (interpolated_u[1:-1, 1:-1, 1:-1].max() >= u_field.min())
+    assert (interpolated_u[1:-1, 1:-1, 1:-1].max() <= np.max(u_field)) & \
+           (interpolated_u[1:-1, 1:-1, 1:-1].max() >= np.min(u_field))
 
-    assert (interpolated_u[1:-1, 1:-1, 1:-1].min() <= u_field.max()) & \
-           (interpolated_u[1:-1, 1:-1, 1:-1].min() >= u_field.min())
+    assert (interpolated_u[1:-1, 1:-1, 1:-1].min() <= np.max(u_field)) & \
+           (interpolated_u[1:-1, 1:-1, 1:-1].min() >= np.min(u_field))
 
-    assert (interpolated_v[1:-1, 1:-1, 1:-1].max() <= v_field.max()) & \
-           (interpolated_v[1:-1, 1:-1, 1:-1].max() >= v_field.min())
+    assert (interpolated_v[1:-1, 1:-1, 1:-1].max() <= np.max(v_field)) & \
+           (interpolated_v[1:-1, 1:-1, 1:-1].max() >= np.min(v_field))
 
-    assert (interpolated_v[1:-1, 1:-1, 1:-1].min() <= v_field.max()) & \
-           (interpolated_v[1:-1, 1:-1, 1:-1].min() >= v_field.min())
+    assert (interpolated_v[1:-1, 1:-1, 1:-1].min() <= np.max(v_field)) & \
+           (interpolated_v[1:-1, 1:-1, 1:-1].min() >= np.min(v_field))
 
-    assert (interpolated_theta[1:-1, 1:-1, 1:-1].max() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, 1:-1, 1:-1].max() >= theta_field.min())
+    assert (interpolated_theta[1:-1, 1:-1, 1:-1].max() <= np.max(theta_field)) & \
+           (interpolated_theta[1:-1, 1:-1, 1:-1].max() >= np.min(theta_field))
 
-    assert (interpolated_theta[1:-1, 1:-1, 1:-1].min() <= theta_field.max()) & \
-           (interpolated_theta[1:-1, 1:-1, 1:-1].min() >= theta_field.min())
+    assert (interpolated_theta[1:-1, 1:-1, 1:-1].min() <= np.max(theta_field)) & \
+           (interpolated_theta[1:-1, 1:-1, 1:-1].min() >= np.min(theta_field))
 
     assert 0 == np.isnan(qgpv).sum()
     assert 0 == (qgpv == float('Inf')).sum()
