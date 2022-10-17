@@ -3,7 +3,7 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
         pv, uq, vq, avort, tq, statn, stats, tn0, ts0)
 
 
-  INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax
+  INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax, jd
   REAL, INTENT(IN) :: uu(nlon,nlat,nlev), vv(nlon,nlat,nlev), tt(nlon,nlat,nlev), &
             plev(nlev)
   REAL, INTENT(in) :: aa, omega, dz,hh, rr, cp
@@ -23,16 +23,20 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
    pi = acos(-1.)
    dphi = pi/float(nlat-1)
 
+  write(6,*) 'nlon, nlat, nlev, kmax, jd'
+  write(6,*) nlon, nlat, nlev, kmax, jd
+
 ! ====== Assign pseudoheight =====
+
+  do k = 1,nlev
+    zlev(k) = -hh*alog(plev(k)/1000.)
+  enddo
 
   do k = 1,kmax
     height(k) = float(k-1)*dz
     pks(k) = exp(rkappa*height(k)/hh)
   enddo
 
-  do k = 1,nlev
-    zlev(k) = -hh*alog(plev(k)/1000.)
-  enddo
 
   do kk = 2,kmax   ! vertical interpolation
     ttt = height(kk)
@@ -92,15 +96,13 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
     csm = 0.
     cnm = 0.
     do j = 1,jd
-      phi0 = -90.+float(j-1)
-      phi0 = phi0*pi/float(nlat-1)
+      phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
       ts0(kk) = ts0(kk) + tzd(j,kk)*cos(phi0)
       csm = csm + cos(phi0)
     enddo
     ts0(kk) = ts0(kk)/csm
     do j = jd,nlat
-      phi0 = -90.+float(j-1)
-      phi0 = phi0*pi/float(nlat-1)
+      phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
       tn0(kk) = tn0(kk) + tzd(j,kk)*cos(phi0)
       cnm = cnm + cos(phi0)
     enddo
@@ -130,14 +132,11 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
 
   do kk = 1,kmax
     do j = 2,nlat-1
-      phi0 = -90.+float(j-1)
-      phi0 = phi0*pi/float(nlat-1)
-      phim = -90.+float(j-2)
-      phim = phim*pi/float(nlat-1)
-      phip = -90.+float(j)
-      phip = phip*pi/float(nlat-1)
+      phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
+      phim = -0.5*pi + pi*float(j-2)/float(nlat-1)
+      phip = -0.5*pi + pi*float(j)/float(nlat-1)
 
-      do i = 2,359
+      do i = 2,nlon-1
         av1 = 2.*omega*sin(phi0)
         av2 = (vq(i+1,j,kk)-vq(i-1,j,kk))/(2.*aa*cos(phi0)*dphi)
         av3 = -(uq(i,j+1,kk)*cos(phip)-uq(i,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
@@ -149,7 +148,7 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
       av3 = -(uq(1,j+1,kk)*cos(phip)-uq(1,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
       avort(1,j,kk) = av1+av2+av3
       av4 = 2.*omega*sin(phi0)
-      av5 = (vq(1,j,kk)-vq(359,j,kk))/(2.*aa*cos(phi0)*dphi)
+      av5 = (vq(1,j,kk)-vq(nlon-1,j,kk))/(2.*aa*cos(phi0)*dphi)
       av6 =   &
       -(uq(nlon,j+1,kk)*cos(phip)-uq(nlon,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
       avort(nlon,j,kk) = av4+av5+av6
@@ -180,8 +179,7 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
 
   do kk = 2,kmax-1
     do j = 1,nlat
-      phi0 = -90.+float(j-1)
-      phi0 = phi0*pi/float(nlat-1)
+      phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
       f = 2.*omega*sin(phi0)
       if (j .le. jd) then
         statp = stats(kk+1)

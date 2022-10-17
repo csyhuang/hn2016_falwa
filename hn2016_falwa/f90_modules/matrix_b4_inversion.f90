@@ -23,7 +23,7 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,&
   qjj(:,:) = 0.
   sjj(:,:) = sjk(:,:,k)
   tj(:) = tjk(:,k)
-  do jj = jb+2,90
+  do jj = jb+2,(nd-1)
     j = jj - jb
     phi0 = float(jj-1)*dp
     phip = (float(jj)-0.5)*dp

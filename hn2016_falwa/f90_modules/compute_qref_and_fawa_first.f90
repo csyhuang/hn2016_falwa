@@ -40,14 +40,14 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
 
 
   ! **** Zonal-mean field ****
-  do j = 91,jmax
-    qbar(j-90,:) = 0.
-    tbar(j-90,:) = 0.
-    ubar(j-90,:) = 0.
+  do j = nd,jmax
+    qbar(j-(nd-1),:) = 0.
+    tbar(j-(nd-1),:) = 0.
+    ubar(j-(nd-1),:) = 0.
     do i = 1,imax
-      qbar(j-90,:) = qbar(j-90,:)+pv(i,j,:)/float(imax)
-      tbar(j-90,:) = tbar(j-90,:)+pt(i,j,:)/float(imax)
-      ubar(j-90,:) = ubar(j-90,:)+uu(i,j,:)/float(imax)
+      qbar(j-(nd-1),:) = qbar(j-(nd-1),:)+pv(i,j,:)/float(imax)
+      tbar(j-(nd-1),:) = tbar(j-(nd-1),:)+pt(i,j,:)/float(imax)
+      ubar(j-(nd-1),:) = ubar(j-(nd-1),:)+uu(i,j,:)/float(imax)
     enddo
   enddo
 
@@ -162,7 +162,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   ! **** top boundary condition (Eqs. 24-25) *****
   tjk(:,:) = 0.
   sjk(:,:,:) = 0.
-  do jj = jb+2,90
+  do jj = jb+2,(nd-1)
     j = jj-jb
     phi0 = float(jj-1)*dp
     cos0 = cos(phi0)
