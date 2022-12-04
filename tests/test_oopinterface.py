@@ -20,7 +20,7 @@ get_cwd = os.path.dirname(os.path.abspath(__file__))
 u_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_u.txt'), [nlev, nlat, nlon])
 v_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_v.txt'), [nlev, nlat, nlon])
 t_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_t.txt'), [nlev, nlat, nlon])
-theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P0) ** (-DRY_GAS_CONSTANT / CP)
+theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P_GROUND) ** (-DRY_GAS_CONSTANT / CP)
 
 
 def test_qgfield():
