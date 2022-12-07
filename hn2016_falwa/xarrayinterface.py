@@ -494,8 +494,8 @@ def integrate_budget(ds, var_names=None):
 
     Integrates the LWA tendencies from equation (2) of `NH18
     <https://doi.org/10.1126/science.aat0721>`_ in time (over the time interval
-    covered by in the input data). The residual (term IV) is determined by
-    subtracting terms (I), (II) and (II) from the LWA difference between the
+    covered by the input data). The residual (term IV) is determined by
+    subtracting terms (I), (II) and (III) from the LWA difference between the
     last and first time step in the data. Uses
     :py:meth:`xarray.DataArray.integrate` for the time integration of the
     tendencies.
