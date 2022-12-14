@@ -18,7 +18,7 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 Package Installation
 ------------------------------
 
-This current version works in both Python 3.x. Note that from v0.3.0 onword, some functions are
+This current version works in both Python 2.7 and 3.x. Note that from v0.3.0 onword, some functions are
 having  backend in Fortran. You will need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) 
 to implement the installation.
 

@@ -13,7 +13,7 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 
 ## Package Installation
 
-This current version works in both Python 3.x. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
+This current version works in both Python 2.7 and 3.x. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 
 Since the package is still being actively developed, please use the *develop* mode for installation:
 ```
