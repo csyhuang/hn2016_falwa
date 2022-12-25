@@ -22,7 +22,7 @@ There are two sets of methods to compute the LWA column budget available in this
 2. `Neal et al., GRL (2022) <https://doi.org/10.1029/2021GL097699>`_ : eq (S5) - (S7) with reference states solved with boundary conditions (S14) - (S16).
     The corresponding methods of flux computation are:
         1. `_interpolate_field_dirinv`
-        2. `_compute_qref_fawa_and_bc`: since the latitudinal boundary is now away from the equator, solution is guaranteed such that `Direct Inversion <https://github.com/csyhuang/hn2016_falwa/blob/release0.7.0/notes/Direct_solver_for_NHN22.pdf>`_ is implemented.
+        2. `_compute_qref_fawa_and_bc`: since the latitudinal boundary is now away from the equator, solution is guaranteed such that `Direct Inversion <https://github.com/csyhuang/hn2016_falwa/blob/master/notes/Direct_solver_for_NHN22.pdf>`_ is implemented.
         3. `_compute_lwa_flux_dirinv`
 
 With the LWA column budget as formulated by `Nakamura and Huang, Science (2018) <https://www.science.org/doi/10.1126/science.aat0721>`_, the output fields of :py:meth:`QGField.compute_lwa_and_barotropic_fluxes` correspond to terms as follows:
