@@ -87,8 +87,10 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                 ep1(i,j,k) = ep1(i,j,k)*cosphi(j) ! correct for cosine factor
 
                 ! meridional eddy momentum flux one grid north and south
-                ep2(i,j,k)=(uu(i,j+jd  ,k)-uref(j,k))*vv(i,j+jd  ,k)*cosphi(j+1)*cosphi(j+1)
-                ep3(i,j,k)=(uu(i,j+jd-2,k)-uref(j,k))*vv(i,j+jd-2,k)*cosphi(j-1)*cosphi(j-1)
+                if (j.gt.1) then  ! only compute ep2 and ep3 for interior points (on latitude grid)
+                    ep2(i,j,k) = (uu(i,j+jd,k)-uref(j+1,k))*cosphi(j+1)*cosphi(j+1) * vv(i,j+jd,k)
+                    ep3(i,j,k) = (uu(i,j+jd-2,k)-uref(j-1,k))*cosphi(j-1)*cosphi(j-1) * vv(i,j+jd-2,k)
+                end if
 
                 ! low-level meridional eddy heat flux
                 if(k.eq.2) then     ! (26) of SI-HN17
