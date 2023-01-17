@@ -87,18 +87,18 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,qref,uref,tref,&
         ep11 = ep11*2.*dz/(tg(k+1)-tg(k-1))
         ep1(i,j) = ep1(i,j)-ep11                   !F3
         phip = dp*float(j)
-        cosp = cos(phip)          ! cosine for one grid north
         phi0 = dp*float(j-1)
-        cos0 = cos(phi0)          ! cosine for latitude grid
-        sin0 = sin(phi0)          ! sine for latitude grid
         phim = dp*float(j-2)
+        cosp = cos(phip)          ! cosine for one grid north
+        cos0 = cos(phi0)          ! cosine for latitude grid
         cosm = cos(phim)          ! cosine for one grid south
+        sin0 = sin(phi0)          ! sine for latitude grid
         ep1(i,j) = ep1(i,j)*cos0 ! correct for cosine factor
 
 
         ! meridional eddy momentum flux one grid north and south
-        ep2(i,j)=(uu(i,j+nd,k)-uref(j-jb,k))*vv(i,j+nd,k)*cosp*cosp
-        ep3(i,j)=(uu(i,j+(nd-2),k)-uref(j-jb,k))*vv(i,j+(nd-2),k)*cosm*cosm
+        ep2(i,j) = (uu(i,j+nd,k)-uref(j-jb+1,k))*cosp*cosp * vv(i,j+nd,k)
+        ep3(i,j) = (uu(i,j+nd-2,k)-uref(j-jb-1,k))*cosm*cosm * vv(i,j+nd-2,k)
 
         ! low-level meridional eddy heat flux
         if(k.eq.2) then     ! (26) of SI-HN17
@@ -110,6 +110,12 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,qref,uref,tref,&
           ep4(i,j) = ep41*(ep42+ep43)   ! low-level heat flux
         endif
       enddo
+      phip = dp*jb
+      phi0 = dp*(jb-1)
+      cosp = cos(phip)          ! cosine for one grid north
+      cos0 = cos(phi0)          ! cosine for latitude grid
+      ep2(i,jb) = (uu(i,nd+jb+1,k)-uref(2,k))*cosp*cosp*vv(i,nd+jb+1,k)
+      ep3(i,jb) = (uu(i,nd+jb,k)-uref(1,k))*cos0*cos0*vv(i,nd+jb,k)
     enddo
 
     ! ******** Column average: (25) of SI-HN17 ********
