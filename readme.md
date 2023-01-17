@@ -1,4 +1,4 @@
-## Python Library: hn2016_falwa (v0.6.1)
+## Python Library: hn2016_falwa (v0.6.3)
 
 [![Build Status](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 
@@ -10,10 +10,11 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 - [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1)
 - [Huang and Nakamura (2017, GRL)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full).
 - [Nakamura and Huang (2018, Science)](https://doi.org/10.1126/science.aat0721) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
+- [Neal et al (2022, GRL)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699) *The 2021 Pacific Northwest Heat Wave and Associated Blocking: Meteorology and the Role of an Upstream Cyclone as a Diabatic Source of Wave Activity*
 
 ## Package Installation
 
-This current version works in both Python 2.7 and 3.6. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
+This current version works in both Python 2.7 and 3.x. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 
 Since the package is still being actively developed, please use the *develop* mode for installation:
 ```

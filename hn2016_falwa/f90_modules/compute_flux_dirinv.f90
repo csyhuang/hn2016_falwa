@@ -97,8 +97,8 @@ SUBROUTINE compute_flux_dirinv(pv,uu,vv,pt,tn0,qref,uref,tref,&
 
 
         ! meridional eddy momentum flux one grid north and south
-        ep2(i,j)=(uu(i,j+91,k)-uref(j-jb,k))*vv(i,j+91,k)*cosp*cosp
-        ep3(i,j)=(uu(i,j+89,k)-uref(j-jb,k))*vv(i,j+89,k)*cosm*cosm
+        ep2(i,j)=(uu(i,j+nd,k)-uref(j-jb,k))*vv(i,j+nd,k)*cosp*cosp
+        ep3(i,j)=(uu(i,j+(nd-2),k)-uref(j-jb,k))*vv(i,j+(nd-2),k)*cosm*cosm
 
         ! low-level meridional eddy heat flux
         if(k.eq.2) then     ! (26) of SI-HN17

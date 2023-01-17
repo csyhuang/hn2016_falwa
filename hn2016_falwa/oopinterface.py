@@ -3,6 +3,7 @@
 File name: oopinterface.py
 Author: Clare Huang
 """
+from typing import Optional
 import math
 import warnings
 import numpy as np
@@ -10,7 +11,7 @@ from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgetrf, dgetri
 
 from hn2016_falwa import utilities
-from hn2016_falwa.constant import SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
+from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
 
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
@@ -211,7 +212,7 @@ class QGField(object):
         self._interpolated_u = None
         self._interpolated_v = None
         self._interpolated_theta = None
-        self.northern_hemisphere_results_only = False
+        self._northern_hemisphere_results_only: Optional[bool] = None  # Leave it uninitialized first.
 
         # Computation from compute_lwa_and_barotropic_fluxes
         self._adv_flux_f1 = None
@@ -269,7 +270,7 @@ class QGField(object):
             self.plev = plev
 
         # Check if kmax is valid given the max pseudoheight in the input data
-        hmax = -scale_height*np.log(plev[-1]/1000.)
+        hmax = -scale_height*np.log(plev[-1]/P_GROUND)
         if hmax < (kmax-1) * dz:
             raise ValueError('Input kmax = {} but the maximum valid kmax'.format(kmax) +
                              '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax//dz)+1))
@@ -520,8 +521,15 @@ class QGField(object):
         >>> qref, uref, ptref = test_object.compute_reference_states()
 
         """
-        self.northern_hemisphere_results_only = \
-            northern_hemisphere_results_only
+        if self._northern_hemisphere_results_only is None:
+            self._northern_hemisphere_results_only = northern_hemisphere_results_only
+        else:
+            if northern_hemisphere_results_only != self._northern_hemisphere_results_only:
+                warnings.warn(
+                    f"In compute_reference_states, input argument northern_hemisphere_results_only = " +
+                    f"{northern_hemisphere_results_only} but self._northern_hemisphere_results_only has been " +
+                    f"initialized to {self._northern_hemisphere_results_only} already. The following computation will " +
+                    f"use self._northern_hemisphere_results_only = {self._northern_hemisphere_results_only}.")
 
         if self._qgpv_temp is None:
             self.interpolate_fields()
@@ -536,7 +544,7 @@ class QGField(object):
             self._qref_ntemp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
 
         # === Compute reference states in Southern Hemisphere ===
-        if not self.northern_hemisphere_results_only:
+        if not self._northern_hemisphere_results_only:
             self._qref_stemp, self._uref_stemp, self._ptref_stemp, num_of_iter = self._compute_reference_state_wrapper(
                 qgpv=-self._qgpv_temp[:, ::-1, :],
                 u=self._interpolated_u_temp[:, ::-1, :],
@@ -548,7 +556,7 @@ class QGField(object):
             qref_stemp_right_unit = self._qref_stemp[::-1, :] * 2 * self.omega * np.sin(
                 np.deg2rad(self.ylat[:self.equator_idx, np.newaxis]))
 
-        if self.northern_hemisphere_results_only:
+        if self._northern_hemisphere_results_only:
             self._qref = np.swapaxes(qref_ntemp_right_unit, 0, 1)
             self._uref = np.swapaxes(self._uref_ntemp, 0, 1)
             self._ptref = np.swapaxes(self._ptref_ntemp, 0, 1)
@@ -583,7 +591,8 @@ class QGField(object):
         ----------
         northern_hemisphere_results_only : bool
            If true, arrays of size [kmax, nlat//2+1] will be returned. Otherwise, arrays of size [kmax, nlat] will be
-           returned. Default: False.
+           returned. Default: False. If this variable has been initialized when calling compute_reference_states,
+           the initialized value will be used. This variable will be deprecated in the next major release.
 
         Returns
         -------
@@ -638,13 +647,19 @@ class QGField(object):
             lwa_baro, u_baro, lwa = test_object.compute_lwa_and_barotropic_fluxes()
         """
 
-        self.northern_hemisphere_results_only = northern_hemisphere_results_only
-
+        # Check if previous steps have been done.
         if self._qgpv_temp is None:
             self.interpolate_fields()
 
         if self._uref_ntemp is None:
-            self.compute_reference_states()
+            self.compute_reference_states(northern_hemisphere_results_only)
+
+        if northern_hemisphere_results_only != self._northern_hemisphere_results_only:
+            warnings.warn(
+                f"In compute_lwa_and_barotropic_fluxes, input argument northern_hemisphere_results_only = " +
+                f"{northern_hemisphere_results_only} but self._northern_hemisphere_results_only has been " +
+                f"initialized to {self._northern_hemisphere_results_only} already. The following computation will " +
+                f"use self._northern_hemisphere_results_only = {self._northern_hemisphere_results_only}.")
 
         # === Compute barotropic flux terms (NHem) ===
         lwa_nhem, astarbaro_nhem, ua1baro_nhem, ubaro_nhem, ua2baro_nhem,\
@@ -667,7 +682,7 @@ class QGField(object):
         self._ep4_nhem = ep4_nhem
 
         # === Compute barotropic flux terms (SHem) ===
-        if not northern_hemisphere_results_only:
+        if not self._northern_hemisphere_results_only:
             lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
                 ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
@@ -697,7 +712,7 @@ class QGField(object):
 
         # *** Southern Hemisphere ***
         # Compute divergence of the meridional eddy momentum flux
-        if not northern_hemisphere_results_only:
+        if not self._northern_hemisphere_results_only:
             meri_flux_shem_temp = np.zeros_like(ep2baro_shem)
             meri_flux_shem_temp[:, 1:-1] = (ep2baro_shem[:, 1:-1] - ep3baro_shem[:, 1:-1]) / \
                 (2 * self.planet_radius * self.dphi *
@@ -713,7 +728,7 @@ class QGField(object):
                     planet_radius=self.planet_radius
                 )
 
-        if northern_hemisphere_results_only:
+        if self._northern_hemisphere_results_only:
             self._adv_flux_f1 = np.swapaxes(ua1baro_nhem, 0, 1)
             self._adv_flux_f2 = np.swapaxes(ua2baro_nhem, 0, 1)
             self._adv_flux_f3 = np.swapaxes(ep1baro_nhem, 0, 1)
@@ -977,7 +992,7 @@ class QGField(object):
         if self._qref is None:
             raise ValueError('qref is not computed yet.')
         return self._return_interp_variables(variable=self._qref, interp_axis=1,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def uref(self):
@@ -987,7 +1002,7 @@ class QGField(object):
         if self._uref is None:
             raise ValueError('uref field is not computed yet.')
         return self._return_interp_variables(variable=self._uref, interp_axis=1,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def ptref(self):
@@ -997,7 +1012,7 @@ class QGField(object):
         if self._ptref is None:
             raise ValueError('ptref field is not computed yet.')
         return self._return_interp_variables(variable=self._ptref, interp_axis=1,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def adv_flux_f1(self):
@@ -1007,7 +1022,7 @@ class QGField(object):
         if self._adv_flux_f1 is None:
             raise ValueError('adv_flux_f1 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f1, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def adv_flux_f2(self):
@@ -1017,7 +1032,7 @@ class QGField(object):
         if self._adv_flux_f2 is None:
             raise ValueError('adv_flux_f2 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f2, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def adv_flux_f3(self):
@@ -1027,7 +1042,7 @@ class QGField(object):
         if self._adv_flux_f3 is None:
             raise ValueError('adv_flux_f3 is not computed yet.')
         return self._return_interp_variables(variable=self._adv_flux_f3, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def convergence_zonal_advective_flux(self):
@@ -1037,7 +1052,7 @@ class QGField(object):
         if self._convergence_zonal_advective_flux is None:
             raise ValueError('convergence_zonal_advective_flux is not computed yet.')
         return self._return_interp_variables(variable=self._convergence_zonal_advective_flux, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def divergence_eddy_momentum_flux(self):
@@ -1047,7 +1062,7 @@ class QGField(object):
         if self._divergence_eddy_momentum_flux is None:
             raise ValueError('divergence_eddy_momentum_flux is not computed yet.')
         return self._return_interp_variables(variable=self._divergence_eddy_momentum_flux, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def meridional_heat_flux(self):
@@ -1057,7 +1072,7 @@ class QGField(object):
         if self._meridional_heat_flux is None:
             raise ValueError('meridional_heat_flux is not computed yet.')
         return self._return_interp_variables(variable=self._meridional_heat_flux, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def lwa_baro(self):
@@ -1067,7 +1082,7 @@ class QGField(object):
         if self._lwa_baro is None:
             raise ValueError('lwa_baro is not computed yet.')
         return self._return_interp_variables(variable=self._lwa_baro, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def u_baro(self):
@@ -1077,7 +1092,7 @@ class QGField(object):
         if self._u_baro is None:
             raise ValueError('u_baro is not computed yet.')
         return self._return_interp_variables(variable=self._u_baro, interp_axis=0,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     @property
     def lwa(self):
@@ -1087,7 +1102,7 @@ class QGField(object):
         if self._lwa is None:
             raise ValueError('lwa is not computed yet.')
         return self._return_interp_variables(variable=self._lwa, interp_axis=1,
-                                             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+                                             northern_hemisphere_results_only=self._northern_hemisphere_results_only)
 
     def get_latitude_dim(self):
         """
