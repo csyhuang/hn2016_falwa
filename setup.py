@@ -17,8 +17,7 @@ LONG_DESCRIPTION =\
     proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
     finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
     
-    Links:
-    -----
+    Links:    
     - Source code: http://github.com/csyhuang/hn2016_falwa/
     """
 
@@ -61,17 +60,18 @@ ext9 = Extension(name='hn2016_falwa.compute_flux_dirinv',
 
 setup(
     name='hn2016_falwa',
-    version='0.6.4',
+    version='0.6.5',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
+    long_description_content_type='text/markdown',
     url='https://github.com/csyhuang/hn2016_falwa',
     author='Clare S. Y. Huang',
     author_email='csyhuang@protonmail.com',
     license='MIT',
     packages=find_packages(),
+    install_requires=['numpy', 'scipy', 'xarray'],
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
-    extras_require={"Xarray": ["xarray"]},
     test_suite="tests",
     ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
     zip_safe=False
