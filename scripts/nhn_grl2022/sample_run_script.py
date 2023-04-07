@@ -18,7 +18,7 @@ from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_
     plot_figure3e, plot_figure3f, plot_figure4, plot_figure5
 
 data_dir = "grl2021_data/"
-to_generate_data = True
+to_generate_data = True  # Set this to False if wave activity and fluxes are computed and stored in netCDF file already
 
 # --- Load the zonal wind and QGPV at 240hPa --- #
 u_file = Dataset(data_dir + '2021_06_u.nc', mode='r')

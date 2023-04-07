@@ -262,53 +262,53 @@ def plot_figure1d_2a(t_filename):
 
 
 def plot_figure3_and_S1(lwa_flux_filename):
+
     ncin1 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
 
     lwa = ncin1.variables['lwa']
     lwa = (np.array(lwa))
 
-    z = np.zeros((91,360))
-    z[:,:] = lwa[100,:,:]-lwa[76,:,:]   # m = 100 is 00 UTC 26 June 2021, m = 76 is 00 UTC 20 June 2021
+    z = np.zeros((91, 360))
+    z[:, :] = lwa[100, :, :] - lwa[76, :, :]  # m = 100 is 00 UTC 26 June 2021, m = 76 is 00 UTC 20 June 2021
 
-    zs = np.zeros((91,360))  # smoothed z #
+    zs = np.zeros((91, 360))  # smoothed z #
 
     #### smoothing in longitude ####
-    n = 5     # smoothing width #
+    n = 5  # smoothing width #
     j = 0
-    while(j < 91):
+    while (j < 91):
         zx = np.zeros(360)
-        zx[:] = z[j,:]
+        zx[:] = z[j, :]
         nn = -n
-        while(nn < n+1):
-            zy = np.roll(zx,nn)
-            zs[j,:] = zs[j,:] + zy[:]/(2*n+1)
-            nn = nn+1
-        j = j+1
+        while (nn < n + 1):
+            zy = np.roll(zx, nn)
+            zs[j, :] = zs[j, :] + zy[:] / (2 * n + 1)
+            nn = nn + 1
+        j = j + 1
 
-
-    cl2 = np.arange(-80,90,10)
-    x = np.arange(0,360)
-    y = np.arange(0,91)
+    cl2 = np.arange(-80, 90, 10)
+    x = np.arange(0, 360)
+    y = np.arange(0, 91)
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure(figsize=(10, 5))
-    ax5 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    plt.xlim(140, 280)
+    ax5 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree(180))
+    plt.xlim(-40, 100)
     plt.ylim(10, 80)
     plt.title('Column LWA Change  00 UTC 20 - 26 June 2021')
-    #plot.xlabel('Longitude')
+    # plot.xlabel('Longitude')
     plt.ylabel('Latitude', fontsize=22)
-    ax5.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
-    ax5.coastlines(alpha = 0.7)
+    ax5.coastlines(alpha=0.7)
     ax5.set_aspect('auto', adjustable=None)
-    ax5.set_xticks([140,160,180,200,220,240,260,280], crs=ccrs.PlateCarree())
+    ax5.set_xticks([140, 160, 180, 200, 220, 240, 260, 280], crs=ccrs.PlateCarree())
     ax5.set_yticks([10, 20, 30, 40, 50, 60, 70, 80], crs=ccrs.PlateCarree())
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax5.xaxis.set_major_formatter(lon_formatter)
     ax5.yaxis.set_major_formatter(lat_formatter)
-    ott = ax5.contourf(x,y,zs,levels=cl2,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax5,label='LWA (m/s)')
-    plt.savefig('dLWA_0.png', bbox_inches='tight', dpi =600)
+    ott = ax5.contourf(x[140:281], y[10:81], zs[10:81, 140:281], levels=cl2, transform=ccrs.PlateCarree(),
+                       cmap='rainbow')
+    fig.colorbar(ott, ax=ax5, label='LWA (m/s)')
+    plt.savefig('dLWA_0.png', bbox_inches='tight', dpi=600)
 
     ncin1 = Dataset(lwa_flux_filename, 'r', format='NETCDF4')
     ua1 = ncin1.variables['ua1']
@@ -329,185 +329,196 @@ def plot_figure3_and_S1(lwa_flux_filename):
     ep4 = ncin6.variables['ep4']
     ep4 = (np.array(ep4))
 
-    f1 = np.zeros((91,360))
-    f2 = np.zeros((91,360))
-    f11 = np.zeros((91,360))
-    f22 = np.zeros((91,360))
+    f1 = np.zeros((91, 360))
+    f2 = np.zeros((91, 360))
+    f11 = np.zeros((91, 360))
+    f22 = np.zeros((91, 360))
 
-    z1 = np.zeros((91,360))
-    z2 = np.zeros((91,360))
-    z3 = np.zeros((91,360))
-    dt = 3600.*6.
+    z1 = np.zeros((91, 360))
+    z2 = np.zeros((91, 360))
+    z3 = np.zeros((91, 360))
+    dt = 3600. * 6.
     a = 6378000.
-    dl = 2.*np.pi/360.
-    dp = 2.*np.pi/360.
-    m = 76              # m = 76 is 20 June 2021 00 UTC
-    while(m < 100):     # m = 100 is 26 June 2021 00 UTC
-    #m = 52              # m = 52 is 14 June 2021 00 UTC
-    #while(m < 76):     # m = 76 is 20 June 2021 00 UTC
+    dl = 2. * np.pi / 360.
+    dp = 2. * np.pi / 360.
+    m = 76  # m = 76 is 20 June 2021 00 UTC
+    while (m < 100):  # m = 100 is 26 June 2021 00 UTC
+        # m = 52              # m = 52 is 14 June 2021 00 UTC
+        # while(m < 76):     # m = 76 is 20 June 2021 00 UTC
 
-        z3[:,:] = z3[:,:]+0.5*dt*ep4[m,:,:]
-        z3[:,:] = z3[:,:]+0.5*dt*ep4[m+1,:,:]
-        f1[:,:] = f1[:,:]+(0.5/24.)*(ua1[m,:,:]+ua2[m,:,:]+ep1[m,:,:])
-        f1[:,:] = f1[:,:]+(0.5/24.)*(ua1[m+1,:,:]+ua2[m+1,:,:]+ep1[m+1,:,:])
-        f11[:,:] = f11[:,:]+(0.5/24.)*(ua1[m-24,:,:]+ua2[m-24,:,:]+ep1[m-24,:,:])
-        f11[:,:] = f11[:,:]+(0.5/24.)*(ua1[m-23,:,:]+ua2[m-23,:,:]+ep1[m-23,:,:])
+        z3[:, :] = z3[:, :] + 0.5 * dt * ep4[m, :, :]
+        z3[:, :] = z3[:, :] + 0.5 * dt * ep4[m + 1, :, :]
+        f1[:, :] = f1[:, :] + (0.5 / 24.) * (ua1[m, :, :] + ua2[m, :, :] + ep1[m, :, :])
+        f1[:, :] = f1[:, :] + (0.5 / 24.) * (ua1[m + 1, :, :] + ua2[m + 1, :, :] + ep1[m + 1, :, :])
+        f11[:, :] = f11[:, :] + (0.5 / 24.) * (ua1[m - 24, :, :] + ua2[m - 24, :, :] + ep1[m - 24, :, :])
+        f11[:, :] = f11[:, :] + (0.5 / 24.) * (ua1[m - 23, :, :] + ua2[m - 23, :, :] + ep1[m - 23, :, :])
         j = 0
-        while(j < 90):
-            phi = dp*j
-            const = 0.5*dt/(2.*a*np.cos(phi)*dl)
-            z2[j,:]=z2[j,:]+const*(ep2[m,j,:]-ep3[m,j,:])
-            z2[j,:]=z2[j,:]+const*(ep2[m+1,j,:]-ep3[m+1,j,:])
-            f2[j,:] = f2[j,:]+(0.25/24.)*(ep2[m,j,:]+ep3[m,j,:])/np.cos(phi)
-            f2[j,:] = f2[j,:]+(0.25/24.)*(ep2[m+1,j,:]+ep3[m+1,j,:])/np.cos(phi)
-            f22[j,:] = f22[j,:]+(0.25/24.)*(ep2[m-24,j,:]+ep3[m-24,j,:])/np.cos(phi)
-            f22[j,:] = f22[j,:]+(0.25/24.)*(ep2[m-23,j,:]+ep3[m-23,j,:])/np.cos(phi)
+        while (j < 90):
+            phi = dp * j
+            const = 0.5 * dt / (2. * a * np.cos(phi) * dl)
+            z2[j, :] = z2[j, :] + const * (ep2[m, j, :] - ep3[m, j, :])
+            z2[j, :] = z2[j, :] + const * (ep2[m + 1, j, :] - ep3[m + 1, j, :])
+            f2[j, :] = f2[j, :] + (0.25 / 24.) * (ep2[m, j, :] + ep3[m, j, :]) / np.cos(phi)
+            f2[j, :] = f2[j, :] + (0.25 / 24.) * (ep2[m + 1, j, :] + ep3[m + 1, j, :]) / np.cos(phi)
+            f22[j, :] = f22[j, :] + (0.25 / 24.) * (ep2[m - 24, j, :] + ep3[m - 24, j, :]) / np.cos(phi)
+            f22[j, :] = f22[j, :] + (0.25 / 24.) * (ep2[m - 23, j, :] + ep3[m - 23, j, :]) / np.cos(phi)
             i = 1
-            while(i < 359):
-                z1[j,i] = z1[j,i]-const*(ua1[m,j,i+1]+ua2[m,j,i+1]+ep1[m,j,i+1]-ua1[m,j,i-1]-ua2[m,j,i-1]-ep1[m,j,i-1])
-                z1[j,i] = z1[j,i]-const*(ua1[m+1,j,i+1]+ua2[m+1,j,i+1]+ep1[m+1,j,i+1]-ua1[m+1,j,i-1]-ua2[m+1,j,i-1]-ep1[m+1,j,i-1])
-                i = i+1
-            z1[j,0] = z1[j,0]-const*(ua1[m,j,1]+ua2[m,j,1]+ep1[m,j,1]-ua1[m,j,359]-ua2[m,j,359]-ep1[m,j,359])
-            z1[j,0] = z1[j,0]-const*(ua1[m+1,j,1]+ua2[m+1,j,1]+ep1[m+1,j,1]-ua1[m+1,j,359]-ua2[m+1,j,359]-ep1[m+1,j,359])
-            z1[j,359] = z1[j,359]-const*(ua1[m,j,0]+ua2[m,j,0]+ep1[m,j,0]-ua1[m,j,358]-ua2[m,j,358]-ep1[m,j,358])
-            z1[j,359] = z1[j,359]-const*(ua1[m+1,j,0]+ua2[m+1,j,0]+ep1[m+1,j,0]-ua1[m+1,j,358]-ua2[m+1,j,358]-ep1[m+1,j,358])
-            j = j+1
-        m = m+1
+            while (i < 359):
+                z1[j, i] = z1[j, i] - const * (
+                            ua1[m, j, i + 1] + ua2[m, j, i + 1] + ep1[m, j, i + 1] - ua1[m, j, i - 1] - ua2[
+                        m, j, i - 1] - ep1[m, j, i - 1])
+                z1[j, i] = z1[j, i] - const * (
+                            ua1[m + 1, j, i + 1] + ua2[m + 1, j, i + 1] + ep1[m + 1, j, i + 1] - ua1[m + 1, j, i - 1] -
+                            ua2[m + 1, j, i - 1] - ep1[m + 1, j, i - 1])
+                i = i + 1
+            z1[j, 0] = z1[j, 0] - const * (
+                        ua1[m, j, 1] + ua2[m, j, 1] + ep1[m, j, 1] - ua1[m, j, 359] - ua2[m, j, 359] - ep1[m, j, 359])
+            z1[j, 0] = z1[j, 0] - const * (
+                        ua1[m + 1, j, 1] + ua2[m + 1, j, 1] + ep1[m + 1, j, 1] - ua1[m + 1, j, 359] - ua2[
+                    m + 1, j, 359] - ep1[m + 1, j, 359])
+            z1[j, 359] = z1[j, 359] - const * (
+                        ua1[m, j, 0] + ua2[m, j, 0] + ep1[m, j, 0] - ua1[m, j, 358] - ua2[m, j, 358] - ep1[m, j, 358])
+            z1[j, 359] = z1[j, 359] - const * (
+                        ua1[m + 1, j, 0] + ua2[m + 1, j, 0] + ep1[m + 1, j, 0] - ua1[m + 1, j, 358] - ua2[
+                    m + 1, j, 358] - ep1[m + 1, j, 358])
+            j = j + 1
+        m = m + 1
 
-    z1s = np.zeros((91,360))  # smoothed z1 #
-    z2s = np.zeros((91,360))  # smoothed z2 #
-    z3s = np.zeros((91,360))  # smoothed z3 #
+    z1s = np.zeros((91, 360))  # smoothed z1 #
+    z2s = np.zeros((91, 360))  # smoothed z2 #
+    z3s = np.zeros((91, 360))  # smoothed z3 #
 
     #### smoothing in longitude ####
     j = 0
-    while(j < 91):
+    while (j < 91):
         z1x = np.zeros(360)
-        z1x[:] = z1[j,:]
+        z1x[:] = z1[j, :]
         z2x = np.zeros(360)
-        z2x[:] = z2[j,:]
+        z2x[:] = z2[j, :]
         z3x = np.zeros(360)
-        z3x[:] = z3[j,:]
+        z3x[:] = z3[j, :]
         nn = -n
-        while(nn < n+1):
-            z1y = np.roll(z1x,nn)
-            z1s[j,:] = z1s[j,:] + z1y[:]/(2*n+1)
-            z2y = np.roll(z2x,nn)
-            z2s[j,:] = z2s[j,:] + z2y[:]/(2*n+1)
-            z3y = np.roll(z3x,nn)
-            z3s[j,:] = z3s[j,:] + z3y[:]/(2*n+1)
-            nn = nn+1
-        j = j+1
+        while (nn < n + 1):
+            z1y = np.roll(z1x, nn)
+            z1s[j, :] = z1s[j, :] + z1y[:] / (2 * n + 1)
+            z2y = np.roll(z2x, nn)
+            z2s[j, :] = z2s[j, :] + z2y[:] / (2 * n + 1)
+            z3y = np.roll(z3x, nn)
+            z3s[j, :] = z3s[j, :] + z3y[:] / (2 * n + 1)
+            nn = nn + 1
+        j = j + 1
 
     ##### Wind vectors ######
 
-    x1 = np.arange(0,24)*15.+5.
-    y1 = np.arange(0,30)*3.
-    xx,yy = np.meshgrid(x1,y1)
-    uu = np.zeros((30,24))
-    vv = np.zeros((30,24))
+    x1 = np.arange(0, 24) * 15. + 5.
+    y1 = np.arange(0, 30) * 3.
+    xx, yy = np.meshgrid(x1, y1)
+    uu = np.zeros((30, 24))
+    vv = np.zeros((30, 24))
 
     j = 0
-    while(j < 30):
+    while (j < 30):
         i = 0
-        while(i < 24):
-            uu[j,i] = f1[j*3,i*15+5]-f11[j*3,i*15+5]
-            vv[j,i] = f2[j*3,i*15+5]-f22[j*3,i*15+5]
-            i = i+1
-        j = j+1
+        while (i < 24):
+            uu[j, i] = f1[j * 3, i * 15 + 5] - f11[j * 3, i * 15 + 5]
+            vv[j, i] = f2[j * 3, i * 15 + 5] - f22[j * 3, i * 15 + 5]
+            i = i + 1
+        j = j + 1
 
-
-    cl1 = np.arange(-200,220,20)
-    x = np.arange(0,360)
-    y = np.arange(0,91)
+    cl1 = np.arange(-200, 220, 20)
+    x = np.arange(0, 360)
+    y = np.arange(0, 91)
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure(figsize=(10, 5))
-    ax6 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    plt.xlim(0, 360)
+    ax6 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree(180))
+    plt.xlim(-40, 100)
     plt.ylim(10, 80)
     plt.title('Integrated column -div (Fx + Fy)   20 - 26 June 2021')
     plt.ylabel('Latitude', fontsize=22)
-    ax6.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
-    ax6.coastlines(alpha = 0.7)
+    ax6.coastlines(alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
-    ax6.set_xticks([140,160,180,200,220,240,260,280], crs=ccrs.PlateCarree())
+    ax6.set_xticks([140, 160, 180, 200, 220, 240, 260, 280], crs=ccrs.PlateCarree())
     ax6.set_yticks([10, 20, 30, 40, 50, 60, 70, 80], crs=ccrs.PlateCarree())
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax6.xaxis.set_major_formatter(lon_formatter)
     ax6.yaxis.set_major_formatter(lat_formatter)
-    ott = ax6.contourf(x,y,z1s+z2s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax6,label='(m/s)')
-    ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
-    plt.savefig('divFx+Fy_0.png', bbox_inches='tight', dpi =600)
+    ott = ax6.contourf(x[140:281], y[10:81], z1s[10:81, 140:281] + z2s[10:81, 140:281], levels=cl1,
+                       transform=ccrs.PlateCarree(), cmap='rainbow')
+    fig.colorbar(ott, ax=ax6, label='(m/s)')
+    ax6.quiver(xx[2:-2, :], yy[2:-2, :], uu[2:-2, :], vv[2:-2, :], transform=ccrs.PlateCarree())
+    plt.savefig('divFx+Fy_0.png', bbox_inches='tight', dpi=600)
 
-    cl1 = np.arange(-200,220,20)
-    x = np.arange(0,360)
-    y = np.arange(0,91)
+    cl1 = np.arange(-200, 220, 20)
+    x = np.arange(0, 360)
+    y = np.arange(0, 91)
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure(figsize=(10, 5))
-    ax6 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    plt.xlim(0, 360)
+    ax6 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree(180))
+    plt.xlim(-40, 100)
     plt.ylim(10, 80)
     plt.title('Integrated column -div Fy   20 - 26 June 2021')
     plt.xlabel('Longitude', fontsize=22)
     plt.ylabel('Latitude', fontsize=22)
-    ax6.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
-    ax6.coastlines(alpha = 0.7)
+    ax6.coastlines(alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
-    ax6.set_xticks([140,160,180,200,220,240,260,280], crs=ccrs.PlateCarree())
+    ax6.set_xticks([140, 160, 180, 200, 220, 240, 260, 280], crs=ccrs.PlateCarree())
     ax6.set_yticks([10, 20, 30, 40, 50, 60, 70, 80], crs=ccrs.PlateCarree())
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax6.xaxis.set_major_formatter(lon_formatter)
     ax6.yaxis.set_major_formatter(lat_formatter)
-    ott = ax6.contourf(x,y,z2s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax6,label='(m/s)')
-    ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
-    plt.savefig('divFy_0.png', bbox_inches='tight', dpi =600)
+    ott = ax6.contourf(x[140:281], y[10:81], z2s[10:81, 140:281], levels=cl1, transform=ccrs.PlateCarree(),
+                       cmap='rainbow')
+    fig.colorbar(ott, ax=ax6, label='(m/s)')
+    ax6.quiver(xx[2:-2, :], yy[2:-2, :], uu[2:-2, :], vv[2:-2, :], transform=ccrs.PlateCarree())
+    plt.savefig('divFy_0.png', bbox_inches='tight', dpi=600)
 
-    cl1 = np.arange(-200,220,20)
-    x = np.arange(0,360)
-    y = np.arange(0,91)
+    cl1 = np.arange(-200, 220, 20)
+    x = np.arange(0, 360)
+    y = np.arange(0, 91)
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure(figsize=(10, 5))
-    ax6 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    plt.xlim(0, 360)
+    ax6 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree(180))
+    plt.xlim(-40, 100)
     plt.ylim(10, 80)
     plt.title('Integrated low-level source   20 - 26 June 2021')
-    ax6.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
-    ax6.coastlines(alpha = 0.7)
+    ax6.coastlines(alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
-    ax6.set_xticks([140,160,180,200,220,240,260,280], crs=ccrs.PlateCarree())
+    ax6.set_xticks([140, 160, 180, 200, 220, 240, 260, 280], crs=ccrs.PlateCarree())
     ax6.set_yticks([10, 20, 30, 40, 50, 60, 70, 80], crs=ccrs.PlateCarree())
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax6.xaxis.set_major_formatter(lon_formatter)
     ax6.yaxis.set_major_formatter(lat_formatter)
-    ott = ax6.contourf(x,y,z3s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax6,label='(m/s)')
-    plt.savefig('EP4_0.png', bbox_inches='tight', dpi =600)
+    ott = ax6.contourf(x[140:281], y[10:81], z3s[10:81, 140:281], levels=cl1, transform=ccrs.PlateCarree(),
+                       cmap='rainbow')
+    fig.colorbar(ott, ax=ax6, label='(m/s)')
+    plt.savefig('EP4_0.png', bbox_inches='tight', dpi=600)
 
-    cl1 = np.arange(-200,220,20)
-    x = np.arange(0,360)
-    y = np.arange(0,91)
+    cl1 = np.arange(-200, 220, 20)
+    x = np.arange(0, 360)
+    y = np.arange(0, 91)
     fig = plt.figure(figsize=(10, 5))
-    ax6 = fig.add_subplot(1,1,1,projection=ccrs.PlateCarree(180))
-    plt.xlim(0, 360)
+    ax6 = fig.add_subplot(1, 1, 1, projection=ccrs.PlateCarree(180))
+    plt.xlim(-40, 100)
     plt.ylim(10, 80)
     plt.title('Integrated residual   20 - 26 June 2021')
-    ax6.set_extent([-220, -80, 10, 80], ccrs.PlateCarree())
-    ax6.coastlines(alpha = 0.7)
+    ax6.coastlines(alpha=0.7)
     ax6.set_aspect('auto', adjustable=None)
-    ax6.set_xticks([140,160,180,200,220,240,260,280], crs=ccrs.PlateCarree())
+    ax6.set_xticks([140, 160, 180, 200, 220, 240, 260, 280], crs=ccrs.PlateCarree())
     ax6.set_yticks([10, 20, 30, 40, 50, 60, 70, 80], crs=ccrs.PlateCarree())
     lon_formatter = LongitudeFormatter(zero_direction_label=True)
     lat_formatter = LatitudeFormatter()
     ax6.xaxis.set_major_formatter(lon_formatter)
     ax6.yaxis.set_major_formatter(lat_formatter)
-    ott = ax6.contourf(x,y,zs-z1s-z2s-z3s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax6,label='(m/s)')
-    ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
-    plt.savefig('Residual_0.png', bbox_inches='tight', dpi =600)
+    ott = ax6.contourf(x[140:281], y[10:81],
+                       zs[10:81, 140:281] - z1s[10:81, 140:281] - z2s[10:81, 140:281] - z3s[10:81, 140:281], levels=cl1,
+                       transform=ccrs.PlateCarree(), cmap='rainbow')
+    fig.colorbar(ott, ax=ax6, label='(m/s)')
+    ax6.quiver(xx[2:-2, :], yy[2:-2, :], uu[2:-2, :], vv[2:-2, :], transform=ccrs.PlateCarree())
+    plt.savefig('Residual_0.png', bbox_inches='tight', dpi=600)
+    plt.show()
     plt.close("all")
 
 
