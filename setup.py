@@ -66,7 +66,7 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/csyhuang/hn2016_falwa',
     author='Clare S. Y. Huang',
-    author_email='csyhuang@protonmail.com',
+    author_email='csyhuang@uchicago.edu',
     license='MIT',
     packages=find_packages(),
     install_requires=['numpy', 'scipy', 'xarray'],

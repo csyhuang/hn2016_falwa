@@ -18,7 +18,7 @@ from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_
     plot_figure3e, plot_figure3f, plot_figure4, plot_figure5
 
 data_dir = "grl2021_data/"
-to_generate_data = True
+to_generate_data = False
 
 # --- Load the zonal wind and QGPV at 240hPa --- #
 u_file = Dataset(data_dir + '2021_06_u.nc', mode='r')
@@ -154,12 +154,12 @@ sp_filename = data_dir + "2021_06_sp.nc"   # sea level pressure (hPa)
 lwa_flux_filename = output_fname
 
 # Execute graph plotting functions
-plot_figure1a(z_filename, u_filename, v_filename)
-plot_figure1b(t_filename)
-plot_figure1c(t2m_filename)
-plot_figure1d_2a(t_filename)
+# plot_figure1a(z_filename, u_filename, v_filename)
+# plot_figure1b(t_filename)
+# plot_figure1c(t2m_filename)
+# plot_figure1d_2a(t_filename)
 plot_figure3_and_S1(lwa_flux_filename)
-plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
-plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
-plot_figure4(lwa_flux_filename)
-plot_figure5(lwa_flux_filename)
+# plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
+# plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
+# plot_figure4(lwa_flux_filename)
+# plot_figure5(lwa_flux_filename)

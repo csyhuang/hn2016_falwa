@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, title, tstamp, diff_factor=0.01, figsize=(15, 4)):
+def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_file='default.png', diff_factor=0.01, figsize=(15, 4)):
 
     cmin = np.min([field_a.min(), field_b.min()])
     cmax = np.max([field_a.max(), field_b.max()])
@@ -21,5 +21,7 @@ def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, tit
         cs3 = ax3.contourf(x_coord, y_coord, np.abs(field_a - field_b), cmap='rainbow')
     ax3.set_title(f'Abs difference')
     cbar3 = fig.colorbar(cs3)
+    plt.suptitle(title)
+    plt.savefig(savefig_file)
     plt.show()
 

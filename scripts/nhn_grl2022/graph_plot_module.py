@@ -285,7 +285,6 @@ def plot_figure3_and_S1(lwa_flux_filename):
             nn = nn+1
         j = j+1
 
-
     cl2 = np.arange(-80,90,10)
     x = np.arange(0,360)
     y = np.arange(0,91)
@@ -487,7 +486,7 @@ def plot_figure3_and_S1(lwa_flux_filename):
     fig.colorbar(ott,ax=ax6,label='(m/s)')
     plt.savefig('EP4_0.png', bbox_inches='tight', dpi =600)
 
-    cl1 = np.arange(-200,220,20)
+    cl1 = np.arange(-200, 201, 20)
     x = np.arange(0,360)
     y = np.arange(0,91)
     fig = plt.figure(figsize=(10, 5))
@@ -504,8 +503,12 @@ def plot_figure3_and_S1(lwa_flux_filename):
     lat_formatter = LatitudeFormatter()
     ax6.xaxis.set_major_formatter(lon_formatter)
     ax6.yaxis.set_major_formatter(lat_formatter)
-    ott = ax6.contourf(x,y,zs-z1s-z2s-z3s,levels=cl1,transform=ccrs.PlateCarree(),cmap='rainbow')
-    fig.colorbar(ott,ax=ax6,label='(m/s)')
+    # *** Output residual ***
+    field_to_output = zs-z1s-z2s-z3s
+    np.save('Residual_0.npy', field_to_output)
+    # *** Finished output residual ***
+    ott = ax6.contourf(x, y, zs-z1s-z2s-z3s, levels=cl1, transform=ccrs.PlateCarree(), cmap='rainbow', antialiased=False)
+    fig.colorbar(ott, ax=ax6, label='(m/s)')
     ax6.quiver(xx[2:-2,:],yy[2:-2,:],uu[2:-2, :],vv[2:-2, :],transform=ccrs.PlateCarree())
     plt.savefig('Residual_0.png', bbox_inches='tight', dpi =600)
     plt.close("all")

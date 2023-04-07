@@ -97,7 +97,7 @@ Issues Reporting
 
 Please make inquiries about / report issues / with the package and suggest feature extensions on the `Issues page <https://github.com/csyhuang/hn2016_falwa/issues>`_. 
 
-If you need help analyzing output from particular model/analysis with our techniques, feel free to email me *csyhuang@protonmail.com* with sample datasets and I can configure the code for you.
+If you need help analyzing output from particular model/analysis with our techniques, feel free to email me *csyhuang@uchicago.edu* with sample datasets and I can configure the code for you.
    
 
 Indices and tables
