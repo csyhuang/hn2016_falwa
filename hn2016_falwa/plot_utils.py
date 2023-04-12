@@ -1,11 +1,29 @@
+"""
+------------------------------------------
+File name: plot_utils.py
+Author: Clare Huang
+"""
 import numpy as np
 from matplotlib import pyplot as plt
 
 
 def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_file='default.png', diff_factor=0.01, figsize=(15, 4)):
-
-    cmin = np.min([field_a.min(), field_b.min()])
-    cmax = np.max([field_a.max(), field_b.max()])
+    """
+    Compare two fields
+    Args:
+        field_a (np.ndarray):
+        field_b (np.ndarray):
+        a_title (str):
+        b_title (str):
+        x_coord (np.array):
+        y_coord (np.array):
+        title (str):
+        savefig_file (str):
+        diff_factor (float):
+        figsize (Tuple[int, int]):
+    """
+    cmin = np.min([np.amin(field_a), np.amin(field_b)])
+    cmax = np.max([np.amax(field_a), np.amax(field_b)])
     print(f"cmin = {cmin}, cmax = {cmax}")
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=figsize)
     cs1 = ax1.contourf(x_coord, y_coord, field_a, np.linspace(cmin, cmax, 31), cmap='rainbow')
@@ -22,6 +40,8 @@ def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, tit
     ax3.set_title(f'Abs difference')
     cbar3 = fig.colorbar(cs3)
     plt.suptitle(title)
-    plt.savefig(savefig_file)
+    plt.tight_layout()
+    if savefig_file:
+        plt.savefig(savefig_file)
     plt.show()
 

@@ -3,7 +3,7 @@
 File name: oopinterface.py
 Author: Clare Huang
 """
-from typing import Optional
+from typing import Optional, NamedTuple
 import math
 import warnings
 import numpy as np
@@ -16,6 +16,9 @@ from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, 
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
+
+# Import python implementation
+from hn2016_falwa.migration.interpolation import interpolate_fields as interpolate_fields_pyimp
 from collections import namedtuple
 
 
@@ -151,6 +154,8 @@ class QGField(object):
         # === To be computed ===
         self.dphi = np.deg2rad(180./(self.nlat-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
+        self.slat = np.sin(np.deg2rad(ylat))  # sin latitude
+        self.clat = np.cos(np.deg2rad(ylat))  # sin latitude
 
         if npart is None:
             self.npart = self.nlat
@@ -266,8 +271,8 @@ class QGField(object):
         # Check if plev is in decending order
         if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
-        else:
-            self.plev = plev
+        self.plev = plev
+        self.zlev = -scale_height * np.log(plev/P_GROUND)
 
         # Check if kmax is valid given the max pseudoheight in the input data
         hmax = -scale_height*np.log(plev[-1]/P_GROUND)
@@ -481,6 +486,67 @@ class QGField(object):
             self.interpolated_v,
             self.interpolated_theta,
             self.static_stability)
+        return interpolated_fields
+
+    def interpolate_fields_nh18(self) -> NamedTuple:
+        pv, ut, vt, avort, theta, stat, t0 = interpolate_fields_pyimp(
+            nlon=self.nlon,
+            nlat=self.nlat,
+            nlev=self.nlev,
+            kmax=self.kmax,
+            equator_idx=self.equator_idx,
+            uu=self.u_field,
+            vv=self.v_field,
+            temp=self.t_field,
+            plev=self.plev,
+            height=self.height,
+            zlev=self.zlev,
+            ylat=self.ylat,
+            clat=self.clat,
+            slat=self.slat,
+            dz=self.dz,
+            dphi=self.dphi,
+            jd=0,
+            use_global_stat_t0=True,
+            smooth_stretch_term=True,
+            hh=self.scale_height,
+            aa=self.planet_radius,
+            omega=self.omega,
+            rkappa=self.dry_gas_constant/self.cp)
+        Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
+        interpolated_fields = Interpolated_fields(
+            pv, ut, vt, theta, stat)
+        return interpolated_fields
+
+    def interpolate_fields_nhn22(self) -> NamedTuple:
+        pv, ut, vt, avort, theta, stat, t0 = interpolate_fields_pyimp(
+            nlon=self.nlon,
+            nlat=self.nlat,
+            nlev=self.nlev,
+            kmax=self.kmax,
+            equator_idx=self.equator_idx,
+            uu=self.u_field,
+            vv=self.v_field,
+            temp=self.t_field,
+            plev=self.plev,
+            height=self.height,
+            zlev=self.zlev,
+            ylat=self.ylat,
+            clat=self.clat,
+            slat=self.slat,
+            dz=self.dz,
+            dphi=self.dphi,
+            jd=5,
+            use_global_stat_t0=False,
+            smooth_stretch_term=False,
+            stat_boundary_treatment='nhn22',
+            hh=self.scale_height,
+            aa=self.planet_radius,
+            omega=self.omega,
+            rkappa=self.dry_gas_constant/self.cp)
+        Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability', 't0'])
+        interpolated_fields = Interpolated_fields(
+            pv, ut, vt, theta, stat, t0)
         return interpolated_fields
 
     def compute_reference_states(self, northern_hemisphere_results_only=False):
