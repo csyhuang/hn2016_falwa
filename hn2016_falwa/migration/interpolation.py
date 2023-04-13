@@ -3,8 +3,12 @@
 File name: interpolation.py
 Author: Clare Huang
 Created on: 2023/4/10
-Description: This module contains functions that replace the f2py module "interpolate_fields".
-  The helper functions are:
+Description: This module contains functions that replace the f2py modules:
+  - interpolate_fields.f90
+  - interpolate_fields_dirinv.f90
+The main function in this module is:
+  - interpolate_fields
+The helper functions are:
   - interpolate_onto_uniform_pseudoheight_grid
   - compute_static_stability
   - compute_pv_from_stat_t0
@@ -74,7 +78,7 @@ def interpolate_fields(
         tn0, stat_n = compute_static_stability(
             theta[:, -equator_idx:, :], clat[-equator_idx:], stat_n, dz, boundary_treatment=stat_boundary_treatment)
         if use_global_stat_t0:
-            print("Debug: route 2.1")
+            print("Debug: route 2.1 - NH18")
             # This branch of logic would recover NH18 results
             t0 = (ts0 + tn0)/2.
             stat = (stat_s + stat_n) / 2.
@@ -86,7 +90,7 @@ def interpolate_fields(
                 slat[-equator_idx:], smooth_stretch_term=smooth_stretch_term)
             return pv, ut, vt, avort, theta, stat, t0
         else:
-            print("Debug: route 2.2")
+            print("Debug: route 2.2 - NHN22")
             # *** Hemispheric domain instead ***
             pv[:, :equator_idx, :] = -compute_pv_from_stat_t0(
                 theta[:, :equator_idx, :][:, ::-1, :], -avort[:, :equator_idx, :][:, ::-1, :], height, hh, ts0, stat_s, omega,

@@ -7,7 +7,55 @@ import numpy as np
 from math import pi
 
 
-def eqvlat(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
+def eqvlat_fawa(xlon, ylat, vort, area, n_points, equator_idx: int, dp, clat, planet_radius=6.378e+6):
+
+    """
+    Compute equivalent latitude and kelvin circulation
+
+    Parameters
+    ----------
+    ylat : sequence or array_like
+        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
+    vort : ndarray
+        2-d numpy array of vorticity values; dimension = (nlat, nlon).
+    area : ndarray
+        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
+    n_points: int
+        Analysis resolution to calculate equivalent latitude.
+    planet_radius: float
+        Radius of spherical planet of interest consistent with input *area*. Default: earth's radius 6.378e+6
+
+    Returns
+    -------
+    qref : ndarray
+        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
+    brac : ndarray or None
+        1-d numpy array of averaged vgrad in the square bracket.
+        If *vgrad* = None, *brac* = None.
+    """
+    vort_min, vort_max = np.amin(vort), np.amax(vort)
+    qbar = vort.mean(axis=-1)
+    q_part_u = np.linspace(vort_min, vort_max, n_points, endpoint=True)
+    vort_flat, area_flat = vort.flatten(), area.flatten()  # Flatten the 2D arrays to 1D
+
+    # Find equivalent latitude:
+    inds = np.digitize(vort_flat, q_part_u)
+    aq = np.cumsum([0] + [area_flat[np.where(inds == i)].sum() for i in range(1, q_part_u.size)])
+    cq = np.cumsum([0] + [np.multiply(area_flat, vort_flat)[np.where(inds == i)].sum() for i in range(1, q_part_u.size)])
+    y_part = aq / (2 * pi * planet_radius ** 2) - 1.0  # ascending from -1
+    lat_part = np.rad2deg(np.arcsin(y_part))
+    qref = np.interp(ylat, lat_part, q_part_u)  # ascending. qref = np.interp(alat[::-1], aq, q_part_u) also works
+
+    # *** Compute FAWA (not yet finished) ***
+    cref = np.interp(ylat, lat_part, cq)
+    cbar = np.zeros_like(cref)
+    for j in np.arange(ylat.size-2, 0, -1):
+        cbar[j] = cbar[j+1] + 0.5 * (qbar[j+1]*area.sum(axis=1)[j+1] + qbar[j]*area.sum(axis=1)[j])
+    fawa = -(cbar[1:] + cref[1:])/(2 * pi * planet_radius)
+    return qref, fawa
+
+
+def eqvlat_vgrad(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
 
     """
     Compute equivalent latitude, and optionally <...>_Q in Nakamura and Zhu (2010).
