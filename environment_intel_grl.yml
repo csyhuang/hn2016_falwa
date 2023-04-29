@@ -1,0 +1,13 @@
+name: intel_env_grl
+
+dependencies:
+- intel::numpy=1.22.3
+- intel::scipy=1.7.3
+- pytest=7.1.2
+- matplotlib=3.6.2
+- cartopy=0.21.1
+
+# After creating the environment, run in command line:
+# conda install -c conda-forge netCDF4
+# conda install -c conda-forge jupyter
+# python setup.py develop
