@@ -1,4 +1,4 @@
-name: intel_env_cython
+name: intel_cython
 
 dependencies:
 - intel::numpy=1.22.3
