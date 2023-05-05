@@ -1,6 +1,6 @@
 """
 -------------------------------------------------------------------------------------------------------------------
-File name: dirinv_cython.py
+File name: dirinv_cython.pyx
 Author: Clare Huang
 Created on: 2023/4/29
 Description:
@@ -9,6 +9,15 @@ Description:
 
 Calling sin:
 https://cython.readthedocs.io/en/stable/src/tutorial/pure.html?highlight=sin#calling-c-functions
+
+Pycharm cython support:
+https://www.jetbrains.com/help/pycharm/cython.html#cython-support
+
+Optimization:
+https://people.duke.edu/~ccc14/sta-663-2016/18D_Cython.html
+
+The version of cython in MDTF environment is 0.29. This is the latest stable version:
+https://cython.readthedocs.io/en/stable/src/quickstart/overview.html
 -------------------------------------------------------------------------------------------------------------------
 """
 import cython
@@ -19,17 +28,16 @@ import numpy as np
 from math import pi, sin, cos, exp
 
 
-@cython.cfunc
-def x_sq_minus_x(x: cython.double) -> cython.double:
+def x_sq_minus_x(x):
+    """Test function from cython documentation page"""
     return x**2 - x
 
 
-@cython.cfunc
-def sin_func(x: cython.double) -> cython.double:
+def sin_func(x):
+    """Test function from cython documentation page"""
     return sin(x * x)
 
 
-@cython.cfunc
 def top_boundary_condition(kmax: int, jd: int, jb: int, nd: int, dp: float, clat: np.array, slat: np.array, dz: float, exp_upper: float, tbar: np.array, h: float, a: float = EARTH_RADIUS, rr: float = DRY_GAS_CONSTANT, omega: float = EARTH_OMEGA):
     """
     exp_upper = exp(-z(kmax - 1) * rkappa / h)
@@ -50,7 +58,6 @@ def top_boundary_condition(kmax: int, jd: int, jb: int, nd: int, dp: float, clat
     return sjk, tjk
 
 
-@cython.cfunc
 def matrix_b4_inversion_cython(sjk, tjk, rkappa: float, dp: float, z: np.array, k: int, jd: int, statn: np.array, jb: int, nd: int, om: float, h: float, a: float, dz: float, rr: float, qref: np.ndarray, u: np.ndarray, ckref: np.ndarray):
     """qref[kmax,nd], u[kmax,jd], ckref[kmax,nd]"""
     qjj = np.zeros((jd-2, jd-2))
@@ -132,7 +139,6 @@ def matrix_b4_inversion_cython(sjk, tjk, rkappa: float, dp: float, z: np.array, 
     return qjj, djj, cjj, rj, tj
 
 
-@cython.cfunc
 def matrix_after_inversion(
     k: int, kmax: int, jd: int, qjj: np.ndarray,
     djj: np.ndarray, cjj: np.ndarray, rj: np.array, sjk: np.ndarray,
@@ -167,7 +173,6 @@ def matrix_after_inversion(
     return sjk, tjk, tj
 
 
-@cython.cfunc
 def upward_sweep(
     jmax: int, kmax: int, nd: int, jb: int, jd: int,
     sjk: np.ndarray, tjk: np.ndarray, ckref: np.ndarray, tb: np.array, qref_over_cor: np.ndarray,

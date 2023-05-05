@@ -18,7 +18,7 @@ from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, comp
     compute_lwa_and_barotropic_fluxes
 
 # Import python implementation
-from hn2016_falwa.migration.interpolation import interpolate_fields as interpolate_fields_pyimp
+from hn2016_falwa.cython_modules.interpolation import interpolate_fields as interpolate_fields_pyimp
 from collections import namedtuple
 
 
