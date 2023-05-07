@@ -24,6 +24,7 @@ jobs:
         pip install numpy
         pip install scipy
         pip install xarray
+        pip install cython
         coverage run setup.py pytest
     - name: Upload Coverage to Codecov
       run: |

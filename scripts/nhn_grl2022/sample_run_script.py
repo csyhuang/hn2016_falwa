@@ -14,8 +14,8 @@ from netCDF4 import Dataset
 from hn2016_falwa.oopinterface import QGField
 
 sys.path.insert(0, os.getcwd())
-from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \
-    plot_figure3e, plot_figure3f, plot_figure4, plot_figure5
+# from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \
+#     plot_figure3e, plot_figure3f, plot_figure4, plot_figure5
 
 data_dir = "grl2021_data/"
 to_generate_data = True  # Set this to False if wave activity and fluxes are computed and stored in netCDF file already
@@ -109,6 +109,7 @@ if to_generate_data:
     ep4 = output_file.createVariable('ep4', np.dtype('float32').char, ('time', 'latitude', 'longitude'))
     ep4.units = 'm/s'
 
+    print("Here")
     # --- Compute LWA + fluxes and save the data into netCDF file ---
     for tstep in range(1):  # or ntimes
 
@@ -123,8 +124,9 @@ if to_generate_data:
 
         qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
 
-        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
-            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
+        ans = qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
+        ans2 = qgfield_object._compute_lwa_flux_dirinv_cython(qref, uref, tref)
+        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = ans
 
         lwa_baro[tstep, :, :] = np.swapaxes(astarbaro, 0, 1)
         ua1[tstep, :, :] = np.swapaxes(ua1baro, 0, 1)
@@ -154,12 +156,12 @@ sp_filename = data_dir + "2021_06_sp.nc"   # sea level pressure (hPa)
 lwa_flux_filename = output_fname
 
 # Execute graph plotting functions
-plot_figure1a(z_filename, u_filename, v_filename)
-plot_figure1b(t_filename)
-plot_figure1c(t2m_filename)
-plot_figure1d_2a(t_filename)
-plot_figure3_and_S1(lwa_flux_filename)
-plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
-plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
-plot_figure4(lwa_flux_filename)
-plot_figure5(lwa_flux_filename)
+# plot_figure1a(z_filename, u_filename, v_filename)
+# plot_figure1b(t_filename)
+# plot_figure1c(t2m_filename)
+# plot_figure1d_2a(t_filename)
+# plot_figure3_and_S1(lwa_flux_filename)
+# plot_figure3e(mtnlwrf_filename, mtnlwrfcs_filename)
+# plot_figure3f(tcw_filename, tcwv_filename, sp_filename)
+# plot_figure4(lwa_flux_filename)
+# plot_figure5(lwa_flux_filename)

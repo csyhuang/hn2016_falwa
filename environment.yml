@@ -8,3 +8,4 @@ dependencies:
 - scipy
 - pytest
 - xarray # This is optional
+- cython=0.29

@@ -910,8 +910,7 @@ class QGField(object):
 
         .. versionadded:: 0.6.0
         """
-        # ans = compute_qref_and_fawa_first(
-            # pv, uu, vort, pt, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
+
         ans = compute_qref_and_fawa_first(
             pv=self._qgpv_temp,
             uu=self._interpolated_u_temp,
@@ -939,8 +938,13 @@ class QGField(object):
         self._check_nan("tjk", tjk)
         self._check_nan("sjk", sjk)
 
-        for k in range(self.kmax-1, 1, -1):  # Fortran indices
+        qref, u, tref = self._matrix_inversion(qref_over_cor, ckref, tjk, sjk)
+        # qref, u, tref = self._matrix_inversion_cython(qref_over_cor, ckref, tjk, sjk)
 
+        return qref, u, tref, fawa, ubar, tbar  # uref = u
+
+    def _matrix_inversion(self, qref_over_cor, ckref, tjk, sjk):
+        for k in range(self.kmax-1, 1, -1):  # Fortran indices
             ans = matrix_b4_inversion(
                 k=k,
                 jmax=self.nlat,
@@ -959,36 +963,10 @@ class QGField(object):
                 cp=self.cp)
             qjj, djj, cjj, rj = ans
 
-            # *** Replace with cython modules ***
-            jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
-            qjj2, djj2, cjj2, rj2 = cython_modules.dirinv_cython.matrix_b4_inversion_cython(
-                sjk=sjk.astype(np.float64),
-                rkappa=float(self.dry_gas_constant/self.cp),
-                dp=float(math.pi/float(self.nlat-1)),
-                z=self.height.astype(np.float64),
-                k=k,  # python indexing
-                jd=jd,  # 86
-                statn=self._static_stability_n.astype(np.float64),
-                jb=self.eq_boundary_index,
-                nd=self.nlat//2 + self.nlat % 2,  # 91
-                om=float(self.omega),
-                scale_height=float(self.scale_height),
-                planet_radius=float(self.planet_radius),
-                dz=float(self.dz),
-                dry_gas_constant=float(self.dry_gas_constant),
-                qref_over_cor=qref_over_cor.astype(np.float64),
-                u=np.zeros((self.kmax, jd), dtype=np.float64),
-                ckref=ckref.astype(np.float64))
-            #print(f"Here. k={k}")
-
             # TODO: The inversion algorithm  is the bottleneck of the computation
             # SciPy is very slow compared to MKL in Fortran...
             lu, piv, info = dgetrf(qjj)
             qjj, info = dgetri(lu, piv)
-
-            # Make a copy of sjk and tjk
-            sjk2 = copy.deepcopy(sjk)
-            tjk2 = copy.deepcopy(tjk)
 
             _ = matrix_after_inversion(
                 k=k,
@@ -998,17 +976,6 @@ class QGField(object):
                 rj=rj,
                 sjk=sjk,
                 tjk=tjk)
-
-            sjk2, tjk2 = cython_modules.dirinv_cython.matrix_after_inversion_cython(
-                k=k,
-                kmax=self.kmax,
-                jd=jd,
-                qjj=qjj.astype(np.float64),
-                djj=djj.astype(np.float64),
-                cjj=cjj.astype(np.float64),
-                rj=rj.astype(np.float64),
-                sjk=sjk2.astype(np.float64),
-                tjk=tjk2.astype(np.float64))
 
         tref, qref, u = upward_sweep(
             jmax=self.nlat,
@@ -1024,10 +991,50 @@ class QGField(object):
             h=self.scale_height,
             rr=self.dry_gas_constant,
             cp=self.cp)
-        print("Check")
+        return qref, u, tref
 
-        # TODO: tref2 not matching
-        tref2, qref2, u2 = cython_modules.dirinv_cython.upward_sweep(
+    def _matrix_inversion_cython(self, qref_over_cor, ckref, tjk, sjk):
+
+        for k in range(self.kmax-1, 1, -1):  # Fortran indices
+
+            # *** Replace with cython modules ***
+            # jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
+            qjj, djj, cjj, rj = cython_modules.dirinv_cython.matrix_b4_inversion_cython(
+                sjk=sjk.astype(np.float64),
+                rkappa=float(self.dry_gas_constant/self.cp),
+                dp=float(math.pi/float(self.nlat-1)),
+                z=self.height.astype(np.float64),
+                k=k,  # python indexing
+                jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,  # 86
+                statn=self._static_stability_n.astype(np.float64),
+                jb=self.eq_boundary_index,
+                nd=self.nlat//2 + self.nlat % 2,  # 91
+                om=float(self.omega),
+                scale_height=float(self.scale_height),
+                planet_radius=float(self.planet_radius),
+                dz=float(self.dz),
+                dry_gas_constant=float(self.dry_gas_constant),
+                qref_over_cor=qref_over_cor.astype(np.float64),
+                u=np.zeros((self.kmax, jd), dtype=np.float64),
+                ckref=ckref.astype(np.float64))
+
+            # TODO: The inversion algorithm  is the bottleneck of the computation
+            # SciPy is very slow compared to MKL in Fortran...
+            lu, piv, info = dgetrf(qjj)
+            qjj, info = dgetri(lu, piv)
+
+            sjk, tjk = cython_modules.dirinv_cython.matrix_after_inversion_cython(
+                k=k,
+                kmax=self.kmax,
+                jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,
+                qjj=qjj.astype(np.float64),
+                djj=djj.astype(np.float64),
+                cjj=cjj.astype(np.float64),
+                rj=rj.astype(np.float64),
+                sjk=sjk.astype(np.float64),
+                tjk=tjk.astype(np.float64))
+
+        tref, qref, u = cython_modules.dirinv_cython.upward_sweep(
             jmax=self.nlat,
             kmax=self.kmax,
             nd=self.nlat//2 + self.nlat % 2,  # 91
@@ -1048,22 +1055,60 @@ class QGField(object):
             rkappa=float(self.dry_gas_constant / self.cp))
         print("Check")
 
-        return qref, u, tref, fawa, ubar, tbar  # uref = u
+        return qref, u, tref
 
     def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """
         Added for NHN 2022 GRL
 
         .. versionadded:: 0.6.0
+
+        TODO: make it available for southern hemisphere
         """
-        ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-                                  pt=self._interpolated_theta_temp, tn0=self._tn0,
-                                  qref=qref, uref=uref, tref=tref,
-                                  jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
-                                  dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
-                                  prefac=self.prefactor)
-        # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
+
+        ans = compute_flux_dirinv(
+            pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
+            pt=self._interpolated_theta_temp, tn0=self._tn0,
+            qref=qref, uref=uref, tref=tref,
+            jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
+            prefac=self.prefactor)
+        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
         return ans
+    
+    def _compute_lwa_flux_dirinv_cython(self, qref, uref, tref):
+        """
+        This is the cython version of self._compute_lwa_flux_dirinv.
+        """
+
+        # Test cython version
+        ans2 = cython_modules.dirinv_cython.compute_flux_dirinv(
+            imax=self.nlon,
+            jmax=self.nlat,
+            kmax=self.kmax,
+            nd=self.nlat // 2 + self.nlat % 2,  # 91
+            jb=self.eq_boundary_index,
+            jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,
+            pv=self._qgpv_temp.astype(np.float64),
+            uu=self._interpolated_u_temp.astype(np.float64),
+            vv=self._interpolated_v_temp.astype(np.float64),
+            pt=self._interpolated_theta_temp.astype(np.float64),
+            qref=qref.astype(np.float64),
+            uref=uref.astype(np.float64),
+            tref=tref.astype(np.float64),
+            tn0=self._tn0.astype(np.float64),
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            dp=float(math.pi/float(self.nlat-1)),
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp,
+            rkappa=self.dry_gas_constant/self.cp,
+            prefac=self.prefactor,
+            z=self.height.astype(np.float64))
+        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans2
+        return ans2
 
     @property
     def qgpv(self):

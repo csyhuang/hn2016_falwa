@@ -6,6 +6,7 @@ dependencies:
 - pytest=7.1.2
 - matplotlib=3.6.2
 - cartopy=0.21.1
+- cython=0.29
 
 # After creating the environment, run in command line:
 # conda install -c conda-forge netCDF4
