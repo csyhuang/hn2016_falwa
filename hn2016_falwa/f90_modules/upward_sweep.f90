@@ -47,7 +47,7 @@ SUBROUTINE upward_sweep(jmax, kmax, nd, jb, jd, sjk, tjk, ckref, tb, qref_over_c
   u(1,kmax) = ckref(1+jb,kmax)/(2.*pi*a)-om*a*cos(dp*float(jb))
   u(jd,kmax) = 0.
 
-  ! *** Divide by cos phi to revover Uref ****
+  ! *** Divide by cos phi to recover Uref ****
   do jj = jb+1,nd-1
     j = jj-jb
     phi0 = dp*float(jj-1)

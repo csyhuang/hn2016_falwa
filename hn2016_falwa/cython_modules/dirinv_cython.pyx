@@ -31,6 +31,7 @@ Cython compiler directives: https://cython.readthedocs.io/en/stable/src/userguid
 Cython: Blend the Best of Python and C++ | SciPy 2015 Tutorial | Kurt Smith: https://youtu.be/gMvkiQ-gOW8
 -------------------------------------------------------------------------------------------------------------------
 """
+import copy
 
 import cython
 from libc.math cimport sin, cos, pi, exp
@@ -273,83 +274,111 @@ def matrix_after_inversion_cython(
     return np.asarray(sjk), np.asarray(tjk)
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def upward_sweep(
-    jmax: int, kmax: int, nd: int, jb: int, jd: int,
-    sjk: np.ndarray, tjk: np.ndarray, ckref: np.ndarray, tb: np.array, qref_over_cor: np.ndarray,
-    a: float, om: float, dz: float, h: float, rr: float, cp: float, dp: float, rkappa: float):
+    int jmax,
+    int kmax,
+    int nd,
+    int jb,
+    int jd,
+    cython.double[:, :, :] sjk,  # sjk(jd-2,jd-2,kmax-1)
+    cython.double[:, :] tjk,     # tjk(jd-2,kmax-1)
+    cython.double[:,:] ckref,    # ckref(nd,kmax)
+    cython.double[:] tb,         # tb(kmax)
+    cython.double[:, :] qref_over_cor, # qref_over_cor(nd,kmax)
+    double a,
+    double om,
+    double dz,
+    double h,
+    double rr,
+    double cp,
+    double dp,
+    double rkappa):
+    """TODO: debugging not yet finished. tref does not match original code"""
 
-    pjk = np.zeros((jd-2, kmax))
-    tj = np.zeros(jd - 2)
-    yj = np.zeros(jd - 2)
-    sjj = np.zeros((jd - 2, jd-2))
-    pj = np.zeros(jd - 2)
-    qref = np.zeros((nd, kmax))
-    tref = np.zeros((jd, kmax))
-    u = np.zeros((jd, kmax))
-    tg = np.zeros(kmax)
+    # *** Create memory view ***
+    sjk_view3d: double[:, :, :] = sjk
+    tjk_view2d: double[:, :] = tjk
+    ckref_view2d: double[:, :] = ckref
+    qref_over_cor_view2d: double[:, :] = qref_over_cor
 
-    for k in range(0, kmax-1):
-        pj[:] = pjk[:, k]
-        sjj[:, :] = sjk[:, :, k]
-        tj[:] = tjk[:, k]
+    cdef double[:, :] pjk = np.zeros((jd-2, kmax), dtype=float)
+    cdef double[:] tj = np.zeros(jd-2, dtype=float)
+    cdef double[:] yj = np.zeros(jd-2, dtype=float)
+    cdef double[:, :] sjj = np.zeros((jd-2, jd-2), dtype=float)
+    cdef double[:] pj = np.zeros(jd-2, dtype=float)
+    cdef double[:, :] qref = np.zeros((nd, kmax), dtype=float)
+    cdef double[:, :] tref = np.zeros((jd, kmax), dtype=float)
+    cdef double[:, :] u = np.zeros((jd, kmax), dtype=float)
+    cdef double[:] tg = np.zeros(kmax, dtype=float)
+    cdef int i, j, jj, k
 
-        for i in range(0, jd-2):
-            yj[i] = 0.
-            for kk in range(0, jd-2):
-                yj[i] = yj[i] + sjj[i, kk] * pj[kk]
-            pjk[i, k + 1] = yj[i] + tj[i]
+    for k in range(1, kmax):
+        pj[:] = pjk[:, k-1]
+        tj[:] = tjk_view2d[:, k-1]
+
+        for i in range(1, jd-1):
+            yj[i-1] = 0.
+            for kk in range(1, jd-1):
+                yj[i-1] = yj[i-1] + sjk_view3d[i-1, kk-1, k-1] * pj[kk-1]
+            pjk[i-1, k] = yj[i-1] + tj[i-1]
 
     # **** Recover u *****
-    for k in range(0, kmax):
-        for j in range(1, jd-1):
-            u[j, k] = pjk[j - 1, k]
+    for k in range(1, kmax+1):
+        for j in range(2, jd):
+            u[j-1, k-1] = pjk[j-2, k-1]
 
     # *** Corner boundary conditions ***
     u[0, 0] = 0.
-    u[jd - 1, 1] = 0.
-    u[0, kmax - 1] = ckref[jb, kmax - 1] / (2. * pi * a) - om * a * cos(dp * float(jb))
+    u[jd - 1, 0] = 0.
+    u[0, kmax - 1] = ckref_view2d[jb, kmax - 1] / (2. * pi * a) - om * a * cos(dp * float(jb))
     u[jd - 1, kmax - 1] = 0.
 
-    # *** Divide by cos phi to revover Uref ****
-    for jj in range(jb, nd-1):
+    # *** Divide by cos phi to recover Uref ****
+    for jj in range(jb+1, nd):
         j = jj - jb
-        phi0 = dp * float(jj)
-        u[j, :] = u[j, :] / cos(phi0)
+        phi0 = dp * float(jj-1)
+        for k in range(1, kmax+1):
+            u[j-1, k-1] = u[j-1, k-1] / cos(phi0)
 
-    u[jd - 1, :] = 2. * u[jd - 2, :] - u[jd - 3, :]
+    for k in range(1, kmax+1):
+        u[jd-1, k-1] = 2. * u[jd-2, k-1] - u[jd-3, k-1]
 
     # ******* compute tref *******
-    qref = qref_over_cor
-    for k in range(1, kmax-1):
+    for k in range(2, kmax):
         t00 = 0.
         zz = dz * float(k - 1)
-        tref[0, k] = t00
-        tref[1, k] = t00
-        for j in range(i, jd-1):
-            phi0 = dp * float(j + jb)
+        tref[0, k-1] = t00
+        tref[1, k-1] = t00
+        for j in range(2, jd):
+            phi0 = dp*float(j-1+jb)
             cor = 2. * om * sin(phi0)
-            uz = (u[j, k + 1] - u[j, k - 1]) / (2. * dz)
+            uz = (u[j-1,k] - u[j-1,k-2]) / (2. * dz)
             ty = -cor * uz * a * h * exp(rkappa * zz / h)
             ty = ty / rr
-            tref[j + 1, k] = tref[j - 1, k] + 2. * ty * dp
-        for j in range(0, nd):
-            phi0 = dp * float(j)
-            qref[j, k] = qref_over_cor[j, k] * sin(phi0)
+            tref[j, k-1] = tref[j-2, k-1] + 2. * ty * dp
+        for j in range(1, nd+1):
+            phi0 = dp * float(j-1)
+            qref[j-1, k-1] = qref_over_cor_view2d[j-1, k-1] * sin(phi0)
 
-        tg[k] = 0.
+        tg[k-1] = 0.
         wt = 0.
-        for jj in range(jb, nd):
+        for jj in range(jb+1, nd+1):
             j = jj - jb
-            phi0 = dp * float(jj)
-            tg[k] = tg[k] + cos(phi0) * tref[j, k]
+            phi0 = dp * float(jj-1)
+            tg[k-1] = tg[k-1] + cos(phi0) * tref[j-1, k-1]
             wt = wt + cos(phi0)
-        tg[k] = tg[k] / wt
-        tres = tb[k] - tg[k]
-        tref[:, k] = tref[:, k] + tres
-    tref[:, 0] = tref[:, 1]-tb[1] + tb[0]
-    tref[:, kmax - 1] = tref[:, kmax - 2] - tb[kmax - 2] + tb[kmax - 1]
+        tg[k-1] = tg[k-1] / wt
+        tres = tb[k-1] - tg[k-1]
+        for jj in range(1, jb+1):
+            tref[jj-1, k-1] = tref[jj-1, k-1] + tres
 
-    return qref, tref, u
+    for j in range(1, jd+1):
+        tref[j-1, 0] = tref[j-1, 1]-tb[1] + tb[0]
+        tref[j-1, kmax-1] = tref[j-1, kmax-2] - tb[kmax-2] + tb[kmax-1]
+
+    return np.asarray(tref), np.asarray(qref), np.asarray(u)
 
 def compute_flux_dirinv(
     pv, uu, vv, pt, tn0, qref, uref, tref,

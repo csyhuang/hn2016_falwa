@@ -979,9 +979,7 @@ class QGField(object):
                 qref_over_cor=qref_over_cor.astype(np.float64),
                 u=np.zeros((self.kmax, jd), dtype=np.float64),
                 ckref=ckref.astype(np.float64))
-            # djj2 matches, cjj2 matches
-            # mismatch: qjj2, rj2, tj2(complete mismatch)
-            print(f"Here. k={k}")
+            #print(f"Here. k={k}")
 
             # TODO: The inversion algorithm  is the bottleneck of the computation
             # SciPy is very slow compared to MKL in Fortran...
@@ -1011,8 +1009,6 @@ class QGField(object):
                 rj=rj.astype(np.float64),
                 sjk=sjk2.astype(np.float64),
                 tjk=tjk2.astype(np.float64))
-            print("Check")
-
 
         tref, qref, u = upward_sweep(
             jmax=self.nlat,
@@ -1028,6 +1024,29 @@ class QGField(object):
             h=self.scale_height,
             rr=self.dry_gas_constant,
             cp=self.cp)
+        print("Check")
+
+        # TODO: tref2 not matching
+        tref2, qref2, u2 = cython_modules.dirinv_cython.upward_sweep(
+            jmax=self.nlat,
+            kmax=self.kmax,
+            nd=self.nlat//2 + self.nlat % 2,  # 91
+            jb=self.eq_boundary_index,
+            jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,
+            sjk=sjk.astype(np.float64),
+            tjk=tjk.astype(np.float64),
+            ckref=ckref.astype(np.float64),
+            tb=self._tn0.astype(np.float64),
+            qref_over_cor=qref_over_cor.astype(np.float64),
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp,
+            dp=float(math.pi/float(self.nlat-1)),
+            rkappa=float(self.dry_gas_constant / self.cp))
+        print("Check")
 
         return qref, u, tref, fawa, ubar, tbar  # uref = u
 
