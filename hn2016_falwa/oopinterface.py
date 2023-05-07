@@ -4,6 +4,7 @@ File name: oopinterface.py
 Author: Clare Huang
 """
 from typing import Optional, NamedTuple
+import copy
 import math
 import warnings
 import numpy as np
@@ -17,9 +18,11 @@ from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, comp
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 
+
 # Import python implementation
 from hn2016_falwa.cython_modules.interpolation import interpolate_fields as interpolate_fields_pyimp
 from collections import namedtuple
+from hn2016_falwa import cython_modules
 
 
 class QGField(object):
@@ -955,6 +958,28 @@ class QGField(object):
                 sjk=sjk,
                 tjk=tjk)
             qjj, djj, cjj, rj, tj = ans
+
+            # *** Replace with cython modules ***
+            jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
+            qjj2, djj2, cjj2, rj2, tj2 = cython_modules.dirinv_cython.matrix_b4_inversion_cython(
+                sjk=sjk.astype(np.float64),
+                tjk=tjk.astype(np.float64),
+                rkappa=float(self.dry_gas_constant/self.cp),
+                dp=float(math.pi/float(self.nlat-1)),
+                z=self.height.astype(np.float64),
+                k=k-1,  # python indexing
+                jd=jd,  # 86
+                statn=self._static_stability_n.astype(np.float64),
+                jb=self.eq_boundary_index,
+                nd=self.nlat//2 + self.nlat % 2,  # 91
+                om=float(self.omega),
+                scale_height=float(self.scale_height),
+                planet_radius=float(self.planet_radius),
+                dz=float(self.dz),
+                dry_gas_constant=float(self.dry_gas_constant),
+                qref=qref_over_cor.astype(np.float64),
+                u=np.zeros((self.kmax, jd), dtype=np.float64),
+                ckref=ckref.astype(np.float64))
 
             # TODO: The inversion algorithm  is the bottleneck of the computation
             # SciPy is very slow compared to MKL in Fortran...

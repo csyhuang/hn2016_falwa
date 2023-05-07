@@ -110,7 +110,7 @@ if to_generate_data:
     ep4.units = 'm/s'
 
     # --- Compute LWA + fluxes and save the data into netCDF file ---
-    for tstep in range(ntimes):  # or ntimes
+    for tstep in range(1):  # or ntimes
 
         uu = u_file.variables['u'][tstep, ::-1, ::-1, :].data
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
