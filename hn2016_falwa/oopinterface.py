@@ -940,6 +940,7 @@ class QGField(object):
         self._check_nan("sjk", sjk)
 
         for k in range(self.kmax-1, 1, -1):  # Fortran indices
+
             ans = matrix_b4_inversion(
                 k=k,
                 jmax=self.nlat,
@@ -949,25 +950,23 @@ class QGField(object):
                 statn=self._static_stability_n,
                 qref=qref_over_cor,
                 ckref=ckref,
+                sjk=sjk,
                 a=self.planet_radius,
                 om=self.omega,
                 dz=self.dz,
                 h=self.scale_height,
                 rr=self.dry_gas_constant,
-                cp=self.cp,
-                sjk=sjk,
-                tjk=tjk)
-            qjj, djj, cjj, rj, tj = ans
+                cp=self.cp)
+            qjj, djj, cjj, rj = ans
 
             # *** Replace with cython modules ***
             jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
-            qjj2, djj2, cjj2, rj2, tj2 = cython_modules.dirinv_cython.matrix_b4_inversion_cython(
+            qjj2, djj2, cjj2, rj2 = cython_modules.dirinv_cython.matrix_b4_inversion_cython(
                 sjk=sjk.astype(np.float64),
-                tjk=tjk.astype(np.float64),
                 rkappa=float(self.dry_gas_constant/self.cp),
                 dp=float(math.pi/float(self.nlat-1)),
                 z=self.height.astype(np.float64),
-                k=k-1,  # python indexing
+                k=k,  # python indexing
                 jd=jd,  # 86
                 statn=self._static_stability_n.astype(np.float64),
                 jb=self.eq_boundary_index,
@@ -977,24 +976,43 @@ class QGField(object):
                 planet_radius=float(self.planet_radius),
                 dz=float(self.dz),
                 dry_gas_constant=float(self.dry_gas_constant),
-                qref=qref_over_cor.astype(np.float64),
+                qref_over_cor=qref_over_cor.astype(np.float64),
                 u=np.zeros((self.kmax, jd), dtype=np.float64),
                 ckref=ckref.astype(np.float64))
+            # djj2 matches, cjj2 matches
+            # mismatch: qjj2, rj2, tj2(complete mismatch)
+            print(f"Here. k={k}")
 
             # TODO: The inversion algorithm  is the bottleneck of the computation
             # SciPy is very slow compared to MKL in Fortran...
             lu, piv, info = dgetrf(qjj)
             qjj, info = dgetri(lu, piv)
 
+            # Make a copy of sjk and tjk
+            sjk2 = copy.deepcopy(sjk)
+            tjk2 = copy.deepcopy(tjk)
+
             _ = matrix_after_inversion(
                 k=k,
                 qjj=qjj,
                 djj=djj,
                 cjj=cjj,
-                tj=tj,
                 rj=rj,
                 sjk=sjk,
                 tjk=tjk)
+
+            sjk2, tjk2 = cython_modules.dirinv_cython.matrix_after_inversion_cython(
+                k=k,
+                kmax=self.kmax,
+                jd=jd,
+                qjj=qjj.astype(np.float64),
+                djj=djj.astype(np.float64),
+                cjj=cjj.astype(np.float64),
+                rj=rj.astype(np.float64),
+                sjk=sjk2.astype(np.float64),
+                tjk=tjk2.astype(np.float64))
+            print("Check")
+
 
         tref, qref, u = upward_sweep(
             jmax=self.nlat,

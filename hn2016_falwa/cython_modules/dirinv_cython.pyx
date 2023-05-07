@@ -34,9 +34,6 @@ Cython: Blend the Best of Python and C++ | SciPy 2015 Tutorial | Kurt Smith: htt
 
 import cython
 from libc.math cimport sin, cos, pi, exp
-from typing import Tuple, Optional
-from scipy.interpolate import interp1d
-from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
 import numpy as np
 cimport numpy as np
 
@@ -92,7 +89,6 @@ def top_boundary_condition(int kmax, int jd, int jb, int nd, float dp, cython.fl
 @cython.wraparound(False)
 def matrix_b4_inversion_cython(
     cython.double[:,:,:] sjk,
-    cython.double[:,:] tjk,
     double rkappa,
     double dp,
     cython.double[:] z,
@@ -106,7 +102,7 @@ def matrix_b4_inversion_cython(
     double planet_radius,
     double dz,
     double dry_gas_constant,
-    cython.double[:,:] qref,
+    cython.double[:,:] qref_over_cor,
     cython.double[:,:] u,
     cython.double[:,:] ckref):
     """
@@ -126,7 +122,7 @@ def matrix_b4_inversion_cython(
         planet_radius:
         dz:
         dry_gas_constant:
-        qref:
+        qref_over_cor:
         u:
         ckref:
 
@@ -148,31 +144,29 @@ def matrix_b4_inversion_cython(
     """
 
     sjk_view3d: double[:, :, :] = sjk
-    tjk_view2d: double[:, :] = tjk
-    qref_view2d: double[:,:] = qref
+    qref_view2d: double[:,:] = qref_over_cor
     u_view2d: double[:, :] = u
     ckref_view2d: double[:, :] = ckref
-    cdef double[:] rj = np.empty(jd-2, dtype=float)
-    cdef double[:, :] cjj = np.empty((jd-2, jd-2), dtype=float)
-    cdef double[:, :] djj = np.empty((jd-2, jd-2), dtype=float)
-    cdef double[:, :] qjj = np.empty((jd-2, jd-2), dtype=float)
-    cdef double[:, :] xjj = np.empty((jd-2, jd-2), dtype=float)
+    cdef double[:] rj = np.zeros(jd-2, dtype=float)
+    cdef double[:, :] cjj = np.zeros((jd-2, jd-2), dtype=float)
+    cdef double[:, :] djj = np.zeros((jd-2, jd-2), dtype=float)
+    cdef double[:, :] qjj = np.zeros((jd-2, jd-2), dtype=float)
+    cdef double[:, :] xjj = np.zeros((jd-2, jd-2), dtype=float)
     cdef double ajk, jbk, cjk, djk, ejk, fjk, amp, amm, fact
     cdef int i, j, jj, kk
 
-    zp = 0.5 * (z[k + 1] + z[k])
-    zm = 0.5 * (z[k - 1] + z[k])
-    statp = 0.5*(statn[k+1]+statn[k])
-    statm = 0.5*(statn[k-1]+statn[k])
+    zp = 0.5 * (z[k] + z[k - 1])
+    zm = 0.5 * (z[k - 2] + z[k - 1])
+    statp = 0.5 * (statn[k] + statn[k - 1])
+    statm = 0.5 * (statn[k - 2] + statn[k - 1])
 
-    sjj = sjk_view3d[k, :, :]
-    tj = tjk_view2d[k, :]
+    sjj = sjk_view3d[:, :, k - 1]
 
-    for jj in range(jb + 1, nd - 1):
+    for jj in range(jb + 2, nd):
         j = jj - jb
-        phi0 = float(jj) * dp  # jj - 1 -> jj
-        phip = (float(jj) + 0.5) * dp   # jj -> jj + 1
-        phim = (float(jj) - 0.5) * dp   # jj -> jj + 1
+        phi0 = float(jj - 1) * dp
+        phip = (float(jj) - 0.5) * dp
+        phim = (float(jj) - 1.5) * dp
         cos0 = cos(phi0)
         cosp = cos(phip)
         cosm = cos(phim)
@@ -182,9 +176,9 @@ def matrix_b4_inversion_cython(
 
         fact = 4. * om * om * scale_height * planet_radius * planet_radius * sin0 * dp * dp / (dz * dz * dry_gas_constant * cos0)
         amp = exp(-zp / scale_height) * exp(rkappa * zp / scale_height) / statp
-        amp = amp*fact*exp(z[k] / scale_height)
+        amp = amp * fact * exp(z[k - 1] / scale_height)
         amm = exp(-zm / scale_height) * exp(rkappa * zm / scale_height) / statm
-        amm = amm*fact*exp(z[k] / scale_height)
+        amm = amm * fact * exp(z[k - 1] / scale_height)
 
         # ***** Specify A, B, C, D, E, F (Eqs. 4-9) *****
         ajk = 1./(sinp*cosp)
@@ -192,19 +186,21 @@ def matrix_b4_inversion_cython(
         cjk = amp
         djk = amm
         ejk = ajk + bjk + cjk + djk
-        fjk = -0.5 * planet_radius * dp * (qref_view2d[k, jj + 1] - qref_view2d[k, jj - 1])
+        fjk = -0.5 * planet_radius * dp * (qref_view2d[jj, k - 1] - qref_view2d[jj - 2, k - 1])
 
         # ***** Specify rk (Eq. 15) ****
         # **** North-south boundary conditions ****
-        u_view2d[k, jd-1] = 0. # jd -> jd-1
-        phi0 = dp * float(jb+1)  # jb -> jb+1
-        u_view2d[k, 0] = ckref_view2d[k, jb] / (2. * pi * planet_radius) \
-                         - om * planet_radius * cos(phi0)
+        u_view2d[k - 1, jd - 1] = 0.
+        phi0 = dp * float(jb)
+        u_view2d[k - 1, 0] = ckref_view2d[k - 1, jb] / (2. * pi * planet_radius) \
+                             - om * planet_radius * cos(phi0)
         rj[j-2] = fjk
-        if j == 1:
-            rj[j - 1] = fjk - bjk * u_view2d[k, 0]
-        if j == jd-2:
-            rj[j - 1] = fjk - ajk * u_view2d[k, jd - 1]
+
+        if j == 2:
+            rj[j - 2] = fjk - bjk * u_view2d[k - 1, 0]
+        if j == jd-1:
+            rj[j - 2] = fjk - ajk * u_view2d[k - 1, jd - 1]
+
         # ***** Specify Ck & Dk (Eqs. 18-19) *****
         cjj[j - 2, j - 2] = cjk
         djj[j - 2, j - 2] = djk
@@ -212,55 +208,69 @@ def matrix_b4_inversion_cython(
         # **** Specify Qk (Eq. 17) *****
         qjj[j - 2, j - 2] = -ejk
 
-        if j - 1 >= 0 & j - 1 < (jd - 2) - 1:  # f2py: if(j-1.ge.1.and.j-1.lt.jd-2)
-            qjj[j - 1, j] = ajk
+        if (j - 1 >= 1) & (j - 1 < jd - 2):  # f2py: if(j-1.ge.1.and.j-1.lt.jd-2)
+            qjj[j - 2, j - 1] = ajk
 
-        if j - 1 > 0 & j - 1 <= (jd - 2) - 1:  # f2py: if(j-1.gt.1.and.j-1.le.jd-2)
-            qjj[j - 1, j - 2] = bjk
+        if (j - 1 > 1) & (j - 1 <= jd - 2):  # f2py: if(j-1.gt.1.and.j-1.le.jd-2)
+            qjj[j - 2, j - 3] = bjk
 
     # **** Compute Qk + Ck Sk *******
-    for i in range(0, jd-2):
-        for j in range(0, jd-2):
-            xjj[i, j] = 0
-            for kk in range(0, jd-2):
-                xjj[i, j] = xjj[i, j] + cjj[i, kk] * sjj[kk, j]
-            qjj[i, j] = qjj[i, j] + xjj[i, j]
+    for i in range(1, jd-1):
+        for j in range(1, jd-1):
+            xjj[i - 1, j - 1] = 0
+            for kk in range(1, jd-1):
+                xjj[i - 1, j - 1] = xjj[i - 1, j - 1] + cjj[i - 1, kk - 1] * sjj[kk - 1, j - 1]
+            qjj[i - 1, j - 1] = qjj[i - 1, j - 1] + xjj[i - 1, j - 1]
 
-    return np.asarray(qjj), np.asarray(djj), np.asarray(cjj), np.asarray(rj), np.asarray(tj)
+    return np.asarray(qjj), np.asarray(djj), np.asarray(cjj), np.asarray(rj)
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def matrix_after_inversion_cython(
+    int k,
+    int kmax,
+    int jd,
+    cython.double[:, :] qjj,
+    cython.double[:, :] djj,
+    cython.double[:, :] cjj,
+    cython.double[:] rj,
+    cython.double[:, :, :] sjk,  # (jd-2, jd-2, kmax-1)
+    cython.double[:, :] tjk):
 
-def matrix_after_inversion(
-    k: int, kmax: int, jd: int, qjj: np.ndarray,
-    djj: np.ndarray, cjj: np.ndarray, rj: np.array, sjk: np.ndarray,
-    tjk: np.ndarray, tj: np.array):
-    xjj = np.zeros((jd-2, jd-2))
-    yj = np.zeros(jd-2)
-    """
-    sjk [k,j,i] >.<
-    """
+    # *** Create memory view ***
+    qjj_view2d: double[:, :] = qjj
+    djj_view2d: double[:, :] = djj
+    cjj_view2d: double[:, :] = cjj
+    sjk_view3d: double[:, :, :] = sjk
+    tjk_view2d: double[:, :] = tjk  # tjk does not match
 
-    for i in range(0, jd-2):
-        for j in range(0, jd-2):
-            xjj[i, j] = 0.
-            for kk in range(0, jd-2):
-                xjj[i, j] = xjj[i, j] + qjj[i, kk] * djj[kk, j]
-            sjk[k-1, j, i] = -xjj[i, j]
+    cdef double[:, :] xjj = np.zeros((jd-2, jd-2), dtype=float)
+    cdef double[:] yj = np.zeros(jd-2, dtype=float)
+    cdef double[:] tj = np.zeros(jd-2, dtype=float)
+
+    tj[:] = tjk_view2d[:, k-1]
+    for i in range(1, jd-1):
+        for j in range(1, jd-1):
+            xjj[i-1, j-1] = 0.
+            for kk in range(1, jd-1):
+                xjj[i-1, j-1] = xjj[i-1, j-1] + qjj_view2d[i-1, kk-1] * djj_view2d[kk-1, j-1]
+            sjk_view3d[i-1,j-1,k-2] = -xjj[i-1, j-1]
 
     #  **** Evaluate rk - Ck Tk ****
-    for i in range(0, jd-2):
-        yj[i] = 0.
-        for kk in range(0, jd-2):
-            yj[i] = yj[i] + cjj[i, kk] * tj[kk]
-        yj[i] = rj[i] - yj[i]
+    for i in range(1, jd-1):
+        yj[i-1] = 0.
+        for kk in range(1, jd-1):
+            yj[i-1] = yj[i-1] + cjj_view2d[i-1, kk-1] * tj[kk-1]
+        yj[i-1] = rj[i-1] - yj[i-1]
 
     # ***** Evaluate Eq. 23 *******
-    for i in range(0, jd-2):
-        tj[i] = 0.
-        for kk in range(0, jd-2):
-            tj[i] = tj[i] + qjj[i, kk] * yj[kk]
-        tjk[i, k-1] = tj[i]
+    for i in range(1, jd-1):
+        tj[i-1] = 0.
+        for kk in range(1, jd-1):
+            tj[i-1] = tj[i-1] + qjj_view2d[i-1, kk-1] * yj[kk-1]
+        tjk_view2d[i-1, k-2] = tj[i-1]
 
-    return sjk, tjk, tj
+    return np.asarray(sjk), np.asarray(tjk)
 
 
 def upward_sweep(
@@ -340,7 +350,6 @@ def upward_sweep(
     tref[:, kmax - 1] = tref[:, kmax - 2] - tb[kmax - 2] + tb[kmax - 1]
 
     return qref, tref, u
-
 
 def compute_flux_dirinv(
     pv, uu, vv, pt, tn0, qref, uref, tref,
@@ -450,9 +459,4 @@ def compute_flux_dirinv(
 if __name__ == "__main__":
     ans = sin_func(0.444)
     print(ans)
-
-
-
-
-
 
