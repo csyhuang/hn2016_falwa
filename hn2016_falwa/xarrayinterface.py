@@ -79,11 +79,18 @@ class QGDataset:
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        Input dataset. Must contain 3D fields of zonal wind, meridional wind
-        and temperature. The 3D fields's dimensions must end with height,
-        latitude and longitude. Other dimensions (e.g. time, ensemble member
-        id) are preserved in the output datasets.
+    ds_u : xarray.Dataset
+        Input dataset. Must contain 3D fields of zonal wind. The 3D fields's
+        dimensions must end with height, latitude and longitude. Other dimensions
+        (e.g. time, ensemble member id) are preserved in the output datasets.
+    ds_v : xarray.Dataset
+        Input dataset. Must contain 3D fields of meridional wind. The 3D fields's
+        dimensions must end with height, latitude and longitude. Other dimensions
+        (e.g. time, ensemble member id) are preserved in the output datasets.
+    ds_t : xarray.Dataset
+        Input dataset. Must contain 3D fields of temperature. The 3D fields's
+        dimensions must end with height, latitude and longitude. Other dimensions
+        (e.g. time, ensemble member id) are preserved in the output datasets.
     qgfield_args : tuple, optional
         Positional arguments given to the QGField constructor.
     qgfield_kwargs : dict, optional
@@ -95,31 +102,35 @@ class QGDataset:
 
     Example
     -------
-    >>> data = xarray.load_dataset("path/to/some/uvt-data.nc")
-    >>> qgds = QGDataset(data)
+    >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
+    >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
+    >>> data_t = xarray.load_dataset("path/to/some/t-data.nc")
+    >>> qgds = QGDataset(data_u, data_v, data_t)
     """
 
-    def __init__(self, ds, qgfield_args=None, qgfield_kwargs=None, var_names=None):
+    def __init__(self, ds_u, ds_v, ds_t, qgfield_args=None, qgfield_kwargs=None, var_names=None):
         if var_names is None:
             var_names = dict()
-        self._ds = ds
+        self._ds_u = ds_u
+        self._ds_v = ds_v
+        self._ds_t = ds_t
         self._qgfield_args   = list() if qgfield_args   is None else qgfield_args
         self._qgfield_kwargs = dict() if qgfield_kwargs is None else qgfield_kwargs
         # Find names of spatial coordinates
-        self._plev_name = _get_name(ds, _NAMES_PLEV, var_names)
-        self._ylat_name = _get_name(ds, _NAMES_YLAT, var_names)
-        self._xlon_name = _get_name(ds, _NAMES_XLON, var_names)
+        self._plev_name = _get_name(ds_u, _NAMES_PLEV, var_names)
+        self._ylat_name = _get_name(ds_u, _NAMES_YLAT, var_names)
+        self._xlon_name = _get_name(ds_u, _NAMES_XLON, var_names)
         # Find names of wind and temperature fields
-        self._u_name = _get_name(ds, _NAMES_U, var_names)
-        self._v_name = _get_name(ds, _NAMES_V, var_names)
-        self._t_name = _get_name(ds, _NAMES_T, var_names)
+        self._u_name = _get_name(ds_u, _NAMES_U, var_names)
+        self._v_name = _get_name(ds_v, _NAMES_V, var_names)
+        self._t_name = _get_name(ds_t, _NAMES_T, var_names)
         # Shorthands for data arrays
-        plev = ds[self._plev_name]
-        ylat = ds[self._ylat_name]
-        xlon = ds[self._xlon_name]
-        u = ds[self._u_name]
-        v = ds[self._v_name]
-        t = ds[self._t_name]
+        plev = ds_u[self._plev_name]
+        ylat = ds_u[self._ylat_name]
+        xlon = ds_u[self._xlon_name]
+        u = ds_u[self._u_name]
+        v = ds_v[self._v_name]
+        t = ds_t[self._t_name]
         # Check that field coordinates end in lev, lat, lon
         assert u.dims[-3] == plev.name, f"dimension -3 of input fields must be '{plev.name}' (plev)"
         assert u.dims[-2] == ylat.name, f"dimension -2 of input fields must be '{ylat.name}' (ylat)"
@@ -130,7 +141,7 @@ class QGDataset:
         # Flatten all these other dimensions so a single loop covers all
         # fields. These dimensions are restored in the output datasets.
         self._other_dims = u.dims[:-3]
-        self._other_shape = tuple(ds[dim].size for dim in self._other_dims)
+        self._other_shape = tuple(ds_u[dim].size for dim in self._other_dims)
         self._other_size = np.product(self._other_shape, dtype=np.int64)
         _shape = (self._other_size, *u.shape[-3:])
         # Extract value arrays and collapse all additional dimensions
@@ -178,7 +189,7 @@ class QGDataset:
 
     @property
     def _other_coords(self):
-        return { dim: self._ds[dim] for dim in self._other_dims}
+        return {dim: self._ds_u[dim] for dim in self._other_dims}
 
     @property
     def attrs(self):
