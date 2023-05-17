@@ -3,11 +3,68 @@
 File name: basis.py
 Author: Clare Huang
 """
+from typing import Tuple, Optional
 import numpy as np
 from math import pi
 
 
-def eqvlat(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
+def eqvlat_fawa(
+        ylat, vort, area, n_points, planet_radius=6.378e+6,
+        output_fawa=True) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+
+    """
+    Compute equivalent latitude and finite amplitude wave activity with the full
+
+    Parameters
+    ----------
+    ylat : sequence or array_like
+        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
+    vort : ndarray
+        2-d numpy array of vorticity values; dimension = (nlat, nlon).
+    area : ndarray
+        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
+    n_points: int
+        Analysis resolution to calculate equivalent latitude.
+    planet_radius: float
+        Radius of spherical planet of interest consistent with input *area*. Default: earth's radius 6.378e+6
+    output_fawa: bool
+        Whether to output FAWA. If True, return tuple would consist of (qref, fawa). Else, this function will
+        return (qref, None).
+
+    Returns
+    -------
+    qref : ndarray
+        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
+    fawa : ndarray or None
+        1-d finite-amplitude local wave activity
+    """
+    vort_min, vort_max = np.amin(vort), np.amax(vort)
+    qbar = vort.mean(axis=-1)  # zonal mean vorticity
+    vort_bins = np.linspace(vort_min, vort_max, n_points, endpoint=True)  # uniform vort bins
+    vort_flat, area_flat = vort.flatten(), area.flatten()  # Flatten the 2D arrays to 1D
+
+    # *** Find equivalent latitude ***
+    inds = np.digitize(vort_flat, vort_bins)  # sort vorticity values into bins
+    aq = np.cumsum([0] + [area_flat[np.where(inds == i)].sum() for i in range(1, vort_bins.size)])  # cumulative area
+    cq = np.cumsum([0] + [np.multiply(area_flat, vort_flat)[np.where(inds == i)].sum()  # cumulative vort * area
+                          for i in range(1, vort_bins.size)])
+    eqv_gaussian_grid = aq / (2 * pi * planet_radius ** 2) - 1.0  # ascending from -1
+    eqv_latitude = np.rad2deg(np.arcsin(eqv_gaussian_grid))
+    qref = np.interp(ylat, eqv_latitude, vort_bins)  # ascending. qref = np.interp(alat[::-1], aq, q_part_u) also works
+
+    # *** Compute FAWA ***
+    if output_fawa:
+        cref = np.interp(ylat, eqv_latitude, cq)
+        cbar = np.zeros_like(cref)
+        for j in np.arange(ylat.size-2, 0, -1):
+            cbar[j] = cbar[j+1] + 0.5 * (qbar[j+1]*area.sum(axis=1)[j+1] + qbar[j]*area.sum(axis=1)[j])
+        fawa = -(cbar[1:] + cref[1:])/(2 * pi * planet_radius)
+        return qref, fawa
+
+    return qref, None
+
+
+def eqvlat_vgrad(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
 
     """
     Compute equivalent latitude, and optionally <...>_Q in Nakamura and Zhu (2010).

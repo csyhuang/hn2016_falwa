@@ -3,7 +3,8 @@
 File name: oopinterface.py
 Author: Clare Huang
 """
-from typing import Optional
+from typing import Optional, NamedTuple
+import copy
 import math
 import warnings
 import numpy as np
@@ -151,6 +152,8 @@ class QGField(object):
         # === To be computed ===
         self.dphi = np.deg2rad(180./(self.nlat-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
+        self.slat = np.sin(np.deg2rad(ylat))  # sin latitude
+        self.clat = np.cos(np.deg2rad(ylat))  # sin latitude
 
         if npart is None:
             self.npart = self.nlat
@@ -266,8 +269,8 @@ class QGField(object):
         # Check if plev is in decending order
         if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
-        else:
-            self.plev = plev
+        self.plev = plev
+        self.zlev = -scale_height * np.log(plev/P_GROUND)
 
         # Check if kmax is valid given the max pseudoheight in the input data
         hmax = -scale_height*np.log(plev[-1]/P_GROUND)
@@ -841,8 +844,7 @@ class QGField(object):
 
         .. versionadded:: 0.6.0
         """
-        # ans = compute_qref_and_fawa_first(
-            # pv, uu, vort, pt, nd, nnd, jb, jd, aa, omega, dz, h, rr, cp)
+
         ans = compute_qref_and_fawa_first(
             pv=self._qgpv_temp,
             uu=self._interpolated_u_temp,
@@ -880,15 +882,14 @@ class QGField(object):
                 statn=self._static_stability_n,
                 qref=qref_over_cor,
                 ckref=ckref,
+                sjk=sjk,
                 a=self.planet_radius,
                 om=self.omega,
                 dz=self.dz,
                 h=self.scale_height,
                 rr=self.dry_gas_constant,
-                cp=self.cp,
-                sjk=sjk,
-                tjk=tjk)
-            qjj, djj, cjj, rj, tj = ans
+                cp=self.cp)
+            qjj, djj, cjj, rj = ans
 
             # TODO: The inversion algorithm  is the bottleneck of the computation
             # SciPy is very slow compared to MKL in Fortran...
@@ -900,7 +901,6 @@ class QGField(object):
                 qjj=qjj,
                 djj=djj,
                 cjj=cjj,
-                tj=tj,
                 rj=rj,
                 sjk=sjk,
                 tjk=tjk)
@@ -927,14 +927,18 @@ class QGField(object):
         Added for NHN 2022 GRL
 
         .. versionadded:: 0.6.0
+
+        TODO: make it available for southern hemisphere
         """
-        ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-                                  pt=self._interpolated_theta_temp, tn0=self._tn0,
-                                  qref=qref, uref=uref, tref=tref,
-                                  jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
-                                  dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
-                                  prefac=self.prefactor)
-        # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
+
+        ans = compute_flux_dirinv(
+            pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
+            pt=self._interpolated_theta_temp, tn0=self._tn0,
+            qref=qref, uref=uref, tref=tref,
+            jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
+            prefac=self.prefactor)
+        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
         return ans
 
     @property
