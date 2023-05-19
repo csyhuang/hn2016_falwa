@@ -86,9 +86,9 @@ The **object-oriented interface** is an easy-to-use interface that takes in the 
    Xarray Interface
    Barotropic Field
    Basis Functions
+   Plot Utilities
    Utility Functions
    Wrapper Functions
-   Beta-version Functions
 
 
 

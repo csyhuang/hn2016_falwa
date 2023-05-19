@@ -8,16 +8,20 @@ import xarray as xr
 from matplotlib import pyplot as plt
 
 
-def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_fname='default.png',
-                       diff_factor=0.01, figsize=(15, 4), cmap='rainbow'):
+def compare_two_fields(
+    field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_fname='default.png',
+        diff_factor=0.01, figsize=(15, 4), cmap='rainbow'):
+
     """
     A handy utility to compare the difference between two 2D-fields and plot their difference. The output plot
     has 3 columns:
-        (1) value of field_a,
-        (2) value of field_b,
-        (3) absolute difference between field_a and field_b. The color scale of this plot can be controlled by the
-            parameter diff_factor: the color range of the plot will be the maximum value among field_a and field_b
-            multiplied by diff_factor. If you want to use the auto-colorscale, set diff_factor to None.
+    (1) value of field_a,
+    (2) value of field_b,
+    (3) absolute difference between field_a and field_b. The color scale of this plot can be controlled by the
+    parameter *diff_factor*: the color range of the plot will be the maximum value among field_a and field_b multiplied
+    by diff_factor. If you want to use the auto-colorscale, set diff_factor to None.
+
+    .. versionadded:: 0.6.7
 
     Args:
         field_a (np.ndarray): First 2D-field to compare
@@ -32,8 +36,8 @@ def compare_two_fields(field_a, field_b, a_title, b_title, x_coord, y_coord, tit
         diff_factor (float): The color range of the plot will be the maximum value among field_a and field_b
             multiplied by diff_factor. If you want to use the auto-colorscale, set diff_factor to None. Default: 0.01.
         figsize (Tuple[int, int]): tuple specifying figure size
-
     """
+
     cmin = np.min([np.amin(field_a), np.amin(field_b)])
     cmax = np.max([np.amax(field_a), np.amax(field_b)])
     print(f"cmin = {cmin}, cmax = {cmax}")
@@ -63,20 +67,13 @@ def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longit
     """
     Plot a snapshot of longitude-latitude map from a netCDF file.
 
-    Parameters
-    ----------
-    filepath : str
-        path to the netCDF file
-    variable_name : str
-        name of the variable to be plotted
-    latitude_name : str
-        name of latitudinal coordinates
-    longitude_name : str
-        name of latitudinal coordinates
-    tstep : int
-        index of timestep to be plotted
-    zonal_axis : int
-        axis of zonal dimension
+    Args:
+        filepath (str): path to the netCDF file
+        variable_name (str): name of the variable to be plotted
+        latitude_name (str): name of latitudinal coordinates
+        longitude_name (str): name of latitudinal coordinates
+        tstep (int): index of timestep to be plotted
+        zonal_axis (int): axis of zonal dimension
     """
     file_handle = xr.open_dataset(filepath)
     field = file_handle.variables[variable_name].isel(time=tstep).values

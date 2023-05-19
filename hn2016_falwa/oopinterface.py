@@ -905,7 +905,7 @@ class QGField(object):
                 sjk=sjk,
                 tjk=tjk)
 
-        tref, qref, u = upward_sweep(
+        tref, qref, uref = upward_sweep(
             jmax=self.nlat,
             jb=self.eq_boundary_index,
             sjk=sjk,
@@ -920,7 +920,7 @@ class QGField(object):
             rr=self.dry_gas_constant,
             cp=self.cp)
 
-        return qref, u, tref, fawa, ubar, tbar  # uref = u
+        return qref, uref, tref, fawa, ubar, tbar
 
     def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """
