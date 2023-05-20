@@ -79,7 +79,7 @@ for tstep in range(ntimes):
     qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
 
     qgpv_temp, interpolated_u_temp, interpolated_v_temp, interpolated_avort_temp, interpolated_theta_temp, \
-    static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_field_dirinv()
+    static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_field_nhn22()
 
     qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
 

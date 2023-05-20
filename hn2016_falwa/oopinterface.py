@@ -3,7 +3,7 @@
 File name: oopinterface.py
 Author: Clare Huang
 """
-from typing import Optional, NamedTuple
+from typing import Tuple, Optional, Union, NamedTuple
 from enum import Enum
 import copy
 import math
@@ -14,7 +14,7 @@ from scipy.linalg.lapack import dgetrf, dgetri
 
 from hn2016_falwa import utilities
 from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
-from hn2016_falwa.data_storage import InterpolatedFieldsStorage
+from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage
 
 # *** Import f2py modules ***
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
@@ -177,6 +177,7 @@ class QGField(object):
 
         # === Added in v0.7.0: Protocol ===
         self._protocol = protocol  # This will be fixed and will not change throughout the computation
+        self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
         # === Other parameters ===
         self.maxit = maxit
@@ -207,13 +208,24 @@ class QGField(object):
             pydim=(self.kmax, self.nlat, self.nlon),
             fdim=(self.nlon, self.nlat, self.kmax),
             swapaxis_1=0,
-            swapaxis_2=2)
+            swapaxis_2=2,
+            northern_hemisphere_results_only=self.northern_hemisphere_results_only)
         # Global averaged quantities (TODO: encalsulate them later)
-        self._static_stability = None
-        self._static_stability_n = None
-        self._static_stability_s = None
-        self._tn0 = None
-        self._ts0 = None
+        self._domain_average_storage = DomainAverageStorage(
+            pydim=self.kmax,
+            fdim=self.kmax,
+            swapaxis_1=0,
+            swapaxis_2=2,
+            northern_hemisphere_results_only=self.northern_hemisphere_results_only)
+
+        # Reference states
+        lat_dim = self.nlat//2+1 if self.northern_hemisphere_results_only else self.nlat
+        self._reference_states_storage = ReferenceStatesStorage(
+            pydim=(self.kmax, lat_dim),
+            fdim=(lat_dim, self.kmax),
+            swapaxis_1=0,
+            swapaxis_2=1,
+            northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # Computation from computer_reference_states
         self._qref_stemp = None
@@ -225,11 +237,6 @@ class QGField(object):
         self._qref = None
         self._uref = None
         self._ptref = None
-        self._qgpv = None
-        self._interpolated_u = None
-        self._interpolated_v = None
-        self._interpolated_theta = None
-        self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
         # Computation from compute_lwa_and_barotropic_fluxes
         self._adv_flux_f1 = None
@@ -401,7 +408,7 @@ class QGField(object):
             qgpv,
             u,
             theta,
-            self._static_stability,
+            self._domain_average_storage.static_stability,
             self.equator_idx,
             self.npart,
             self.maxit,
@@ -456,14 +463,38 @@ class QGField(object):
 
         """
 
-        # === Interpolate fields and obtain qgpv ===
+        # Return a named tuple
+        Interpolated_fields_to_return = namedtuple(
+            'Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
+
+        if self.protocol == Protocol.NH18:
+            # === Interpolate fields and obtain qgpv ===
+            self._interpolate_fields_nh18()
+            interpolated_fields = Interpolated_fields_to_return(
+                self.qgpv,
+                self.interpolated_u,
+                self.interpolated_v,
+                self.interpolated_theta,
+                self.static_stability)
+        else:  # *** Protocol.NHN22 ***
+            self._interpolate_fields_nhn22()
+            interpolated_fields = Interpolated_fields_to_return(
+                self.qgpv,
+                self.interpolated_u,
+                self.interpolated_v,
+                self.interpolated_theta,
+                (self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n))
+            # TODO: warn that for NHN22, static stability returned would be a tuple of ndarray
+
+        return interpolated_fields
+
+    def _interpolate_fields_nh18(self):
         self._interpolated_field_storage.qgpv, \
             self._interpolated_field_storage.interpolated_u, \
             self._interpolated_field_storage.interpolated_v, \
             self._interpolated_field_storage.interpolated_avort, \
             self._interpolated_field_storage.interpolated_theta, \
-            self._static_stability = \
-            interpolate_fields(
+            self._domain_average_storage.static_stability = interpolate_fields(  # f2py module
                 np.swapaxes(self.u_field, 0, 2),
                 np.swapaxes(self.v_field, 0, 2),
                 np.swapaxes(self.t_field, 0, 2),
@@ -474,25 +505,34 @@ class QGField(object):
                 self.dz,
                 self.scale_height,
                 self.dry_gas_constant,
-                self.cp
-            )
+                self.cp)
 
-        # self._qgpv = np.swapaxes(self._qgpv_temp, 0, 2)
-        # self._interpolated_u = np.swapaxes(self._interpolated_u_temp, 0, 2)
-        # self._interpolated_v = np.swapaxes(self._interpolated_v_temp, 0, 2)
-        # self._interpolated_theta = np.swapaxes(
-        #     self._interpolated_theta_temp, 0, 2
-        # )
+    def _interpolate_fields_nhn22(self):
+        self._interpolated_field_storage.qgpv, \
+            self._interpolated_field_storage.interpolated_u, \
+            self._interpolated_field_storage.interpolated_v, \
+            self._interpolated_field_storage.interpolated_avort, \
+            self._interpolated_field_storage.interpolated_theta, \
+            self._domain_average_storage.static_stability_n, \
+            self._domain_average_storage.static_stability_s, \
+            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = interpolate_fields_direct_inv(  # f2py module
+                self.kmax,
+                self.nlat // 2 + self.nlat % 2,
+                np.swapaxes(self.u_field, 0, 2),
+                np.swapaxes(self.v_field, 0, 2),
+                np.swapaxes(self.t_field, 0, 2),
+                self.plev,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp)
 
-        # Return a named tuple
-        Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
-        interpolated_fields = Interpolated_fields(
-            self.qgpv,
-            self.interpolated_u,
-            self.interpolated_v,
-            self.interpolated_theta,
-            self.static_stability)
-        return interpolated_fields
+        return self._interpolated_field_storage.qgpv, self._interpolated_field_storage.interpolated_u, \
+            self._interpolated_field_storage.interpolated_v, self._interpolated_field_storage.interpolated_avort, \
+            self._interpolated_field_storage.interpolated_theta, self._domain_average_storage.static_stability_n, self._domain_average_storage.static_stability_s, \
+            self._domain_average_storage.tn0, self._domain_average_storage.ts0
 
     def compute_reference_states(self, **kwargs):
 
@@ -543,44 +583,9 @@ class QGField(object):
                 """)
 
         if self.qgpv is None:
-            self.interpolate_fields()
+            raise ValueError("QGField.interpolate_fields has to be called before QGField.compute_reference_states.")
 
-        # === Compute reference states in Northern Hemisphere ===
-        self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp, num_of_iter = self._compute_reference_state_wrapper(
-            qgpv=self._interpolated_field_storage.qgpv, u=self._interpolated_field_storage.interpolated_u, theta=self._interpolated_field_storage.interpolated_theta)
-        if num_of_iter >= self.maxit:
-            raise ValueError("The reference state does not converge for Northern Hemisphere.")
-        # *** Convert Qref to the right unit
-        qref_ntemp_right_unit = \
-            self._qref_ntemp * 2 * self.omega * np.sin(np.deg2rad(self.ylat[(self.equator_idx - 1):, np.newaxis]))
-
-        # === Compute reference states in Southern Hemisphere ===
-        if not self.northern_hemisphere_results_only:
-            self._qref_stemp, self._uref_stemp, self._ptref_stemp, num_of_iter = self._compute_reference_state_wrapper(
-                qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
-                u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :])
-            if num_of_iter >= self.maxit:
-                raise ValueError("The reference state does not converge for Southern Hemisphere.")
-
-            # *** Convert Qref to the right unit
-            qref_stemp_right_unit = self._qref_stemp[::-1, :] * 2 * self.omega * np.sin(
-                np.deg2rad(self.ylat[:self.equator_idx, np.newaxis]))
-
-        if self.northern_hemisphere_results_only:
-            self._qref = np.swapaxes(qref_ntemp_right_unit, 0, 1)
-            self._uref = np.swapaxes(self._uref_ntemp, 0, 1)
-            self._ptref = np.swapaxes(self._ptref_ntemp, 0, 1)
-        else:
-            self._qref = \
-                np.hstack((np.swapaxes(qref_stemp_right_unit[:, :], 0, 1),
-                           np.swapaxes(qref_ntemp_right_unit[1:, :], 0, 1)))
-            self._uref = \
-                np.hstack((np.swapaxes(self._uref_stemp[::-1, :], 0, 1),
-                           np.swapaxes(self._uref_ntemp[1:, :], 0, 1)))
-            self._ptref = \
-                np.hstack((np.swapaxes(self._ptref_stemp[::-1, :], 0, 1),
-                           np.swapaxes(self._ptref_ntemp[1:, :], 0, 1)))
+        self._compute_reference_states_nh18()
 
         # Construct a named tuple
         Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
@@ -589,6 +594,32 @@ class QGField(object):
             self.uref,
             self.ptref)
         return reference_states
+
+    def _compute_reference_states_nh18(self):
+        # *** Compute reference states in Northern Hemisphere using SOR ***
+        self._reference_states_storage.qref_nhem, \
+            self._reference_states_storage.uref_nhem, \
+            self._reference_states_storage.ptref_nhem, num_of_iter = \
+            self._compute_reference_state_wrapper(
+                qgpv=self._interpolated_field_storage.qgpv,
+                u=self._interpolated_field_storage.interpolated_u,
+                theta=self._interpolated_field_storage.interpolated_theta)
+
+        if num_of_iter >= self.maxit:
+            raise ValueError("The reference state does not converge for Northern Hemisphere.")
+
+        # === Compute reference states in Southern Hemisphere ===
+        if not self.northern_hemisphere_results_only:
+            self._reference_states_storage.qref_shem, \
+                self._reference_states_storage.uref_shem, \
+                self._reference_states_storage.ptref_shem, num_of_iter = \
+                self._compute_reference_state_wrapper(
+                    qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :])
+
+            if num_of_iter >= self.maxit:
+                raise ValueError("The reference state does not converge for Southern Hemisphere.")
 
     def compute_lwa_and_barotropic_fluxes(self, **kwargs):
 
@@ -682,9 +713,9 @@ class QGField(object):
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
-                self._qref_ntemp,
-                self._uref_ntemp,
-                self._ptref_ntemp)
+                self._reference_states_storage.qref_nhem,
+                self._reference_states_storage.uref_nhem,
+                self._reference_states_storage.ptref_nhem)
 
         # === Access barotropic components of ua1, ua2, ep1, ep2, ep3, ep4: for the use of nhn GLR paper only ===
         self._ua1baro_nhem = ua1baro_nhem
@@ -703,9 +734,9 @@ class QGField(object):
                     self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_v[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    self._qref_stemp,
-                    self._uref_stemp,
-                    self._ptref_stemp)
+                    self._reference_states_storage.qref_shem[::-1, :],
+                    self._reference_states_storage.uref_shem[::-1, :],
+                    self._reference_states_storage.ptref_shem[::-1, :])
 
         # *** Northern Hemisphere ***
         # Compute divergence of the meridional eddy momentum flux
@@ -795,53 +826,6 @@ class QGField(object):
             self.divergence_eddy_momentum_flux, self.meridional_heat_flux, self.lwa_baro, self.u_baro, self.lwa)
         return lwa_and_fluxes
 
-    # *** Added in Release 0.6.0 ***
-    # The following internal functions are used to compute results in NHN (2022, GRL):
-    # - _interpolate_field_dirinv
-    # - _compute_qref_fawa_and_bc
-    # - _compute_lwa_flux_dirinv
-    # They will be refactored in the upcoming releases.
-    def _interpolate_field_dirinv(self):
-        """
-        Added for NHN 2022 GRL
-
-        .. versionadded:: 0.6.0
-        """
-        self._qgpv_temp, \
-        self._interpolated_u_temp, \
-        self._interpolated_v_temp, \
-        self._interpolated_avort_temp, \
-        self._interpolated_theta_temp, \
-        self._static_stability_n, \
-        self._static_stability_s,\
-        self._tn0, self._ts0 = \
-            interpolate_fields_direct_inv(
-                self.kmax,
-                self.nlat // 2 + self.nlat % 2,
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
-                self.plev,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp)
-
-        self._check_nan("self._qgpv_temp", self._qgpv_temp)
-        self._check_nan("self._interpolated_u_temp", self._interpolated_u_temp)
-        self._check_nan("self._interpolated_v_temp", self._interpolated_v_temp)
-        self._check_nan("self._interpolated_avort_temp", self._interpolated_avort_temp)
-        self._check_nan("self._interpolated_theta_temp", self._interpolated_theta_temp)
-        self._check_nan("self._static_stability_n", self._static_stability_n)
-        self._check_nan("self._static_stability_s", self._static_stability_s)
-        self._check_nan("self._tn0", self._tn0)
-        self._check_nan("self._ts0", self._ts0)
-
-        return self._qgpv_temp, self._interpolated_u_temp, self._interpolated_v_temp,  self._interpolated_avort_temp, \
-        self._interpolated_theta_temp, self._static_stability_n, self._static_stability_s, self._tn0, self._ts0
-
     @staticmethod
     def _check_nan(name, var):
         nan_num = np.count_nonzero(np.isnan(var))
@@ -860,7 +844,7 @@ class QGField(object):
             uu=self._interpolated_u_temp,
             vort=self._interpolated_avort_temp,
             pt=self._interpolated_theta_temp,
-            tn0=self._tn0,
+            tn0=self._domain_average_storage.tn0,
             nd=self.nlat//2 + self.nlat % 2,  # 91
             nnd=self.nlat,                    # 181
             jb=self.eq_boundary_index,        # 5
@@ -889,7 +873,7 @@ class QGField(object):
                 jb=self.eq_boundary_index,  # 5
                 jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,  # 86
                 z=np.arange(0, self.kmax*self.dz, self.dz),
-                statn=self._static_stability_n,
+                statn=self._domain_average_storage.static_stability_n,
                 qref=qref_over_cor,
                 ckref=ckref,
                 sjk=sjk,
@@ -921,7 +905,7 @@ class QGField(object):
             sjk=sjk,
             tjk=tjk,
             ckref=ckref,
-            tb=self._tn0,
+            tb=self._domain_average_storage.tn0,
             qref_over_cor=qref_over_cor,
             a=self.planet_radius,
             om=self.omega,
@@ -943,7 +927,7 @@ class QGField(object):
 
         ans = compute_flux_dirinv(
             pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-            pt=self._interpolated_theta_temp, tn0=self._tn0,
+            pt=self._interpolated_theta_temp, tn0=self._domain_average_storage.tn0,
             qref=qref, uref=uref, tref=tref,
             jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
             dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
@@ -962,6 +946,16 @@ class QGField(object):
         """Which paper's formalism is used. Fixed since creation of the instance."""
         # TODO validation check for the inputs, e.g. boundary index etc
         return self._protocol
+
+    @property
+    def ylat_ref_states(self) -> np.array:
+        """
+        Latitude dimension of reference state
+        """
+        if self.northern_hemisphere_results_only:
+            return self.ylat[-(self.nlat//2+1):]
+        return self.ylat
+
 
     @property
     def northern_hemisphere_results_only(self) -> bool:
@@ -1013,38 +1007,47 @@ class QGField(object):
             self._interpolated_field_storage.interpolated_theta), interp_axis=1)
 
     @property
-    def static_stability(self):
+    def static_stability(self) -> Union[np.array, Tuple[np.array, np.array]]:
         """
         The interpolated static stability.
         """
-        return self._static_stability
+        if self._protocol == Protocol.NH18:
+            return self._domain_average_storage.static_stability
+        if self._protocol == Protocol.NHN22:
+            if self.northern_hemisphere_results_only:
+                return self._domain_average_storage.static_stability_n
+            else:
+                return self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n
 
     @property
     def qref(self):
         """
         Reference state of QGPV (Qref).
         """
-        if self._qref is None:
+        if self._reference_states_storage.qref is None:
             raise ValueError('qref is not computed yet.')
-        return self._return_interp_variables(variable=self._qref, interp_axis=1)
+        return self._return_interp_variables(
+            variable=self._reference_states_storage.qref_correct_unit(self.ylat_ref_states, self.omega), interp_axis=1)
 
     @property
     def uref(self):
         """
         Reference state of zonal wind (Uref).
         """
-        if self._uref is None:
-            raise ValueError('uref field is not computed yet.')
-        return self._return_interp_variables(variable=self._uref, interp_axis=1)
+        if self._reference_states_storage.uref is None:
+            raise ValueError('uref is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.uref), interp_axis=1)
 
     @property
     def ptref(self):
         """
         Reference state of potential temperature (\\Theta_ref).
         """
-        if self._ptref is None:
-            raise ValueError('ptref field is not computed yet.')
-        return self._return_interp_variables(variable=self._ptref, interp_axis=1)
+        if self._reference_states_storage.ptref is None:
+            raise ValueError('ptref is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.ptref), interp_axis=1)
 
     @property
     def adv_flux_f1(self):

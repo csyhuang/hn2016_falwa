@@ -351,14 +351,14 @@ class QGDataset:
 
     # The new routines so far only seem to work for 1°-resolution data and the northern hemisphere
 
-    def _interpolate_field_dirinv(self):
+    def _interpolate_fields_nhn22(self):
         # Call interpolate_field_dirinv on all QGField objects
         out_fields = _map_collect(
-            lambda field: field._interpolate_field_dirinv(),
+            lambda field: field._interpolate_fields_nhn22(),
             self._fields,
             ["qgpv", "interpolated_u", "interpolated_v", "interpolated_avort",
-                "interpolated_theta", "static_stability_n", "static_stability_s",
-                "tn0", "ts0"],
+             "interpolated_theta", "static_stability_n", "static_stability_s",
+             "tn0", "ts0"],
             postprocess=np.asarray
         )
         # Take the first field to extract coordinates and metadata
