@@ -13,7 +13,9 @@ from scipy.linalg.lapack import dgetrf, dgetri
 
 from hn2016_falwa import utilities
 from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
+from hn2016_falwa.data_storage import InterpolatedFieldsStorage
 
+# *** Import f2py modules ***
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
@@ -27,6 +29,11 @@ class QGField(object):
     that can be used to reproduce the results in:
     Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018).
     Note that topography is assumed flat in this object.
+
+    Public methods:
+    - interpolate_fields
+    - compute_reference_states
+    - compute_lwa_and_barotropic_fluxes
 
     .. versionadded:: 0.3.0
 
@@ -149,20 +156,16 @@ class QGField(object):
             self.v_field = v_field
             self.t_field = t_field
 
-        # === To be computed ===
+        # === Coordinate-related ===
         self.dphi = np.deg2rad(180./(self.nlat-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
         self.slat = np.sin(np.deg2rad(ylat))  # sin latitude
         self.clat = np.cos(np.deg2rad(ylat))  # sin latitude
-
-        if npart is None:
-            self.npart = self.nlat
-        else:
-            self.npart = npart
+        self.npart = npart if npart is not None else self.nlat
+        self.kmax = kmax
         self.height = np.array([i * dz for i in range(kmax)])
 
-        # === Parameters ===
-        self.kmax = kmax
+        # === Other parameters ===
         self.maxit = maxit
         self.dz = dz
         self.tol = tol
@@ -180,26 +183,24 @@ class QGField(object):
         # Modification on Oct 19, 2021 - deprecation of prefactor (it should be computed from kmax and dz)
         if prefactor is not None:
             warnings.warn(
-                "The optional input prefactor will be deprecated since it can be determined directly from " +
-                "kmax and dz. Given your input kmax = {kmax} and dz = {dz}, ".format(kmax=self.kmax, dz=self.dz) +
-                "the computed normalization prefactor is {prefactor}. ".format(prefactor=self.prefactor) +
-                "Your input value {input} would be ignored.".format(input=prefactor))
+                f"""
+                The optional input prefactor will be deprecated since it can be determined directly from 
+                kmax and dz. Given your input kmax = {self.kmax} and dz = {self.dz}, the computed normalization 
+                prefactor is {self.prefactor}. Your input value {prefactor} would be ignored.
+                """)
 
-        # === Variables that will be computed in methods ===
-        self._qgpv_temp = None
-        self._interpolated_u_temp = None
-        self._interpolated_v_temp = None
-        self._interpolated_avort_temp = None
-        self._interpolated_theta_temp = None
+        # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
+        self._interpolated_field_storage = InterpolatedFieldsStorage(
+            pydim=(self.kmax, self.nlat, self.nlon),
+            fdim=(self.nlon, self.nlat, self.kmax),
+            swapaxis_1=0,
+            swapaxis_2=2)
+        # Global averaged quantities (TODO: encalsulate them later)
         self._static_stability = None
         self._static_stability_n = None
         self._static_stability_s = None
         self._tn0 = None
         self._ts0 = None
-
-        # === Temporary solution for direct inv routine
-        self._f_qref, self._f_u, self._f_tref, self._f_ubar, self._f_tbar, self._f_fawa, self._f_ckref = \
-            None, None, None, None, None, None, None
 
         # Computation from computer_reference_states
         self._qref_stemp = None
@@ -446,37 +447,35 @@ class QGField(object):
 
         """
 
-        if self._qref_ntemp is None:
-
-            # === Interpolate fields and obtain qgpv ===
-            self._qgpv_temp, \
-                self._interpolated_u_temp, \
-                self._interpolated_v_temp, \
-                self._interpolated_avort_temp, \
-                self._interpolated_theta_temp, \
-                self._static_stability = \
-                interpolate_fields(
-                    np.swapaxes(self.u_field, 0, 2),
-                    np.swapaxes(self.v_field, 0, 2),
-                    np.swapaxes(self.t_field, 0, 2),
-                    self.plev,
-                    self.height,
-                    self.planet_radius,
-                    self.omega,
-                    self.dz,
-                    self.scale_height,
-                    self.dry_gas_constant,
-                    self.cp
-                )
-
-            self._qgpv = np.swapaxes(self._qgpv_temp, 0, 2)
-            self._interpolated_u = np.swapaxes(self._interpolated_u_temp, 0, 2)
-            self._interpolated_v = np.swapaxes(self._interpolated_v_temp, 0, 2)
-            self._interpolated_theta = np.swapaxes(
-                self._interpolated_theta_temp, 0, 2
+        # === Interpolate fields and obtain qgpv ===
+        self._interpolated_field_storage.qgpv, \
+            self._interpolated_field_storage.interpolated_u, \
+            self._interpolated_field_storage.interpolated_v, \
+            self._interpolated_field_storage.interpolated_avort, \
+            self._interpolated_field_storage.interpolated_theta, \
+            self._static_stability = \
+            interpolate_fields(
+                np.swapaxes(self.u_field, 0, 2),
+                np.swapaxes(self.v_field, 0, 2),
+                np.swapaxes(self.t_field, 0, 2),
+                self.plev,
+                self.height,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp
             )
 
-        # Construct a named tuple # TODO: add absolute vorticity here? But only after testing
+        # self._qgpv = np.swapaxes(self._qgpv_temp, 0, 2)
+        # self._interpolated_u = np.swapaxes(self._interpolated_u_temp, 0, 2)
+        # self._interpolated_v = np.swapaxes(self._interpolated_v_temp, 0, 2)
+        # self._interpolated_theta = np.swapaxes(
+        #     self._interpolated_theta_temp, 0, 2
+        # )
+
+        # Return a named tuple
         Interpolated_fields = namedtuple('Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
         interpolated_fields = Interpolated_fields(
             self.qgpv,
@@ -534,12 +533,12 @@ class QGField(object):
                     f"initialized to {self._northern_hemisphere_results_only} already. The following computation will " +
                     f"use self._northern_hemisphere_results_only = {self._northern_hemisphere_results_only}.")
 
-        if self._qgpv_temp is None:
+        if self._interpolated_field_storage.qgpv is None:
             self.interpolate_fields()
 
         # === Compute reference states in Northern Hemisphere ===
         self._qref_ntemp, self._uref_ntemp, self._ptref_ntemp, num_of_iter = self._compute_reference_state_wrapper(
-            qgpv=self._qgpv_temp, u=self._interpolated_u_temp, theta=self._interpolated_theta_temp)
+            qgpv=self._interpolated_field_storage.qgpv, u=self._interpolated_field_storage.interpolated_u, theta=self._interpolated_field_storage.interpolated_theta)
         if num_of_iter >= self.maxit:
             raise ValueError("The reference state does not converge for Northern Hemisphere.")
         # *** Convert Qref to the right unit
@@ -549,9 +548,9 @@ class QGField(object):
         # === Compute reference states in Southern Hemisphere ===
         if not self._northern_hemisphere_results_only:
             self._qref_stemp, self._uref_stemp, self._ptref_stemp, num_of_iter = self._compute_reference_state_wrapper(
-                qgpv=-self._qgpv_temp[:, ::-1, :],
-                u=self._interpolated_u_temp[:, ::-1, :],
-                theta=self._interpolated_theta_temp[:, ::-1, :])
+                qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
+                u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :])
             if num_of_iter >= self.maxit:
                 raise ValueError("The reference state does not converge for Southern Hemisphere.")
 
@@ -651,7 +650,7 @@ class QGField(object):
         """
 
         # Check if previous steps have been done.
-        if self._qgpv_temp is None:
+        if self._interpolated_field_storage.qgpv is None:
             self.interpolate_fields()
 
         if self._uref_ntemp is None:
@@ -668,10 +667,10 @@ class QGField(object):
         lwa_nhem, astarbaro_nhem, ua1baro_nhem, ubaro_nhem, ua2baro_nhem,\
             ep1baro_nhem, ep2baro_nhem, ep3baro_nhem, ep4_nhem = \
             self._compute_lwa_and_barotropic_fluxes_wrapper(
-                self._qgpv_temp,
-                self._interpolated_u_temp,
-                self._interpolated_v_temp,
-                self._interpolated_theta_temp,
+                self._interpolated_field_storage.qgpv,
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
                 self._qref_ntemp,
                 self._uref_ntemp,
                 self._ptref_ntemp)
@@ -689,10 +688,10 @@ class QGField(object):
             lwa_shem, astarbaro_shem, ua1baro_shem, ubaro_shem, ua2baro_shem,\
                 ep1baro_shem, ep2baro_shem, ep3baro_shem, ep4_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
-                    -self._qgpv_temp[:, ::-1, :],
-                    self._interpolated_u_temp[:, ::-1, :],
-                    self._interpolated_v_temp[:, ::-1, :],
-                    self._interpolated_theta_temp[:, ::-1, :],
+                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
                     self._qref_stemp,
                     self._uref_stemp,
                     self._ptref_stemp)
@@ -946,40 +945,48 @@ class QGField(object):
         """
         Quasi-geostrophic potential vorticity on the regular pseudoheight grids.
         """
-        if self._qgpv is None:
+        if self._interpolated_field_storage.qgpv is None:
             raise ValueError('QGPV field is not present in the QGField object.')
         return self._return_interp_variables(
-            variable=self._qgpv, interp_axis=1, northern_hemisphere_results_only=False)
+            variable=self._interpolated_field_storage.fortran_to_python(
+                self._interpolated_field_storage.qgpv),
+            interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_u(self):
         """
         Zonal wind on the regular pseudoheight grids.
         """
-        if self._interpolated_u is None:
+        if self._interpolated_field_storage.interpolated_u is None:
             raise ValueError('interpolated_u is not present in the QGField object.')
         return self._return_interp_variables(
-            variable=self._interpolated_u, interp_axis=1, northern_hemisphere_results_only=False)
+            variable=self._interpolated_field_storage.fortran_to_python(
+                self._interpolated_field_storage.interpolated_u),
+            interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_v(self):
         """
         Meridional wind on the regular pseudoheight grids.
         """
-        if self._interpolated_v is None:
+        if self._interpolated_field_storage.interpolated_v is None:
             raise ValueError('interpolated_v is not present in the QGField object.')
         return self._return_interp_variables(
-            variable=self._interpolated_v, interp_axis=1, northern_hemisphere_results_only=False)
+            variable=self._interpolated_field_storage.fortran_to_python(
+                self._interpolated_field_storage.interpolated_v),
+            interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def interpolated_theta(self):
         """
         Potential temperature on the regular pseudoheight grids.
         """
-        if self._interpolated_theta is None:
+        if self._interpolated_field_storage.interpolated_theta is None:
             raise ValueError('interpolated_theta is not present in the QGField object.')
         return self._return_interp_variables(
-            variable=self._interpolated_theta, interp_axis=1, northern_hemisphere_results_only=False)
+            variable=self._interpolated_field_storage.fortran_to_python(
+                self._interpolated_field_storage.interpolated_theta),
+            interp_axis=1, northern_hemisphere_results_only=False)
 
     @property
     def static_stability(self):
