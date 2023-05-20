@@ -253,7 +253,7 @@ class QGDataset:
             attrs=self.attrs
         )
 
-    def compute_reference_states(self, northern_hemisphere_results_only=False):
+    def compute_reference_states(self):
         """Collect the output of `compute_reference_states` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.compute_reference_states`.
@@ -264,7 +264,7 @@ class QGDataset:
         """
         # Call compute_reference_states on all QGField objects
         out_fields = _map_collect(
-            lambda field: field.compute_reference_states(northern_hemisphere_results_only),
+            lambda field: field.compute_reference_states(),
             self._fields,
             ["qref", "uref", "ptref"],
             postprocess=np.asarray
@@ -272,7 +272,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if northern_hemisphere_results_only:
+        if _field.northern_hemisphere_results_only:
             _ylat = _field.ylat[(_field.equator_idx - 1):]            
         else:
             _ylat = _field.ylat
@@ -295,7 +295,7 @@ class QGDataset:
             attrs=self.attrs
         )
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
+    def compute_lwa_and_barotropic_fluxes(self):
         """Collect the output of `compute_lwa_and_barotropic_fluxes` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.compute_lwa_and_barotropic_fluxes`.
@@ -306,7 +306,7 @@ class QGDataset:
         """
         # Call compute_lwa_and_barotropic_fluxes on all QGField objects
         out_fields = _map_collect(
-            lambda field: field.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only),
+            lambda field: field.compute_lwa_and_barotropic_fluxes(),
             self._fields,
             ["adv_flux_f1", "adv_flux_f2", "adv_flux_f3", "convergence_zonal_advective_flux",
                 "divergence_eddy_momentum_flux", "meridional_heat_flux", "lwa_baro", "u_baro",
@@ -316,7 +316,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if northern_hemisphere_results_only:
+        if _field.northern_hemisphere_results_only:
             _ylat = _field.ylat[(_field.equator_idx - 1):]            
         else:
             _ylat = _field.ylat

@@ -32,7 +32,7 @@ def test_qgfield():
                           u_field=np.ma.masked_equal(u_field, 0.0), v_field=np.ma.masked_equal(v_field, 0.0),
                           t_field=np.ma.masked_equal(t_field, 0.0), kmax=kmax, maxit=100000, dz=1000., npart=None,
                           tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                          omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS)
+                          omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
@@ -64,7 +64,7 @@ def test_qgfield():
     # Check that the output reference states are of correct dimension, and
     # the QGPV reference state is non-decreasing.
     qref_north_hem, uref_north_hem, ptref_north_hem = \
-        qgfield.compute_reference_states(northern_hemisphere_results_only=True)
+        qgfield.compute_reference_states()
 
     # Check dimension of the input field
     assert (kmax, nlat // 2 + 1) == qref_north_hem.shape
@@ -112,7 +112,7 @@ def test_qgfield():
         1672.3165, 1733.3434]), rtol=1.e-4)
 
     # Check LWA and fluxes
-    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only=True)
+    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes()
     assert lwa_and_fluxes.adv_flux_f1.shape == (nlat // 2 + 1, nlon)
     assert lwa_and_fluxes.adv_flux_f2.shape == (nlat // 2 + 1, nlon)
     assert lwa_and_fluxes.adv_flux_f3.shape == (nlat // 2 + 1, nlon)
@@ -148,7 +148,8 @@ def test_qgfield_full_globe():
     # Create a QGField object for testing
     qgfield = QGField(xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=v_field, t_field=t_field, kmax=kmax,
                       maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-                      dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS)
+                      dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
+                      northern_hemisphere_results_only=False)
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
@@ -156,8 +157,7 @@ def test_qgfield_full_globe():
 
     # Check that the output reference states are of correct dimension, and
     # the QGPV reference state is non-decreasing.
-    qref_full_hem, uref_full_hem, ptref_full_hem = qgfield.compute_reference_states(
-        northern_hemisphere_results_only=False)
+    qref_full_hem, uref_full_hem, ptref_full_hem = qgfield.compute_reference_states()
 
     # Check dimension of the input field
     assert (kmax, nlat) == qref_full_hem.shape
@@ -169,7 +169,7 @@ def test_qgfield_full_globe():
     assert (np.diff(qref_full_hem, axis=-1)[1:-1, nlat // 2 + 1:-1] >= 0.).all()  # North Hem
 
     # Check LWA and fluxes
-    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only=False)
+    lwa_and_fluxes = qgfield.compute_lwa_and_barotropic_fluxes()
     assert lwa_and_fluxes.adv_flux_f1.shape == (nlat, nlon)
     assert lwa_and_fluxes.adv_flux_f2.shape == (nlat, nlon)
     assert lwa_and_fluxes.adv_flux_f3.shape == (nlat, nlon)

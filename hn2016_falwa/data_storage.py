@@ -43,7 +43,7 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
         self.interpolated_avort: Optional[np.ndarray] = None
         self.qgpv: Optional[np.ndarray] = None
 
-    def to_python_indexing(self):
+    def to_python_indexing(self):  # TODO: may not be necessary
         Interpolated_fields = namedtuple('Interpolated_fields', ['U', 'V', 'Theta', 'AbsVort', 'QGPV'])
         interpolated_fields = Interpolated_fields(
             self.fortran_to_python(self.interpolated_u),
