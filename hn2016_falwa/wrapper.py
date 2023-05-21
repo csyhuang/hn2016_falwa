@@ -42,9 +42,9 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
     if n_points is None:
         n_points = nlat
 
-    qref, dummy = basis.eqvlat_vgrad(ylat, vort, area, n_points,
-                               planet_radius=planet_radius)
-    lwa_result, dummy = basis.lwa(nlon, nlat, vort, qref, dmu)
+    qref, fawa = basis.eqvlat_fawa(
+        ylat, vort, area, n_points)
+    lwa_result, _ = basis.lwa(nlon, nlat, vort, qref, dmu)
 
     return qref, lwa_result
 

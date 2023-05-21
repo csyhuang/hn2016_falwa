@@ -501,6 +501,9 @@ class QGField(object):
         return interpolated_fields
 
     def _interpolate_fields_nh18(self):
+        """
+        .. versionadded:: 0.7.0
+        """
         self._interpolated_field_storage.qgpv, \
             self._interpolated_field_storage.interpolated_u, \
             self._interpolated_field_storage.interpolated_v, \
@@ -520,6 +523,9 @@ class QGField(object):
                 self.cp)
 
     def _interpolate_fields_nhn22(self):
+        """
+        .. versionadded:: 0.7.0
+        """
         self._interpolated_field_storage.qgpv, \
             self._interpolated_field_storage.interpolated_u, \
             self._interpolated_field_storage.interpolated_v, \
@@ -605,6 +611,9 @@ class QGField(object):
         return reference_states
 
     def _compute_reference_states_nh18(self):
+        """
+        .. versionadded:: 0.7.0
+        """
         # *** Compute reference states in Northern Hemisphere using SOR ***
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
@@ -759,6 +768,9 @@ class QGField(object):
         return lwa_and_fluxes
 
     def _compute_intermediate_flux_terms_nh18(self):
+        """
+        .. versionadded:: 0.7.0
+        """
         # === Compute barotropic flux terms (NHem) ===
         self._lwa_storage.lwa_nhem, \
             self._barotropic_flux_terms_storage.lwa_baro_nhem, \
