@@ -122,14 +122,16 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
         else:
             self.qref[self.nlat//2::-1, :] = value  # running from equator to pole
 
-    def qref_correct_unit(self, ylat, omega):
+    def qref_correct_unit(self, ylat, omega, python_indexing=True):
         """
-        This returns Qref of the correct unit to the user
+        This returns Qref of the correct unit to the user.
         TODO: encapsulate this elsewhere to avoid potential error
         """
-        qref_stemp_right_unit = \
+        qref_right_unit = \
             self.qref * 2 * omega * np.sin(np.deg2rad(ylat[:, np.newaxis]))
-        return self.fortran_to_python(qref_stemp_right_unit)  # (kmax, nlat)
+        if python_indexing:
+            return self.fortran_to_python(qref_right_unit) # (kmax, nlat)
+        return qref_right_unit
 
     # *** Uref ***
     @property

@@ -698,50 +698,14 @@ class QGField(object):
         if self.qgpv is None:
             raise ValueError("QGField.interpolate_fields has to be called before QGField.compute_reference_states.")
 
-        # TODO: need a check for reference states computed
+        # TODO: need a check for reference states computed. If not, throw an error.
         # if self._reference_states_storage.uref_nhem is None:
         #     self.compute_reference_states()
 
-        # === Compute barotropic flux terms (NHem) ===
-        self._lwa_storage.lwa_nhem, \
-            self._barotropic_flux_terms_storage.lwa_baro_nhem, \
-            self._barotropic_flux_terms_storage.ua1baro_nhem, \
-            self._barotropic_flux_terms_storage.ubaro_nhem, \
-            self._barotropic_flux_terms_storage.ua2baro_nhem,\
-            self._barotropic_flux_terms_storage.ep1baro_nhem, \
-            self._barotropic_flux_terms_storage.ep2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem = \
-            self._compute_lwa_and_barotropic_fluxes_wrapper(
-                self._interpolated_field_storage.qgpv,
-                self._interpolated_field_storage.interpolated_u,
-                self._interpolated_field_storage.interpolated_v,
-                self._interpolated_field_storage.interpolated_theta,
-                self._reference_states_storage.qref_nhem,
-                self._reference_states_storage.uref_nhem,
-                self._reference_states_storage.ptref_nhem)
-
-        # === Compute barotropic flux terms (SHem) ===
-        # TODO: check signs!
-        if not self.northern_hemisphere_results_only:
-            self._lwa_storage.lwa_shem, \
-                self._barotropic_flux_terms_storage.lwa_baro_shem, \
-                self._barotropic_flux_terms_storage.ua1baro_shem, \
-                self._barotropic_flux_terms_storage.ubaro_shem, \
-                self._barotropic_flux_terms_storage.ua2baro_shem, \
-                self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
-                ep4_shem = \
-                self._compute_lwa_and_barotropic_fluxes_wrapper(
-                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    self._reference_states_storage.qref_shem[::-1, :],
-                    self._reference_states_storage.uref_shem[::-1, :],
-                    self._reference_states_storage.ptref_shem[::-1, :])
-            self._barotropic_flux_terms_storage.ep4_shem = -ep4_shem
+        # if self.protocol == Protocol.NH18:
+        self._compute_intermediate_flux_terms_nh18()
+        # else:  # Protocol.NHN22
+        #     self._compute_intermediate_flux_terms_nhn22()
 
         # *** Compute named fluxes in NH18 ***
         clat = self.clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.clat
@@ -785,6 +749,128 @@ class QGField(object):
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ubaro),
             self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
         return lwa_and_fluxes
+
+    def _compute_intermediate_flux_terms_nh18(self):
+        # === Compute barotropic flux terms (NHem) ===
+        self._lwa_storage.lwa_nhem, \
+            self._barotropic_flux_terms_storage.lwa_baro_nhem, \
+            self._barotropic_flux_terms_storage.ua1baro_nhem, \
+            self._barotropic_flux_terms_storage.ubaro_nhem, \
+            self._barotropic_flux_terms_storage.ua2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep1baro_nhem, \
+            self._barotropic_flux_terms_storage.ep2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep3baro_nhem, \
+            self._barotropic_flux_terms_storage.ep4_nhem = \
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
+                self._interpolated_field_storage.qgpv,
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
+                self._reference_states_storage.qref_nhem,
+                self._reference_states_storage.uref_nhem,
+                self._reference_states_storage.ptref_nhem)
+
+        # === Compute barotropic flux terms (SHem) ===
+        # TODO: check signs!
+        if not self.northern_hemisphere_results_only:
+            self._lwa_storage.lwa_shem, \
+                self._barotropic_flux_terms_storage.lwa_baro_shem, \
+                self._barotropic_flux_terms_storage.ua1baro_shem, \
+                self._barotropic_flux_terms_storage.ubaro_shem, \
+                self._barotropic_flux_terms_storage.ua2baro_shem, \
+                self._barotropic_flux_terms_storage.ep1baro_shem, \
+                self._barotropic_flux_terms_storage.ep2baro_shem, \
+                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                ep4_shem = \
+                self._compute_lwa_and_barotropic_fluxes_wrapper(
+                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    self._reference_states_storage.qref_shem[::-1, :],
+                    self._reference_states_storage.uref_shem[::-1, :],
+                    self._reference_states_storage.ptref_shem[::-1, :])
+            self._barotropic_flux_terms_storage.ep4_shem = -ep4_shem
+
+    def _compute_intermediate_flux_terms_nhn22(self):
+        """
+        Added for NHN 2022 GRL
+
+        compute_flux_dirinv requires qref in proper unit
+        .. versionadded:: 0.6.0
+
+        TODO: make it available for southern hemisphere
+        """
+
+        # Turn qref back to correct unit
+        qref_nhem_right_unit = self._reference_states_storage.qref_correct_unit(
+            ylat=self.ylat, omega=self.omega, python_indexing=False)[-self.equator_idx:]
+        qref_shem_right_unit = self._reference_states_storage.qref_correct_unit(
+            ylat=self.ylat, omega=self.omega, python_indexing=False)[-self.equator_idx:]
+
+        # === Compute barotropic flux terms (NHem) ===
+        self._barotropic_flux_terms_storage.lwa_baro_nhem, \
+            self._barotropic_flux_terms_storage.ubaro_nhem, \
+            urefbaro, \
+            self._barotropic_flux_terms_storage.ua1baro_nhem, \
+            self._barotropic_flux_terms_storage.ua2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep1baro_nhem, \
+            self._barotropic_flux_terms_storage.ep2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep3baro_nhem, \
+            self._barotropic_flux_terms_storage.ep4_nhem, \
+            astar1, \
+            astar2 = \
+            compute_flux_dirinv(
+                pv=self._interpolated_field_storage.qgpv,
+                uu=self._interpolated_field_storage.interpolated_u,
+                vv=self._interpolated_field_storage.interpolated_v,
+                pt=self._interpolated_field_storage.interpolated_theta,
+                tn0=self._domain_average_storage.tn0,
+                qref=qref_nhem_right_unit,
+                uref=self._reference_states_storage.uref_nhem,
+                tref=self._reference_states_storage.ptref_nhem,
+                jb=self.eq_boundary_index,
+                a=self.planet_radius,
+                om=self.omega,
+                dz=self.dz,
+                h=self.scale_height,
+                rr=self.dry_gas_constant,
+                cp=self.cp,
+                prefac=self.prefactor)
+        self._lwa_storage.lwa_nhem = astar1 + astar2
+
+        # === Compute barotropic flux terms (SHem) ===
+        # TODO: check signs!
+        if not self.northern_hemisphere_results_only:
+            self._barotropic_flux_terms_storage.lwa_baro_shem, \
+                self._barotropic_flux_terms_storage.ubaro_shem, \
+                urefbaro, \
+                self._barotropic_flux_terms_storage.ua1baro_shem, \
+                self._barotropic_flux_terms_storage.ua2baro_shem, \
+                self._barotropic_flux_terms_storage.ep1baro_shem, \
+                self._barotropic_flux_terms_storage.ep2baro_shem, \
+                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                self._barotropic_flux_terms_storage.ep4_shem, \
+                astar1, \
+                astar2 = \
+                compute_flux_dirinv(
+                    pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    vv=-self._interpolated_field_storage.interpolated_v[:, ::-1, :],
+                    pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    tn0=self._domain_average_storage.ts0,
+                    qref=qref_shem_right_unit[::-1, :],
+                    uref=self._reference_states_storage.uref_shem[::-1, :],
+                    tref=self._reference_states_storage.ptref_shem[::-1, :],
+                    jb=self.eq_boundary_index,
+                    a=self.planet_radius,
+                    om=self.omega,
+                    dz=self.dz,
+                    h=self.scale_height,
+                    rr=self.dry_gas_constant,
+                    cp=self.cp,
+                    prefac=self.prefactor)
+            self._lwa_storage.lwa_shem = astar1 + astar2
 
     @staticmethod
     def _check_nan(name, var):
@@ -898,25 +984,6 @@ class QGField(object):
 
         # return qref, uref, tref, fawa, ubar, tbar
         return qref_over_sin / (2. * self.omega), uref, tref
-
-    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
-        """
-        Added for NHN 2022 GRL
-
-        .. versionadded:: 0.6.0
-
-        TODO: make it available for southern hemisphere
-        """
-
-        ans = compute_flux_dirinv(
-            pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
-            pt=self._interpolated_theta_temp, tn0=self._domain_average_storage.tn0,
-            qref=qref, uref=uref, tref=tref,
-            jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
-            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
-            prefac=self.prefactor)
-        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
-        return ans
 
     # *** Fixed properties (since creation of instance) ***
     @property

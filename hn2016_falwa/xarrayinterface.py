@@ -404,7 +404,7 @@ class QGDataset:
             postprocess=np.asarray
         )
         # The output of _compute_reference_states_nhn22 is currently not stored in
-        # the QGField object and must be given to _compute_lwa_flux_dirinv
+        # the QGField object and must be given to _compute_intermediate_flux_terms_nhn22
         # explicitly. Until a better solution is found in the QGField
         # implementation, apply a monkey patch here: add the outputs of
         # _compute_reference_states_nhn22 as underscore-attributes to the QGField
@@ -450,11 +450,11 @@ class QGDataset:
         return out_fields
 
     def _compute_lwa_flux_dirinv(self):
-        # Call _compute_lwa_flux_dirinv on all QGField objects, use the monkey
+        # Call _compute_intermediate_flux_terms_nhn22 on all QGField objects, use the monkey
         # patched attributes added in _compute_reference_states_nhn22
         out_fields = _map_collect(
-            lambda field: field._compute_lwa_flux_dirinv(qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u,
-                                                         tref=field._temp_dirinv_tref),
+            lambda field: field._compute_intermediate_flux_terms_nhn22(qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u,
+                                                                       tref=field._temp_dirinv_tref),
             self._fields,
             ["astarbaro", "ubaro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
                 "ep2baro", "ep3baro", "ep4", "astar1", "astar2"],
