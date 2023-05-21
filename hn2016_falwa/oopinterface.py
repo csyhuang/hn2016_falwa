@@ -781,9 +781,9 @@ class QGField(object):
             self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux,
             self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux,
             self._output_barotropic_flux_terms_storage.meridional_heat_flux,
-            self._barotropic_flux_terms_storage.lwa_baro,
-            self._barotropic_flux_terms_storage.ubaro,
-            self._lwa_storage.lwa)
+            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.lwa_baro),
+            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ubaro),
+            self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
         return lwa_and_fluxes
 
     @staticmethod
