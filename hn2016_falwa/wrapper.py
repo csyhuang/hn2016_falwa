@@ -119,13 +119,13 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radi
         n_points = nlat_s
 
     # --- Southern Hemisphere ---
-    qref1, _ = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
+    qref1, _ = basis.eqvlat_fawa(ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :],
                             n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
 
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1, :]
-    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
+    qref2, _ = basis.eqvlat_fawa(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
                             n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = qref2[::-1]
 
@@ -176,7 +176,7 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, pla
         n_points = nlat_s
 
     # --- Southern Hemisphere ---
-    qref1, brac1 = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+    qref1, brac1 = basis.eqvlat_fawa(ylat[:nlat_s], vort[:nlat_s, :],
                                 area[:nlat_s, :],
                                 n_points, planet_radius=planet_radius,
                                 vgrad=vgrad)
@@ -184,7 +184,7 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, pla
 
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1, :]
-    qref2, brac2 = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+    qref2, brac2 = basis.eqvlat_fawa(ylat[:nlat_s], vort2[:nlat_s, :],
                                 area[:nlat_s, :],
                                 n_points, planet_radius=planet_radius,
                                 vgrad=vgrad)
@@ -246,9 +246,8 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_rad
     lwa_result = np.zeros((nlat, nlon))
 
     # --- Southern Hemisphere ---
-    qref1, _ = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
-                            area[:nlat_s, :],
-                            n_points, planet_radius=planet_radius)
+    qref1, _ = basis.eqvlat_fawa(
+        ylat[:nlat_s], vort[:nlat_s, :], area[:nlat_s, :], n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
     lwa_result[:nlat_s, :], _ = basis.lwa(nlon, nlat_s,
                                           vort[:nlat_s, :],
@@ -257,8 +256,8 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_rad
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1, :]
     # Added the minus sign, but gotta see if NL_North is affected
-    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
-                            n_points, planet_radius=planet_radius)
+    qref2, _ = basis.eqvlat_fawa(
+        ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :], n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = -qref2[::-1]
     lwa_result[-nlat_s:, :], _ = basis.lwa(nlon, nlat_s,
                                            vort[-nlat_s:, :],
@@ -322,7 +321,7 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points
     capsigma = np.zeros((nlat, nlon))
 
     # --- Southern Hemisphere ---
-    qref1, _ = basis.eqvlat(ylat[:nlat_s],
+    qref1, _ = basis.eqvlat_fawa(ylat[:nlat_s],
                             vort[:nlat_s, :], area[:nlat_s, :],
                             n_points, planet_radius=planet_radius)
     qref[:nlat_s] = qref1
@@ -334,7 +333,7 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points
     # --- Northern Hemisphere ---
     vort2 = -vort[::-1, :]
     # Added the minus sign, but gotta see if NL_North is affected
-    qref2, _ = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
+    qref2, _ = basis.eqvlat_fawa(ylat[:nlat_s], vort2[:nlat_s, :], area[:nlat_s, :],
                             n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = -qref2[::-1]
     lwa_result[-nlat_s:, :], \
@@ -408,11 +407,11 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vg
 
     # --- Southern Hemisphere ---
     if vgrad is None:
-        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+        qref1, brac = basis.eqvlat_fawa(ylat[:nlat_s], vort[:nlat_s, :],
                                    area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius)
     else:
-        qref1, brac = basis.eqvlat(ylat[:nlat_s], vort[:nlat_s, :],
+        qref1, brac = basis.eqvlat_fawa(ylat[:nlat_s], vort[:nlat_s, :],
                                    area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius,
                                    vgrad=vgrad[:nlat_s, :])
@@ -436,12 +435,12 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vg
     # Added the minus sign, but gotta see if NL_North is affected
 
     if vgrad is None:
-        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+        qref2, brac = basis.eqvlat_fawa(ylat[:nlat_s], vort2[:nlat_s, :],
                                    area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius)
     else:
         vgrad2 = -vgrad[::-1, :]  # Is this correct?
-        qref2, brac = basis.eqvlat(ylat[:nlat_s], vort2[:nlat_s, :],
+        qref2, brac = basis.eqvlat_fawa(ylat[:nlat_s], vort2[:nlat_s, :],
                                    area[:nlat_s, :],
                                    n_points, planet_radius=planet_radius,
                                    vgrad=vgrad2[:nlat_s, :])
@@ -563,7 +562,7 @@ def theta_lwa(ylat, theta, area, dmu, nlat_s=None, n_points=None, planet_radius=
     lwa_result = np.zeros((nlat, nlon))
 
     # --- southern Hemisphere ---
-    qref[:nlat_s], brac = basis.eqvlat(ylat[:nlat_s], theta[:nlat_s, :],
+    qref[:nlat_s], brac = basis.eqvlat_fawa(ylat[:nlat_s], theta[:nlat_s, :],
                                        area[:nlat_s, :], n_points,
                                        planet_radius=planet_radius)
     lwa_result[:nlat_s, :], dummy = basis.lwa(nlon, nlat_s, theta[:nlat_s, :],
@@ -572,7 +571,7 @@ def theta_lwa(ylat, theta, area, dmu, nlat_s=None, n_points=None, planet_radius=
     # --- northern Hemisphere ---
     theta2 = theta[::-1, :]
     # Added the minus sign, but gotta see if NL_north is affected
-    qref2, brac = basis.eqvlat(ylat[:nlat_s], theta2[:nlat_s, :],
+    qref2, brac = basis.eqvlat_fawa(ylat[:nlat_s], theta2[:nlat_s, :],
                                area[:nlat_s, :],
                                n_points, planet_radius=planet_radius)
     qref[-nlat_s:] = qref2[::-1]
