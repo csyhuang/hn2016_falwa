@@ -396,18 +396,18 @@ class QGDataset:
         )
 
     def _compute_qref_fawa_and_bc(self):
-        # Call _compute_reference_states_nhn22 on all QGField objects
+        # Call _compute_qref_fawa_and_bc on all QGField objects
         out_fields = _map_collect(
-            lambda field: field._compute_reference_states_nhn22(),
+            lambda field: field._compute_qref_fawa_and_bc(),
             self._fields,
             ["qref", "u", "tref", "fawa", "ubar", "tbar"],
             postprocess=np.asarray
         )
-        # The output of _compute_reference_states_nhn22 is currently not stored in
-        # the QGField object and must be given to _compute_intermediate_flux_terms_nhn22
+        # The output of _compute_qref_fawa_and_bc is currently not stored in
+        # the QGField object and must be given to _compute_lwa_flux_dirinv
         # explicitly. Until a better solution is found in the QGField
         # implementation, apply a monkey patch here: add the outputs of
-        # _compute_reference_states_nhn22 as underscore-attributes to the QGField
+        # _compute_qref_fawa_and_bc as underscore-attributes to the QGField
         # objects so they can be retrieved later.
         for name, arrs in out_fields.items():
             for field, arr in zip(self._fields, arrs):
@@ -450,11 +450,11 @@ class QGDataset:
         return out_fields
 
     def _compute_lwa_flux_dirinv(self):
-        # Call _compute_intermediate_flux_terms_nhn22 on all QGField objects, use the monkey
-        # patched attributes added in _compute_reference_states_nhn22
+        # Call _compute_lwa_flux_dirinv on all QGField objects, use the monkey
+        # patched attributes added in _compute_qref_fawa_and_bc
         out_fields = _map_collect(
-            lambda field: field._compute_intermediate_flux_terms_nhn22(qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u,
-                                                                       tref=field._temp_dirinv_tref),
+            lambda field: field._compute_lwa_flux_dirinv(
+                qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u, tref=field._temp_dirinv_tref),
             self._fields,
             ["astarbaro", "ubaro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
                 "ep2baro", "ep3baro", "ep4", "astar1", "astar2"],

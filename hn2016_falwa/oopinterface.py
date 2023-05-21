@@ -872,11 +872,69 @@ class QGField(object):
                     prefac=self.prefactor)
             self._lwa_storage.lwa_shem = astar1 + astar2
 
+    def _interpolate_field_dirinv(self):
+        """
+        Added for NHN 2022 GRL
+
+        .. versionadded:: 0.6.0
+        """
+        self._qgpv_temp, \
+        self._interpolated_u_temp, \
+        self._interpolated_v_temp, \
+        self._interpolated_avort_temp, \
+        self._interpolated_theta_temp, \
+        self._static_stability_n, \
+        self._static_stability_s,\
+        self._tn0, self._ts0 = \
+            interpolate_fields_direct_inv(
+                self.kmax,
+                self.nlat // 2 + self.nlat % 2,
+                np.swapaxes(self.u_field, 0, 2),
+                np.swapaxes(self.v_field, 0, 2),
+                np.swapaxes(self.t_field, 0, 2),
+                self.plev,
+                self.planet_radius,
+                self.omega,
+                self.dz,
+                self.scale_height,
+                self.dry_gas_constant,
+                self.cp)
+
+        self._check_nan("self._qgpv_temp", self._qgpv_temp)
+        self._check_nan("self._interpolated_u_temp", self._interpolated_u_temp)
+        self._check_nan("self._interpolated_v_temp", self._interpolated_v_temp)
+        self._check_nan("self._interpolated_avort_temp", self._interpolated_avort_temp)
+        self._check_nan("self._interpolated_theta_temp", self._interpolated_theta_temp)
+        self._check_nan("self._static_stability_n", self._static_stability_n)
+        self._check_nan("self._static_stability_s", self._static_stability_s)
+        self._check_nan("self._tn0", self._tn0)
+        self._check_nan("self._ts0", self._ts0)
+
+        return self._qgpv_temp, self._interpolated_u_temp, self._interpolated_v_temp,  self._interpolated_avort_temp, \
+        self._interpolated_theta_temp, self._static_stability_n, self._static_stability_s, self._tn0, self._ts0
+
     @staticmethod
     def _check_nan(name, var):
         nan_num = np.count_nonzero(np.isnan(var))
         if nan_num > 0:
             print(f"num of nan in {name}: {np.count_nonzero(np.isnan(var))}.")
+
+    def _compute_qref_fawa_and_bc(self):
+        """
+        Note to Christopher: This is a wrapper to return the same output such that your
+        scripts are not affected. Please refactor this when you have time.
+        This routine assumes calculation only over the Northern hemisphere.
+        """
+
+        qref_over_cor, uref, tref, fawa, ubar, tbar = self._compute_reference_states_nhn22_hemispheric_wrapper(
+            qgpv=self._interpolated_field_storage.qgpv,
+            u=self._interpolated_field_storage.interpolated_u,
+            avort=self._interpolated_field_storage.interpolated_avort,
+            theta=self._interpolated_field_storage.interpolated_theta,
+            t0=self._domain_average_storage.tn0)
+        qref = 2 * self.omega * np.sin(np.deg2rad(self.ylat[-self.equator_idx:, np.newaxis]))
+
+        return qref, uref, tref, fawa, ubar, tbar
 
     def _compute_reference_states_nhn22(self):
         """
@@ -888,7 +946,8 @@ class QGField(object):
         # === Compute reference states in Northern Hemisphere ===
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
-            self._reference_states_storage.ptref_nhem = \
+            self._reference_states_storage.ptref_nhem, \
+                fawa, ubar, tbar = \
             self._compute_reference_states_nhn22_hemispheric_wrapper(
                 qgpv=self._interpolated_field_storage.qgpv,
                 u=self._interpolated_field_storage.interpolated_u,
@@ -900,7 +959,8 @@ class QGField(object):
             # === Compute reference states in Southern Hemisphere ===
             self._reference_states_storage.qref_shem, \
                 self._reference_states_storage.uref_shem, \
-                self._reference_states_storage.ptref_shem = \
+                self._reference_states_storage.ptref_shem, \
+                fawa, ubar, tbar = \
                 self._compute_reference_states_nhn22_hemispheric_wrapper(
                     qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
@@ -983,7 +1043,22 @@ class QGField(object):
             cp=self.cp)
 
         # return qref, uref, tref, fawa, ubar, tbar
-        return qref_over_sin / (2. * self.omega), uref, tref
+        return qref_over_sin / (2. * self.omega), uref, tref, fawa, ubar, tbar
+
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
+        """
+        Added for NHN 2022 GRL
+
+        .. versionadded:: 0.6.0
+        """
+        ans = compute_flux_dirinv(pv=self._qgpv_temp, uu=self._interpolated_u_temp, vv=self._interpolated_v_temp,
+                                  pt=self._interpolated_theta_temp, tn0=self._tn0,
+                                  qref=qref, uref=uref, tref=tref,
+                                  jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
+                                  dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
+                                  prefac=self.prefactor)
+        # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
+        return ans
 
     # *** Fixed properties (since creation of instance) ***
     @property
