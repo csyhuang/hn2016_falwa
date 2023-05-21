@@ -121,7 +121,7 @@ if to_generate_data:
         qgpv_temp, interpolated_u_temp, interpolated_v_temp, interpolated_avort_temp, interpolated_theta_temp, \
         static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_fields_nhn22()
 
-        qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
+        qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_reference_states_nhn22()
 
         astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
             qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)

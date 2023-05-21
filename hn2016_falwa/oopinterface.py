@@ -585,7 +585,10 @@ class QGField(object):
         if self.qgpv is None:
             raise ValueError("QGField.interpolate_fields has to be called before QGField.compute_reference_states.")
 
-        self._compute_reference_states_nh18()
+        if self.protocol == Protocol.NH18:
+            self._compute_reference_states_nh18()
+        else:
+            self._compute_reference_states_nhn22()
 
         # Construct a named tuple
         Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
@@ -832,19 +835,43 @@ class QGField(object):
         if nan_num > 0:
             print(f"num of nan in {name}: {np.count_nonzero(np.isnan(var))}.")
 
-    def _compute_qref_fawa_and_bc(self):
+    def _compute_reference_states_nhn22(self):
         """
         Added for NHN 2022 GRL
 
         .. versionadded:: 0.6.0
         """
 
-        ans = compute_qref_and_fawa_first(
-            pv=self._qgpv_temp,
-            uu=self._interpolated_u_temp,
-            vort=self._interpolated_avort_temp,
-            pt=self._interpolated_theta_temp,
-            tn0=self._domain_average_storage.tn0,
+        # === Compute reference states in Northern Hemisphere ===
+        self._reference_states_storage.qref_nhem, \
+            self._reference_states_storage.uref_nhem, \
+            self._reference_states_storage.ptref_nhem = \
+            self._compute_reference_states_nhn22_hemispheric_wrapper(
+                qgpv=self._interpolated_field_storage.qgpv,
+                u=self._interpolated_field_storage.interpolated_u,
+                avort=self._interpolated_field_storage.interpolated_avort,
+                theta=self._interpolated_field_storage.interpolated_theta,
+                t0=self._domain_average_storage.tn0)
+
+        if not self.northern_hemisphere_results_only:
+            # === Compute reference states in Southern Hemisphere ===
+            self._reference_states_storage.qref_shem, \
+                self._reference_states_storage.uref_shem, \
+                self._reference_states_storage.ptref_shem = \
+                self._compute_reference_states_nhn22_hemispheric_wrapper(
+                    qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    avort=self._interpolated_field_storage.interpolated_avort[:, ::-1, :],
+                    theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    t0=self._domain_average_storage.tn0)
+
+    def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0):
+        qref_over_sin, ubar, tbar, fawa, ckref, tjk, sjk = compute_qref_and_fawa_first(
+            pv=qgpv,
+            uu=u,
+            vort=avort,
+            pt=theta,
+            tn0=t0,
             nd=self.nlat//2 + self.nlat % 2,  # 91
             nnd=self.nlat,                    # 181
             jb=self.eq_boundary_index,        # 5
@@ -856,9 +883,7 @@ class QGField(object):
             rr=self.dry_gas_constant,
             cp=self.cp)
 
-        qref_over_cor, ubar, tbar, fawa, ckref, tjk, sjk = ans  # unpack tuple
-
-        self._check_nan("qref_over_cor", qref_over_cor)
+        self._check_nan("qref_over_sin", qref_over_sin)
         self._check_nan("ubar", ubar)
         self._check_nan("tbar", tbar)
         self._check_nan("fawa", fawa)
@@ -874,7 +899,7 @@ class QGField(object):
                 jd=self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index,  # 86
                 z=np.arange(0, self.kmax*self.dz, self.dz),
                 statn=self._domain_average_storage.static_stability_n,
-                qref=qref_over_cor,
+                qref=qref_over_sin,
                 ckref=ckref,
                 sjk=sjk,
                 a=self.planet_radius,
@@ -906,7 +931,7 @@ class QGField(object):
             tjk=tjk,
             ckref=ckref,
             tb=self._domain_average_storage.tn0,
-            qref_over_cor=qref_over_cor,
+            qref_over_cor=qref_over_sin,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,
@@ -914,7 +939,9 @@ class QGField(object):
             rr=self.dry_gas_constant,
             cp=self.cp)
 
-        return qref, uref, tref, fawa, ubar, tbar
+        # return qref_over_sin/(2.*self.omega), uref, tref, fawa, ubar, tbar
+
+        return qref_over_sin / (2. * self.omega), uref, tref
 
     def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """
@@ -1027,7 +1054,8 @@ class QGField(object):
         if self._reference_states_storage.qref is None:
             raise ValueError('qref is not computed yet.')
         return self._return_interp_variables(
-            variable=self._reference_states_storage.qref_correct_unit(self.ylat_ref_states, self.omega), interp_axis=1)
+            variable=self._reference_states_storage.qref_correct_unit(
+                self.ylat_ref_states, self.omega), interp_axis=1)
 
     @property
     def uref(self):

@@ -97,9 +97,9 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
-        self.qref = np.empty(self.fdim)  # This is to substitute self._qref_ntemp
-        self.uref = np.empty(self.fdim)
-        self.ptref = np.empty(self.fdim)
+        self.qref = np.zeros(self.fdim)  # This is to substitute self._qref_ntemp
+        self.uref = np.zeros(self.fdim)
+        self.ptref = np.zeros(self.fdim)
         kmax, self.nlat = self.pydim
 
     # *** Qref ***
@@ -146,10 +146,9 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
     @uref_nhem.setter
     def uref_nhem(self, value):
-        if self.northern_hemisphere_results_only:
-            self.uref[:, :] = value
-        else:
-            self.uref[-(self.nlat//2+1):, :] = value
+        # input uref would be of dim (jd, kmax)
+        jdim = value.shape[0]
+        self.uref[-jdim:, :] = value
 
     @property
     def uref_shem(self):
@@ -159,10 +158,11 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
     @uref_shem.setter
     def uref_shem(self, value):
+        jdim = value.shape[0]
         if self.northern_hemisphere_results_only:
             raise InvalidCallOfSHemVariables
         else:
-            self.uref[self.nlat//2::-1, :] = value  # running from equator to pole
+            self.uref[:jdim, :] = value[::-1, :]  # running from equator to pole
 
     # *** PTref (reference potential temperature) ***
     @property
@@ -173,10 +173,8 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
     @ptref_nhem.setter
     def ptref_nhem(self, value):
-        if self.northern_hemisphere_results_only:
-            self.ptref[:, :] = value
-        else:
-            self.ptref[-(self.nlat//2+1):, :] = value
+        jdim = value.shape[0]
+        self.ptref[-jdim:, :] = value
 
     @property
     def ptref_shem(self):
@@ -186,10 +184,11 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
     @ptref_shem.setter
     def ptref_shem(self, value):
+        jdim = value.shape[0]
         if self.northern_hemisphere_results_only:
             raise InvalidCallOfSHemVariables
         else:
-            self.ptref[self.nlat//2::-1, :] = value  # running from equator to pole
+            self.ptref[:jdim, :] = value[::-1, :]  # running from equator to pole  # running from equator to pole
 
 
 class InvalidCallOfSHemVariables(Exception):
