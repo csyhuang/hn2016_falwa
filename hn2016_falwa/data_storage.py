@@ -443,7 +443,6 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
 
     @lwa_baro_nhem.setter
     def lwa_baro_nhem(self, value):
-        print(f"Debug. value.shape = {value.shape}")
         jdim = value.shape[1]
         self.lwa_baro[:, -jdim:] = value
 
