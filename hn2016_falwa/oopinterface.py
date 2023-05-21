@@ -26,10 +26,19 @@ from collections import namedtuple
 
 class Protocol(Enum):
     """
-    Equatorward Boundary conditions
+    Set of boundary conditions and operations to compute reference states.
+    Available options are:
+        1. NH18:
+            Nakamura, N., & Huang, C. S. (2018). Atmospheric blocking as a traffic jam in the jet stream. Science, 361(6397), 42-47.
+            https://www.science.org/doi/10.1126/science.aat0721
+        2. NHN22:
+            Neal et al (2022). The 2021 Pacific Northwest heat wave and associated blocking: meteorology and the role of an upstream cyclone as a diabatic source of wave activity
+            https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2021GL097699
+
+        .. versionadded:: 0.7.0
     """
-    NH18 = 'Nakamura and Huang (Science, 2018)'
-    NHN22 = 'Neal, Huang and Nakamura (GRL, 2022)'
+    NH18 = "Nakamura and Huang (Science, 2018)"
+    NHN22 = "Neal, Huang and Nakamura (GRL, 2022)"
 
 
 class QGField(object):
@@ -39,11 +48,6 @@ class QGField(object):
     that can be used to reproduce the results in:
     Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018).
     Note that topography is assumed flat in this object.
-
-    Public methods:
-    - interpolate_fields
-    - compute_reference_states
-    - compute_lwa_and_barotropic_fluxes
 
     .. versionadded:: 0.3.0
 
@@ -89,10 +93,12 @@ class QGField(object):
     planet_radius : float, optional
            Radius of the planet in meters.
            Default = 6.378e+6 (Earth's radius).
+    protocol: Protocol, optional
+           Set of boundary conditions and operations to compute reference states. Default: Protocol.NH18
     eq_boundary_index: int, optional
            The improved inversion algorithm of reference states allow modification of equatorward boundary
            to be the absolute vorticity. This parameter specify the location of grid point (from equator)
-           which will be used as boundary. Default = 5.
+           which will be used as boundary. Default = 5 as described in NHN22.
 
     Examples
     --------
@@ -102,8 +108,8 @@ class QGField(object):
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, protocol=Protocol.NH18, prefactor=None,
-                 eq_boundary_index=5, northern_hemisphere_results_only=False):
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, protocol=Protocol.NH18,
+                 eq_boundary_index=5, northern_hemisphere_results_only=False, **kwargs):
 
         """
         Create a QGField object.
@@ -199,12 +205,12 @@ class QGField(object):
         self._compute_prefactor()  # Compute normalization prefactor
 
         # Modification on Oct 19, 2021 - deprecation of prefactor (it should be computed from kmax and dz)
-        if prefactor is not None:
+        if kwargs.get('prefactor'):
             warnings.warn(
                 f"""
                 The optional input prefactor will be deprecated since it can be determined directly from 
                 kmax and dz. Given your input kmax = {self.kmax} and dz = {self.dz}, the computed normalization 
-                prefactor is {self.prefactor}. Your input value {prefactor} would be ignored.
+                prefactor is {self.prefactor}. Your input value {kwargs.get('prefactor')} would be ignored.
                 """)
 
         # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
@@ -631,6 +637,8 @@ class QGField(object):
         Nakamura and Huang (Science, 2018). It returns a named tuple called "LWA_and_fluxes" that consists of
         9 elements as listed below. The discretization scheme that is used in the numerical integration is outlined
         in the Supplementary materials of Huang and Nakamura (GRL, 2017).
+
+        Note that flux computation for NHN22 is still experimental.
 
         Returns
         -------

@@ -9,8 +9,9 @@ import numpy as np
 
 class DerivedQuantityStorage:
     """
-    Variables are stored in **fortran dimension ordering**.
-    It is converted to python when output to users.
+    This class manages the storage of derived variables in QGField (for internal use only).
+    Variables are stored in fortran indexing order for easy communication with f2py modules.
+    To return variables in python indexing order, use the method `fortran_to_python` to swap the axes.
     """
     def __init__(
         self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -49,6 +50,10 @@ class DerivedQuantityStorage:
 
 
 class DomainAverageStorage(DerivedQuantityStorage):
+    """
+    This stores global/hemispheric averaged potential temperature and static stability.
+    Fortran dimension: (kmax)
+    """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
@@ -62,8 +67,11 @@ class DomainAverageStorage(DerivedQuantityStorage):
 
 class InterpolatedFieldsStorage(DerivedQuantityStorage):
     """
-    This class stores 3D fields on interpolated grids
-    Python dimension: (kmax, nlat, nlon)
+    This class stores 3D fields on interpolated grids, including:
+        - u
+        - v
+        - t (potential temperature)
+        - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
     Fortran dimension: (nlon, nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -78,13 +86,11 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
 
 class ReferenceStatesStorage(DerivedQuantityStorage):
     """
-    If northern_hemisphere_results_only=False:
-        return dimension (kmax, nlat)
-    If northern_hemisphere_results_only=True:
-        return dimension (kmax, nlat//2+1)
-
-    Note that qref here is not yet multiplied by 2*omega*sin(phi).
-    This is for downstream computation.
+    This class stores height-latitude 2D fields on interpolated grids, including:
+        - uref
+        - qref (it actually stores qref/f, where f is Coriolis paramter)
+        - tref (potential temperature reference state)
+    Fortran dimension: (nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -189,7 +195,8 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
 class LWAStorage(DerivedQuantityStorage):
     """
-    LWA has python dim (kmax, nlat, nlon) / fortran dim (nlon, nlat, kmax)
+    This class stores 3D LWA field on interpolated grids.
+    Fortran dimension: (nlon, nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -226,7 +233,15 @@ class LWAStorage(DerivedQuantityStorage):
 
 class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
-    This is operating in python dimension only
+    This class stores vertically integrated derived quantities in latitude-longitude 2D grid, including:
+        - adv_flux_f1
+        - adv_flux_f2
+        - adv_flux_f3
+        - zonal_adv_flux
+        - convergence_zonal_advective_flux
+        - divergence_eddy_momentum_flux
+        - meridional_heat_flux
+    Variables are stored in **python indexing order**: (nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -244,7 +259,8 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
 
 class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
-    Barotropic flux terms has python dim (nlat, nlon) / fortran dim (nlon, nlat)
+    This class stores intermediate computed quantities in latitude-longitude 2D grid.
+    Variables are stored in fortran indexing order: (nlon, nlat)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -468,8 +484,3 @@ class InvalidCallOfSHemVariables(Exception):
     """
     pass
 
-
-if __name__ == "__main__":
-
-    # Do simple experiment to test setter method
-    print("instance.pp_var")
