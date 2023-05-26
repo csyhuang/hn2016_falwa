@@ -118,13 +118,13 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     @property
     def qref_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.qref[:(self.nlat//2+1), :]
 
     @qref_shem.setter
     def qref_shem(self, value):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.qref[self.nlat//2::-1, :] = value  # running from equator to pole
 
@@ -155,14 +155,14 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     @property
     def uref_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.uref[:(self.nlat//2+1), :]
 
     @uref_shem.setter
     def uref_shem(self, value):
         jdim = value.shape[0]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.uref[:jdim, :] = value[::-1, :]  # running from equator to pole
 
@@ -181,14 +181,14 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     @property
     def ptref_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ptref[:(self.nlat//2+1), :]
 
     @ptref_shem.setter
     def ptref_shem(self, value):
         jdim = value.shape[0]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ptref[:jdim, :] = value[::-1, :]  # running from equator to pole  # running from equator to pole
 
@@ -219,14 +219,14 @@ class LWAStorage(DerivedQuantityStorage):
     @property
     def lwa_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.lwa[:, :(self.nlat//2+1), :]
 
     @lwa_shem.setter
     def lwa_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.lwa[:, :jdim, :] = value[:, ::-1, :]  # running from equator to pole  # running from equator to pole
 
@@ -290,14 +290,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ua1baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ua1baro[:, :(self.nlat//2+1)]
 
     @ua1baro_shem.setter
     def ua1baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ua1baro[:, :jdim] = value[:, ::-1]
 
@@ -315,14 +315,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ua2baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ua2baro[:, :(self.nlat//2+1)]
 
     @ua2baro_shem.setter
     def ua2baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ua2baro[:, :jdim] = value[:, ::-1]
 
@@ -340,14 +340,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ep1baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ep1baro[:, :(self.nlat//2+1)]
 
     @ep1baro_shem.setter
     def ep1baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ep1baro[:, :jdim] = value[:, ::-1]
 
@@ -365,14 +365,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ep2baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ep2baro[:, :(self.nlat//2+1)]
 
     @ep2baro_shem.setter
     def ep2baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ep2baro[:, :jdim] = value[:, ::-1]
 
@@ -390,14 +390,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ep3baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ep3baro[:, :(self.nlat//2+1)]
 
     @ep3baro_shem.setter
     def ep3baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ep3baro[:, :jdim] = value[:, ::-1]
 
@@ -415,14 +415,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ep4_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ep4[:, :(self.nlat//2+1)]
 
     @ep4_shem.setter
     def ep4_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ep4[:, :jdim] = value[:, ::-1]
 
@@ -440,14 +440,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def ubaro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.ubaro[:, :(self.nlat//2+1)]
 
     @ubaro_shem.setter
     def ubaro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.ubaro[:, :jdim] = value[:, ::-1]
 
@@ -465,14 +465,14 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     @property
     def lwa_baro_shem(self):
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         return self.lwa_baro[:, :(self.nlat // 2 + 1)]
 
     @lwa_baro_shem.setter
     def lwa_baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
+            raise InvalidCallOfSHemVariables()
         else:
             self.lwa_baro[:, :jdim] = value[:, ::-1]
 
