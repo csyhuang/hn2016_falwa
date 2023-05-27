@@ -49,7 +49,7 @@ if __name__ == "__main__":
     tol = 1.e-5  # tolerance that define convergence of solution
     rjac = 0.95  # spectral radius of the Jacobi iteration in the SOR solver.
     jd = nlat // 2 + 1  # (one plus) index of latitude grid point with value 0 deg
-    eq_boundary_index = 5
+    eq_boundary_index = 3
 
     # This is to be input to fortran code. The index convention is different.
 

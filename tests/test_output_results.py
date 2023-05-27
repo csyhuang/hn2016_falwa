@@ -133,13 +133,13 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
     tol = 1.e-5  # tolerance that define convergence of solution
     rjac = 0.95  # spectral radius of the Jacobi iteration in the SOR solver.
     jd = nlat // 2 + 1  # (one plus) index of latitude grid point with value 0 deg
+    eq_boundary_index = 3
     # This is to be input to fortran code. The index convention is different.
 
     qgfield = QGField(
         xlon, ylat, plev, u_field, v_field, t_field, kmax=kmax, maxit=maxit, dz=dz, npart=npart,
         tol=tol, rjac=rjac, scale_height=hh, cp=cp, dry_gas_constant=rr, protocol=Protocol.NHN22,
-        eq_boundary_index=5,
-        omega=omega, planet_radius=aa, northern_hemisphere_results_only=False)
+        eq_boundary_index=eq_boundary_index, omega=omega, planet_radius=aa, northern_hemisphere_results_only=False)
     qgfield.interpolate_fields()
     qgfield.compute_reference_states()
     qgfield.compute_lwa_and_barotropic_fluxes()
