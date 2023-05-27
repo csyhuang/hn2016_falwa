@@ -57,11 +57,8 @@ if __name__ == "__main__":
     vv = v_file.v.values
     tt = t_file.t.values
 
-    qgfield_object = QGField(
-        xlon, ylat, plev,
-        uu[::-1, ::-1, :], vv[::-1, ::-1, :], tt[::-1, ::-1, :],
-        eq_boundary_index=eq_boundary_index, protocol=Protocol.NHN22,
-        northern_hemisphere_results_only=False)
+    qgfield_object = QGField(xlon, ylat, plev, uu[::-1, ::-1, :], vv[::-1, ::-1, :], tt[::-1, ::-1, :],
+                             northern_hemisphere_results_only=False)
     qgfield_object.interpolate_fields()
     qgfield_object.compute_reference_states()
     qgfield_object.compute_lwa_and_barotropic_fluxes()
