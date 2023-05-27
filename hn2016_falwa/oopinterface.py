@@ -1104,8 +1104,11 @@ class QGField_NHN22(QGField):
     def _compute_qref_fawa_and_bc(self):
         """
         Note to Christopher: This is a wrapper to return the same output such that your
-        scripts are not affected. Please refactor this when you have time.
+        scripts using QGDataset are not affected. Please refactor this when you have time
+        such that this function can be removed.
         This routine assumes calculation only over the Northern hemisphere.
+
+        # TODO remove this in the upcoming release.
         """
 
         qref_over_cor, uref, tref, fawa, ubar, tbar = self._compute_reference_states_nhn22_hemispheric_wrapper(
@@ -1119,6 +1122,9 @@ class QGField_NHN22(QGField):
         return qref, uref, tref, fawa, ubar, tbar
 
     def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0):
+        """
+        Wrapper to a series of operation using direct inversion algorithm to solve reference state.
+        """
         qref_over_sin, ubar, tbar, fawa, ckref, tjk, sjk = compute_qref_and_fawa_first(
             pv=qgpv,
             uu=u,
