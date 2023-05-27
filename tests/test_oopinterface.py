@@ -17,9 +17,9 @@ plev = np.array([1000,  900,  800,  700,  600,  500,  400,  300,  200, 100,   10
 nlev = plev.size
 kmax = 49
 get_cwd = os.path.dirname(os.path.abspath(__file__))
-u_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_u.txt'), [nlev, nlat, nlon])
-v_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_v.txt'), [nlev, nlat, nlon])
-t_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_t.txt'), [nlev, nlat, nlon])
+u_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_u.txt'), [nlev, nlat, nlon])
+v_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_v.txt'), [nlev, nlat, nlon])
+t_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_t.txt'), [nlev, nlat, nlon])
 theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P_GROUND) ** (-DRY_GAS_CONSTANT / CP)
 
 

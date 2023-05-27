@@ -763,7 +763,7 @@ class QGField(object):
             self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux,
             self._output_barotropic_flux_terms_storage.meridional_heat_flux,
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.lwa_baro),
-            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ubaro),
+            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
             self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
         return lwa_and_fluxes
 
@@ -775,7 +775,7 @@ class QGField(object):
         self._lwa_storage.lwa_nhem, \
             self._barotropic_flux_terms_storage.lwa_baro_nhem, \
             self._barotropic_flux_terms_storage.ua1baro_nhem, \
-            self._barotropic_flux_terms_storage.ubaro_nhem, \
+            self._barotropic_flux_terms_storage.u_baro_nhem, \
             self._barotropic_flux_terms_storage.ua2baro_nhem, \
             self._barotropic_flux_terms_storage.ep1baro_nhem, \
             self._barotropic_flux_terms_storage.ep2baro_nhem, \
@@ -796,7 +796,7 @@ class QGField(object):
             self._lwa_storage.lwa_shem, \
                 self._barotropic_flux_terms_storage.lwa_baro_shem, \
                 self._barotropic_flux_terms_storage.ua1baro_shem, \
-                self._barotropic_flux_terms_storage.ubaro_shem, \
+                self._barotropic_flux_terms_storage.u_baro_shem, \
                 self._barotropic_flux_terms_storage.ua2baro_shem, \
                 self._barotropic_flux_terms_storage.ep1baro_shem, \
                 self._barotropic_flux_terms_storage.ep2baro_shem, \
@@ -830,7 +830,7 @@ class QGField(object):
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
-            self._barotropic_flux_terms_storage.ubaro_nhem, \
+            self._barotropic_flux_terms_storage.u_baro_nhem, \
             urefbaro, \
             self._barotropic_flux_terms_storage.ua1baro_nhem, \
             self._barotropic_flux_terms_storage.ua2baro_nhem, \
@@ -863,7 +863,7 @@ class QGField(object):
         # TODO: check signs!
         if not self.northern_hemisphere_results_only:
             self._barotropic_flux_terms_storage.lwa_baro_shem, \
-                self._barotropic_flux_terms_storage.ubaro_shem, \
+                self._barotropic_flux_terms_storage.u_baro_shem, \
                 urefbaro, \
                 self._barotropic_flux_terms_storage.ua1baro_shem, \
                 self._barotropic_flux_terms_storage.ua2baro_shem, \
@@ -1077,7 +1077,7 @@ class QGField(object):
                                   jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
                                   dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
                                   prefac=self.prefactor)
-        # astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
+        # astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
         return ans
 
     # *** Fixed properties (since creation of instance) ***
@@ -1273,11 +1273,11 @@ class QGField(object):
         """
         Two-dimensional array of barotropic zonal wind (without cosine weighting).
         """
-        if self._barotropic_flux_terms_storage.ubaro is None:
+        if self._barotropic_flux_terms_storage.u_baro is None:
             raise ValueError('u_baro is not computed yet.')
         return self._return_interp_variables(
             variable=self._barotropic_flux_terms_storage.fortran_to_python(
-                self._barotropic_flux_terms_storage.ubaro),
+                self._barotropic_flux_terms_storage.u_baro),
             interp_axis=0)
 
     @property

@@ -273,7 +273,7 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.ep2baro = np.zeros(self.fdim)
         self.ep3baro = np.zeros(self.fdim)
         self.ep4 = np.zeros(self.fdim)
-        self.ubaro = np.zeros(self.fdim)
+        self.u_baro = np.zeros(self.fdim)
         self.lwa_baro = np.zeros(self.fdim)  # This is barotropic LWA (astarbaro)
 
     @property
@@ -427,29 +427,29 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
             self.ep4[:, :jdim] = value[:, ::-1]
 
     @property
-    def ubaro_nhem(self):
+    def u_baro_nhem(self):
         if self.northern_hemisphere_results_only:
-            return self.ubaro
-        return self.ubaro[:, -(self.nlat//2+1):]
+            return self.u_baro
+        return self.u_baro[:, -(self.nlat//2+1):]
 
-    @ubaro_nhem.setter
-    def ubaro_nhem(self, value):
+    @u_baro_nhem.setter
+    def u_baro_nhem(self, value):
         jdim = value.shape[1]
-        self.ubaro[:, -jdim:] = value
+        self.u_baro[:, -jdim:] = value
 
     @property
-    def ubaro_shem(self):
+    def u_baro_shem(self):
         if self.northern_hemisphere_results_only:
             raise InvalidCallOfSHemVariables
-        return self.ubaro[:, :(self.nlat//2+1)]
+        return self.u_baro[:, :(self.nlat//2+1)]
 
-    @ubaro_shem.setter
-    def ubaro_shem(self, value):
+    @u_baro_shem.setter
+    def u_baro_shem(self, value):
         jdim = value.shape[1]
         if self.northern_hemisphere_results_only:
             raise InvalidCallOfSHemVariables
         else:
-            self.ubaro[:, :jdim] = value[:, ::-1]
+            self.u_baro[:, :jdim] = value[:, ::-1]
 
     @property
     def lwa_baro_nhem(self):
