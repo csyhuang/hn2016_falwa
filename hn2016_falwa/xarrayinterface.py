@@ -61,18 +61,18 @@ def _map_collect(f, xs, names, postprocess=None):
 
 
 class QGDataset:
-    """A wrapper for multiple QGField_NH18 objects with xarray in- and output.
+    """A wrapper for multiple QGField objects with xarray in- and output.
 
     Examines the given dataset and tries to extract `u`, `v`, and `T` fields
     based on the names of coordinates in the dataset. For each combination of
-    timestep, ensemble member, etc., a :py:class:`oopinterface.QGField_NH18` object
+    timestep, ensemble member, etc., a :py:class:`oopinterface.QGField` object
     is instanciated. The constructor will automatically flip latitude and
     pressure dimensions of the input data if necessary to meet the requirements
-    of QGField_NH18.
+    of QGField.
 
-    This wrapper class imitates the methods of QGField_NH18 (but not the
+    This wrapper class imitates the methods of QGField (but not the
     properties/attributes) and collects and re-organizes output data in xarray
-    Datasets for convenience. All calculations are performed by the QGField_NH18
+    Datasets for convenience. All calculations are performed by the QGField
     routines.
 
     .. versionadded:: 0.6.1
@@ -92,9 +92,9 @@ class QGDataset:
         dimensions must end with height, latitude and longitude. Other dimensions
         (e.g. time, ensemble member id) are preserved in the output datasets.
     qgfield_args : tuple, optional
-        Positional arguments given to the QGField_NH18 constructor.
+        Positional arguments given to the QGField constructor.
     qgfield_kwargs : dict, optional
-        Keyword arguments given to the QGField_NH18 constructor.
+        Keyword arguments given to the QGField constructor.
     var_names : dict, optional
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
@@ -149,7 +149,7 @@ class QGDataset:
         v = v.data.reshape(_shape)
         t = t.data.reshape(_shape)
         # Automatically determine how fields need to be flipped so they match
-        # the requirements of QGField_NH18 and extract coordinate values
+        # the requirements of QGField and extract coordinate values
         flip = []
         # Ensure that ylat is ascending
         ylat = ylat.values
@@ -163,7 +163,7 @@ class QGDataset:
             flip.append(-3)
         # Ordering of xlon doesn't matter here
         xlon = xlon.values
-        # Create a QGField_NH18 object for each combination of timestep, ensemble
+        # Create a QGField object for each combination of timestep, ensemble
         # member, etc.
         self._fields = []
         for u_field, v_field, t_field in zip(u, v, t):
@@ -179,9 +179,9 @@ class QGDataset:
 
     @property
     def fields(self):
-        """Access to the QGField_NH18 objects created by the QGDataset.
+        """Access to the QGField objects created by the QGDataset.
 
-        The :py:class:`.oopinterface.QGField_NH18` objects are stored in a flattened
+        The :py:class:`.oopinterface.QGField` objects are stored in a flattened
         list.
         """
         return self._fields
@@ -213,13 +213,13 @@ class QGDataset:
     def interpolate_fields(self):
         """Collect the output of `interpolate_fields` in a dataset.
 
-        See :py:meth:`.oopinterface.QGField_NH18.interpolate_fields`.
+        See :py:meth:`.oopinterface.QGField.interpolate_fields`.
 
         Returns
         -------
         xarray.Dataset
         """
-        # Call interpolate_fields on all QGField_NH18 objects
+        # Call interpolate_fields on all QGField objects
         out_fields = _map_collect(
             lambda field: field.interpolate_fields(),
             self._fields,
@@ -255,13 +255,13 @@ class QGDataset:
     def compute_reference_states(self):
         """Collect the output of `compute_reference_states` in a dataset.
 
-        See :py:meth:`.oopinterface.QGField_NH18.compute_reference_states`.
+        See :py:meth:`.oopinterface.QGField.compute_reference_states`.
 
         Returns
         -------
         xarray.Dataset
         """
-        # Call compute_reference_states on all QGField_NH18 objects
+        # Call compute_reference_states on all QGField objects
         out_fields = _map_collect(
             lambda field: field.compute_reference_states(),
             self._fields,
@@ -297,13 +297,13 @@ class QGDataset:
     def compute_lwa_and_barotropic_fluxes(self):
         """Collect the output of `compute_lwa_and_barotropic_fluxes` in a dataset.
 
-        See :py:meth:`.oopinterface.QGField_NH18.compute_lwa_and_barotropic_fluxes`.
+        See :py:meth:`.oopinterface.QGField.compute_lwa_and_barotropic_fluxes`.
 
         Returns
         -------
         xarray.Dataset
         """
-        # Call compute_lwa_and_barotropic_fluxes on all QGField_NH18 objects
+        # Call compute_lwa_and_barotropic_fluxes on all QGField objects
         out_fields = _map_collect(
             lambda field: field.compute_lwa_and_barotropic_fluxes(),
             self._fields,
@@ -351,7 +351,7 @@ class QGDataset:
     # The new routines so far only seem to work for 1°-resolution data and the northern hemisphere
 
     def _interpolate_fields_nhn22(self):
-        # Call interpolate_field_dirinv on all QGField_NH18 objects
+        # Call interpolate_field_dirinv on all QGField objects
         out_fields = _map_collect(
             lambda field: field._interpolate_fields_nhn22(),
             self._fields,
@@ -395,7 +395,7 @@ class QGDataset:
         )
 
     def _compute_qref_fawa_and_bc(self):
-        # Call _compute_qref_fawa_and_bc on all QGField_NH18 objects
+        # Call _compute_qref_fawa_and_bc on all QGField objects
         out_fields = _map_collect(
             lambda field: field._compute_qref_fawa_and_bc(),
             self._fields,
@@ -403,10 +403,10 @@ class QGDataset:
             postprocess=np.asarray
         )
         # The output of _compute_qref_fawa_and_bc is currently not stored in
-        # the QGField_NH18 object and must be given to _compute_lwa_flux_dirinv
-        # explicitly. Until a better solution is found in the QGField_NH18
+        # the QGField object and must be given to _compute_lwa_flux_dirinv
+        # explicitly. Until a better solution is found in the QGField
         # implementation, apply a monkey patch here: add the outputs of
-        # _compute_qref_fawa_and_bc as underscore-attributes to the QGField_NH18
+        # _compute_qref_fawa_and_bc as underscore-attributes to the QGField
         # objects so they can be retrieved later.
         for name, arrs in out_fields.items():
             for field, arr in zip(self._fields, arrs):
@@ -449,7 +449,7 @@ class QGDataset:
         return out_fields
 
     def _compute_lwa_flux_dirinv(self):
-        # Call _compute_lwa_flux_dirinv on all QGField_NH18 objects, use the monkey
+        # Call _compute_lwa_flux_dirinv on all QGField objects, use the monkey
         # patched attributes added in _compute_qref_fawa_and_bc
         out_fields = _map_collect(
             lambda field: field._compute_lwa_flux_dirinv(
