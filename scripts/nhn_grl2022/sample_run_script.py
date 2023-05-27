@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from math import pi
 from netCDF4 import Dataset
-from hn2016_falwa.oopinterface import QGField_NHN22
+from hn2016_falwa.oopinterface import QGFieldNHN22
 
 sys.path.insert(0, os.getcwd())
 from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \
@@ -116,7 +116,7 @@ if to_generate_data:
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
 
-        qgfield_object = QGField_NHN22(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
+        qgfield_object = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
 
         qgfield_object.interpolate_fields()
 

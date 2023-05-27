@@ -852,7 +852,7 @@ class QGField(object):
             return self.nlat
 
 
-class QGField_NH18(QGField):
+class QGFieldNH18(QGField):
     """
     This child class of QGField implements the procedures and compute reference states with the set of
     boundary conditions specified in NH18:
@@ -972,7 +972,7 @@ class QGField_NH18(QGField):
         return self._domain_average_storage.static_stability
 
 
-class QGField_NHN22(QGField):
+class QGFieldNHN22(QGField):
     """
     This child class of QGField implements the procedures and compute reference states with the set of
     boundary conditions specified in NHN22:
@@ -1040,7 +1040,7 @@ class QGField_NHN22(QGField):
 
     def _interpolate_fields_nhn22(self):
         """
-        This method is encapsulated in QGField_NHN22. I keep it here just for the xarray interface to run.
+        This method is encapsulated in QGFieldNHN22. I keep it here just for the xarray interface to run.
         TODO: remove this after making adjustment to the XarrayInterface
         """
         self._interpolated_field_storage.qgpv, \
@@ -1205,7 +1205,7 @@ class QGField_NHN22(QGField):
         """
         Added for NHN 2022 GRL. The main run script is scripts/nhn_grl2022/sample_run_script.py.
 
-        This shall be encapsulate in QGField_NHN22._compute_intermediate_flux_terms_nhn22
+        This shall be encapsulate in QGFieldNHN22._compute_intermediate_flux_terms_nhn22
         properly soon.
 
         As now the input are in python indexing order, the axes has to be swapped.

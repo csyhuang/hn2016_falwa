@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 
 from hn2016_falwa import __version__
-from hn2016_falwa.oopinterface import QGField_NH18
+from hn2016_falwa.oopinterface import QGFieldNH18
 
 
 def _is_ascending(arr):
@@ -172,7 +172,7 @@ class QGDataset:
                 u_field = np.flip(u_field, axis=flip)
                 v_field = np.flip(v_field, axis=flip)
                 t_field = np.flip(t_field, axis=flip)
-            field = QGField_NH18(xlon, ylat, plev, u_field, v_field, t_field, **self._qgfield_kwargs)
+            field = QGFieldNH18(xlon, ylat, plev, u_field, v_field, t_field, **self._qgfield_kwargs)
             self._fields.append(field)
         # Make sure there is at least one field in the dataset
         assert self._fields, "empty input"

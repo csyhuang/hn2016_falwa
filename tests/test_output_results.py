@@ -7,7 +7,7 @@ import pytest
 from math import pi
 import numpy as np
 import xarray as xr
-from hn2016_falwa.oopinterface import QGField_NH18, QGField_NHN22
+from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 
 
 test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/data"
@@ -82,7 +82,7 @@ def test_expected_value_check_nh18(u_field, v_field, t_field, files_with_expecte
     jd = nlat // 2 + 1  # (one plus) index of latitude grid point with value 0 deg
     # This is to be input to fortran code. The index convention is different.
 
-    qgfield = QGField_NH18(
+    qgfield = QGFieldNH18(
         xlon, ylat, plev, u_field, v_field, t_field, kmax=kmax, maxit=maxit, dz=dz, npart=npart, tol=tol,
         rjac=rjac, scale_height=hh, cp=cp, dry_gas_constant=rr, omega=omega, planet_radius=aa,
         northern_hemisphere_results_only=False)
@@ -136,7 +136,7 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
     eq_boundary_index = 3
     # This is to be input to fortran code. The index convention is different.
 
-    qgfield = QGField_NHN22(
+    qgfield = QGFieldNHN22(
         xlon, ylat, plev, u_field, v_field, t_field, kmax=kmax, maxit=maxit, dz=dz, npart=npart, tol=tol,
         rjac=rjac, scale_height=hh, cp=cp, dry_gas_constant=rr, omega=omega, planet_radius=aa,
         eq_boundary_index=eq_boundary_index, northern_hemisphere_results_only=False)
