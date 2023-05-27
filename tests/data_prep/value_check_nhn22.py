@@ -2,7 +2,7 @@ import os
 import numpy as np
 from math import pi
 import xarray as xr
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGField, Protocol
 
 
 def extract_data_from_notebook_dir(dir: str, test_data_dir: str):
@@ -13,7 +13,7 @@ def extract_data_from_notebook_dir(dir: str, test_data_dir: str):
 
 
 test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/../data"
-output_netcdf_file = test_data_dir + "/expected_values_nh18.nc"
+output_netcdf_file = test_data_dir + "/expected_values_nhn22.nc"
 
 if __name__ == "__main__":
     u_file = xr.open_dataset(f"{test_data_dir}/2005-01-23-0000-u.nc")
@@ -49,6 +49,8 @@ if __name__ == "__main__":
     tol = 1.e-5  # tolerance that define convergence of solution
     rjac = 0.95  # spectral radius of the Jacobi iteration in the SOR solver.
     jd = nlat // 2 + 1  # (one plus) index of latitude grid point with value 0 deg
+    eq_boundary_index = 5
+
     # This is to be input to fortran code. The index convention is different.
 
     uu = u_file.u.values
@@ -58,6 +60,7 @@ if __name__ == "__main__":
     qgfield_object = QGField(
         xlon, ylat, plev,
         uu[::-1, ::-1, :], vv[::-1, ::-1, :], tt[::-1, ::-1, :],
+        eq_boundary_index=eq_boundary_index, protocol=Protocol.NHN22,
         northern_hemisphere_results_only=False)
     qgfield_object.interpolate_fields()
     qgfield_object.compute_reference_states()
@@ -67,7 +70,8 @@ if __name__ == "__main__":
     ds = xr.Dataset({
         "qgpv": (("levelist", "latitude", "longitude"), qgfield_object.qgpv),
         "lwa": (("levelist", "latitude", "longitude"), qgfield_object.lwa),
-        "static_stability": (("levelist"), qgfield_object.static_stability),
+        "static_stability_s": (("levelist"), qgfield_object.static_stability[0]),
+        "static_stability_n": (("levelist"), qgfield_object.static_stability[1]),
         "qref": (("levelist", "latitude"), qgfield_object.qref),
         "uref": (("levelist", "latitude"), qgfield_object.uref),
         "ptref": (("levelist", "latitude"), qgfield_object.ptref),
