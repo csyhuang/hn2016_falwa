@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from math import pi
 from netCDF4 import Dataset
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNHN22
 
 sys.path.insert(0, os.getcwd())
 from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \
@@ -116,14 +116,13 @@ if to_generate_data:
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
 
-        qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
+        qgfield_object = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
 
-        qgpv_temp, interpolated_u_temp, interpolated_v_temp, interpolated_avort_temp, interpolated_theta_temp, \
-        static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_fields_nhn22()
+        qgfield_object.interpolate_fields()
 
         qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
 
-        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
+        astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
             qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
 
         lwa_baro[tstep, :, :] = np.swapaxes(astarbaro, 0, 1)

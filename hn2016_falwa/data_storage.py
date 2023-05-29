@@ -7,6 +7,62 @@ from typing import Tuple, Optional, Union, List, NamedTuple
 import numpy as np
 
 
+class InvalidCallOfSHemVariables(Exception):
+    """
+    northern_hemisphere_results_only = True. 
+    Southern hemispheric variables are not computed.
+    """
+
+
+class HemisphericProperty:
+
+    def __init__(self, attr, ndims_fill=(0, 0), doc=None):
+        self.attr = attr
+        self.__doc__ = doc
+        # Dimensions to fill in pre- and post-latitude
+        npre, npost = ndims_fill
+        self.slc_pre  = tuple(slice(None) for _ in range(npre))
+        self.slc_post = tuple(slice(None) for _ in range(npost))
+
+    @property
+    def ndim_j(self):
+        return len(self.slc_pre)
+
+
+class NHemProperty(HemisphericProperty):
+
+    def __get__(self, obj, objtype=None):
+        if obj.northern_hemisphere_results_only:
+            return getattr(obj, self.attr)
+        # Assemble full slice from slices of pre-latitude dimensions, latitude
+        # dimension slice and post-latitude dimensions slices
+        slc = (*self.slc_pre, slice(-(obj.nlat//2+1), None), *self.slc_post)
+        return getattr(obj, self.attr)[slc]
+
+    def __set__(self, obj, value):
+        jdim = value.shape[self.ndim_j]
+        slc = (*self.slc_pre, slice(-jdim, None), *self.slc_post)
+        getattr(obj, self.attr)[slc] = value
+
+
+class SHemProperty(HemisphericProperty):
+
+    def __get__(self, obj, objtype=None):
+        if obj.northern_hemisphere_results_only:
+            raise InvalidCallOfSHemVariables()
+        slc = (*self.slc_pre, slice(None, obj.nlat//2+1), *self.slc_post)
+        return getattr(obj, self.attr)[slc]
+
+    def __set__(self, obj, value):
+        jdim = value.shape[self.ndim_j]
+        if obj.northern_hemisphere_results_only:
+            raise InvalidCallOfSHemVariables()
+        slc = (*self.slc_pre, slice(None, jdim), *self.slc_post)
+        vlc = (*self.slc_pre, slice(None, None, -1), *self.slc_post)
+        getattr(obj, self.attr)[slc] = value[vlc]
+
+
+
 class DerivedQuantityStorage:
     """
     This class manages the storage of derived variables in QGField (for internal use only).
@@ -101,32 +157,8 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
         self.ptref = np.zeros(self.fdim)
         kmax, self.nlat = self.pydim
 
-    # *** Qref ***
-    @property
-    def qref_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.qref
-        return self.qref[-(self.nlat//2+1):, :]
-
-    @qref_nhem.setter
-    def qref_nhem(self, value):
-        if self.northern_hemisphere_results_only:
-            self.qref[:, :] = value
-        else:
-            self.qref[-(self.nlat//2+1):, :] = value
-
-    @property
-    def qref_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.qref[:(self.nlat//2+1), :]
-
-    @qref_shem.setter
-    def qref_shem(self, value):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.qref[self.nlat//2::-1, :] = value  # running from equator to pole
+    qref_nhem = NHemProperty("qref", (0, 1))
+    qref_shem = SHemProperty("qref", (0, 1))
 
     def qref_correct_unit(self, ylat, omega, python_indexing=True):
         """
@@ -139,58 +171,11 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
             return self.fortran_to_python(qref_right_unit) # (kmax, nlat)
         return qref_right_unit
 
-    # *** Uref ***
-    @property
-    def uref_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.uref
-        return self.uref[-(self.nlat//2+1):, :]
+    uref_nhem = NHemProperty("uref", (0, 1))
+    uref_shem = SHemProperty("uref", (0, 1))
 
-    @uref_nhem.setter
-    def uref_nhem(self, value):
-        # input uref would be of dim (jd, kmax)
-        jdim = value.shape[0]
-        self.uref[-jdim:, :] = value
-
-    @property
-    def uref_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.uref[:(self.nlat//2+1), :]
-
-    @uref_shem.setter
-    def uref_shem(self, value):
-        jdim = value.shape[0]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.uref[:jdim, :] = value[::-1, :]  # running from equator to pole
-
-    # *** PTref (reference potential temperature) ***
-    @property
-    def ptref_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ptref
-        return self.ptref[-(self.nlat//2+1):, :]
-
-    @ptref_nhem.setter
-    def ptref_nhem(self, value):
-        jdim = value.shape[0]
-        self.ptref[-jdim:, :] = value
-
-    @property
-    def ptref_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ptref[:(self.nlat//2+1), :]
-
-    @ptref_shem.setter
-    def ptref_shem(self, value):
-        jdim = value.shape[0]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ptref[:jdim, :] = value[::-1, :]  # running from equator to pole  # running from equator to pole
+    ptref_nhem = NHemProperty("ptref", (0, 1))
+    ptref_shem = SHemProperty("ptref", (0, 1))
 
 
 class LWAStorage(DerivedQuantityStorage):
@@ -205,30 +190,8 @@ class LWAStorage(DerivedQuantityStorage):
         self.lwa = np.zeros(self.fdim)
         self.nlat = self.fdim[1]
 
-    @property
-    def lwa_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.lwa
-        return self.lwa[:, -(self.nlat//2+1):, :]
-
-    @lwa_nhem.setter
-    def lwa_nhem(self, value):
-        jdim = value.shape[1]
-        self.lwa[:, -jdim:, :] = value
-
-    @property
-    def lwa_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.lwa[:, :(self.nlat//2+1), :]
-
-    @lwa_shem.setter
-    def lwa_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.lwa[:, :jdim, :] = value[:, ::-1, :]  # running from equator to pole  # running from equator to pole
+    lwa_nhem = NHemProperty("lwa", (1, 1))
+    lwa_shem = SHemProperty("lwa", (1, 1))
 
 
 class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
@@ -273,214 +236,30 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.ep2baro = np.zeros(self.fdim)
         self.ep3baro = np.zeros(self.fdim)
         self.ep4 = np.zeros(self.fdim)
-        self.ubaro = np.zeros(self.fdim)
+        self.u_baro = np.zeros(self.fdim)
         self.lwa_baro = np.zeros(self.fdim)  # This is barotropic LWA (astarbaro)
 
-    @property
-    def ua1baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ua1baro
-        return self.ua1baro[:, -(self.nlat//2+1):]
+    ua1baro_nhem = NHemProperty("ua1baro", (1, 0))
+    ua1baro_shem = SHemProperty("ua1baro", (1, 0))
 
-    @ua1baro_nhem.setter
-    def ua1baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ua1baro[:, -jdim:] = value
+    ua2baro_nhem = NHemProperty("ua2baro", (1, 0))
+    ua2baro_shem = SHemProperty("ua2baro", (1, 0))
 
-    @property
-    def ua1baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ua1baro[:, :(self.nlat//2+1)]
+    ep1baro_nhem = NHemProperty("ep1baro", (1, 0))
+    ep1baro_shem = SHemProperty("ep1baro", (1, 0))
 
-    @ua1baro_shem.setter
-    def ua1baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ua1baro[:, :jdim] = value[:, ::-1]
+    ep2baro_nhem = NHemProperty("ep2baro", (1, 0))
+    ep2baro_shem = SHemProperty("ep2baro", (1, 0))
 
-    @property
-    def ua2baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ua2baro
-        return self.ua2baro[:, -(self.nlat//2+1):]
+    ep3baro_nhem = NHemProperty("ep3baro", (1, 0))
+    ep3baro_shem = SHemProperty("ep3baro", (1, 0))
 
-    @ua2baro_nhem.setter
-    def ua2baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ua2baro[:, -jdim:] = value
+    ep4_nhem = NHemProperty("ep4", (1, 0))
+    ep4_shem = SHemProperty("ep4", (1, 0))
 
-    @property
-    def ua2baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ua2baro[:, :(self.nlat//2+1)]
+    u_baro_nhem = NHemProperty("u_baro", (1, 0))
+    u_baro_shem = SHemProperty("u_baro", (1, 0))
 
-    @ua2baro_shem.setter
-    def ua2baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ua2baro[:, :jdim] = value[:, ::-1]
-
-    @property
-    def ep1baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ep1baro
-        return self.ep1baro[:, -(self.nlat//2+1):]
-
-    @ep1baro_nhem.setter
-    def ep1baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ep1baro[:, -jdim:] = value
-
-    @property
-    def ep1baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ep1baro[:, :(self.nlat//2+1)]
-
-    @ep1baro_shem.setter
-    def ep1baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ep1baro[:, :jdim] = value[:, ::-1]
-
-    @property
-    def ep2baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ep2baro
-        return self.ep2baro[:, -(self.nlat//2+1):]
-
-    @ep2baro_nhem.setter
-    def ep2baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ep2baro[:, -jdim:] = value
-
-    @property
-    def ep2baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ep2baro[:, :(self.nlat//2+1)]
-
-    @ep2baro_shem.setter
-    def ep2baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ep2baro[:, :jdim] = value[:, ::-1]
-
-    @property
-    def ep3baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ep3baro
-        return self.ep3baro[:, -(self.nlat//2+1):]
-
-    @ep3baro_nhem.setter
-    def ep3baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ep3baro[:, -jdim:] = value
-
-    @property
-    def ep3baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ep3baro[:, :(self.nlat//2+1)]
-
-    @ep3baro_shem.setter
-    def ep3baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ep3baro[:, :jdim] = value[:, ::-1]
-
-    @property
-    def ep4_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ep4
-        return self.ep4[:, -(self.nlat//2+1):]
-
-    @ep4_nhem.setter
-    def ep4_nhem(self, value):
-        jdim = value.shape[1]
-        self.ep4[:, -jdim:] = value
-
-    @property
-    def ep4_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ep4[:, :(self.nlat//2+1)]
-
-    @ep4_shem.setter
-    def ep4_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ep4[:, :jdim] = value[:, ::-1]
-
-    @property
-    def ubaro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.ubaro
-        return self.ubaro[:, -(self.nlat//2+1):]
-
-    @ubaro_nhem.setter
-    def ubaro_nhem(self, value):
-        jdim = value.shape[1]
-        self.ubaro[:, -jdim:] = value
-
-    @property
-    def ubaro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.ubaro[:, :(self.nlat//2+1)]
-
-    @ubaro_shem.setter
-    def ubaro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.ubaro[:, :jdim] = value[:, ::-1]
-
-    @property
-    def lwa_baro_nhem(self):
-        if self.northern_hemisphere_results_only:
-            return self.lwa_baro
-        return self.lwa_baro[:, -(self.nlat // 2 + 1):]
-
-    @lwa_baro_nhem.setter
-    def lwa_baro_nhem(self, value):
-        jdim = value.shape[1]
-        self.lwa_baro[:, -jdim:] = value
-
-    @property
-    def lwa_baro_shem(self):
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        return self.lwa_baro[:, :(self.nlat // 2 + 1)]
-
-    @lwa_baro_shem.setter
-    def lwa_baro_shem(self, value):
-        jdim = value.shape[1]
-        if self.northern_hemisphere_results_only:
-            raise InvalidCallOfSHemVariables
-        else:
-            self.lwa_baro[:, :jdim] = value[:, ::-1]
-
-
-class InvalidCallOfSHemVariables(Exception):
-    """
-    northern_hemisphere_results_only = True. 
-    Southern hemispheric variables are not computed.
-    """
-    pass
+    lwa_baro_nhem = NHemProperty("lwa_baro", (1, 0))
+    lwa_baro_shem = SHemProperty("lwa_baro", (1, 0))
 

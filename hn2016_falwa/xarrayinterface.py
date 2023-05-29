@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 
 from hn2016_falwa import __version__
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNH18
 
 
 def _is_ascending(arr):
@@ -172,8 +172,7 @@ class QGDataset:
                 u_field = np.flip(u_field, axis=flip)
                 v_field = np.flip(v_field, axis=flip)
                 t_field = np.flip(t_field, axis=flip)
-            field = QGField(xlon, ylat, plev, u_field, v_field, t_field,
-                            *self._qgfield_args, **self._qgfield_kwargs)
+            field = QGFieldNH18(xlon, ylat, plev, u_field, v_field, t_field, **self._qgfield_kwargs)
             self._fields.append(field)
         # Make sure there is at least one field in the dataset
         assert self._fields, "empty input"
@@ -456,7 +455,7 @@ class QGDataset:
             lambda field: field._compute_lwa_flux_dirinv(
                 qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u, tref=field._temp_dirinv_tref),
             self._fields,
-            ["astarbaro", "ubaro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
+            ["astarbaro", "u_baro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
                 "ep2baro", "ep3baro", "ep4", "astar1", "astar2"],
             postprocess=np.asarray
         )
@@ -479,7 +478,7 @@ class QGDataset:
         return xr.Dataset(
             data_vars={
                 "astarbaro": (out_dims_xy, out_fields["astarbaro"].reshape(out_shape_xy)),
-                "ubaro": (out_dims_xy, out_fields["ubaro"].reshape(out_shape_xy)),
+                "u_baro": (out_dims_xy, out_fields["u_baro"].reshape(out_shape_xy)),
                 "urefbaro": (out_dims_y, out_fields["urefbaro"].reshape(out_shape_y)),
                 "ua1baro": (out_dims_xy, out_fields["ua1baro"].reshape(out_shape_xy)),
                 "ua2baro": (out_dims_xy, out_fields["ua2baro"].reshape(out_shape_xy)),

@@ -6,7 +6,7 @@ from math import pi
 from scipy.interpolate import interp1d
 
 from hn2016_falwa.constant import *
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNH18
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 121
@@ -17,22 +17,23 @@ plev = np.array([1000,  900,  800,  700,  600,  500,  400,  300,  200, 100,   10
 nlev = plev.size
 kmax = 49
 get_cwd = os.path.dirname(os.path.abspath(__file__))
-u_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_u.txt'), [nlev, nlat, nlon])
-v_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_v.txt'), [nlev, nlat, nlon])
-t_field = np.reshape(np.loadtxt(get_cwd + '/test_data/global_demo_t.txt'), [nlev, nlat, nlon])
+u_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_u.txt'), [nlev, nlat, nlon])
+v_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_v.txt'), [nlev, nlat, nlon])
+t_field = np.reshape(np.loadtxt(get_cwd + '/data/global_demo_t.txt'), [nlev, nlat, nlon])
 theta_field = t_field * (plev[:, np.newaxis, np.newaxis] / P_GROUND) ** (-DRY_GAS_CONSTANT / CP)
 
 
 def test_qgfield():
 
-    # Create a QGField object out of some masked array for testing. The test below is to ensure
+    # Create a QGFieldNH18 object out of some masked array for testing. The test below is to ensure
     # warning is raised for masked array.
     with pytest.warns(UserWarning):
-        qgfield = QGField(xlon=xlon, ylat=np.ma.masked_equal(ylat, 0.0), plev=plev,
-                          u_field=np.ma.masked_equal(u_field, 0.0), v_field=np.ma.masked_equal(v_field, 0.0),
-                          t_field=np.ma.masked_equal(t_field, 0.0), kmax=kmax, maxit=100000, dz=1000., npart=None,
-                          tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                          omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
+        qgfield = QGFieldNH18(
+            xlon=xlon, ylat=np.ma.masked_equal(ylat, 0.0), plev=plev,
+            u_field=np.ma.masked_equal(u_field, 0.0), v_field=np.ma.masked_equal(v_field, 0.0),
+            t_field=np.ma.masked_equal(t_field, 0.0), kmax=kmax, maxit=100000, dz=1000., npart=None,
+            tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
+            omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
@@ -145,11 +146,12 @@ def test_qgfield():
 
 def test_qgfield_full_globe():
 
-    # Create a QGField object for testing
-    qgfield = QGField(xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=v_field, t_field=t_field, kmax=kmax,
-                      maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-                      dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
-                      northern_hemisphere_results_only=False)
+    # Create a QGFieldNH18 object for testing
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=v_field, t_field=t_field, kmax=kmax,
+        maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
+        northern_hemisphere_results_only=False)
 
     # Check that the input fields are interpolated onto a grid of correct dimension
     # and the interpolated values are bounded.
@@ -185,9 +187,10 @@ def test_raise_error_for_unrealistic_fields():
     """
     Error shall be raised if the SOR algorithm for computing reference state does not converge.
     """
-    qgfield = QGField(xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=u_field, t_field=u_field, kmax=kmax,
-                      maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-                      dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS)
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=u_field, t_field=u_field, kmax=kmax,
+        maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS)
     qgfield.interpolate_fields()
     with pytest.raises(ValueError):
         qgfield.compute_reference_states()
@@ -201,7 +204,7 @@ def test_raise_error_for_unrealistic_kmax():
     """
     too_large_kmax = 1000
     with pytest.raises(ValueError):
-        QGField(xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=v_field, t_field=t_field, kmax=too_large_kmax)
+        QGFieldNH18(xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=v_field, t_field=t_field, kmax=too_large_kmax)
 
 
 def test_interpolate_fields_even_grids():
@@ -219,11 +222,12 @@ def test_interpolate_fields_even_grids():
     t_field_even = interp1d(ylat, t_field, axis=1,
                             fill_value="extrapolate")(ylat_even)
 
-    # Create a QGField object for testing
-    qgfield_even = QGField(xlon=xlon, ylat=ylat_even, plev=plev, u_field=u_field_even, v_field=v_field_even,
-                           t_field=t_field_even, kmax=kmax, maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95,
-                           scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
-                           planet_radius=EARTH_RADIUS)
+    # Create a QGFieldNH18 object for testing
+    qgfield_even = QGFieldNH18(
+        xlon=xlon, ylat=ylat_even, plev=plev, u_field=u_field_even, v_field=v_field_even,
+        t_field=t_field_even, kmax=kmax, maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95,
+        scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS)
 
     qgpv, interpolated_u, interpolated_v, interpolated_theta, static_stability = \
         qgfield_even.interpolate_fields()

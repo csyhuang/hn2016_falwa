@@ -5,6 +5,7 @@ Author: Clare Huang
 """
 import numpy as np
 from hn2016_falwa.constant import EARTH_RADIUS
+from hn2016_falwa import basis
 
 
 def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS):
@@ -34,9 +35,6 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
         2-d numpy array of local wave activity values;
                     dimension = [nlat_s x nlon]
     """
-
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     if n_points is None:
@@ -74,7 +72,6 @@ def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, planet_rad
     lwa_result : numpy.ndarray
         2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]
     """
-    from hn2016_falwa import basis
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     lwa_result = basis.lwa(nlon, nlat, vort, qref, dmu)
@@ -107,8 +104,6 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radi
         1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
 
     """
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     qref = np.zeros(nlat)
 
@@ -163,8 +158,6 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, pla
         If *vgrad* = None, *brac* = None.
 
     """
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     qref = np.zeros(nlat)
     brac = np.zeros(nlat)
@@ -230,9 +223,6 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_rad
                     dimension = [nlat_s x nlon]
 
     """
-
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     nlon = vort.shape[1]
 
@@ -304,9 +294,6 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points
         2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
 
     """
-
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     nlon = vort.shape[1]
 
@@ -386,9 +373,6 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vg
         2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
 
     """
-
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     nlon = vort.shape[1]
 
@@ -501,8 +485,6 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None, pla
     lwa_result : numpy.ndarray
         2-d numpy array of local wave activity values; dimension = (nlat, nlon).
     """
-    from hn2016_falwa import basis
-
     nlat = vort.shape[0]
     nlon = vort.shape[1]
     if nlat_s is None:
@@ -549,8 +531,6 @@ def theta_lwa(ylat, theta, area, dmu, nlat_s=None, n_points=None, planet_radius=
         2-d numpy array of local surface wave activity values; dimension = (nlat, nlon).
 
     """
-    from hn2016_falwa import basis
-
     nlat = theta.shape[0]
     nlon = theta.shape[1]
     if nlat_s is None:
