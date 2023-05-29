@@ -91,14 +91,17 @@ class QGDataset:
         Input dataset. Must contain 3D fields of temperature. The 3D fields's
         dimensions must end with height, latitude and longitude. Other dimensions
         (e.g. time, ensemble member id) are preserved in the output datasets.
-    qgfield_args : tuple, optional
-        Positional arguments given to the QGField constructor.
-    qgfield_kwargs : dict, optional
-        Keyword arguments given to the QGField constructor.
     var_names : dict, optional
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
+    qgfield : QGField class
+        The QGField class to use in the computation. Default:
+        :py:class:`oopinterface.QGFieldNH18`.
+    qgfield_args : tuple, optional
+        Positional arguments given to the QGField constructor.
+    qgfield_kwargs : dict, optional
+        Keyword arguments given to the QGField constructor.
 
     Example
     -------
@@ -108,13 +111,15 @@ class QGDataset:
     >>> qgds = QGDataset(data_u, data_v, data_t)
     """
 
-    def __init__(self, ds_u, ds_v, ds_t, qgfield_args=None, qgfield_kwargs=None, var_names=None):
+    def __init__(self, ds_u, ds_v, ds_t, *, var_names=None,
+                 qgfield=QGFieldNH18, qgfield_args=None, qgfield_kwargs=None):
         if var_names is None:
             var_names = dict()
         self._ds_u = ds_u
         self._ds_v = ds_v
         self._ds_t = ds_t
-        self._qgfield_args   = list() if qgfield_args   is None else qgfield_args
+        self._qgfield = qgfield
+        self._qgfield_args = list() if qgfield_args is None else qgfield_args
         self._qgfield_kwargs = dict() if qgfield_kwargs is None else qgfield_kwargs
         # Find names of spatial coordinates
         self._plev_name = _get_name(ds_u, _NAMES_PLEV, var_names)
@@ -172,7 +177,8 @@ class QGDataset:
                 u_field = np.flip(u_field, axis=flip)
                 v_field = np.flip(v_field, axis=flip)
                 t_field = np.flip(t_field, axis=flip)
-            field = QGFieldNH18(xlon, ylat, plev, u_field, v_field, t_field, **self._qgfield_kwargs)
+            field = self._qgfield(xlon, ylat, plev, u_field, v_field, t_field,
+                                  *self._qgfield_args, **self._qgfield_kwargs)
             self._fields.append(field)
         # Make sure there is at least one field in the dataset
         assert self._fields, "empty input"
@@ -207,6 +213,7 @@ class QGDataset:
             "omega": field.omega,
             "planet_radius": field.planet_radius,
             "prefactor": field.prefactor,
+            "protocol": self._qgfield.__name__,
             "package": f"hn2016_falwa {__version__}"
         }
 
