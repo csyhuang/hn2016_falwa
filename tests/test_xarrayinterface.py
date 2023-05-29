@@ -20,55 +20,59 @@ def _generate_test_dataset(**additional_coords):
     )
 
 
-def test_qgdataset():
+def test_qgdataset_with_dataset():
     data = _generate_test_dataset()
-    qgds = QGDataset(data, data, data)
+    qgds = QGDataset(data)
     # Make sure all computation functions run
     qgds.interpolate_fields()
     qgds.compute_reference_states()
     qgds.compute_lwa_and_barotropic_fluxes()
 
-
-def test_qgdataset_flips_ylat():
+def test_qgdataset_with_dataarray():
     data = _generate_test_dataset()
-    interp1 = QGDataset(data, data, data).interpolate_fields()
-    interp2 = QGDataset(
-        data.reindex({"ylat": data["ylat"][::-1]}),
-        data.reindex({"ylat": data["ylat"][::-1]}),
-        data.reindex({"ylat": data["ylat"][::-1]})).interpolate_fields()
-    assert np.allclose(interp1["ylat"], interp2["ylat"])
+    QGDataset(data["u"], data["v"], data["t"])
 
-
-def test_qgdataset_flips_plev():
+def test_qgdataset_with_mixed_args():
     data = _generate_test_dataset()
-    interp1 = QGDataset(data, data, data).interpolate_fields()
-    interp2 = QGDataset(
-        data.reindex({"plev": data["plev"][::-1]}),
-        data.reindex({"plev": data["plev"][::-1]}),
-        data.reindex({"plev": data["plev"][::-1]})).interpolate_fields()
-    assert np.allclose(interp1["height"], interp2["height"])
-
+    QGDataset(data[["u", "t"]], da_v=data["v"])
 
 def test_qgdataset_rejects_incomplete():
     data = _generate_test_dataset()
     for var in data:
         with pytest.raises(KeyError):
-            QGDataset(data.drop_vars([var]), data.drop_vars([var]), data.drop_vars([var]))
+            QGDataset(data.drop_vars([var]))
 
+def test_qgdataset_with_coordinate_mismatch():
+    data = _generate_test_dataset()
+    with pytest.raises(AssertionError):
+        QGDataset(data["u"], data["v"], data["t"].rename({ "ylat": "latitude" }))
 
 def test_qgdataset_rejects_transposed():
     data = _generate_test_dataset()
     with pytest.raises(AssertionError):
         transposed_data = data.transpose("xlon", "plev", "ylat")
-        QGDataset(transposed_data, transposed_data, transposed_data)
+        QGDataset(transposed_data)
     with pytest.raises(AssertionError):
         transposed_data = data.transpose("ylat", "xlon", "plev")
-        QGDataset(transposed_data, transposed_data, transposed_data)
+        QGDataset(transposed_data)
+
+
+def test_qgdataset_flips_ylat():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({"ylat": data["ylat"][::-1]})).interpolate_fields()
+    assert np.allclose(interp1["ylat"], interp2["ylat"])
+
+def test_qgdataset_flips_plev():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({"plev": data["plev"][::-1]})).interpolate_fields()
+    assert np.allclose(interp1["height"], interp2["height"])
 
 
 def test_qgdataset_4d():
     data = xr.concat([_generate_test_dataset(time=t) for t in range(3)], dim="time")
-    qgds = QGDataset(data, data, data)
+    qgds = QGDataset(data)
     interp = qgds.interpolate_fields()
     # Verify that time dimension is preserved
     assert "time" in interp.coords
@@ -80,13 +84,12 @@ def test_qgdataset_4d():
         data["xlon"].size
     )
 
-
 def test_qgdataset_5d():
     data = xr.concat([
         xr.concat([_generate_test_dataset(time=t, number=n) for t in range(3)], dim="time")
         for n in range(4)
     ], dim="number")
-    qgds = QGDataset(data, data, data)
+    qgds = QGDataset(data)
     interp = qgds.interpolate_fields()
     # Verify that additional dimensions are preserved
     assert "time" in interp.coords
@@ -109,7 +112,6 @@ def test_is_ascending():
     assert not _is_ascending([0, 2, 3, 3, 3, 2.9])
     assert not _is_ascending([-1, -2., -3.])
 
-
 def test_is_descending():
     assert _is_descending([4])
     assert not _is_descending([0, 1, 2, 3, 4, 5])
@@ -117,7 +119,6 @@ def test_is_descending():
     assert _is_descending([0, -1])
     assert not _is_descending([0, 2, 3, 3, 3, 2.9])
     assert _is_descending([-1, -2., -3.])
-
 
 def test_is_equator():
     assert _is_equator(0.)

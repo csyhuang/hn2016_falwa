@@ -35,6 +35,10 @@ _NAMES_CZAF = ["convergence_zonal_advective_flux"]
 _NAMES_DEMF = ["divergence_eddy_momentum_flux"]
 _NAMES_MHF  = ["meridional_heat_flux"]
 
+def _get_dataarray(data, names, user_names=None):
+    name = _get_name(data, names, user_names=None)
+    return data[name]
+
 def _get_name(ds, names, user_names=None):
     # If the first name from the list of defaults is in the user-provided
     # dictionary, use the name provided there
@@ -63,12 +67,10 @@ def _map_collect(f, xs, names, postprocess=None):
 class QGDataset:
     """A wrapper for multiple QGField objects with xarray in- and output.
 
-    Examines the given dataset and tries to extract `u`, `v`, and `T` fields
-    based on the names of coordinates in the dataset. For each combination of
-    timestep, ensemble member, etc., a :py:class:`oopinterface.QGField` object
-    is instanciated. The constructor will automatically flip latitude and
-    pressure dimensions of the input data if necessary to meet the requirements
-    of QGField.
+    For each combination of timestep, ensemble member, etc. in the input data,
+    a :py:class:`oopinterface.QGField` object is instanciated. The constructor
+    will automatically flip latitude and pressure dimensions of the input data
+    if necessary to meet the requirements of QGField.
 
     This wrapper class imitates the methods of QGField (but not the
     properties/attributes) and collects and re-organizes output data in xarray
@@ -79,18 +81,21 @@ class QGDataset:
 
     Parameters
     ----------
-    ds_u : xarray.Dataset
-        Input dataset. Must contain 3D fields of zonal wind. The 3D fields's
-        dimensions must end with height, latitude and longitude. Other dimensions
-        (e.g. time, ensemble member id) are preserved in the output datasets.
-    ds_v : xarray.Dataset
-        Input dataset. Must contain 3D fields of meridional wind. The 3D fields's
-        dimensions must end with height, latitude and longitude. Other dimensions
-        (e.g. time, ensemble member id) are preserved in the output datasets.
-    ds_t : xarray.Dataset
-        Input dataset. Must contain 3D fields of temperature. The 3D fields's
-        dimensions must end with height, latitude and longitude. Other dimensions
-        (e.g. time, ensemble member id) are preserved in the output datasets.
+    da_u : xarray.DataArray | xarray.Dataset
+        Input 3D fields of zonal wind. The 3D fields's dimensions must end with
+        height, latitude and longitude. Other dimensions (e.g. time, ensemble
+        member id) are preserved in the output datasets.
+        Alternatively, a dataset can be given, from which `u`, `v` and `T`
+        fields are then extracted. The `da_v` and `da_t` arguments can then be
+        omitted or used as an override.
+    da_v : xarray.DataArray, optional
+        Input 3D fields of meridional wind. The 3D fields's dimensions must end
+        with height, latitude and longitude. Other dimensions (e.g. time,
+        ensemble member id) are preserved in the output datasets.
+    da_t : xarray.DataArray, optional
+        Input 3D fields of temperature. The 3D fields's dimensions must end
+        with height, latitude and longitude. Other dimensions (e.g. time,
+        ensemble member id) are preserved in the output datasets.
     var_names : dict, optional
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
@@ -105,69 +110,73 @@ class QGDataset:
 
     Example
     -------
-    >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
-    >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
-    >>> data_t = xarray.load_dataset("path/to/some/t-data.nc")
-    >>> qgds = QGDataset(data_u, data_v, data_t)
+    >>> data = xarray.open_dataset("path/to/some/uvt-data.nc")
+    >>> qgds = QGDataset(data)
     """
 
-    def __init__(self, ds_u, ds_v, ds_t, *, var_names=None,
+    def __init__(self, da_u, da_v=None, da_t=None, *, var_names=None,
                  qgfield=QGFieldNH18, qgfield_args=None, qgfield_kwargs=None):
         if var_names is None:
             var_names = dict()
-        self._ds_u = ds_u
-        self._ds_v = ds_v
-        self._ds_t = ds_t
+        # Also support construction from single-arg and mixed variants
+        if isinstance(da_u, xr.Dataset):
+            # Fill up missing DataArrays for v and t from the Dataset but give
+            # priority to existing v and t fields from the args
+            if da_v is None:
+                da_v = _get_dataarray(da_u, _NAMES_V, var_names)
+            if da_t is None:
+                da_t = _get_dataarray(da_u, _NAMES_T, var_names)
+            # Always take u
+            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
+        # Assertions about da_u, da_v, da_t
+        assert da_u is not None, "missing u field"
+        assert da_v is not None, "missing v field"
+        assert da_t is not None, "missing t field"
+        # Merge into one dataset and keep the reference. xarray will avoid
+        # copying the data in the merge, so the operation should be relatively
+        # cheap and fast. The merge further verifies that the coordinates of
+        # the three DataArrays match.
+        self._ds = xr.merge([da_u, da_v, da_t], join="exact", compat="equals")
+        # QGField* configuration
         self._qgfield = qgfield
         self._qgfield_args = list() if qgfield_args is None else qgfield_args
         self._qgfield_kwargs = dict() if qgfield_kwargs is None else qgfield_kwargs
-        # Find names of spatial coordinates
-        self._plev_name = _get_name(ds_u, _NAMES_PLEV, var_names)
-        self._ylat_name = _get_name(ds_u, _NAMES_YLAT, var_names)
-        self._xlon_name = _get_name(ds_u, _NAMES_XLON, var_names)
-        # Find names of wind and temperature fields
-        self._u_name = _get_name(ds_u, _NAMES_U, var_names)
-        self._v_name = _get_name(ds_v, _NAMES_V, var_names)
-        self._t_name = _get_name(ds_t, _NAMES_T, var_names)
-        # Shorthands for data arrays
-        plev = ds_u[self._plev_name]
-        ylat = ds_u[self._ylat_name]
-        xlon = ds_u[self._xlon_name]
-        u = ds_u[self._u_name]
-        v = ds_v[self._v_name]
-        t = ds_t[self._t_name]
+        # Extract spatial coordinates
+        da_plev = _get_dataarray(self._ds.coords, _NAMES_PLEV, var_names)
+        da_ylat = _get_dataarray(self._ds.coords, _NAMES_YLAT, var_names)
+        da_xlon = _get_dataarray(self._ds.coords, _NAMES_XLON, var_names)
         # Check that field coordinates end in lev, lat, lon
-        assert u.dims[-3] == plev.name, f"dimension -3 of input fields must be '{plev.name}' (plev)"
-        assert u.dims[-2] == ylat.name, f"dimension -2 of input fields must be '{ylat.name}' (ylat)"
-        assert u.dims[-1] == xlon.name, f"dimension -1 of input fields must be '{xlon.name}' (xlon)"
-        assert u.dims == v.dims, f"dimensions of fields '{u.name}' (u) and '{v.name}' (v) don't match"
-        assert u.dims == t.dims, f"dimensions of fields '{u.name}' (u) and '{t.name}' (t) don't match"
+        assert da_u.dims[-3] == da_plev.name, f"dimension -3 of input fields must be '{da_plev.name}' (plev)"
+        assert da_u.dims[-2] == da_ylat.name, f"dimension -2 of input fields must be '{da_ylat.name}' (ylat)"
+        assert da_u.dims[-1] == da_xlon.name, f"dimension -1 of input fields must be '{da_xlon.name}' (xlon)"
+        assert da_u.dims == da_v.dims, f"dimensions of fields '{da_u.name}' (u) and '{da_v.name}' (v) don't match"
+        assert da_u.dims == da_t.dims, f"dimensions of fields '{da_u.name}' (u) and '{da_t.name}' (t) don't match"
         # The input data may contain multiple time steps, ensemble members etc.
         # Flatten all these other dimensions so a single loop covers all
         # fields. These dimensions are restored in the output datasets.
-        self._other_dims = u.dims[:-3]
-        self._other_shape = tuple(ds_u[dim].size for dim in self._other_dims)
+        self._other_dims = da_u.dims[:-3]
+        self._other_shape = tuple(da_u[dim].size for dim in self._other_dims)
         self._other_size = np.product(self._other_shape, dtype=np.int64)
-        _shape = (self._other_size, *u.shape[-3:])
+        _shape = (self._other_size, *da_u.shape[-3:])
         # Extract value arrays and collapse all additional dimensions
-        u = u.data.reshape(_shape)
-        v = v.data.reshape(_shape)
-        t = t.data.reshape(_shape)
+        u = da_u.data.reshape(_shape)
+        v = da_v.data.reshape(_shape)
+        t = da_t.data.reshape(_shape)
         # Automatically determine how fields need to be flipped so they match
         # the requirements of QGField and extract coordinate values
         flip = []
         # Ensure that ylat is ascending
-        ylat = ylat.values
+        ylat = da_ylat.values
         if not _is_ascending(ylat):
             ylat = np.flip(ylat)
             flip.append(-2)
         # Ensure that plev is descending
-        plev = plev.values
+        plev = da_plev.values
         if not _is_descending(plev):
             plev = np.flip(plev)
             flip.append(-3)
         # Ordering of xlon doesn't matter here
-        xlon = xlon.values
+        xlon = da_xlon.values
         # Create a QGField object for each combination of timestep, ensemble
         # member, etc.
         self._fields = []
@@ -194,7 +203,7 @@ class QGDataset:
 
     @property
     def _other_coords(self):
-        return {dim: self._ds_u[dim] for dim in self._other_dims}
+        return {dim: self._ds[dim] for dim in self._other_dims}
 
     @property
     def attrs(self):
