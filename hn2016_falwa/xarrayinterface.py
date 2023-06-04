@@ -63,6 +63,32 @@ def _map_collect(f, xs, names, postprocess=None):
             out[name] = postprocess(out[name])
     return out
 
+class _DataArrayCollector(property):
+    # Getter properties for DataArray-based access to QGField properties.
+    # Inherits from property, so instances are recognized as properties by
+    # sphinx for the docs.
+
+    def __init__(self, name, dimnames, dimvars=None):
+        self.name = name
+        self.dimnames = dimnames
+        self.dimvars = dimvars if dimvars is not None else dimnames
+        self.__doc__ = (
+            f"See :py:attr:`oopinterface.QGField.{name}`."
+            "\n\nReturns\n-------\nxarray.DataArray"
+        )
+
+    def __get__(self, obj, objtype=None):
+        fields = obj.fields
+        data = np.asarray([getattr(field, self.name) for field in fields])
+        coords = ({
+            coord: getattr(fields[0], var)
+            for coord, var in zip(self.dimnames, self.dimvars)
+        })
+        coords.update(obj._other_coords)
+        dims = (*obj._other_dims, *self.dimnames)
+        shape = (*obj._other_shape, *(getattr(fields[0], var).size for var in self.dimvars))
+        return xr.DataArray(data.reshape(shape), coords, dims, self.name, obj.attrs)
+
 
 class QGDataset:
     """A wrapper for multiple QGField objects with xarray in- and output.
@@ -294,6 +320,24 @@ class QGDataset:
             attrs=self.attrs
         )
 
+    # Accessors for individual field properties computed in interpolate_fields
+    qgpv = _DataArrayCollector(
+        "qgpv",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_u = _DataArrayCollector(
+        "interpolated_u",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_v = _DataArrayCollector(
+        "interpolated_v",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_theta = _DataArrayCollector(
+        "interpolated_theta",
+        ["height", "ylat", "xlon"]
+    )
+
     def compute_reference_states(self):
         """Collect the output of `compute_reference_states` in a dataset.
 
@@ -332,6 +376,23 @@ class QGDataset:
             },
             attrs=self.attrs
         )
+
+    # Accessors for individual field properties computed in compute_reference_states
+    qref = _DataArrayCollector(
+        "qref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
+    uref = _DataArrayCollector(
+        "uref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
+    ptref = _DataArrayCollector(
+        "ptref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
 
     def compute_lwa_and_barotropic_fluxes(self):
         """Collect the output of `compute_lwa_and_barotropic_fluxes` in a dataset.
@@ -383,6 +444,54 @@ class QGDataset:
             },
             attrs=self.attrs
         )
+
+    # Accessors for individual field properties computed in compute_lwa_and_barotropic_fluxes
+    adv_flux_f1 = _DataArrayCollector(
+        "adv_flux_f1",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    adv_flux_f2 = _DataArrayCollector(
+        "adv_flux_f2",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    adv_flux_f3 = _DataArrayCollector(
+        "adv_flux_f3",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    convergence_zonal_advective_flux = _DataArrayCollector(
+        "convergence_zonal_advective_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    divergence_eddy_momentum_flux = _DataArrayCollector(
+        "divergence_eddy_momentum_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    meridional_heat_flux = _DataArrayCollector(
+        "meridional_heat_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    lwa_baro = _DataArrayCollector(
+        "lwa_baro",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    u_baro = _DataArrayCollector(
+        "u_baro",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    lwa = _DataArrayCollector(
+        "lwa",
+        ["height", "ylat", "xlon"],
+        ["height", "ylat_ref_states", "xlon"]
+    )
+
 
 
 def integrate_budget(ds, var_names=None):

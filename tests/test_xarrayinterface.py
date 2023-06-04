@@ -114,27 +114,27 @@ def test_basic_qgdataset_calls(QGField, nh_only):
     })
     # Step 1: basic output verification
     out1 = qgds.interpolate_fields()
-    assert "qgpv" in out1
-    assert "interpolated_u" in out1
-    assert "interpolated_v" in out1
-    assert "theta" in out1
+    np.testing.assert_allclose(out1["qgpv"], qgds.qgpv)
+    np.testing.assert_allclose(out1["interpolated_u"], qgds.interpolated_u)
+    np.testing.assert_allclose(out1["interpolated_v"], qgds.interpolated_v)
+    np.testing.assert_allclose(out1["interpolated_theta"], qgds.interpolated_theta)
     assert "static_stability" in out1 or ("static_stability_n" in out1 and "static_stability_s" in out1)
     # Step 2: basic output verification
     out2 = qgds.compute_reference_states()
-    assert "qref" in out2
-    assert "uref" in out2
-    assert "ptref" in out2
+    np.testing.assert_allclose(out2["qref"], qgds.qref)
+    np.testing.assert_allclose(out2["uref"], qgds.uref)
+    np.testing.assert_allclose(out2["ptref"], qgds.ptref)
     # Step 3: basic output verification
     out3 = qgds.compute_lwa_and_barotropic_fluxes()
-    assert "adv_flux_f1" in out3
-    assert "adv_flux_f2" in out3
-    assert "adv_flux_f3" in out3
-    assert "convergence_zonal_advective_flux" in out3
-    assert "divergence_eddy_momentum_flux" in out3
-    assert "meridional_heat_flux" in out3
-    assert "lwa_baro" in out3
-    assert "u_baro" in out3
-    assert "lwa" in out3
+    np.testing.assert_allclose(out3["adv_flux_f1"], qgds.adv_flux_f1)
+    np.testing.assert_allclose(out3["adv_flux_f2"], qgds.adv_flux_f2)
+    np.testing.assert_allclose(out3["adv_flux_f3"], qgds.adv_flux_f3)
+    np.testing.assert_allclose(out3["convergence_zonal_advective_flux"], qgds.convergence_zonal_advective_flux)
+    np.testing.assert_allclose(out3["divergence_eddy_momentum_flux"], qgds.divergence_eddy_momentum_flux)
+    np.testing.assert_allclose(out3["meridional_heat_flux"], qgds.meridional_heat_flux)
+    np.testing.assert_allclose(out3["lwa_baro"], qgds.lwa_baro)
+    np.testing.assert_allclose(out3["u_baro"], qgds.u_baro)
+    np.testing.assert_allclose(out3["lwa"], qgds.lwa)
 
 
 # Tests for internals
