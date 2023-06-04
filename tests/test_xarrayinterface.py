@@ -105,11 +105,36 @@ def test_qgdataset_5d():
     )
 
 
+@pytest.mark.parametrize("nh_only", [False, True])
 @pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
-def test_compare_qgdataset_with_qgfield_reference(QGField):
+def test_basic_qgdataset_calls(QGField, nh_only):
     data = _generate_test_dataset()
-    qgds = QGDataset(data, qgfield=QGField)
-    qgds.interpolate_fields()
+    qgds = QGDataset(data, qgfield=QGField, qgfield_kwargs={
+        "northern_hemisphere_results_only": nh_only
+    })
+    # Step 1: basic output verification
+    out1 = qgds.interpolate_fields()
+    assert "qgpv" in out1
+    assert "interpolated_u" in out1
+    assert "interpolated_v" in out1
+    assert "theta" in out1
+    assert "static_stability" in out1 or ("static_stability_n" in out1 and "static_stability_s" in out1)
+    # Step 2: basic output verification
+    out2 = qgds.compute_reference_states()
+    assert "qref" in out2
+    assert "uref" in out2
+    assert "ptref" in out2
+    # Step 3: basic output verification
+    out3 = qgds.compute_lwa_and_barotropic_fluxes()
+    assert "adv_flux_f1" in out3
+    assert "adv_flux_f2" in out3
+    assert "adv_flux_f3" in out3
+    assert "convergence_zonal_advective_flux" in out3
+    assert "divergence_eddy_momentum_flux" in out3
+    assert "meridional_heat_flux" in out3
+    assert "lwa_baro" in out3
+    assert "u_baro" in out3
+    assert "lwa" in out3
 
 
 # Tests for internals
