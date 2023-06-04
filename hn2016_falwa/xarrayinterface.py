@@ -100,7 +100,7 @@ class QGDataset:
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
-    qgfield : QGField class
+    qgfield : QGField class, optional
         The QGField class to use in the computation. Default:
         :py:class:`oopinterface.QGFieldNH18`.
     qgfield_args : tuple, optional
@@ -112,6 +112,8 @@ class QGDataset:
     -------
     >>> data = xarray.open_dataset("path/to/some/uvt-data.nc")
     >>> qgds = QGDataset(data)
+    >>> qgds.interpolate_fields()
+    <xarray.Dataset> ...
     """
 
     def __init__(self, da_u, da_v=None, da_t=None, *, var_names=None,
@@ -234,6 +236,14 @@ class QGDataset:
         """Collect the output of `interpolate_fields` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.interpolate_fields`.
+
+        .. note::
+            A QGField class may define static stability globally or
+            hemispherically on each level. The output dataset contains a single
+            variable for static stability in case of a global definition and
+            two variables for static stability for a hemispheric definition
+            (suffix ``_n`` for the northern hemisphere and ``_s`` for the
+            southern hemisphere).
 
         Returns
         -------
