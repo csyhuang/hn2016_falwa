@@ -253,6 +253,18 @@ class QGDataset:
         # latitude, longitude
         out_dims = (*self._other_dims, "height", "ylat", "xlon")
         out_shape = (*self._other_shape, _field.height.size, _field.ylat.size, _field.xlon.size)
+        # Special case: static stability (global for NH18, hemispheric for NHN22)
+        stability = out_fields["static_stability"]
+        data_vars_stability = {}
+        if stability.ndim == 2:
+            # One vertical profile of static stability per field: global
+            data_vars_stability["static_stability"] = (out_dims[:-2], stability.reshape(out_shape[:-2]))
+        elif stability.ndim == 3 and stability.shape[-2] == 2:
+            # Two vertical profiles of static stability per field: hemispheric
+            data_vars_stability["static_stability_n"] = (out_dims[:-2], stability[:,0,:].reshape(out_shape[:-2]))
+            data_vars_stability["static_stability_s"] = (out_dims[:-2], stability[:,1,:].reshape(out_shape[:-2]))
+        else:
+            raise ValueError(f"cannot process shape of returned static stability field: {stability.shape}")
         # Combine all outputs into a dataset, reshape to restore the original
         # other dimensions that were flattened earlier
         return xr.Dataset(
@@ -261,7 +273,7 @@ class QGDataset:
                 "interpolated_u": (out_dims, out_fields["interpolated_u"].reshape(out_shape)),
                 "interpolated_v": (out_dims, out_fields["interpolated_v"].reshape(out_shape)),
                 "theta": (out_dims, out_fields["theta"].reshape(out_shape)),
-                "static_stability": (out_dims[:-2], out_fields["static_stability"].reshape(out_shape[:-2]))
+                **data_vars_stability
             },
             coords={
                 **self._other_coords,

@@ -6,6 +6,7 @@ try:
 except ImportError:
     pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
+from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
 from hn2016_falwa.xarrayinterface import _get_name, _map_collect
@@ -103,6 +104,15 @@ def test_qgdataset_5d():
         data["xlon"].size
     )
 
+
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_compare_qgdataset_with_qgfield_reference(QGField):
+    data = _generate_test_dataset()
+    qgds = QGDataset(data, qgfield=QGField)
+    qgds.interpolate_fields()
+
+
+# Tests for internals
 
 def test_is_ascending():
     assert _is_ascending([4])
