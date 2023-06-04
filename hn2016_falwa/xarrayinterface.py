@@ -253,7 +253,7 @@ class QGDataset:
         out_fields = _map_collect(
             lambda field: field.interpolate_fields(),
             self._fields,
-            ["qgpv", "interpolated_u", "interpolated_v", "theta", "static_stability"],
+            ["qgpv", "interpolated_u", "interpolated_v", "interpolated_theta", "static_stability"],
             postprocess=np.asarray
         )
         # Take the first field to extract coordinates and metadata
@@ -282,7 +282,7 @@ class QGDataset:
                 "qgpv": (out_dims, out_fields["qgpv"].reshape(out_shape)),
                 "interpolated_u": (out_dims, out_fields["interpolated_u"].reshape(out_shape)),
                 "interpolated_v": (out_dims, out_fields["interpolated_v"].reshape(out_shape)),
-                "theta": (out_dims, out_fields["theta"].reshape(out_shape)),
+                "interpolated_theta": (out_dims, out_fields["interpolated_theta"].reshape(out_shape)),
                 **data_vars_stability
             },
             coords={
@@ -313,10 +313,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if _field.northern_hemisphere_results_only:
-            _ylat = _field.ylat[(_field.equator_idx - 1):]            
-        else:
-            _ylat = _field.ylat
+        _ylat = _field.ylat_ref_states
         # 2D data, function of height and latitude
         out_dims = (*self._other_dims, "height", "ylat")
         out_shape = (*self._other_shape, _field.height.size, _ylat.size)
@@ -357,10 +354,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if _field.northern_hemisphere_results_only:
-            _ylat = _field.ylat[(_field.equator_idx - 1):]            
-        else:
-            _ylat = _field.ylat
+        _ylat = _field.ylat_ref_states
         # 2D data, function of latitude and longitude
         out_dims_2d = (*self._other_dims, "ylat", "xlon")
         out_shape_2d = (*self._other_shape, _ylat.size, _field.xlon.size)
