@@ -132,6 +132,10 @@ class QGDataset:
         assert da_u is not None, "missing u field"
         assert da_v is not None, "missing v field"
         assert da_t is not None, "missing t field"
+        # Assign standard names to the input fields
+        da_u = da_u.rename("u")
+        da_v = da_v.rename("v")
+        da_t = da_t.rename("t")
         # Merge into one dataset and keep the reference. xarray will avoid
         # copying the data in the merge, so the operation should be relatively
         # cheap and fast. The merge further verifies that the coordinates of
