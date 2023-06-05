@@ -26,10 +26,15 @@ from collections import namedtuple
 class QGField(object):
 
     """
-    Local wave activity and flux analysis in quasi-geostrophic framework
-    that can be used to reproduce the results in:
-    Nakamura and Huang, Atmospheric Blocking as a Traffic Jam in the Jet Stream, Science (2018).
-    Note that topography is assumed flat in this object.
+    Local wave activity and flux analysis in the quasi-geostrophic framework.
+
+    .. warning::
+        This is an abstract class that defines the public interface but does
+        not define any boundary conditions for the reference state computation.
+        Instanciate via the specific child classes :py:class:`QGFieldNH18` or
+        :py:class:`QGFieldNHN22` to select the desired boundary conditions.
+
+    Topography is assumed flat in this object.
 
     .. versionadded:: 0.3.0
 
@@ -854,14 +859,16 @@ class QGField(object):
 
 class QGFieldNH18(QGField):
     """
-    This child class of QGField implements the procedures and compute reference states with the set of
-    boundary conditions specified in NH18:
+    Procedures and reference state computation with the set of boundary conditions of NH18:
+
         Nakamura, N., & Huang, C. S. (2018). Atmospheric blocking as a traffic jam in the jet stream. Science, 361(6397), 42-47.
         https://www.science.org/doi/10.1126/science.aat0721
 
-    .. versionadded:: 0.7.0
+    See the documentation of :py:class:`QGField` for the public interface.
 
-    See documentation of QGField for the public interface. There is no additional arguments for this class.
+    There are no additional arguments for this class.
+
+    .. versionadded:: 0.7.0
     """
 
     def _interpolate_fields(self, Interpolated_fields_to_return):
@@ -974,15 +981,15 @@ class QGFieldNH18(QGField):
 
 class QGFieldNHN22(QGField):
     """
-    This child class of QGField implements the procedures and compute reference states with the set of
-    boundary conditions specified in NHN22:
+    Procedures and reference state computation with the set of boundary conditions of NHN22:
+
         Neal et al (2022). The 2021 Pacific Northwest heat wave and associated blocking: meteorology and the role of an
-        upstream cyclone as a diabatic source of wave activity
+        upstream cyclone as a diabatic source of wave activity.
         https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2021GL097699
 
-    .. versionadded:: 0.7.0
+    See the documentation of :py:class:`QGField` for the public interface.
 
-    See documentation of QGField for the public interface.
+    .. versionadded:: 0.7.0
 
     Parameters
     ----------
