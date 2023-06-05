@@ -34,6 +34,10 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
     lwa_result : numpy.ndarray
         2-d numpy array of local wave activity values;
                     dimension = [nlat_s x nlon]
+
+    Examples
+    --------
+    :doc:`Example Notebook <notebooks/Example_barotropic>`
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -222,6 +226,9 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_rad
         2-d numpy array of local wave activity values;
                     dimension = [nlat_s x nlon]
 
+    Examples
+    --------
+    :doc:`Example Notebook <notebooks/Example_qgpv>`
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]

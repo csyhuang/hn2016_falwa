@@ -865,10 +865,13 @@ class QGFieldNH18(QGField):
         https://www.science.org/doi/10.1126/science.aat0721
 
     See the documentation of :py:class:`QGField` for the public interface.
-
     There are no additional arguments for this class.
 
     .. versionadded:: 0.7.0
+
+    Examples
+    --------
+    :doc:`notebooks/demo_script_for_nh2018`
     """
 
     def _interpolate_fields(self, Interpolated_fields_to_return):
@@ -998,6 +1001,10 @@ class QGFieldNHN22(QGField):
         to be the absolute vorticity. This parameter specify the location of grid point (from equator)
         which will be used as boundary. The results in NHN22 is produced by using 1 deg latitude data and
         eq_boundary_index = 5, i.e. using a latitude domain from 5 deg to the pole. Default = 5 here.
+
+    Examples
+    --------
+    Notebook: :doc:`notebooks/nhn22_reference_states`
     """
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,

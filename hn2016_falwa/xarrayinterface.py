@@ -100,8 +100,11 @@ class QGDataset:
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
 
-    Example
+    Examples
     -------
+
+    :doc:`notebooks/demo_script_for_nh2018_with_xarray`
+
     >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
     >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
     >>> data_t = xarray.load_dataset("path/to/some/t-data.nc")
@@ -531,7 +534,7 @@ def integrate_budget(ds, var_names=None):
     -------
     xarray.Dataset
 
-    Example
+    Examples
     -------
     >>> qgds = QGDataset(data)
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
