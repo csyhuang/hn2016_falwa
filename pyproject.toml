@@ -1,0 +1,49 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "numpy"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hn2016_falwa"
+authors = [
+    { name="Clare S. Y. Huang", email="csyhuang@uchicago.edu" },
+]
+description = "python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)"
+readme = "readme.md"
+license = { file="LICENSE.txt" }
+dynamic = ["version"]
+requires-python = ">=3.7"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Fortran",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "xarray"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "netcdf4"
+]
+
+[project.urls]
+"Documentation" = "https://hn2016-falwa.readthedocs.io/"
+"Repository" = "https://github.com/csyhuang/hn2016_falwa"
+"Bug Tracker" = "https://github.com/csyhuang/hn2016_falwa/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hn2016_falwa*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "hn2016_falwa.__version__"}
+
