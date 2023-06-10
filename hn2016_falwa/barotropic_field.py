@@ -33,8 +33,10 @@ class BarotropicField(object):
             Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
 
 
-    Example
-    ---------
+    Examples
+    --------
+    :doc:`Example Notebook <notebooks/Example_qgpv>`
+
     >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
 
     """

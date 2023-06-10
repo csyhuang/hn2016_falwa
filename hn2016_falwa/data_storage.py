@@ -65,9 +65,11 @@ class SHemProperty(HemisphericProperty):
 
 class DerivedQuantityStorage:
     """
-    This class manages the storage of derived variables in QGField (for internal use only).
-    Variables are stored in fortran indexing order for easy communication with f2py modules.
-    To return variables in python indexing order, use the method `fortran_to_python` to swap the axes.
+    This class manages the storage of derived variables in :py:class:`oopinterface.QGField`.
+
+    Variables are stored in fortran indexing order for easy communication with
+    f2py modules. To return variables in python indexing order, use the method
+    :py:meth:`fortran_to_python` to swap the axes.
     """
     def __init__(
         self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -108,6 +110,7 @@ class DerivedQuantityStorage:
 class DomainAverageStorage(DerivedQuantityStorage):
     """
     This stores global/hemispheric averaged potential temperature and static stability.
+
     Fortran dimension: (kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -124,10 +127,12 @@ class DomainAverageStorage(DerivedQuantityStorage):
 class InterpolatedFieldsStorage(DerivedQuantityStorage):
     """
     This class stores 3D fields on interpolated grids, including:
-        - u
-        - v
-        - t (potential temperature)
-        - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
+
+    - u
+    - v
+    - theta (potential temperature)
+    - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
+
     Fortran dimension: (nlon, nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -143,9 +148,11 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
 class ReferenceStatesStorage(DerivedQuantityStorage):
     """
     This class stores height-latitude 2D fields on interpolated grids, including:
-        - uref
-        - qref (it actually stores qref/f, where f is Coriolis paramter)
-        - tref (potential temperature reference state)
+
+    - uref
+    - qref (it actually stores qref/f, where f is Coriolis paramter)
+    - tref (potential temperature reference state)
+
     Fortran dimension: (nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -181,6 +188,7 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 class LWAStorage(DerivedQuantityStorage):
     """
     This class stores 3D LWA field on interpolated grids.
+
     Fortran dimension: (nlon, nlat, kmax)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -197,13 +205,15 @@ class LWAStorage(DerivedQuantityStorage):
 class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores vertically integrated derived quantities in latitude-longitude 2D grid, including:
-        - adv_flux_f1
-        - adv_flux_f2
-        - adv_flux_f3
-        - zonal_adv_flux
-        - convergence_zonal_advective_flux
-        - divergence_eddy_momentum_flux
-        - meridional_heat_flux
+
+    - adv_flux_f1
+    - adv_flux_f2
+    - adv_flux_f3
+    - zonal_adv_flux
+    - convergence_zonal_advective_flux
+    - divergence_eddy_momentum_flux
+    - meridional_heat_flux
+
     Variables are stored in **python indexing order**: (nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -223,6 +233,7 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
 class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores intermediate computed quantities in latitude-longitude 2D grid.
+
     Variables are stored in fortran indexing order: (nlon, nlat)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],

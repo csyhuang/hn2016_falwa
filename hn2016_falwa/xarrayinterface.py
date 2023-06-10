@@ -35,9 +35,11 @@ _NAMES_CZAF = ["convergence_zonal_advective_flux"]
 _NAMES_DEMF = ["divergence_eddy_momentum_flux"]
 _NAMES_MHF  = ["meridional_heat_flux"]
 
+
 def _get_dataarray(data, names, user_names=None):
     name = _get_name(data, names, user_names=None)
     return data[name]
+
 
 def _get_name(ds, names, user_names=None):
     # If the first name from the list of defaults is in the user-provided
@@ -53,6 +55,7 @@ def _get_name(ds, names, user_names=None):
             return name
     raise KeyError(f"no matching variable for '{names[0]}' found")
 
+
 def _map_collect(f, xs, names, postprocess=None):
     out = { name: [] for name in names }
     for x in xs:
@@ -62,6 +65,7 @@ def _map_collect(f, xs, names, postprocess=None):
         for name in names:
             out[name] = postprocess(out[name])
     return out
+
 
 class _DataArrayCollector(property):
     # Getter properties for DataArray-based access to QGField properties.
@@ -134,12 +138,19 @@ class QGDataset:
     qgfield_kwargs : dict, optional
         Keyword arguments given to the QGField constructor.
 
-    Example
+    Examples
     -------
     >>> data = xarray.open_dataset("path/to/some/uvt-data.nc")
     >>> qgds = QGDataset(data)
     >>> qgds.interpolate_fields()
     <xarray.Dataset> ...
+
+    :doc:`notebooks/demo_script_for_nh2018_with_xarray`
+
+    >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
+    >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
+    >>> data_t = xarray.load_dataset("path/to/some/t-data.nc")
+    >>> qgds = QGDataset(data_u, data_v, data_t)
     """
 
     def __init__(self, da_u, da_v=None, da_t=None, *, var_names=None,
@@ -526,7 +537,7 @@ def integrate_budget(ds, var_names=None):
     -------
     xarray.Dataset
 
-    Example
+    Examples
     -------
     >>> qgds = QGDataset(data)
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()

@@ -88,6 +88,7 @@ Modules
    Utility Functions
    Wrapper Functions
    Data Storage
+   Example Notebooks
 
 
 Indices and tables
