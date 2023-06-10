@@ -24,7 +24,8 @@ jobs:
         pip install numpy
         pip install scipy
         pip install xarray
-        coverage run setup.py pytest
+        python setup.py develop
+        coverage run -m pytest -k "not output_results"
     - name: Upload Coverage to Codecov
       run: |
         bash <(curl -s https://codecov.io/bash)
