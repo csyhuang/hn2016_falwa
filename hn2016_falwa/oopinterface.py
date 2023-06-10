@@ -1067,7 +1067,7 @@ class QGFieldNHN22(QGField):
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     avort=self._interpolated_field_storage.interpolated_avort[:, ::-1, :],
                     theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    t0=self._domain_average_storage.tn0)
+                    t0=self._domain_average_storage.ts0)
 
     def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0):
         """
@@ -1246,3 +1246,25 @@ class QGFieldNHN22(QGField):
                     cp=self.cp,
                     prefac=self.prefactor)
             self._lwa_storage.lwa_shem = astar1 + astar2
+
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
+        """
+        Added for NHN 2022 GRL
+
+        .. versionadded:: 0.6.0
+        """
+        ans = compute_flux_dirinv(
+            pv=self._interpolated_field_storage.qgpv,
+            uu=self._interpolated_field_storage.interpolated_u,
+            vv=self._interpolated_field_storage.interpolated_v,
+            pt=self._interpolated_field_storage.interpolated_theta,
+            tn0=self._domain_average_storage.tn0,
+            qref=qref,
+            uref=uref,
+            tref=tref,
+            jb=self.eq_boundary_index,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp, prefac=self.prefactor)
+        # astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = ans
+        return ans
