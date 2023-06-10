@@ -1037,38 +1037,6 @@ class QGFieldNHN22(QGField):
 
         return interpolated_fields
 
-
-    def _interpolate_fields_nhn22(self):
-        """
-        This method is encapsulated in QGFieldNHN22. I keep it here just for the xarray interface to run.
-        TODO: remove this after making adjustment to the XarrayInterface
-        """
-        self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, \
-            self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, \
-            self._domain_average_storage.static_stability_n, \
-            self._domain_average_storage.static_stability_s, \
-            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = interpolate_fields_direct_inv(  # f2py module
-                self.kmax,
-                self.nlat // 2 + self.nlat % 2,
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
-                self.plev,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp)
-
-        return self._interpolated_field_storage.qgpv, self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, self._domain_average_storage.static_stability_n, self._domain_average_storage.static_stability_s, \
-            self._domain_average_storage.tn0, self._domain_average_storage.ts0
-
     def _compute_reference_states(self):
         """
         Added for NHN 2022 GRL
@@ -1099,27 +1067,7 @@ class QGFieldNHN22(QGField):
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     avort=self._interpolated_field_storage.interpolated_avort[:, ::-1, :],
                     theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    t0=self._domain_average_storage.tn0)
-
-    def _compute_qref_fawa_and_bc(self):
-        """
-        Note to Christopher: This is a wrapper to return the same output such that your
-        scripts using QGDataset are not affected. Please refactor this when you have time
-        such that this function can be removed.
-        This routine assumes calculation only over the Northern hemisphere.
-
-        # TODO remove this in the upcoming release.
-        """
-
-        qref_over_cor, uref, tref, fawa, ubar, tbar = self._compute_reference_states_nhn22_hemispheric_wrapper(
-            qgpv=self._interpolated_field_storage.qgpv,
-            u=self._interpolated_field_storage.interpolated_u,
-            avort=self._interpolated_field_storage.interpolated_avort,
-            theta=self._interpolated_field_storage.interpolated_theta,
-            t0=self._domain_average_storage.tn0)
-        qref = qref_over_cor * 2 * self.omega * np.sin(np.deg2rad(self.ylat[-self.equator_idx:, np.newaxis]))
-
-        return qref, uref, tref, fawa, ubar, tbar
+                    t0=self._domain_average_storage.ts0)
 
     def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0):
         """
@@ -1200,33 +1148,6 @@ class QGFieldNHN22(QGField):
 
         # return qref, uref, tref, fawa, ubar, tbar
         return qref_over_sin / (2. * self.omega), uref, tref, fawa, ubar, tbar
-
-    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
-        """
-        Added for NHN 2022 GRL. The main run script is scripts/nhn_grl2022/sample_run_script.py.
-
-        This shall be encapsulate in QGFieldNHN22._compute_intermediate_flux_terms_nhn22
-        properly soon.
-
-        As now the input are in python indexing order, the axes has to be swapped.
-
-        .. versionadded:: 0.6.0
-        """
-
-        ans = compute_flux_dirinv(
-            pv=self._interpolated_field_storage.qgpv,
-            uu=self._interpolated_field_storage.interpolated_u,
-            vv=self._interpolated_field_storage.interpolated_v,
-            pt=self._interpolated_field_storage.interpolated_theta,
-            tn0=self._domain_average_storage.tn0,
-            qref=qref,
-            uref=uref,
-            tref=tref,
-            jb=self.eq_boundary_index, a=self.planet_radius, om=self.omega,
-            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp,
-            prefac=self.prefactor)
-        # astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, astar1, astar2 = ans
-        return ans
 
     @property
     def static_stability(self) -> Tuple[np.array, np.array]:
@@ -1325,3 +1246,25 @@ class QGFieldNHN22(QGField):
                     cp=self.cp,
                     prefac=self.prefactor)
             self._lwa_storage.lwa_shem = astar1 + astar2
+
+    def _compute_lwa_flux_dirinv(self, qref, uref, tref):
+        """
+        Added for NHN 2022 GRL
+
+        .. versionadded:: 0.6.0
+        """
+        ans = compute_flux_dirinv(
+            pv=self._interpolated_field_storage.qgpv,
+            uu=self._interpolated_field_storage.interpolated_u,
+            vv=self._interpolated_field_storage.interpolated_v,
+            pt=self._interpolated_field_storage.interpolated_theta,
+            tn0=self._domain_average_storage.tn0,
+            qref=qref,
+            uref=uref,
+            tref=tref,
+            jb=self.eq_boundary_index,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp, prefac=self.prefactor)
+        # astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = ans
+        return ans
