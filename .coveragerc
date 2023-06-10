@@ -5,3 +5,4 @@ source=hn2016_falwa
 show_missing = True
 omit =
     hn2016_falwa/legacy/*
+    hn2016_falwa/f90_modules/*
