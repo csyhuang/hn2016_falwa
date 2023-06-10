@@ -6,6 +6,7 @@ try:
 except ImportError:
     pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
+from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
 from hn2016_falwa.xarrayinterface import _get_name, _map_collect
@@ -103,6 +104,40 @@ def test_qgdataset_5d():
         data["xlon"].size
     )
 
+
+@pytest.mark.parametrize("nh_only", [False, True])
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_basic_qgdataset_calls(QGField, nh_only):
+    data = _generate_test_dataset()
+    qgds = QGDataset(data, qgfield=QGField, qgfield_kwargs={
+        "northern_hemisphere_results_only": nh_only
+    })
+    # Step 1: basic output verification
+    out1 = qgds.interpolate_fields()
+    np.testing.assert_allclose(out1["qgpv"], qgds.qgpv)
+    np.testing.assert_allclose(out1["interpolated_u"], qgds.interpolated_u)
+    np.testing.assert_allclose(out1["interpolated_v"], qgds.interpolated_v)
+    np.testing.assert_allclose(out1["interpolated_theta"], qgds.interpolated_theta)
+    assert "static_stability" in out1 or ("static_stability_n" in out1 and "static_stability_s" in out1)
+    # Step 2: basic output verification
+    out2 = qgds.compute_reference_states()
+    np.testing.assert_allclose(out2["qref"], qgds.qref)
+    np.testing.assert_allclose(out2["uref"], qgds.uref)
+    np.testing.assert_allclose(out2["ptref"], qgds.ptref)
+    # Step 3: basic output verification
+    out3 = qgds.compute_lwa_and_barotropic_fluxes()
+    np.testing.assert_allclose(out3["adv_flux_f1"], qgds.adv_flux_f1)
+    np.testing.assert_allclose(out3["adv_flux_f2"], qgds.adv_flux_f2)
+    np.testing.assert_allclose(out3["adv_flux_f3"], qgds.adv_flux_f3)
+    np.testing.assert_allclose(out3["convergence_zonal_advective_flux"], qgds.convergence_zonal_advective_flux)
+    np.testing.assert_allclose(out3["divergence_eddy_momentum_flux"], qgds.divergence_eddy_momentum_flux)
+    np.testing.assert_allclose(out3["meridional_heat_flux"], qgds.meridional_heat_flux)
+    np.testing.assert_allclose(out3["lwa_baro"], qgds.lwa_baro)
+    np.testing.assert_allclose(out3["u_baro"], qgds.u_baro)
+    np.testing.assert_allclose(out3["lwa"], qgds.lwa)
+
+
+# Tests for internals
 
 def test_is_ascending():
     assert _is_ascending([4])
