@@ -23,8 +23,8 @@ jobs:
         sudo apt-get install gfortran
         pip install numpy
         pip install scipy
-        pip install xarray==0.20.1
-        coverage run -m pytest -k "not output_results"
+        pip install xarray
+        coverage run setup.py pytest
     - name: Upload Coverage to Codecov
       run: |
         bash <(curl -s https://codecov.io/bash)
