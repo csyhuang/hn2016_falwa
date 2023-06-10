@@ -4,7 +4,7 @@ File name: oopinterface.py
 Author: Clare Huang
 """
 from typing import Tuple, Optional, Union, NamedTuple
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import math
 import warnings
 import numpy as np
@@ -23,7 +23,7 @@ from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, comp
 from collections import namedtuple
 
 
-class QGField(object):
+class QGField(ABC):
 
     """
     Local wave activity and flux analysis in the quasi-geostrophic framework.
