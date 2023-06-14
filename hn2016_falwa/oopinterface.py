@@ -628,52 +628,6 @@ class QGFieldBase(ABC):
         Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
         """
 
-    def _compute_intermediate_flux_terms_nh18(self):
-        """
-        The flux term computation from NH18 is currently shared by both interface.
-        .. versionadded:: 0.7.0
-        """
-        # === Compute barotropic flux terms (NHem) ===
-        self._lwa_storage.lwa_nhem, \
-            self._barotropic_flux_terms_storage.lwa_baro_nhem, \
-            self._barotropic_flux_terms_storage.ua1baro_nhem, \
-            self._barotropic_flux_terms_storage.u_baro_nhem, \
-            self._barotropic_flux_terms_storage.ua2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep1baro_nhem, \
-            self._barotropic_flux_terms_storage.ep2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem = \
-            self._compute_lwa_and_barotropic_fluxes_wrapper(
-                self._interpolated_field_storage.qgpv,
-                self._interpolated_field_storage.interpolated_u,
-                self._interpolated_field_storage.interpolated_v,
-                self._interpolated_field_storage.interpolated_theta,
-                self._reference_states_storage.qref_nhem,
-                self._reference_states_storage.uref_nhem,
-                self._reference_states_storage.ptref_nhem)
-
-        # === Compute barotropic flux terms (SHem) ===
-        # TODO: check signs!
-        if not self.northern_hemisphere_results_only:
-            self._lwa_storage.lwa_shem, \
-                self._barotropic_flux_terms_storage.lwa_baro_shem, \
-                self._barotropic_flux_terms_storage.ua1baro_shem, \
-                self._barotropic_flux_terms_storage.u_baro_shem, \
-                self._barotropic_flux_terms_storage.ua2baro_shem, \
-                self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
-                ep4_shem = \
-                self._compute_lwa_and_barotropic_fluxes_wrapper(
-                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    self._reference_states_storage.qref_shem[::-1, :],
-                    self._reference_states_storage.uref_shem[::-1, :],
-                    self._reference_states_storage.ptref_shem[::-1, :])
-            self._barotropic_flux_terms_storage.ep4_shem = -ep4_shem
-
     @staticmethod
     def _check_nan(name, var):
         nan_num = np.count_nonzero(np.isnan(var))
@@ -1000,7 +954,50 @@ class QGFieldNH18(QGFieldBase):
         )
 
     def _compute_intermediate_flux_terms(self):
-        self._compute_intermediate_flux_terms_nh18()
+        """
+        The flux term computation from NH18 is currently shared by both interface.
+        .. versionadded:: 0.7.0
+        """
+        # === Compute barotropic flux terms (NHem) ===
+        self._lwa_storage.lwa_nhem, \
+            self._barotropic_flux_terms_storage.lwa_baro_nhem, \
+            self._barotropic_flux_terms_storage.ua1baro_nhem, \
+            self._barotropic_flux_terms_storage.u_baro_nhem, \
+            self._barotropic_flux_terms_storage.ua2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep1baro_nhem, \
+            self._barotropic_flux_terms_storage.ep2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep3baro_nhem, \
+            self._barotropic_flux_terms_storage.ep4_nhem = \
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
+                self._interpolated_field_storage.qgpv,
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
+                self._reference_states_storage.qref_nhem,
+                self._reference_states_storage.uref_nhem,
+                self._reference_states_storage.ptref_nhem)
+
+        # === Compute barotropic flux terms (SHem) ===
+        # TODO: check signs!
+        if not self.northern_hemisphere_results_only:
+            self._lwa_storage.lwa_shem, \
+                self._barotropic_flux_terms_storage.lwa_baro_shem, \
+                self._barotropic_flux_terms_storage.ua1baro_shem, \
+                self._barotropic_flux_terms_storage.u_baro_shem, \
+                self._barotropic_flux_terms_storage.ua2baro_shem, \
+                self._barotropic_flux_terms_storage.ep1baro_shem, \
+                self._barotropic_flux_terms_storage.ep2baro_shem, \
+                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                ep4_shem = \
+                self._compute_lwa_and_barotropic_fluxes_wrapper(
+                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
+                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    self._reference_states_storage.qref_shem[::-1, :],
+                    self._reference_states_storage.uref_shem[::-1, :],
+                    self._reference_states_storage.ptref_shem[::-1, :])
+            self._barotropic_flux_terms_storage.ep4_shem = -ep4_shem
 
     @property
     def static_stability(self) -> np.array:
@@ -1024,9 +1021,8 @@ class QGFieldNHN22(QGFieldBase):
         upstream cyclone as a diabatic source of wave activity.
         https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2021GL097699
 
-    The flux calculation via method "compute_lwa_and_barotropic_fluxes" is using the NH18 protocol, which may have
-    inconsistency in latitude indexing. The procedures used to produce results in NHN22 is only available as
-    private method for now, since the results produced from are numerically unstable.
+    Note that barotropic flux term computation from this class occasionally experience numerical instability, so
+    please use with caution.
 
     See the documentation of :py:class:`QGField` for the public interface.
 
@@ -1220,18 +1216,9 @@ class QGFieldNHN22(QGFieldBase):
         return self._jd
 
     def _compute_intermediate_flux_terms(self):
-        warnings.warn(
-            """
-            The flux calculation via method "compute_lwa_and_barotropic_fluxes" is using the NH18 protocol, which may 
-            have inconsistency in latitude indexing. The procedures used to produce results in NHN22 is only available 
-            as private method for now, since the results produced from are numerically unstable.
-            """)
-        self._compute_intermediate_flux_terms_nh18()
-
-    def _compute_intermediate_flux_terms_nhn22(self):
         """
-        Added for NHN 2022 GRL. This is the counterpart of QGFieldBase._compute_intermediate_flux_terms_nh18 but
-        the results are numerically unstable, so it has not been incorporate in use in QGFieldNHN22 yet.
+        Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
+        so please used with caution.
 
         .. versionadded:: 0.7.0
         """

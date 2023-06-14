@@ -13,4 +13,5 @@ from .matrix_after_inversion import matrix_after_inversion
 from .upward_sweep import upward_sweep
 from .compute_reference_states import compute_reference_states
 from .compute_flux_dirinv import compute_flux_dirinv
+from .compute_flux_dirinv_nshem import compute_flux_dirinv_nshem
 from .compute_lwa_and_barotropic_fluxes import compute_lwa_and_barotropic_fluxes
