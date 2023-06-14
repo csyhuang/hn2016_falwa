@@ -1009,7 +1009,8 @@ class QGFieldNH18(QGFieldBase):
 
 class QGField(QGFieldNH18):
     """
-    This class is equivalent to QGFieldNH18. See documentation in QGFieldNH18.
+    This class is equivalent to `QGFieldNH18` for backward compatibility.
+    `QGField` will be deprecated in upcoming release. See documentation in `QGFieldNH18`.
     """
 
 
