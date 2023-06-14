@@ -80,11 +80,8 @@ class QGField(ABC):
     planet_radius : float, optional
            Radius of the planet in meters.
            Default = 6.378e+6 (Earth's radius).
-
-    Examples
-    --------
-    >>> test_object = QGField(xlon,ylat,plev,u_field,v_field,t_field)
-
+    northern_hemisphere_results_only : bool, optional
+           whether only to return northern hemispheric results. Default = False
     """
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
@@ -367,12 +364,19 @@ class QGField(ABC):
             qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp,
             self.planet_radius, self.omega, self.dz, self.scale_height, self.dry_gas_constant, self.cp, self.prefactor)
 
-    def interpolate_fields(self) -> NamedTuple:
+    def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
 
         """
         Interpolate zonal wind, maridional wind, and potential temperature field onto the uniform pseudoheight grids,
         and compute QGPV on the same grids. This returns named tuple called "Interpolated_fields" that consists of
         5 elements as listed below.
+
+        Parameters
+        ----------
+        return_named_tuple : bool
+           Whether to returned a named tuple with variables in python indexing. Default: True. If False, nothing will be
+           returned from this method. The variables can be retrieved from the QGField object after all computation is
+           finished. This may save run time in some use case.
 
         Returns
         -------
@@ -404,19 +408,19 @@ class QGField(ABC):
         Interpolated_fields_to_return = namedtuple(
             'Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
 
-        interpolated_fields_tuple = self._interpolate_fields(Interpolated_fields_to_return)
+        interpolated_fields_tuple = self._interpolate_fields(Interpolated_fields_to_return, return_named_tuple)
 
         # TODO: warn that for NHN22, static stability returned would be a tuple of ndarray
-
-        return interpolated_fields_tuple
+        if return_named_tuple:
+            return interpolated_fields_tuple
 
     @abstractmethod
-    def _interpolate_fields(self, Interpolated_fields_to_return: NamedTuple):
+    def _interpolate_fields(self, Interpolated_fields_to_return: NamedTuple, return_named_tuple: bool) -> Optional[NamedTuple]:
         """
         The specific interpolation procedures w.r.t the particular procedures in the paper will be implemented here.
         """
 
-    def compute_reference_states(self, northern_hemisphere_results_only=None) -> NamedTuple:
+    def compute_reference_states(self, return_named_tuple: bool = True, northern_hemisphere_results_only=None) -> Optional[NamedTuple]:
 
         """
         Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
@@ -425,7 +429,12 @@ class QGField(ABC):
 
         The parameter `northern_hemisphere_results_only` is deprecated and has no effect.
 
-        This function returns named tuple called "Reference_states" that consists of 3 elements:
+        Parameters
+        ----------
+        return_named_tuple : bool
+           Whether to returned a named tuple with variables in python indexing. Default: True. If False, nothing will be
+           returned from this method. The variables can be retrieved from the QGField object after all computation is
+           finished. This may save run time in some use case.
 
         Returns
         -------
@@ -466,12 +475,13 @@ class QGField(ABC):
         self._compute_reference_states()
 
         # *** Return a named tuple ***
-        Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
-        reference_states = Reference_states(
-            self.qref,
-            self.uref,
-            self.ptref)
-        return reference_states
+        if return_named_tuple:
+            Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
+            reference_states = Reference_states(
+                self.qref,
+                self.uref,
+                self.ptref)
+            return reference_states
 
     @abstractmethod
     def _compute_reference_states(self):
@@ -480,7 +490,7 @@ class QGField(ABC):
         implemented here.
         """
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=None):
+    def compute_lwa_and_barotropic_fluxes(self, return_named_tuple: bool = True, northern_hemisphere_results_only=None):
 
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
@@ -491,6 +501,13 @@ class QGField(ABC):
         The parameter `northern_hemisphere_results_only` is deprecated and has no effect.
 
         Note that flux computation for NHN22 is still experimental.
+
+        Parameters
+        ----------
+        return_named_tuple : bool
+           Whether to returned a named tuple with variables in python indexing. Default: True. If False, nothing will be
+           returned from this method. The variables can be retrieved from the QGField object after all computation is
+           finished. This may save run time in some use case.
 
         Returns
         -------
@@ -588,21 +605,22 @@ class QGField(ABC):
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ep4)
 
         # *** Return the named tuple ***
-        LWA_and_fluxes = namedtuple(
-            'LWA_and_fluxes',
-            ['adv_flux_f1', 'adv_flux_f2', 'adv_flux_f3', 'convergence_zonal_advective_flux',
-             'divergence_eddy_momentum_flux', 'meridional_heat_flux', 'lwa_baro', 'u_baro', 'lwa'])
-        lwa_and_fluxes = LWA_and_fluxes(
-            self._output_barotropic_flux_terms_storage.adv_flux_f1,
-            self._output_barotropic_flux_terms_storage.adv_flux_f2,
-            self._output_barotropic_flux_terms_storage.adv_flux_f3,
-            self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux,
-            self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux,
-            self._output_barotropic_flux_terms_storage.meridional_heat_flux,
-            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.lwa_baro),
-            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
-            self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
-        return lwa_and_fluxes
+        if return_named_tuple:
+            LWA_and_fluxes = namedtuple(
+                'LWA_and_fluxes',
+                ['adv_flux_f1', 'adv_flux_f2', 'adv_flux_f3', 'convergence_zonal_advective_flux',
+                 'divergence_eddy_momentum_flux', 'meridional_heat_flux', 'lwa_baro', 'u_baro', 'lwa'])
+            lwa_and_fluxes = LWA_and_fluxes(
+                self._output_barotropic_flux_terms_storage.adv_flux_f1,
+                self._output_barotropic_flux_terms_storage.adv_flux_f2,
+                self._output_barotropic_flux_terms_storage.adv_flux_f3,
+                self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux,
+                self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux,
+                self._output_barotropic_flux_terms_storage.meridional_heat_flux,
+                self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.lwa_baro),
+                self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
+                self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
+            return lwa_and_fluxes
 
     def _compute_intermediate_flux_terms_nh18(self):
         """
@@ -874,7 +892,7 @@ class QGFieldNH18(QGField):
     :doc:`notebooks/demo_script_for_nh2018`
     """
 
-    def _interpolate_fields(self, Interpolated_fields_to_return):
+    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
         """
         .. versionadded:: 0.7.0
         """
@@ -896,13 +914,14 @@ class QGFieldNH18(QGField):
                 self.dry_gas_constant,
                 self.cp)
 
-        interpolated_fields = Interpolated_fields_to_return(
-            self.qgpv,
-            self.interpolated_u,
-            self.interpolated_v,
-            self.interpolated_theta,
-            self._domain_average_storage.static_stability)
-        return interpolated_fields
+        if return_named_tuple:
+            interpolated_fields = Interpolated_fields_to_return(
+                self.qgpv,
+                self.interpolated_u,
+                self.interpolated_v,
+                self.interpolated_theta,
+                self._domain_average_storage.static_stability)
+            return interpolated_fields
 
     def _compute_reference_states(self):
         """
@@ -1017,7 +1036,7 @@ class QGFieldNHN22(QGField):
         self._eq_boundary_index = eq_boundary_index
         self._jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
 
-    def _interpolate_fields(self, Interpolated_fields_to_return):
+    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
         """
         .. versionadded:: 0.7.0
         """
@@ -1042,14 +1061,14 @@ class QGFieldNHN22(QGField):
                 self.dry_gas_constant,
                 self.cp)
 
-        interpolated_fields = Interpolated_fields_to_return(
-            self.qgpv,
-            self.interpolated_u,
-            self.interpolated_v,
-            self.interpolated_theta,
-            (self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n))
-
-        return interpolated_fields
+        if return_named_tuple:
+            interpolated_fields = Interpolated_fields_to_return(
+                self.qgpv,
+                self.interpolated_u,
+                self.interpolated_v,
+                self.interpolated_theta,
+                (self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n))
+            return interpolated_fields
 
     def _compute_reference_states(self):
         """

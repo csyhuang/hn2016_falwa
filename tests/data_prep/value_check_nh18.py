@@ -2,7 +2,7 @@ import os
 import numpy as np
 from math import pi
 import xarray as xr
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNH18
 
 
 def extract_data_from_notebook_dir(dir: str, test_data_dir: str):
@@ -55,8 +55,9 @@ if __name__ == "__main__":
     vv = v_file.v.values
     tt = t_file.t.values
 
-    qgfield_object = QGField(xlon, ylat, plev, uu[::-1, ::-1, :], vv[::-1, ::-1, :], tt[::-1, ::-1, :],
-                             northern_hemisphere_results_only=False)
+    qgfield_object = QGFieldNH18(
+        xlon, ylat, plev, uu[::-1, ::-1, :], vv[::-1, ::-1, :], tt[::-1, ::-1, :],
+        northern_hemisphere_results_only=False)
     qgfield_object.interpolate_fields()
     qgfield_object.compute_reference_states()
     qgfield_object.compute_lwa_and_barotropic_fluxes()
