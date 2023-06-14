@@ -18,12 +18,12 @@ from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageSt
 
 # *** Import f2py modules ***
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
-    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_reference_states,\
+    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
 
 
-class QGField(ABC):
+class QGFieldBase(ABC):
 
     """
     Local wave activity and flux analysis in the quasi-geostrophic framework.
@@ -576,7 +576,7 @@ class QGField(ABC):
             raise ValueError("QGField.interpolate_fields has to be called before QGField.compute_reference_states.")
 
         # TODO: need a check for reference states computed. If not, throw an error.
-        self._compute_intermediate_flux_terms_nh18()
+        self._compute_intermediate_flux_terms()
 
         # *** Compute named fluxes in NH18 ***
         clat = self.clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.clat
@@ -621,6 +621,12 @@ class QGField(ABC):
                 self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
                 self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
             return lwa_and_fluxes
+
+    @abstractmethod
+    def _compute_intermediate_flux_terms(self):
+        """
+        Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
+        """
 
     def _compute_intermediate_flux_terms_nh18(self):
         """
@@ -875,7 +881,7 @@ class QGField(ABC):
             return self.nlat
 
 
-class QGFieldNH18(QGField):
+class QGFieldNH18(QGFieldBase):
     """
     Procedures and reference state computation with the set of boundary conditions of NH18:
 
@@ -993,6 +999,9 @@ class QGFieldNH18(QGField):
             self.rjac,
         )
 
+    def _compute_intermediate_flux_terms(self):
+        self._compute_intermediate_flux_terms_nh18()
+
     @property
     def static_stability(self) -> np.array:
         """
@@ -1001,13 +1010,23 @@ class QGFieldNH18(QGField):
         return self._domain_average_storage.static_stability
 
 
-class QGFieldNHN22(QGField):
+class QGField(QGFieldNH18):
+    """
+    This class is equivalent to QGFieldNH18. See documentation in QGFieldNH18.
+    """
+
+
+class QGFieldNHN22(QGFieldBase):
     """
     Procedures and reference state computation with the set of boundary conditions of NHN22:
 
         Neal et al (2022). The 2021 Pacific Northwest heat wave and associated blocking: meteorology and the role of an
         upstream cyclone as a diabatic source of wave activity.
         https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2021GL097699
+
+    The flux calculation via method "compute_lwa_and_barotropic_fluxes" is using the NH18 protocol, which may have
+    inconsistency in latitude indexing. The procedures used to produce results in NHN22 is only available as
+    private method for now, since the results produced from are numerically unstable.
 
     See the documentation of :py:class:`QGField` for the public interface.
 
@@ -1200,21 +1219,28 @@ class QGFieldNHN22(QGField):
     def jd(self):
         return self._jd
 
+    def _compute_intermediate_flux_terms(self):
+        warnings.warn(
+            """
+            The flux calculation via method "compute_lwa_and_barotropic_fluxes" is using the NH18 protocol, which may 
+            have inconsistency in latitude indexing. The procedures used to produce results in NHN22 is only available 
+            as private method for now, since the results produced from are numerically unstable.
+            """)
+        self._compute_intermediate_flux_terms_nh18()
+
     def _compute_intermediate_flux_terms_nhn22(self):
         """
-        Added for NHN 2022 GRL. This is the counterpart of QGField._compute_intermediate_flux_terms_nh18 but since
-        the treatment of fluxes in southern hemisphere requires further verification, it has not been in use yet.
+        Added for NHN 2022 GRL. This is the counterpart of QGFieldBase._compute_intermediate_flux_terms_nh18 but
+        the results are numerically unstable, so it has not been incorporate in use in QGFieldNHN22 yet.
 
         .. versionadded:: 0.7.0
-
-        TODO: make it available for southern hemisphere
         """
 
         # Turn qref back to correct unit
-        qref_nhem_right_unit = self._reference_states_storage.qref_correct_unit(
-            ylat=self.ylat, omega=self.omega, python_indexing=False)[-self.equator_idx:]
-        qref_shem_right_unit = self._reference_states_storage.qref_correct_unit(
-            ylat=self.ylat, omega=self.omega, python_indexing=False)[-self.equator_idx:]
+
+        ylat_input = self.ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.ylat
+        qref_correct_unit = self._reference_states_storage.qref_correct_unit(
+            ylat=ylat_input, omega=self.omega, python_indexing=False)
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -1228,16 +1254,17 @@ class QGFieldNHN22(QGField):
             self._barotropic_flux_terms_storage.ep4_nhem, \
             astar1, \
             astar2 = \
-            compute_flux_dirinv(
+            compute_flux_dirinv_nshem(
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
                 vv=self._interpolated_field_storage.interpolated_v,
                 pt=self._interpolated_field_storage.interpolated_theta,
                 tn0=self._domain_average_storage.tn0,
-                qref=qref_nhem_right_unit,
+                qref=qref_correct_unit[-self.equator_idx:],
                 uref=self._reference_states_storage.uref_nhem,
                 tref=self._reference_states_storage.ptref_nhem,
                 jb=self.eq_boundary_index,
+                is_nhem=True,
                 a=self.planet_radius,
                 om=self.omega,
                 dz=self.dz,
@@ -1245,32 +1272,33 @@ class QGFieldNHN22(QGField):
                 rr=self.dry_gas_constant,
                 cp=self.cp,
                 prefac=self.prefactor)
-        self._lwa_storage.lwa_nhem = astar1 + astar2
+        self._lwa_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
         # TODO: check signs!
         if not self.northern_hemisphere_results_only:
-            self._barotropic_flux_terms_storage.lwa_baro_shem, \
-                self._barotropic_flux_terms_storage.u_baro_shem, \
+            self._barotropic_flux_terms_storage.lwa_baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.u_baro[:, :self.equator_idx], \
                 urefbaro, \
-                self._barotropic_flux_terms_storage.ua1baro_shem, \
-                self._barotropic_flux_terms_storage.ua2baro_shem, \
-                self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
-                self._barotropic_flux_terms_storage.ep4_shem, \
+                self._barotropic_flux_terms_storage.ua1baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ua2baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep1baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep2baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
                 astar1, \
                 astar2 = \
-                compute_flux_dirinv(
-                    pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
-                    uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    vv=-self._interpolated_field_storage.interpolated_v[:, ::-1, :],
-                    pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                compute_flux_dirinv_nshem(
+                    pv=self._interpolated_field_storage.qgpv,
+                    uu=self._interpolated_field_storage.interpolated_u,
+                    vv=self._interpolated_field_storage.interpolated_v,
+                    pt=self._interpolated_field_storage.interpolated_theta,
                     tn0=self._domain_average_storage.ts0,
-                    qref=qref_shem_right_unit[::-1, :],
-                    uref=self._reference_states_storage.uref_shem[::-1, :],
-                    tref=self._reference_states_storage.ptref_shem[::-1, :],
+                    qref=qref_correct_unit[:self.equator_idx],
+                    uref=self._reference_states_storage.uref_shem,
+                    tref=self._reference_states_storage.ptref_shem,
                     jb=self.eq_boundary_index,
+                    is_nhem=False,
                     a=self.planet_radius,
                     om=self.omega,
                     dz=self.dz,
@@ -1278,7 +1306,7 @@ class QGFieldNHN22(QGField):
                     rr=self.dry_gas_constant,
                     cp=self.cp,
                     prefac=self.prefactor)
-            self._lwa_storage.lwa_shem = astar1 + astar2
+            self._lwa_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
 
     def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """

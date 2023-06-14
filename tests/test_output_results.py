@@ -142,7 +142,8 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
         eq_boundary_index=eq_boundary_index, northern_hemisphere_results_only=False)
     qgfield.interpolate_fields()
     qgfield.compute_reference_states()
-    qgfield.compute_lwa_and_barotropic_fluxes()
+    with pytest.warns():
+        qgfield.compute_lwa_and_barotropic_fluxes()
 
     mismatch = "{0} values don't match"
     rtol = 1.e-3

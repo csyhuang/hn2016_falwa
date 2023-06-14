@@ -58,6 +58,10 @@ ext9 = Extension(name='hn2016_falwa.compute_flux_dirinv',
                  sources=['hn2016_falwa/f90_modules/compute_flux_dirinv.f90'],
                  f2py_options=['--quiet'])
 
+ext10 = Extension(name='hn2016_falwa.compute_flux_dirinv_nshem',
+                 sources=['hn2016_falwa/f90_modules/compute_flux_dirinv_nshem.f90'],
+                 f2py_options=['--quiet'])
+
 setup(
     name='hn2016_falwa',
     version='0.7.0',
@@ -73,7 +77,7 @@ setup(
     setup_requires=['pytest-runner'],
     tests_require=['pytest'],
     test_suite="tests",
-    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
+    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9, ext10],
     zip_safe=False
 )
 
