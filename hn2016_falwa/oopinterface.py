@@ -18,7 +18,7 @@ from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageSt
 
 # *** Import f2py modules ***
 from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
-    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv, compute_flux_dirinv_nshem, compute_reference_states,\
+    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
 
@@ -1302,7 +1302,7 @@ class QGFieldNHN22(QGFieldBase):
 
         .. versionadded:: 0.6.0
         """
-        ans = compute_flux_dirinv(
+        ans = compute_flux_dirinv_nshem(
             pv=self._interpolated_field_storage.qgpv,
             uu=self._interpolated_field_storage.interpolated_u,
             vv=self._interpolated_field_storage.interpolated_v,
@@ -1312,6 +1312,7 @@ class QGFieldNHN22(QGFieldBase):
             uref=uref,
             tref=tref,
             jb=self.eq_boundary_index,
+            is_nhem=True,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz, h=self.scale_height, rr=self.dry_gas_constant, cp=self.cp, prefac=self.prefactor)
