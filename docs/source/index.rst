@@ -19,7 +19,7 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 Package Installation
 ------------------------------
 
-This current version works in both Python 2.7 and 3.x. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) to implement the installation.
+This current version works for Python 3.x. Note that since v0.3.0, some functions have backend in Fortran. To build the package from source, you need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) to implement the installation.
 
 Since the package is still being actively developed, please use the *develop* mode for installation.
 

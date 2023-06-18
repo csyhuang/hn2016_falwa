@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 def compare_two_fields(
     field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_fname='default.png',
-        diff_factor=0.01, figsize=(15, 4), cmap='rainbow'):
+        diff_factor=0.01, figsize=(15, 4), cmap='rainbow') -> None:
 
     """
     A handy utility to compare the difference between two 2D-fields and plot their difference. The output plot
@@ -23,19 +23,30 @@ def compare_two_fields(
 
     .. versionadded:: 0.6.7
 
-    Args:
-        field_a (np.ndarray): First 2D-field to compare
-        field_b (np.ndarray): Second 2D-field to compare
-        a_title (str): Title of the first field
-        b_title (str): Title of the second field
-        x_coord (np.array): array of x-coordinates
-        y_coord (np.array): array of y-coordinates
-        title (str): Main title of the whole plot
-        savefig_fname (str): Filename of figure saved. Default: "default.png". If you don't want a file to be
+    Parameters
+    ----------
+        field_a : np.ndarray
+            First 2D-field to compare
+        field_b : np.ndarray
+            Second 2D-field to compare
+        a_title :str
+            Title of the first field
+        b_title :str
+            Title of the second field
+        x_coord : np.array
+            array of x-coordinates
+        y_coord : np.array
+            array of y-coordinates
+        title : str
+            Main title of the whole plot
+        savefig_fname : str
+            Filename of figure saved. Default: "default.png". If you don't want a file to be
             saved, set this to None.
-        diff_factor (float): The color range of the plot will be the maximum value among field_a and field_b
+        diff_factor : float
+            The color range of the plot will be the maximum value among field_a and field_b
             multiplied by diff_factor. If you want to use the auto-colorscale, set diff_factor to None. Default: 0.01.
-        figsize (Tuple[int, int]): tuple specifying figure size
+        figsize : Tuple[int, int]
+            tuple specifying figure size
     """
 
     cmin = np.min([np.amin(field_a), np.amin(field_b)])
@@ -63,17 +74,24 @@ def compare_two_fields(
 
 
 def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longitude_name='longitude',
-                       tstep=10, zonal_axis=0):
+                       tstep=10, zonal_axis=0) -> None:
     """
     Plot a snapshot of longitude-latitude map from a netCDF file.
 
-    Args:
-        filepath (str): path to the netCDF file
-        variable_name (str): name of the variable to be plotted
-        latitude_name (str): name of latitudinal coordinates
-        longitude_name (str): name of latitudinal coordinates
-        tstep (int): index of timestep to be plotted
-        zonal_axis (int): axis of zonal dimension
+    Parameters
+    ----------
+        filepath : str
+            path to the netCDF file
+        variable_name : str
+            name of the variable to be plotted
+        latitude_name : str
+            name of latitudinal coordinates
+        longitude_name : str
+            name of latitudinal coordinates
+        tstep : int
+            index of timestep to be plotted
+        zonal_axis : int
+            axis of zonal dimension
     """
     file_handle = xr.open_dataset(filepath)
     field = file_handle.variables[variable_name].isel(time=tstep).values
