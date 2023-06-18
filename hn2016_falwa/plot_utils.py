@@ -5,7 +5,7 @@ Author: Clare Huang
 """
 import numpy as np
 import xarray as xr
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt  # Optional dependency
 
 
 def compare_two_fields(
