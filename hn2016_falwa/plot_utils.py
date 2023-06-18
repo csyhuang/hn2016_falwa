@@ -20,9 +20,11 @@ def compare_two_fields(
 
     2. value of field_b,
 
-    3. absolute difference between field_a and field_b. The color scale of this plot can be controlled by the
-    parameter *diff_factor*: the color range of the plot will be the maximum value among field_a and field_b multiplied
-    by diff_factor. If you want to use the auto-colorscale, set diff_factor to None.
+    3. absolute difference between field_a and field_b.
+
+    The color scale of this plot can be controlled by the parameter *diff_factor*: the color range of the plot will be
+    the maximum value among field_a and field_b multiplied by diff_factor. If you want to use the auto-colorscale,
+    set diff_factor to None.
 
     .. versionadded:: 0.7.0
 
