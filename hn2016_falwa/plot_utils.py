@@ -15,13 +15,16 @@ def compare_two_fields(
     """
     A handy utility to compare the difference between two 2D-fields and plot their difference. The output plot
     has 3 columns:
-    (1) value of field_a,
-    (2) value of field_b,
-    (3) absolute difference between field_a and field_b. The color scale of this plot can be controlled by the
+
+    1. value of field_a,
+
+    2. value of field_b,
+
+    3. absolute difference between field_a and field_b. The color scale of this plot can be controlled by the
     parameter *diff_factor*: the color range of the plot will be the maximum value among field_a and field_b multiplied
     by diff_factor. If you want to use the auto-colorscale, set diff_factor to None.
 
-    .. versionadded:: 0.6.7
+    .. versionadded:: 0.7.0
 
     Parameters
     ----------
