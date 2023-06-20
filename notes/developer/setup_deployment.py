@@ -1,4 +1,4 @@
-from setuptools import find_packages
+# from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
 LONG_DESCRIPTION =\
@@ -68,9 +68,10 @@ setup(
     author='Clare S. Y. Huang',
     author_email='csyhuang@uchicago.edu',
     license='MIT',
-    packages=find_packages(),
-    install_requires=['numpy', 'scipy', 'xarray'],
-    setup_requires=['pytest-runner'],
+    python_requires='>=3',
+    packages=['hn2016_falwa', 'tests', 'hn2016_falwa.legacy'],
+    setup_requires=['numpy==1.22.3'],
+    install_requires=['numpy==1.22.3', 'scipy==1.9', 'xarray==2023.2.0'],
     tests_require=['pytest'],
     test_suite="tests",
     ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
