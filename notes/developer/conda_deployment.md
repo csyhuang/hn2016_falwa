@@ -25,7 +25,7 @@ setup(
     ...
 )
 ```
-is changed to 
+is changed to (the version numbers below come from [MDTF base environment](https://github.com/NOAA-GFDL/MDTF-diagnostics/blob/main/src/conda/env_base.yml))
 ```python
 setup(
     ...
