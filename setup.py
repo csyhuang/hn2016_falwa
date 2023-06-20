@@ -70,7 +70,7 @@ setup(
     license='MIT',
     python_requires='>=3',
     packages=['hn2016_falwa', 'tests', 'hn2016_falwa.legacy'],
-    setup_requires=['numpy==1.22.3', 'pytest-runner'],
+    setup_requires=['numpy==1.22.3'],
     install_requires=['numpy==1.22.3', 'scipy==1.9', 'xarray==2023.2.0'],
     tests_require=['pytest'],
     test_suite="tests",
