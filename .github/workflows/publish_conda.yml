@@ -1,6 +1,9 @@
 name: publish_conda
 
-on: [push]
+on:
+  push:
+    branches:
+      - conda_deployment_mac
 
 jobs:
   publish:
