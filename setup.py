@@ -1,7 +1,7 @@
-from setuptools import find_packages
+# from setuptools import find_packages
 from numpy.distutils.core import setup, Extension
 
-LONG_DESCRIPTION =\
+LONG_DESCRIPTION = \
     """
     hn2016_falwa is a package that contains modules to compute the finite-amplitude
     local wave activity (FALWA) and reference state (U_ref) in the following papers:
@@ -12,11 +12,11 @@ LONG_DESCRIPTION =\
 
     The current version of the library handles calculation of FALWA in a spherical barotropic model and QGPV fields on 
     isobaric surfaces.
-    
+
     The functions in this library can compute the tracer equivalent-latitude relationship
     proposed in Nakamura (1996) (Also, see Allen and Nakamura (2003)) and the (zonal mean)
     finite-amplitude wave activity in spherical geometry as in Nakamura and Solomon (2010).
-    
+
     Links:    
     - Source code: http://github.com/csyhuang/hn2016_falwa/
     """
@@ -60,7 +60,7 @@ ext9 = Extension(name='hn2016_falwa.compute_flux_dirinv',
 
 setup(
     name='hn2016_falwa',
-    version='0.7.0',
+    version='0.7.1',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
@@ -68,9 +68,10 @@ setup(
     author='Clare S. Y. Huang',
     author_email='csyhuang@uchicago.edu',
     license='MIT',
-    packages=find_packages(),
-    install_requires=['numpy', 'scipy', 'xarray'],
-    setup_requires=['pytest-runner'],
+    python_requires='>=3',
+    packages=['hn2016_falwa', 'tests', 'hn2016_falwa.legacy'],
+    setup_requires=['numpy==1.22.3'],
+    install_requires=['numpy==1.22.3', 'scipy==1.9', 'xarray==2023.2.0'],
     tests_require=['pytest'],
     test_suite="tests",
     ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
