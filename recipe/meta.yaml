@@ -12,9 +12,11 @@ requirements:
   build:
     - python==3.10
     - numpy==1.22.3
+    - gfortran
   run:
     - python==3.10
     - numpy==1.22.3
+    - gfortran
 
 test:
   imports:
