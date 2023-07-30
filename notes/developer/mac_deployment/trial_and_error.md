@@ -47,3 +47,17 @@ Try this GitHub action: https://github.com/marketplace/actions/build-and-publish
 Modify `/.conda/conda_build_config.yaml` accordingly:
 
 > https://stackoverflow.com/questions/53196129/conda-forge-recipe-for-python-package-with-a-fortran-extension-not-working-on-ap
+
+
+## On Mac
+
+Try to create a conda env:
+```
+conda create --name test_compiled python=3.10 numpy=1.22.3
+conda activate test_compiled
+```
+Then try:
+```
+conda install --use-local hn2016_falwa
+```
+not successful
