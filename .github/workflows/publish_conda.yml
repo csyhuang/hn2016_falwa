@@ -12,6 +12,6 @@ jobs:
       with:
         subDir: 'recipe'
         AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
-        platforms: ['osx-64', 'osx-arm64']
+        platforms: 'osx-64'
         override: true
         dry_run: true
