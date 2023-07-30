@@ -40,3 +40,10 @@ conda install -c conda-forge gfortran
 
 ## Trial 1
 Try this GitHub action: https://github.com/marketplace/actions/build-and-publish-conda-packages-to-anaconda-org
+
+
+## Added this to conda_build_config.yaml
+
+Modify `/.conda/conda_build_config.yaml` accordingly:
+
+> https://stackoverflow.com/questions/53196129/conda-forge-recipe-for-python-package-with-a-fortran-extension-not-working-on-ap
