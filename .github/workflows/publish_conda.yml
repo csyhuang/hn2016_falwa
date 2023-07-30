@@ -10,11 +10,11 @@ jobs:
     runs-on: macos-latest
     steps:
     - name: checkout
-    - uses: actions/checkout@v1
+      uses: actions/checkout@v1
     - name: Setup GNU Fortran
-    - uses: modflowpy/install-gfortran-action@v1
+      uses: modflowpy/install-gfortran-action@v1
     - name: publish-to-conda
-    - uses: MichaelsJP/conda-package-publish-action@v1.0.0
+      uses: MichaelsJP/conda-package-publish-action@v1.0.0
       with:
         subDir: 'recipe'
         AnacondaToken: ${{ secrets.ANACONDA_TOKEN }}
