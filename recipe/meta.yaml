@@ -10,7 +10,7 @@ source:
 
 requirements:
   build:
-    - { compiler('fortran') }
+    - gfortran
     - python==3.10
     - numpy==1.22.3
   run:
