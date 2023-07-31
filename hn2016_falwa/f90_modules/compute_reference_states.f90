@@ -1,11 +1,11 @@
 SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits,&
-               a,om,dz,eps,h,r,cp,rjac,qref,u,tref,num_of_iter)
+               a,om,dz,eps,h,r,cp,rjac,qref,u,tref,fawa,ubar,num_of_iter)
 
 
     integer, intent(in) :: nlon,nlat,kmax,jd,npart,maxits
     real, intent(in) :: pv(nlon,nlat,kmax),uu(nlon,nlat,kmax),pt(nlon,nlat,kmax),stat(kmax)
     real, intent(in) :: a, om, dz,eps,h, r, cp, rjac
-    real, intent(out) :: qref(jd,kmax),u(jd,kmax),tref(jd,kmax)
+    real, intent(out) :: qref(jd,kmax),u(jd,kmax),tref(jd,kmax),fawa(jd,kmax),ubar(jd,kmax)
     integer, intent(out) :: num_of_iter
 
 
@@ -19,7 +19,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     real :: djk(jd,kmax),ejk(jd,kmax),fjk(jd,kmax)
 
     real :: cref(jd,kmax)
-    real :: qbar(jd,kmax),ubar(jd,kmax),tbar(jd,kmax)
+    real :: qbar(jd,kmax),tbar(jd,kmax)
     real :: pi, dp, zero, half, qtr, one, rkappa
 
     pi = acos(-1.)
@@ -111,10 +111,8 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             phi0 = dp*(float(j)-0.5)
             cbar(j,k) = cbar(j+1,k)+0.5*(qbar(j+1,k)+qbar(j,k)) &
             *a*dp*2.*pi*a*cos(phi0)
-        enddo 
-
+        enddo
     enddo
-
 
     ! ***** normalize QGPV by the Coriolis parameter ****
 
@@ -128,6 +126,8 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
         qref(1,k) = 2.*qref(2,k)-qref(3,k)
     enddo
 
+    ! ***** FAWA *****
+    fawa(:,:) = (cref(:,:)-cbar(:,:))/(2.*pi*a)
 
     ! **** SOR (elliptic solver a la Numerical Recipes) ****
 

@@ -737,6 +737,17 @@ class QGFieldBase(ABC):
             variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.ptref), interp_axis=1)
 
     @property
+    def fawa(self):
+        """
+        Finite-amplitude wave activity (zonal mean) computed during the computation of reference states
+        """
+        if self._reference_states_storage.fawa is None:
+            raise ValueError('fawa is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._reference_states_storage.fortran_to_python(
+                self._reference_states_storage.fawa), interp_axis=1)
+
+    @property
     def adv_flux_f1(self):
         """
         Two-dimensional array of the second-order eddy term in zonal advective flux, i.e. F1 in equation 3 of NH18
@@ -890,7 +901,10 @@ class QGFieldNH18(QGFieldBase):
         # *** Compute reference states in Northern Hemisphere using SOR ***
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
-            self._reference_states_storage.ptref_nhem, num_of_iter = \
+            self._reference_states_storage.ptref_nhem, \
+            self._reference_states_storage.fawa_nhem, \
+            self._reference_states_storage.ubar_nhem, \
+            num_of_iter = \
             self._compute_reference_state_wrapper(
                 qgpv=self._interpolated_field_storage.qgpv,
                 u=self._interpolated_field_storage.interpolated_u,
@@ -903,7 +917,10 @@ class QGFieldNH18(QGFieldBase):
         if not self.northern_hemisphere_results_only:
             self._reference_states_storage.qref_shem, \
                 self._reference_states_storage.uref_shem, \
-                self._reference_states_storage.ptref_shem, num_of_iter = \
+                self._reference_states_storage.ptref_shem, \
+                self._reference_states_storage.fawa_shem, \
+                self._reference_states_storage.ubar_shem, \
+                num_of_iter = \
                 self._compute_reference_state_wrapper(
                     qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
@@ -935,7 +952,8 @@ class QGFieldNH18(QGFieldBase):
 
             PTref(numpy.ndarray): Reference state of potential temperature of dimension [nlat, kmax]
         """
-        return compute_reference_states(
+
+        qref, uref, ptref, fawa, ubar, num_of_iter = compute_reference_states(
             qgpv,
             u,
             theta,
@@ -952,6 +970,7 @@ class QGFieldNH18(QGFieldBase):
             self.cp,
             self.rjac,
         )
+        return qref, uref, ptref, fawa, ubar, num_of_iter
 
     def _compute_intermediate_flux_terms(self):
         """
@@ -1097,7 +1116,9 @@ class QGFieldNHN22(QGFieldBase):
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
             self._reference_states_storage.ptref_nhem, \
-                fawa, ubar, tbar = \
+            self._reference_states_storage.fawa_nhem, \
+            self._reference_states_storage.ubar_nhem, \
+            tbar = \
             self._compute_reference_states_nhn22_hemispheric_wrapper(
                 qgpv=self._interpolated_field_storage.qgpv,
                 u=self._interpolated_field_storage.interpolated_u,
@@ -1110,7 +1131,9 @@ class QGFieldNHN22(QGFieldBase):
             self._reference_states_storage.qref_shem, \
                 self._reference_states_storage.uref_shem, \
                 self._reference_states_storage.ptref_shem, \
-                fawa, ubar, tbar = \
+                self._reference_states_storage.fawa_shem, \
+                self._reference_states_storage.ubar_shem, \
+                tbar = \
                 self._compute_reference_states_nhn22_hemispheric_wrapper(
                     qgpv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],

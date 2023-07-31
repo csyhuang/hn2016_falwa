@@ -162,6 +162,8 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
         self.qref = np.zeros(self.fdim)  # This is to substitute self._qref_ntemp
         self.uref = np.zeros(self.fdim)
         self.ptref = np.zeros(self.fdim)
+        self.fawa = np.zeros(self.fdim)
+        self.ubar = np.zeros(self.fdim)
         kmax, self.nlat = self.pydim
 
     qref_nhem = NHemProperty("qref", (0, 1))
@@ -183,6 +185,12 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
     ptref_nhem = NHemProperty("ptref", (0, 1))
     ptref_shem = SHemProperty("ptref", (0, 1))
+
+    fawa_nhem = NHemProperty("fawa", (0, 1))
+    fawa_shem = SHemProperty("fawa", (0, 1))
+
+    ubar_nhem = NHemProperty("ubar", (0, 1))
+    ubar_shem = SHemProperty("ubar", (0, 1))
 
 
 class LWAStorage(DerivedQuantityStorage):
