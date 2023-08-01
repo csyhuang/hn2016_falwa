@@ -2,8 +2,8 @@
 {% set version = "0.7.0" %}
 
 package:
-  name: "{{ name|lower }}"
-  version: "{{ version }}"
+  name: "hn2016_falwa"
+  version: "0.7.1"
 
 source:
   path: ../
