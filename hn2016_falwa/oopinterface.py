@@ -748,6 +748,17 @@ class QGFieldBase(ABC):
                 self._reference_states_storage.fawa), interp_axis=1)
 
     @property
+    def ubar(self):
+        """
+        Finite-amplitude wave activity (zonal mean) computed during the computation of reference states
+        """
+        if self._reference_states_storage.ubar is None:
+            raise ValueError('ubar is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._reference_states_storage.fortran_to_python(
+                self._reference_states_storage.ubar), interp_axis=1)
+
+    @property
     def adv_flux_f1(self):
         """
         Two-dimensional array of the second-order eddy term in zonal advective flux, i.e. F1 in equation 3 of NH18
