@@ -37,7 +37,7 @@ _NAMES_MHF  = ["meridional_heat_flux"]
 
 
 def _get_dataarray(data, names, user_names=None):
-    name = _get_name(data, names, user_names=None)
+    name = _get_name(data, names, user_names=user_names)
     return data[name]
 
 
