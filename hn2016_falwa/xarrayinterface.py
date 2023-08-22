@@ -295,11 +295,12 @@ class QGDataset:
         )
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
+        ylat_output = _field.ylat_no_equator if _field.need_latitude_interpolation else _field.ylat
         # Prepare coordinate-related data for the output: interpolated data is
         # transferred onto the QG height grid, fields are functions of height,
         # latitude, longitude
         out_dims = (*self._other_dims, "height", "ylat", "xlon")
-        out_shape = (*self._other_shape, _field.height.size, _field.ylat.size, _field.xlon.size)
+        out_shape = (*self._other_shape, _field.height.size, ylat_output.size, _field.xlon.size)
         # Special case: static stability (global for NH18, hemispheric for NHN22)
         stability = out_fields["static_stability"]
         data_vars_stability = {}
@@ -325,7 +326,7 @@ class QGDataset:
             coords={
                 **self._other_coords,
                 "height": _field.height,
-                "ylat": _field.ylat,
+                "ylat": ylat_output,
                 "xlon": _field.xlon,
             },
             attrs=self.attrs
