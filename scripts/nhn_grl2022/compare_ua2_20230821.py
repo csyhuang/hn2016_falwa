@@ -71,7 +71,7 @@ nd = nlat//2+1                      # (one plus) index of latitude grid point wi
 eq_boundary_index = 5               # This value is used in NHN22
 
 # --- Outputing files ---
-output_fname = '2022-01-after-ua2-fix.nc'
+output_fname = '2022-01-before-ua2-fix.nc'
 print(f"output_fname: {output_fname}")
 
 # --- Generate analysis results ---
