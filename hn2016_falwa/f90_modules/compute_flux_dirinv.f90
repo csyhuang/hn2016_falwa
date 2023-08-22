@@ -11,11 +11,10 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
           ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
 
-  REAL :: tg(kmax)
-  REAL :: ua1(imax,nd),ua2(imax,nd),ep1(imax,nd)
-  REAL :: ep2(imax,nd),ep3(imax,nd)
+  REAL :: tg(kmax),ua1(imax,nd),ua2(imax,nd),ep1(imax,nd),ep2(imax,nd),ep3(imax,nd)
   REAL :: qe(imax,nd),ue(imax,nd)
   REAL :: z(kmax)
+  REAL :: aa, ab
   INTEGER :: jstart, jend
 
   !a = 6378000.
@@ -75,6 +74,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
           phi0 = dp*float(j-1)-0.5*pi
         endif
         cor = 2.*om*sin(phi0)          !Coriolis parameter
+        ab = a*dp*cos(phi0)
         do jj = 1,nd
           if (is_nhem) then
             phi1 = dp*float(jj-1)
@@ -85,14 +85,14 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
             qe(i,jj) = pv(i,jj,k)-qref(j,k)     !qe; Q = qref
             ue(i,jj) = uu(i,jj,k)-uref(j-jb,k)  !ue;
           endif
-          aa = a*dp*cos(phi1)                      !length element
+          aa = a*dp*cos(phi1)   !cosine factor in the meridional integral
           if((qe(i,jj).le.0.).and.(jj.ge.j)) then  !LWA*cos and F2
             if (is_nhem) then
               astar2(i,j,k)=astar2(i,j,k)-qe(i,jj)*aa  !anticyclonic
             else
               astar1(i,j,k)=astar1(i,j,k)-qe(i,jj)*aa  !cyclonic
             endif
-            ua2(i,j) = ua2(i,j)-qe(i,jj)*ue(i,jj)*aa
+            ua2(i,j) = ua2(i,j)-qe(i,jj)*ue(i,jj)*ab
           endif
           if((qe(i,jj).gt.0.).and.(jj.lt.j)) then
             if (is_nhem) then
@@ -100,7 +100,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
             else
               astar2(i,j,k)=astar2(i,j,k)+qe(i,jj)*aa  !anticyclonic
             endif
-            ua2(i,j) = ua2(i,j)+qe(i,jj)*ue(i,jj)*aa
+            ua2(i,j) = ua2(i,j)+qe(i,jj)*ue(i,jj)*ab
           endif
         enddo
 
