@@ -1,6 +1,6 @@
 package:
   name: "hn2016_falwa"
-  version: "0.7.1"
+  version: "0.7.2"
 
 source:
   path: ../
