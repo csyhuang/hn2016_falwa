@@ -1,15 +1,13 @@
-{% set name = "hn2016_falwa" %}
-{% set version = "0.7.0" %}
-
 package:
-  name: "{{ name|lower }}"
-  version: "{{ version }}"
+  name: "hn2016_falwa"
+  version: "0.7.2"
 
 source:
   path: ../
 
 requirements:
   build:
+    - gfortran
     - python==3.10
     - numpy==1.22.3
   run:
