@@ -1,0 +1,18 @@
+name: env_nhn_grl2022
+
+dependencies:
+- intel::numpy=1.22.3
+- intel::scipy=1.7.3
+- pytest=7.1.2
+- matplotlib=3.6.2
+- cartopy=0.21.1
+- conda-forge::netCDF4=1.6.0
+
+# 1. To create the environment, run:
+# $ conda env create -f scripts/nhn_grl2022/env_nhn_grl2022.yml
+# 2. Activate the environment
+# $ conda activate env_nhn_grl2022
+# 3. Remove any existing compiled fortran modules by:
+# $ rm hn2016_falwa/*.so
+# 4. Install hn2016_falwa by running in command line:
+# $ python setup.py develop

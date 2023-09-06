@@ -1,19 +1,14 @@
-name: test_f2py_2021            # default is root
+name: falwa_env
+
 channels:
 - conda-forge
-- bioconda
-dependencies:         # everything under this, installed by conda
-- numpy
-- scipy
-- netcdf4
-- pytest
-- matplotlib=2.2.2
-- ecmwfapi
-- cartopy
-- earthengine-api
-# The packages below are optional, for downloading ERA5
-- pip
-- lxml
-- pandas
-- pip:
-    - cdsapi
+- defaults
+
+dependencies:
+- python=3.10
+- numpy=1.22.3
+- scipy=1.9
+- pytest=7.4.0
+- xarray=2023.2.0
+- netCDF4=1.5.8
+

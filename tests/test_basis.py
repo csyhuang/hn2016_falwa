@@ -25,11 +25,11 @@ area = 2. * pi * planet_radius ** 2 \
 
 
 def test_lwa():
-    '''
+    """
     To assert that the lwa function in basis.py produce the expect results -
     lwa shall be all zero when the there is no meridional component in the
     wind field.
-    '''
+    """
 
     test_vort = (np.ones((5, 5)) * np.array([1, 2, 3, 4, 5]))\
         .swapaxes(0, 1)
@@ -38,16 +38,16 @@ def test_lwa():
     assert np.array_equal(input_result, np.zeros((5, 5)))
 
 
-def test_eqvlat():
-    '''
+def test_eqvlat_vgrad():
+    """
     To test whether the eqvlat function in basis.py produce a reference state of vorticity non-decreasing with latitude, given a random vorticity field.
-    '''
-    q_part1, vgrad = basis.eqvlat(
+    """
+    q_part1, vgrad = basis.eqvlat_vgrad(
         ylat, vort, area, nlat,
         planet_radius=EARTH_RADIUS,
         vgrad=dummy_vgrad
     )
-    q_part2, _ = basis.eqvlat(
+    q_part2, _ = basis.eqvlat_vgrad(
         ylat, vort, area, nlat,
         planet_radius=EARTH_RADIUS,
         vgrad=None
