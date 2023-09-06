@@ -37,7 +37,7 @@ _NAMES_MHF  = ["meridional_heat_flux"]
 
 
 def _get_dataarray(data, names, user_names=None):
-    name = _get_name(data, names, user_names=None)
+    name = _get_name(data, names, user_names=user_names)
     return data[name]
 
 
@@ -295,6 +295,8 @@ class QGDataset:
         )
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
+        # TODO: fix the code below for even-number latitude grid point scenario
+        ylat_output = _field.ylat_no_equator if _field.need_latitude_interpolation else _field.ylat
         # Prepare coordinate-related data for the output: interpolated data is
         # transferred onto the QG height grid, fields are functions of height,
         # latitude, longitude
