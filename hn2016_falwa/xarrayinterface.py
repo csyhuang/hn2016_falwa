@@ -159,14 +159,20 @@ class QGDataset:
             var_names = dict()
         # Also support construction from single-arg and mixed variants
         if isinstance(da_u, xr.Dataset):
+            # Always take u
+            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
             # Fill up missing DataArrays for v and t from the Dataset but give
             # priority to existing v and t fields from the args
             if da_v is None:
                 da_v = _get_dataarray(da_u, _NAMES_V, var_names)
+            else:
+                da_v = _get_dataarray(da_v, _NAMES_V, var_names)
+
             if da_t is None:
                 da_t = _get_dataarray(da_u, _NAMES_T, var_names)
-            # Always take u
-            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
+            else:
+                da_t = _get_dataarray(da_t, _NAMES_T, var_names)
+
         # Assertions about da_u, da_v, da_t
         assert da_u is not None, "missing u field"
         assert da_v is not None, "missing v field"
