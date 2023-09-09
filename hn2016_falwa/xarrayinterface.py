@@ -157,21 +157,30 @@ class QGDataset:
                  qgfield=QGFieldNH18, qgfield_args=None, qgfield_kwargs=None):
         if var_names is None:
             var_names = dict()
+
+        # Check input data type first
+        assert isinstance(da_u, xr.Dataset) or isinstance(da_u, xr.DataArray)
+        assert da_v is None or isinstance(da_v, xr.DataArray) or isinstance(da_v, xr.Dataset)
+        assert da_t is None or isinstance(da_t, xr.DataArray) or isinstance(da_t, xr.Dataset)
+
         # Also support construction from single-arg and mixed variants
         if isinstance(da_u, xr.Dataset):
-            # Always take u
-            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
             # Fill up missing DataArrays for v and t from the Dataset but give
             # priority to existing v and t fields from the args
             if da_v is None:
                 da_v = _get_dataarray(da_u, _NAMES_V, var_names)
-            else:
+            elif isinstance(da_v, xr.Dataset):
                 da_v = _get_dataarray(da_v, _NAMES_V, var_names)
+            # else: assume da_v is dataarray so there is no issue
 
             if da_t is None:
                 da_t = _get_dataarray(da_u, _NAMES_T, var_names)
-            else:
+            elif isinstance(da_t, xr.Dataset):
                 da_t = _get_dataarray(da_t, _NAMES_T, var_names)
+            # else: assume da_t is dataarray so there is no issue
+
+            # Always take u
+            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
 
         # Assertions about da_u, da_v, da_t
         assert da_u is not None, "missing u field"
