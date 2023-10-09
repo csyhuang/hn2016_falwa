@@ -6,6 +6,7 @@ try:
 except ImportError:
     pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
+from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 from hn2016_falwa.xarrayinterface import QGDataset
 from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
 from hn2016_falwa.xarrayinterface import _get_name, _map_collect
@@ -19,7 +20,8 @@ def _generate_test_dataset(**additional_coords):
         coords={ "plev": plev, "ylat": ylat, "xlon": xlon, **additional_coords }
     )
 
-def test_qgdataset():
+
+def test_qgdataset_with_dataset():
     data = _generate_test_dataset()
     qgds = QGDataset(data)
     # Make sure all computation functions run
@@ -27,17 +29,13 @@ def test_qgdataset():
     qgds.compute_reference_states()
     qgds.compute_lwa_and_barotropic_fluxes()
 
-def test_qgdataset_flips_ylat():
+def test_qgdataset_with_dataarray():
     data = _generate_test_dataset()
-    interp1 = QGDataset(data).interpolate_fields()
-    interp2 = QGDataset(data.reindex({ "ylat": data["ylat"][::-1] })).interpolate_fields()
-    assert np.allclose(interp1["ylat"], interp2["ylat"])
+    QGDataset(data["u"], data["v"], data["t"])
 
-def test_qgdataset_flips_plev():
+def test_qgdataset_with_mixed_args():
     data = _generate_test_dataset()
-    interp1 = QGDataset(data).interpolate_fields()
-    interp2 = QGDataset(data.reindex({ "plev": data["plev"][::-1] })).interpolate_fields()
-    assert np.allclose(interp1["height"], interp2["height"])
+    QGDataset(data[["u", "t"]], da_v=data["v"])
 
 def test_qgdataset_rejects_incomplete():
     data = _generate_test_dataset()
@@ -45,12 +43,33 @@ def test_qgdataset_rejects_incomplete():
         with pytest.raises(KeyError):
             QGDataset(data.drop_vars([var]))
 
+def test_qgdataset_with_coordinate_mismatch():
+    data = _generate_test_dataset()
+    with pytest.raises(AssertionError):
+        QGDataset(data["u"], data["v"], data["t"].rename({ "ylat": "latitude" }))
+
 def test_qgdataset_rejects_transposed():
     data = _generate_test_dataset()
     with pytest.raises(AssertionError):
-        QGDataset(data.transpose("xlon", "plev", "ylat"))
+        transposed_data = data.transpose("xlon", "plev", "ylat")
+        QGDataset(transposed_data)
     with pytest.raises(AssertionError):
-        QGDataset(data.transpose("ylat", "xlon", "plev"))
+        transposed_data = data.transpose("ylat", "xlon", "plev")
+        QGDataset(transposed_data)
+
+
+def test_qgdataset_flips_ylat():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({"ylat": data["ylat"][::-1]})).interpolate_fields()
+    assert np.allclose(interp1["ylat"], interp2["ylat"])
+
+def test_qgdataset_flips_plev():
+    data = _generate_test_dataset()
+    interp1 = QGDataset(data).interpolate_fields()
+    interp2 = QGDataset(data.reindex({"plev": data["plev"][::-1]})).interpolate_fields()
+    assert np.allclose(interp1["height"], interp2["height"])
+
 
 def test_qgdataset_4d():
     data = xr.concat([_generate_test_dataset(time=t) for t in range(3)], dim="time")
@@ -85,6 +104,40 @@ def test_qgdataset_5d():
         data["xlon"].size
     )
 
+
+@pytest.mark.parametrize("nh_only", [False, True])
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_basic_qgdataset_calls(QGField, nh_only):
+    data = _generate_test_dataset()
+    qgds = QGDataset(data, qgfield=QGField, qgfield_kwargs={
+        "northern_hemisphere_results_only": nh_only
+    })
+    # Step 1: basic output verification
+    out1 = qgds.interpolate_fields()
+    np.testing.assert_allclose(out1["qgpv"], qgds.qgpv)
+    np.testing.assert_allclose(out1["interpolated_u"], qgds.interpolated_u)
+    np.testing.assert_allclose(out1["interpolated_v"], qgds.interpolated_v)
+    np.testing.assert_allclose(out1["interpolated_theta"], qgds.interpolated_theta)
+    assert "static_stability" in out1 or ("static_stability_n" in out1 and "static_stability_s" in out1)
+    # Step 2: basic output verification
+    out2 = qgds.compute_reference_states()
+    np.testing.assert_allclose(out2["qref"], qgds.qref)
+    np.testing.assert_allclose(out2["uref"], qgds.uref)
+    np.testing.assert_allclose(out2["ptref"], qgds.ptref)
+    # Step 3: basic output verification
+    out3 = qgds.compute_lwa_and_barotropic_fluxes()
+    np.testing.assert_allclose(out3["adv_flux_f1"], qgds.adv_flux_f1)
+    np.testing.assert_allclose(out3["adv_flux_f2"], qgds.adv_flux_f2)
+    np.testing.assert_allclose(out3["adv_flux_f3"], qgds.adv_flux_f3)
+    np.testing.assert_allclose(out3["convergence_zonal_advective_flux"], qgds.convergence_zonal_advective_flux)
+    np.testing.assert_allclose(out3["divergence_eddy_momentum_flux"], qgds.divergence_eddy_momentum_flux)
+    np.testing.assert_allclose(out3["meridional_heat_flux"], qgds.meridional_heat_flux)
+    np.testing.assert_allclose(out3["lwa_baro"], qgds.lwa_baro)
+    np.testing.assert_allclose(out3["u_baro"], qgds.u_baro)
+    np.testing.assert_allclose(out3["lwa"], qgds.lwa)
+
+
+# Tests for internals
 
 def test_is_ascending():
     assert _is_ascending([4])

@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from math import pi
 from netCDF4 import Dataset
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNHN22
 
 sys.path.insert(0, os.getcwd())
 from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \
@@ -72,7 +72,7 @@ tol = 1.e-5                         # tolerance that define convergence of solut
 rjac = 0.95                         # spectral radius of the Jacobi iteration in the SOR solver.
 nd = nlat//2+1                      # (one plus) index of latitude grid point with value 0 deg
                                     # This is to be input to fortran code. The index convention is different.
-
+eq_boundary_index = 5               # This value is used in NHN22
 
 # --- Outputing files ---
 output_fname = '2021-06-01_to_2021-06-30_output.nc'
@@ -110,21 +110,23 @@ if to_generate_data:
     ep4.units = 'm/s'
 
     # --- Compute LWA + fluxes and save the data into netCDF file ---
-    for tstep in range(ntimes):  # or ntimes
+    for tstep in range(ntimes):
 
         uu = u_file.variables['u'][tstep, ::-1, ::-1, :].data
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
 
-        qgfield_object = QGField(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=5)
+        qgfield = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=dz, eq_boundary_index=eq_boundary_index)
 
-        qgpv_temp, interpolated_u_temp, interpolated_v_temp, interpolated_avort_temp, interpolated_theta_temp, \
-        static_stability_n, static_stability_s, tn0, ts0 = qgfield_object._interpolate_field_dirinv()
+        qgfield.interpolate_fields()
 
-        qref, uref, tref, fawa, ubar, tbar = qgfield_object._compute_qref_fawa_and_bc()
+        qgfield.compute_reference_states()
 
-        astarbaro, ubaro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
-            qgfield_object._compute_lwa_flux_dirinv(qref, uref, tref)
+        astarbaro, u_baro, urefbaro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4baro, astar1, astar2 = \
+            qgfield._compute_lwa_flux_dirinv(
+                np.swapaxes(qgfield.qref[:, -nd:], 0, 1),
+                np.swapaxes(qgfield.uref[:, -(nd-eq_boundary_index):], 0, 1),
+                np.swapaxes(qgfield.ptref[:, -(nd-eq_boundary_index):], 0, 1))
 
         lwa_baro[tstep, :, :] = np.swapaxes(astarbaro, 0, 1)
         ua1[tstep, :, :] = np.swapaxes(ua1baro, 0, 1)

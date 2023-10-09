@@ -33,8 +33,10 @@ class BarotropicField(object):
             Absolute vorticity field with dimension [nlat x nlon]. If 'pv_field=None': pv_field is expected to be computed with u,v,t field.
 
 
-    Example
-    ---------
+    Examples
+    --------
+    :doc:`Example Notebook <notebooks/Example_qgpv>`
+
     >>> barofield1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)
 
     """
@@ -98,9 +100,9 @@ class BarotropicField(object):
         """
         Private function. Compute equivalent latitude if it has not been computed yet.
         """
-        self.eqvlat, _ = basis.eqvlat(
+        self.eqvlat, _ = basis.eqvlat_fawa(
             self.ylat, self.pv_field, self.area, self.n_partitions,
-            planet_radius=self.planet_radius
+            planet_radius=self.planet_radius, output_fawa=False
         )
         return self.eqvlat
 

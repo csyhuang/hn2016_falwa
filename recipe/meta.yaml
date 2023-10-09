@@ -1,0 +1,25 @@
+package:
+  name: "hn2016_falwa"
+  version: "0.7.2"
+
+source:
+  path: ../
+
+requirements:
+  build:
+    - gfortran
+    - python==3.10
+    - numpy==1.22.3
+  run:
+    - python==3.10
+    - numpy==1.22.3
+
+test:
+  imports:
+    - hn2016_falwa
+
+about:
+  home: https://github.com/csyhuang/hn2016_falwa
+  license: MIT
+  license_family: MIT
+  summary: Finite amplitude local wave activity package

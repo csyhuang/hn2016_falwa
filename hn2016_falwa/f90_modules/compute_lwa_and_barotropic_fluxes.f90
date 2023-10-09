@@ -18,7 +18,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
     real :: ua2(nlon,jd,kmax),ep1(nlon,jd,kmax)
     real :: ep2(nlon,jd,kmax),ep3(nlon,jd,kmax)
     real :: tg(kmax)
-    real :: aa, cor, dc, ep11, ep41, ep42, ep43, wt, zk, zz, dp, rkappa
+    real :: aa, ab, cor, dc, ep11, ep41, ep42, ep43, wt, zk, zz, dp, rkappa
     real :: cosphi(0:jd+1), sinphi(0:jd+1)
     real, parameter :: pi = acos(-1.)
 
@@ -53,6 +53,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                 astar(i,j,k) = 0.       ! LWA*cos(phi)
                 ua2(i,j,k) = 0.         ! F2
                 cor = 2.*om*sinphi(j)          !Coriolis parameter
+                ab = a*dp*cosphi(j)
                 ! South of the current latitude
                 do jj = 1,j-1
                     qe(i,jj) = pv(i,jj+jd-1,k)-qref(j,k)*cor   !qe; Q = qref*cor
@@ -60,7 +61,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).gt.0.) then                    !LWA*cos(phi) and F2
                         astar(i,j,k)=astar(i,j,k)+qe(i,jj)*aa
-                        ua2(i,j,k) = ua2(i,j,k)+qe(i,jj)*ue(i,jj)*aa
+                        ua2(i,j,k) = ua2(i,j,k)+qe(i,jj)*ue(i,jj)*ab
                     endif  
                 enddo
                 ! North of the current latitude
@@ -70,7 +71,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).le.0.) then                    !LWA*cos(phi) and F2
                         astar(i,j,k)=astar(i,j,k)-qe(i,jj)*aa
-                        ua2(i,j,k) = ua2(i,j,k)-qe(i,jj)*ue(i,jj)*aa
+                        ua2(i,j,k) = ua2(i,j,k)-qe(i,jj)*ue(i,jj)*ab
                     endif  
                 enddo
 

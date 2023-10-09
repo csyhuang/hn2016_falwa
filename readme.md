@@ -1,4 +1,4 @@
-## Python Library: hn2016_falwa (v0.6.6)
+## Python Library: hn2016_falwa (v0.7.2)
 
 [![Build Status](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 
@@ -14,31 +14,36 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 
 ## Package Installation
 
-This current version works in both Python 2.7 and 3.x. Note that since v0.3.0, some functions have backend in Fortran. You will need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
+This current version works for Python 3.x. Note that since v0.3.0, some functions have backend in Fortran. To build the package from source, you need a fortran compiler (e.g. [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 
-Since the package is still being actively developed, please use the *develop* mode for installation:
+Since the package is still being actively developed, please use the *develop* mode for installation.
+
+To install the package for the first time, clone the GitHub repo and install via `develop` mode:
 ```
 git clone https://github.com/csyhuang/hn2016_falwa.git
 cd hn2016_falwa
 python setup.py develop
 ```
 
-To incorporate updates, pull the new version of the code from GitHub by:
+To incorporate updates, pull the new version of the code from GitHub. Remove any existing f2py modules and recompile.
 ```
+# Assume you are already in the hn2016_falwa/ repo
 git pull
-```
-
-If there are updates in the Fortran modules in the new commits, please re-compile them:
-```
-python setup develop -u
-python setup develop
-pytest # to check if the package can be run properly
+rm hn2016_falwa/*.so
+python setup.py develop
+pytest tests/ # to check if the package can be run properly
 ```
 
 ## Quick start
 
-The jupyter notebook in `examples/nh2018_science` demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018). 
-To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
+There are some readily run python scripts (in `scripts/`) and jupyter notebooks (in `notebooks/`) which you can start with. 
+The netCDF files needed can be found in [Clare's Dropbox folder](https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/h?dl=0&rlkey=f8c1gm2xaxvx3c7cf06vop6or).
+
+Depending on what you want to do, the methods to be use may be different.
+
+1. If you solely want to compute equivalent latitude and local wave activity from a 2D field, you can refer to `notebooks/simple/Example_barotropic.ipynb`. This is useful for users who want to use LWA to quantify field anomalies.
+
+2. If you want to compute zonal wind reference states and wave activity fluxes in QG Formalism, look at `notebooks/nh2018_science/demo_script_for_nh2018.ipynb` for the usage of `QGField`. This notebook demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018). To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
 
 THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute:
 
@@ -46,36 +51,11 @@ THe conda environment for running the notebook can be found in `environment.yml`
 conda env create -f environment.yml
 ```
 
-## Interfaces
+## Sponsorship acknowledgement
 
-There are two interfaces for this library. One is the **developer interface**; the other is the **object-oriented 
-interface**, which is a wrapper for the basis functions in the developer interface and also compiled fortran modules. 
-Users are strongly adviced to use only the object-oriented interface.
+<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png"  width="100">
 
-### Object-oriented interface
-
-The **object-oriented interface** is an easy-to-use interface that takes in the climate field and coordinates as the attributes of an object, and implement the wrapper functions above as methods.
-
-There are two classes with object-oriented interface: *QGField* and *BarotropicField*. Please refer to the example/ directory:
-
-Sample Script | Description
-------------- | -------------
-nh2018_science/demo_script_for_nh2018.ipynb | Compute wave activity and flux terms in the QG framework presented in Nakamura and Huang (2018, Science). Sample data can be retrieved with `download_example.py` in the same directory.
-simple/oopinterface_example_BarotropicField.ipynb | It reads in a sample datasets "barotropic_vorticity.nc", which contains absolute vorticity field snapsnots from a barotropic decay model (Held and Phillips 1987). It computes both the equivalent-latitude relationship (e.g. Nakamura 1996) and local wave activity (Huang and Nakamura 2016) in a global domain.
-
-
-### Developer Interface
-
-The **developer interface**  contains separate functions that users can alter the inputs more flexibly. Functions 
-are added upon users' request on new functionalities to test hypotheses (also see the *test* branch). The 
-**developer interface** consists of 4 types of functions:  
-
-- The **basis functions** are smallest unit of functions that make up the **wrapper functions** and **object-oriented interface**.  
-
-- The **wrapper functions** implement particular analysis tasks for published work/manuscripts in preparation  
-
-- The **utility functions** compute general quantities, such as static stability or quasi-geostrophic potential vorticity that are not specific to the finite-amplitude wave theory.   
-
+This project is sponsored by JetBrains as one of the non-commercial open source projects. JetBrains provides core project contributors with a set of best-in-class developer tools free of charge. Please check out their [Open Source Support page](https://www.jetbrains.com/community/opensource/) for details.  
 
 ## Inquiries / Issues reporting
 

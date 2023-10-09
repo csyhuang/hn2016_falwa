@@ -8,7 +8,7 @@ import numpy as np
 import xarray as xr
 
 from hn2016_falwa import __version__
-from hn2016_falwa.oopinterface import QGField
+from hn2016_falwa.oopinterface import QGFieldNH18
 
 
 def _is_ascending(arr):
@@ -35,6 +35,12 @@ _NAMES_CZAF = ["convergence_zonal_advective_flux"]
 _NAMES_DEMF = ["divergence_eddy_momentum_flux"]
 _NAMES_MHF  = ["meridional_heat_flux"]
 
+
+def _get_dataarray(data, names, user_names=None):
+    name = _get_name(data, names, user_names=user_names)
+    return data[name]
+
+
 def _get_name(ds, names, user_names=None):
     # If the first name from the list of defaults is in the user-provided
     # dictionary, use the name provided there
@@ -49,6 +55,7 @@ def _get_name(ds, names, user_names=None):
             return name
     raise KeyError(f"no matching variable for '{names[0]}' found")
 
+
 def _map_collect(f, xs, names, postprocess=None):
     out = { name: [] for name in names }
     for x in xs:
@@ -60,15 +67,40 @@ def _map_collect(f, xs, names, postprocess=None):
     return out
 
 
+class _DataArrayCollector(property):
+    # Getter properties for DataArray-based access to QGField properties.
+    # Inherits from property, so instances are recognized as properties by
+    # sphinx for the docs.
+
+    def __init__(self, name, dimnames, dimvars=None):
+        self.name = name
+        self.dimnames = dimnames
+        self.dimvars = dimvars if dimvars is not None else dimnames
+        self.__doc__ = (
+            f"See :py:attr:`oopinterface.QGField.{name}`."
+            "\n\nReturns\n-------\nxarray.DataArray"
+        )
+
+    def __get__(self, obj, objtype=None):
+        fields = obj.fields
+        data = np.asarray([getattr(field, self.name) for field in fields])
+        coords = ({
+            coord: getattr(fields[0], var)
+            for coord, var in zip(self.dimnames, self.dimvars)
+        })
+        coords.update(obj._other_coords)
+        dims = (*obj._other_dims, *self.dimnames)
+        shape = (*obj._other_shape, *(getattr(fields[0], var).size for var in self.dimvars))
+        return xr.DataArray(data.reshape(shape), coords, dims, self.name, obj.attrs)
+
+
 class QGDataset:
     """A wrapper for multiple QGField objects with xarray in- and output.
 
-    Examines the given dataset and tries to extract `u`, `v`, and `T` fields
-    based on the names of coordinates in the dataset. For each combination of
-    timestep, ensemble member, etc., a :py:class:`oopinterface.QGField` object
-    is instanciated. The constructor will automatically flip latitude and
-    pressure dimensions of the input data if necessary to meet the requirements
-    of QGField.
+    For each combination of timestep, ensemble member, etc. in the input data,
+    a :py:class:`oopinterface.QGField` object is instanciated. The constructor
+    will automatically flip latitude and pressure dimensions of the input data
+    if necessary to meet the requirements of QGField.
 
     This wrapper class imitates the methods of QGField (but not the
     properties/attributes) and collects and re-organizes output data in xarray
@@ -79,79 +111,115 @@ class QGDataset:
 
     Parameters
     ----------
-    ds : xarray.Dataset
-        Input dataset. Must contain 3D fields of zonal wind, meridional wind
-        and temperature. The 3D fields's dimensions must end with height,
-        latitude and longitude. Other dimensions (e.g. time, ensemble member
-        id) are preserved in the output datasets.
-    qgfield_args : tuple, optional
-        Positional arguments given to the QGField constructor.
-    qgfield_kwargs : dict, optional
-        Keyword arguments given to the QGField constructor.
+    da_u : xarray.DataArray | xarray.Dataset
+        Input 3D fields of zonal wind. The 3D fields's dimensions must end with
+        height, latitude and longitude. Other dimensions (e.g. time, ensemble
+        member id) are preserved in the output datasets.
+        Alternatively, a dataset can be given, from which `u`, `v` and `T`
+        fields are then extracted. The `da_v` and `da_t` arguments can then be
+        omitted or used as an override.
+    da_v : xarray.DataArray, optional
+        Input 3D fields of meridional wind. The 3D fields's dimensions must end
+        with height, latitude and longitude. Other dimensions (e.g. time,
+        ensemble member id) are preserved in the output datasets.
+    da_t : xarray.DataArray, optional
+        Input 3D fields of temperature. The 3D fields's dimensions must end
+        with height, latitude and longitude. Other dimensions (e.g. time,
+        ensemble member id) are preserved in the output datasets.
     var_names : dict, optional
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
+    qgfield : QGField class, optional
+        The QGField class to use in the computation. Default:
+        :py:class:`oopinterface.QGFieldNH18`.
+    qgfield_args : tuple, optional
+        Positional arguments given to the QGField constructor.
+    qgfield_kwargs : dict, optional
+        Keyword arguments given to the QGField constructor.
 
-    Example
+    Examples
     -------
-    >>> data = xarray.load_dataset("path/to/some/uvt-data.nc")
+    >>> data = xarray.open_dataset("path/to/some/uvt-data.nc")
     >>> qgds = QGDataset(data)
+    >>> qgds.interpolate_fields()
+    <xarray.Dataset> ...
+
+    :doc:`notebooks/demo_script_for_nh2018_with_xarray`
+
+    >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
+    >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
+    >>> data_t = xarray.load_dataset("path/to/some/t-data.nc")
+    >>> qgds = QGDataset(data_u, data_v, data_t)
     """
 
-    def __init__(self, ds, qgfield_args=None, qgfield_kwargs=None, var_names=None):
+    def __init__(self, da_u, da_v=None, da_t=None, *, var_names=None,
+                 qgfield=QGFieldNH18, qgfield_args=None, qgfield_kwargs=None):
         if var_names is None:
             var_names = dict()
-        self._ds = ds
-        self._qgfield_args   = list() if qgfield_args   is None else qgfield_args
+        # Also support construction from single-arg and mixed variants
+        if isinstance(da_u, xr.Dataset):
+            # Fill up missing DataArrays for v and t from the Dataset but give
+            # priority to existing v and t fields from the args
+            if da_v is None:
+                da_v = _get_dataarray(da_u, _NAMES_V, var_names)
+            if da_t is None:
+                da_t = _get_dataarray(da_u, _NAMES_T, var_names)
+            # Always take u
+            da_u = _get_dataarray(da_u, _NAMES_U, var_names)
+        # Assertions about da_u, da_v, da_t
+        assert da_u is not None, "missing u field"
+        assert da_v is not None, "missing v field"
+        assert da_t is not None, "missing t field"
+        # Assign standard names to the input fields
+        da_u = da_u.rename("u")
+        da_v = da_v.rename("v")
+        da_t = da_t.rename("t")
+        # Merge into one dataset and keep the reference. xarray will avoid
+        # copying the data in the merge, so the operation should be relatively
+        # cheap and fast. The merge further verifies that the coordinates of
+        # the three DataArrays match.
+        self._ds = xr.merge([da_u, da_v, da_t], join="exact", compat="equals")
+        # QGField* configuration
+        self._qgfield = qgfield
+        self._qgfield_args = list() if qgfield_args is None else qgfield_args
         self._qgfield_kwargs = dict() if qgfield_kwargs is None else qgfield_kwargs
-        # Find names of spatial coordinates
-        self._plev_name = _get_name(ds, _NAMES_PLEV, var_names)
-        self._ylat_name = _get_name(ds, _NAMES_YLAT, var_names)
-        self._xlon_name = _get_name(ds, _NAMES_XLON, var_names)
-        # Find names of wind and temperature fields
-        self._u_name = _get_name(ds, _NAMES_U, var_names)
-        self._v_name = _get_name(ds, _NAMES_V, var_names)
-        self._t_name = _get_name(ds, _NAMES_T, var_names)
-        # Shorthands for data arrays
-        plev = ds[self._plev_name]
-        ylat = ds[self._ylat_name]
-        xlon = ds[self._xlon_name]
-        u = ds[self._u_name]
-        v = ds[self._v_name]
-        t = ds[self._t_name]
+        # Extract spatial coordinates
+        da_plev = _get_dataarray(self._ds.coords, _NAMES_PLEV, var_names)
+        da_ylat = _get_dataarray(self._ds.coords, _NAMES_YLAT, var_names)
+        da_xlon = _get_dataarray(self._ds.coords, _NAMES_XLON, var_names)
         # Check that field coordinates end in lev, lat, lon
-        assert u.dims[-3] == plev.name, f"dimension -3 of input fields must be '{plev.name}' (plev)"
-        assert u.dims[-2] == ylat.name, f"dimension -2 of input fields must be '{ylat.name}' (ylat)"
-        assert u.dims[-1] == xlon.name, f"dimension -1 of input fields must be '{xlon.name}' (xlon)"
-        assert u.dims == v.dims, f"dimensions of fields '{u.name}' (u) and '{v.name}' (v) don't match"
-        assert u.dims == t.dims, f"dimensions of fields '{u.name}' (u) and '{t.name}' (t) don't match"
+        assert da_u.dims[-3] == da_plev.name, f"dimension -3 of input fields must be '{da_plev.name}' (plev)"
+        assert da_u.dims[-2] == da_ylat.name, f"dimension -2 of input fields must be '{da_ylat.name}' (ylat)"
+        assert da_u.dims[-1] == da_xlon.name, f"dimension -1 of input fields must be '{da_xlon.name}' (xlon)"
+        assert da_u.dims == da_v.dims, f"dimensions of fields '{da_u.name}' (u) and '{da_v.name}' (v) don't match"
+        assert da_u.dims == da_t.dims, f"dimensions of fields '{da_u.name}' (u) and '{da_t.name}' (t) don't match"
         # The input data may contain multiple time steps, ensemble members etc.
         # Flatten all these other dimensions so a single loop covers all
         # fields. These dimensions are restored in the output datasets.
-        self._other_dims = u.dims[:-3]
-        self._other_shape = tuple(ds[dim].size for dim in self._other_dims)
+        self._other_dims = da_u.dims[:-3]
+        self._other_shape = tuple(da_u[dim].size for dim in self._other_dims)
         self._other_size = np.product(self._other_shape, dtype=np.int64)
-        _shape = (self._other_size, *u.shape[-3:])
+        _shape = (self._other_size, *da_u.shape[-3:])
         # Extract value arrays and collapse all additional dimensions
-        u = u.data.reshape(_shape)
-        v = v.data.reshape(_shape)
-        t = t.data.reshape(_shape)
+        u = da_u.data.reshape(_shape)
+        v = da_v.data.reshape(_shape)
+        t = da_t.data.reshape(_shape)
         # Automatically determine how fields need to be flipped so they match
         # the requirements of QGField and extract coordinate values
         flip = []
         # Ensure that ylat is ascending
-        ylat = ylat.values
+        ylat = da_ylat.values
         if not _is_ascending(ylat):
             ylat = np.flip(ylat)
             flip.append(-2)
         # Ensure that plev is descending
-        plev = plev.values
+        plev = da_plev.values
         if not _is_descending(plev):
             plev = np.flip(plev)
             flip.append(-3)
         # Ordering of xlon doesn't matter here
-        xlon = xlon.values
+        xlon = da_xlon.values
         # Create a QGField object for each combination of timestep, ensemble
         # member, etc.
         self._fields = []
@@ -161,8 +229,8 @@ class QGDataset:
                 u_field = np.flip(u_field, axis=flip)
                 v_field = np.flip(v_field, axis=flip)
                 t_field = np.flip(t_field, axis=flip)
-            field = QGField(xlon, ylat, plev, u_field, v_field, t_field,
-                            *self._qgfield_args, **self._qgfield_kwargs)
+            field = self._qgfield(xlon, ylat, plev, u_field, v_field, t_field,
+                                  *self._qgfield_args, **self._qgfield_kwargs)
             self._fields.append(field)
         # Make sure there is at least one field in the dataset
         assert self._fields, "empty input"
@@ -178,7 +246,7 @@ class QGDataset:
 
     @property
     def _other_coords(self):
-        return { dim: self._ds[dim] for dim in self._other_dims}
+        return {dim: self._ds[dim] for dim in self._other_dims}
 
     @property
     def attrs(self):
@@ -197,6 +265,7 @@ class QGDataset:
             "omega": field.omega,
             "planet_radius": field.planet_radius,
             "prefactor": field.prefactor,
+            "protocol": self._qgfield.__name__,
             "package": f"hn2016_falwa {__version__}"
         }
 
@@ -204,6 +273,14 @@ class QGDataset:
         """Collect the output of `interpolate_fields` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.interpolate_fields`.
+
+        .. note::
+            A QGField class may define static stability globally or
+            hemispherically on each level. The output dataset contains a single
+            variable for static stability in case of a global definition and
+            two variables for static stability for a hemispheric definition
+            (suffix ``_n`` for the northern hemisphere and ``_s`` for the
+            southern hemisphere).
 
         Returns
         -------
@@ -213,16 +290,30 @@ class QGDataset:
         out_fields = _map_collect(
             lambda field: field.interpolate_fields(),
             self._fields,
-            ["qgpv", "interpolated_u", "interpolated_v", "theta", "static_stability"],
+            ["qgpv", "interpolated_u", "interpolated_v", "interpolated_theta", "static_stability"],
             postprocess=np.asarray
         )
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
+        # TODO: fix the code below for even-number latitude grid point scenario
+        ylat_output = _field.ylat_no_equator if _field.need_latitude_interpolation else _field.ylat
         # Prepare coordinate-related data for the output: interpolated data is
         # transferred onto the QG height grid, fields are functions of height,
         # latitude, longitude
         out_dims = (*self._other_dims, "height", "ylat", "xlon")
         out_shape = (*self._other_shape, _field.height.size, _field.ylat.size, _field.xlon.size)
+        # Special case: static stability (global for NH18, hemispheric for NHN22)
+        stability = out_fields["static_stability"]
+        data_vars_stability = {}
+        if stability.ndim == 2:
+            # One vertical profile of static stability per field: global
+            data_vars_stability["static_stability"] = (out_dims[:-2], stability.reshape(out_shape[:-2]))
+        elif stability.ndim == 3 and stability.shape[-2] == 2:
+            # Two vertical profiles of static stability per field: hemispheric
+            data_vars_stability["static_stability_n"] = (out_dims[:-2], stability[:,0,:].reshape(out_shape[:-2]))
+            data_vars_stability["static_stability_s"] = (out_dims[:-2], stability[:,1,:].reshape(out_shape[:-2]))
+        else:
+            raise ValueError(f"cannot process shape of returned static stability field: {stability.shape}")
         # Combine all outputs into a dataset, reshape to restore the original
         # other dimensions that were flattened earlier
         return xr.Dataset(
@@ -230,8 +321,8 @@ class QGDataset:
                 "qgpv": (out_dims, out_fields["qgpv"].reshape(out_shape)),
                 "interpolated_u": (out_dims, out_fields["interpolated_u"].reshape(out_shape)),
                 "interpolated_v": (out_dims, out_fields["interpolated_v"].reshape(out_shape)),
-                "theta": (out_dims, out_fields["theta"].reshape(out_shape)),
-                "static_stability": (out_dims[:-2], out_fields["static_stability"].reshape(out_shape[:-2]))
+                "interpolated_theta": (out_dims, out_fields["interpolated_theta"].reshape(out_shape)),
+                **data_vars_stability
             },
             coords={
                 **self._other_coords,
@@ -242,7 +333,25 @@ class QGDataset:
             attrs=self.attrs
         )
 
-    def compute_reference_states(self, northern_hemisphere_results_only=False):
+    # Accessors for individual field properties computed in interpolate_fields
+    qgpv = _DataArrayCollector(
+        "qgpv",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_u = _DataArrayCollector(
+        "interpolated_u",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_v = _DataArrayCollector(
+        "interpolated_v",
+        ["height", "ylat", "xlon"]
+    )
+    interpolated_theta = _DataArrayCollector(
+        "interpolated_theta",
+        ["height", "ylat", "xlon"]
+    )
+
+    def compute_reference_states(self):
         """Collect the output of `compute_reference_states` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.compute_reference_states`.
@@ -253,7 +362,7 @@ class QGDataset:
         """
         # Call compute_reference_states on all QGField objects
         out_fields = _map_collect(
-            lambda field: field.compute_reference_states(northern_hemisphere_results_only),
+            lambda field: field.compute_reference_states(),
             self._fields,
             ["qref", "uref", "ptref"],
             postprocess=np.asarray
@@ -261,10 +370,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if northern_hemisphere_results_only:
-            _ylat = _field.ylat[(_field.equator_idx - 1):]            
-        else:
-            _ylat = _field.ylat
+        _ylat = _field.ylat_ref_states
         # 2D data, function of height and latitude
         out_dims = (*self._other_dims, "height", "ylat")
         out_shape = (*self._other_shape, _field.height.size, _ylat.size)
@@ -284,7 +390,24 @@ class QGDataset:
             attrs=self.attrs
         )
 
-    def compute_lwa_and_barotropic_fluxes(self, northern_hemisphere_results_only=False):
+    # Accessors for individual field properties computed in compute_reference_states
+    qref = _DataArrayCollector(
+        "qref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
+    uref = _DataArrayCollector(
+        "uref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
+    ptref = _DataArrayCollector(
+        "ptref",
+        ["height", "ylat"],
+        ["height", "ylat_ref_states"]
+    )
+
+    def compute_lwa_and_barotropic_fluxes(self):
         """Collect the output of `compute_lwa_and_barotropic_fluxes` in a dataset.
 
         See :py:meth:`.oopinterface.QGField.compute_lwa_and_barotropic_fluxes`.
@@ -295,7 +418,7 @@ class QGDataset:
         """
         # Call compute_lwa_and_barotropic_fluxes on all QGField objects
         out_fields = _map_collect(
-            lambda field: field.compute_lwa_and_barotropic_fluxes(northern_hemisphere_results_only),
+            lambda field: field.compute_lwa_and_barotropic_fluxes(),
             self._fields,
             ["adv_flux_f1", "adv_flux_f2", "adv_flux_f3", "convergence_zonal_advective_flux",
                 "divergence_eddy_momentum_flux", "meridional_heat_flux", "lwa_baro", "u_baro",
@@ -305,10 +428,7 @@ class QGDataset:
         # Take the first field to extract coordinates and metadata
         _field = self.fields[0]
         # Prepare coordinate-related data for the output
-        if northern_hemisphere_results_only:
-            _ylat = _field.ylat[(_field.equator_idx - 1):]            
-        else:
-            _ylat = _field.ylat
+        _ylat = _field.ylat_ref_states
         # 2D data, function of latitude and longitude
         out_dims_2d = (*self._other_dims, "ylat", "xlon")
         out_shape_2d = (*self._other_shape, _ylat.size, _field.xlon.size)
@@ -338,155 +458,53 @@ class QGDataset:
             attrs=self.attrs
         )
 
-    # The new routines so far only seem to work for 1°-resolution data and the northern hemisphere
+    # Accessors for individual field properties computed in compute_lwa_and_barotropic_fluxes
+    adv_flux_f1 = _DataArrayCollector(
+        "adv_flux_f1",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    adv_flux_f2 = _DataArrayCollector(
+        "adv_flux_f2",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    adv_flux_f3 = _DataArrayCollector(
+        "adv_flux_f3",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    convergence_zonal_advective_flux = _DataArrayCollector(
+        "convergence_zonal_advective_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    divergence_eddy_momentum_flux = _DataArrayCollector(
+        "divergence_eddy_momentum_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    meridional_heat_flux = _DataArrayCollector(
+        "meridional_heat_flux",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    lwa_baro = _DataArrayCollector(
+        "lwa_baro",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    u_baro = _DataArrayCollector(
+        "u_baro",
+        ["ylat", "xlon"],
+        ["ylat_ref_states", "xlon"]
+    )
+    lwa = _DataArrayCollector(
+        "lwa",
+        ["height", "ylat", "xlon"],
+        ["height", "ylat_ref_states", "xlon"]
+    )
 
-    def _interpolate_field_dirinv(self):
-        # Call interpolate_field_dirinv on all QGField objects
-        out_fields = _map_collect(
-            lambda field: field._interpolate_field_dirinv(),
-            self._fields,
-            ["qgpv", "interpolated_u", "interpolated_v", "interpolated_avort",
-                "interpolated_theta", "static_stability_n", "static_stability_s",
-                "tn0", "ts0"],
-            postprocess=np.asarray
-        )
-        # Take the first field to extract coordinates and metadata
-        _field = self.fields[0]
-        # Prepare coordinate-related data for the output: interpolated data is
-        # transferred onto the QG height grid.
-        # 1D data, function of height only
-        out_dims_h = (*self._other_dims, "height")
-        out_shape_h = (*self._other_shape, _field.height.size)
-        # 3D data, function of longitude, latitude and height (plev and xlon
-        # dimensions are not swapped back in the dirinv routines currently)
-        out_dims_xyh = (*self._other_dims, "xlon", "ylat", "height")
-        out_shape_xyh = (*self._other_shape, _field.xlon.size, _field.ylat.size, _field.height.size)
-        # Combine all outputs into a dataset, reshape to restore the original
-        # other dimensions that were flattened earlier
-        return xr.Dataset(
-            data_vars={
-                "qgpv": (out_dims_xyh, out_fields["qgpv"].reshape(out_shape_xyh)),
-                "interpolated_u": (out_dims_xyh, out_fields["interpolated_u"].reshape(out_shape_xyh)),
-                "interpolated_v": (out_dims_xyh, out_fields["interpolated_v"].reshape(out_shape_xyh)),
-                "interpolated_avort": (out_dims_xyh, out_fields["interpolated_avort"].reshape(out_shape_xyh)),
-                "interpolated_theta": (out_dims_xyh, out_fields["interpolated_theta"].reshape(out_shape_xyh)),
-                "static_stability_n": (out_dims_h, out_fields["static_stability_n"].reshape(out_shape_h)),
-                "static_stability_s": (out_dims_h, out_fields["static_stability_s"].reshape(out_shape_h)),
-                "tn0": (out_dims_h, out_fields["tn0"].reshape(out_shape_h)),
-                "ts0": (out_dims_h, out_fields["ts0"].reshape(out_shape_h)),
-            },
-            coords={
-                **self._other_coords,
-                "height": _field.height,
-                "ylat": _field.ylat,
-                "xlon": _field.xlon,
-            },
-            attrs=self.attrs
-        )
-
-    def _compute_qref_fawa_and_bc(self):
-        # Call _compute_qref_fawa_and_bc on all QGField objects
-        out_fields = _map_collect(
-            lambda field: field._compute_qref_fawa_and_bc(),
-            self._fields,
-            ["qref", "u", "tref", "fawa", "ubar", "tbar"],
-            postprocess=np.asarray
-        )
-        # The output of _compute_qref_fawa_and_bc is currently not stored in
-        # the QGField object and must be given to _compute_lwa_flux_dirinv
-        # explicitly. Until a better solution is found in the QGField
-        # implementation, apply a monkey patch here: add the outputs of
-        # _compute_qref_fawa_and_bc as underscore-attributes to the QGField
-        # objects so they can be retrieved later.
-        for name, arrs in out_fields.items():
-            for field, arr in zip(self._fields, arrs):
-                setattr(field, "_temp_dirinv_" + name, arr)
-        # Take the first field to extract coordinates and metadata
-        _field = self.fields[0]
-        _nlat = _field.nlat // 2 + _field.nlat % 2
-        # Prepare coordinate-related data for the output: all outputs are
-        # functions of latitude and height
-        out_dims_yh = (*self._other_dims, "ylat", "height")
-        out_shape_yh = (*self._other_shape, _nlat, _field.height.size)
-        # Output fields u (=uref) and tref currently exclude the equator
-        # boundary points and are padded here for more convenient, consistent
-        # output array shapes.
-        _pad = functools.partial(
-            np.pad,
-            pad_width=[(0, 0), (_field.eq_boundary_index, 0), (0, 0)],
-            mode="constant",
-            constant_values=np.nan
-        )
-        # Combine all outputs into a dataset, reshape to restore the original
-        # other dimensions that were flattened earlier. u is returned under the
-        # name uref to avoid confusion about the content.
-        return xr.Dataset(
-            data_vars={
-                "qref": (out_dims_yh, out_fields["qref"].reshape(out_shape_yh)),
-                "uref": (out_dims_yh, _pad(out_fields["u"]).reshape(out_shape_yh)),
-                "tref": (out_dims_yh, _pad(out_fields["tref"]).reshape(out_shape_yh)),
-                "fawa": (out_dims_yh, out_fields["fawa"].reshape(out_shape_yh)),
-                "ubar": (out_dims_yh, out_fields["ubar"].reshape(out_shape_yh)),
-                "tbar": (out_dims_yh, out_fields["tbar"].reshape(out_shape_yh)),
-            },
-            coords={
-                **self._other_coords,
-                "height": _field.height,
-                "ylat": _field.ylat[-_nlat:],
-            },
-            attrs=self.attrs
-        )
-        return out_fields
-
-    def _compute_lwa_flux_dirinv(self):
-        # Call _compute_lwa_flux_dirinv on all QGField objects, use the monkey
-        # patched attributes added in _compute_qref_fawa_and_bc
-        out_fields = _map_collect(
-            lambda field: field._compute_lwa_flux_dirinv(qref=field._temp_dirinv_qref, uref=field._temp_dirinv_u,
-                                                         tref=field._temp_dirinv_tref),
-            self._fields,
-            ["astarbaro", "ubaro", "urefbaro", "ua1baro", "ua2baro", "ep1baro",
-                "ep2baro", "ep3baro", "ep4", "astar1", "astar2"],
-            postprocess=np.asarray
-        )
-        # Take the first field to extract coordinates and metadata
-        _field = self.fields[0]
-        _nlat = _field.nlat // 2 + _field.nlat % 2
-        # Prepare coordinate-related data for the output:
-        # 1D data, function of latitude only
-        out_dims_y = (*self._other_dims, "ylat")
-        out_shape_y = (*self._other_shape, _nlat)
-        # 2D data, function of longitude and latitude
-        out_dims_xy = (*self._other_dims, "xlon", "ylat")
-        out_shape_xy = (*self._other_shape, _field.xlon.size, _nlat)
-        # 3D data, function of longitude, latitude and height (again, xlon and
-        # plev are currently not swapped back in the dirinv routines)
-        out_dims_xyh = (*self._other_dims, "xlon", "ylat", "height")
-        out_shape_xyh = (*self._other_shape, _field.xlon.size, _nlat, _field.height.size)
-        # Combine all outputs into a dataset, reshape to restore the original
-        # other dimensions that were flattened earlier
-        return xr.Dataset(
-            data_vars={
-                "astarbaro": (out_dims_xy, out_fields["astarbaro"].reshape(out_shape_xy)),
-                "ubaro": (out_dims_xy, out_fields["ubaro"].reshape(out_shape_xy)),
-                "urefbaro": (out_dims_y, out_fields["urefbaro"].reshape(out_shape_y)),
-                "ua1baro": (out_dims_xy, out_fields["ua1baro"].reshape(out_shape_xy)),
-                "ua2baro": (out_dims_xy, out_fields["ua2baro"].reshape(out_shape_xy)),
-                "ep1baro": (out_dims_xy, out_fields["ep1baro"].reshape(out_shape_xy)),
-                "ep2baro": (out_dims_xy, out_fields["ep2baro"].reshape(out_shape_xy)),
-                "ep3baro": (out_dims_xy, out_fields["ep3baro"].reshape(out_shape_xy)),
-                "ep4": (out_dims_xy, out_fields["ep4"].reshape(out_shape_xy)),
-                "astar1": (out_dims_xyh, out_fields["astar1"].reshape(out_shape_xyh)),
-                "astar2": (out_dims_xyh, out_fields["astar2"].reshape(out_shape_xyh)),
-            },
-            coords={
-                **self._other_coords,
-                "height": _field.height,
-                "ylat": _field.ylat[-_nlat:],
-                "xlon": _field.xlon,
-            },
-            attrs=self.attrs
-        )
 
 
 def integrate_budget(ds, var_names=None):
@@ -521,7 +539,7 @@ def integrate_budget(ds, var_names=None):
     -------
     xarray.Dataset
 
-    Example
+    Examples
     -------
     >>> qgds = QGDataset(data)
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
