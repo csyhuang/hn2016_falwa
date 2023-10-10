@@ -180,3 +180,74 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
     except:
         ArrayValueCheckMismatchException()
 
+
+@pytest.mark.xfail(raises=ArrayValueCheckMismatchException, reason="""
+    LWA and flux computation for QGFieldNHN22 is numerically unstable. 
+    Suspected to be precision issues which will be tackled in upcoming release.
+    """)
+def test_expected_value_check_nhn22_with_ncforce(u_field, v_field, t_field, files_with_expected_values_nhn22):
+    """
+    This is for Sandro's testing purpose.
+    """
+    xlon = np.arange(0, 360, 1.5)
+    ylat = np.arange(-90, 91, 1.5)
+    plev = np.array([
+        1000, 975, 950, 925, 900, 875, 850, 825, 800, 775, 750,
+        700, 650, 600, 550, 500, 450, 400, 350, 300, 250, 225,
+        200, 175, 150, 125, 100, 70, 50, 30, 20, 10, 7,
+        5, 3, 2, 1])
+    nlon = xlon.size
+    nlat = ylat.size
+    nlev = plev.size
+
+    # *** Set other parameters and constants ***
+    p0 = 1000.  # surface pressure [hPa]
+    kmax = 49  # number of grid points for vertical extrapolation (dimension of height)
+    dz = 1000.  # differential height element
+    height = np.arange(0, kmax) * dz  # pseudoheight [m]
+    dphi = np.diff(ylat)[0] * pi / 180.  # differential latitudinal element
+    dlambda = np.diff(xlon)[0] * pi / 180.  # differential latitudinal element
+    hh = 7000.  # scale height
+    cp = 1004.  # heat capacity of dry air
+    rr = 287.  # gas constant
+    omega = 7.29e-5  # rotation rate of the earth
+    aa = 6.378e+6  # earth radius
+    # just above the ground (z=1km) to aloft
+    npart = nlat  # number of partitions to construct the equivalent latitude grids
+    maxit = 100000  # maximum number of iteration in the SOR solver to solve for reference state
+    tol = 1.e-5  # tolerance that define convergence of solution
+    rjac = 0.95  # spectral radius of the Jacobi iteration in the SOR solver.
+    jd = nlat // 2 + 1  # (one plus) index of latitude grid point with value 0 deg
+    eq_boundary_index = 3
+    # This is to be input to fortran code. The index convention is different.
+
+    qgfield = QGFieldNHN22(
+        xlon, ylat, plev, u_field, v_field, t_field, kmax=kmax, maxit=maxit, dz=dz, npart=npart, tol=tol,
+        rjac=rjac, scale_height=hh, cp=cp, dry_gas_constant=rr, omega=omega, planet_radius=aa,
+        eq_boundary_index=eq_boundary_index, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+
+    temp_ncforce = np.zeros((kmax, nlat, nlon))
+    temp_ncforce[:, 80:100, :] = np.random.rand(49, 20, 240) * 1.e-5
+    qgfield.compute_lwa_and_barotropic_fluxes(ncforce=temp_ncforce)
+    print("Examine qgfield.ncforce_baro")
+    print(qgfield.ncforce_baro)
+
+    mismatch = "{0} values don't match"
+    rtol = 1.e-3
+
+    try:
+        assert np.allclose(qgfield.qgpv, files_with_expected_values_nhn22.qgpv.values, rtol), mismatch.format("qgpv")
+        assert np.allclose(qgfield.lwa, files_with_expected_values_nhn22.lwa.values, rtol), mismatch.format("lwa")
+        assert np.allclose(qgfield.qref, files_with_expected_values_nhn22.qref.values, rtol), mismatch.format("qref")
+        assert np.allclose(qgfield.uref, files_with_expected_values_nhn22.uref.values, rtol), mismatch.format("uref")
+        assert np.allclose(qgfield.ptref, files_with_expected_values_nhn22.ptref.values, rtol), mismatch.format("ptref")
+        assert np.allclose(qgfield.static_stability[0], files_with_expected_values_nhn22.static_stability_s.values,
+                           rtol), mismatch.format("static_stability_s")
+        assert np.allclose(qgfield.static_stability[1], files_with_expected_values_nhn22.static_stability_n.values,
+                           rtol), mismatch.format("static_stability_n")
+        assert np.allclose(qgfield.lwa_baro, files_with_expected_values_nhn22.lwa_baro.values, rtol), mismatch.format("lwa_baro")
+        assert np.allclose(qgfield.u_baro, files_with_expected_values_nhn22.u_baro.values, rtol), mismatch.format("u_baro")
+    except:
+        ArrayValueCheckMismatchException()
