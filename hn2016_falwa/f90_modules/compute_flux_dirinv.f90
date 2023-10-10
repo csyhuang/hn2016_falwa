@@ -1,18 +1,22 @@
-SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
-        imax, JMAX, kmax, nd, jb, jd, is_nhem, &
-        a, om, dz, h, rr, cp, prefac,&
-        astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2)
+SUBROUTINE compute_flux_dirinv_nshem( &
+    pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, &
+    imax, JMAX, kmax, nd, jb, jd, is_nhem, &
+    a, om, dz, h, rr, cp, prefac,&
+    astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2,ncforcebaro)
 
-  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax),&
+  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax), &
+          ncforce(imax, jmax, kmax), &
           tn0(kmax),qref(nd,kmax),uref(jd,kmax),tref(jd,kmax)
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, jb, jd
   LOGICAL, INTENT(IN) :: is_nhem
   REAL, INTENT(IN) :: a, om, dz, h, rr, cp, prefac
   REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
-          ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax)
+          ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),ep4(imax,nd),astar1(imax,nd,kmax),astar2(imax,nd,kmax),&
+          ncforcebaro(imax,nd)
 
   REAL :: tg(kmax),ua1(imax,nd),ua2(imax,nd),ep1(imax,nd),ep2(imax,nd),ep3(imax,nd)
   REAL :: qe(imax,nd),ue(imax,nd)
+  REAL :: ncforce2d(imax,nd),ncforce3d(imax,nd,kmax)
   REAL :: z(kmax)
   REAL :: aa, ab
   INTEGER :: jstart, jend
@@ -39,9 +43,14 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
 ! **** hemispheric-mean potential temperature ****
   tg(:) = tn0(:)
 
+! **** Computing ncforce (testing) ***
+  ncforce2d(:,:) = 0.0
+  ncforce3d(:,:,:) = 0.0
+
 ! **** wave activity and nonlinear zonal flux F2 ****
 
   astarbaro(:,:) = 0.
+  ncforcebaro(:,:) = 0.
   ubaro(:,:) = 0.
   urefbaro(:) = 0.
   ua1baro(:,:) = 0.
@@ -67,6 +76,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
       do j = jstart, jend
         astar1(i,j,k) = 0.       ! LWA*cos(phi)
         astar2(i,j,k) = 0.       ! LWA*cos(phi)
+        ncforce3d(i,j,k) = 0.
         ua2(i,j) = 0.          !F2
         if (is_nhem) then        !latitude
           phi0 = dp*float(j-1)
@@ -79,10 +89,12 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
           if (is_nhem) then
             phi1 = dp*float(jj-1)
             qe(i,jj) = pv(i,jj+nd-1,k)-qref(j,k)    !qe; Q = qref
+            ncforce2d(i,jj) = ncforce(i,jj+nd-1,k)
             ue(i,jj) = uu(i,jj+nd-1,k)-uref(j-jb,k) !ue; shift uref 5N
           else
             phi1 = dp*float(jj-1)-0.5*pi
             qe(i,jj) = pv(i,jj,k)-qref(j,k)     !qe; Q = qref
+            ncforce2d(i,jj) = ncforce(i,jj,k)
             ue(i,jj) = uu(i,jj,k)-uref(j-jb,k)  !ue;
           endif
           aa = a*dp*cos(phi1)   !cosine factor in the meridional integral
@@ -92,6 +104,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
             else
               astar1(i,j,k)=astar1(i,j,k)-qe(i,jj)*aa  !cyclonic
             endif
+            ncforce3d(i,j,k)=ncforce3d(i,j,k)-ncforce2d(i,jj)*aa
             ua2(i,j) = ua2(i,j)-qe(i,jj)*ue(i,jj)*ab
           endif
           if((qe(i,jj).gt.0.).and.(jj.lt.j)) then
@@ -100,6 +113,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
             else
               astar2(i,j,k)=astar2(i,j,k)+qe(i,jj)*aa  !anticyclonic
             endif
+            ncforce3d(i,j,k)=ncforce3d(i,j,k)+ncforce2d(i,jj)*aa
             ua2(i,j) = ua2(i,j)+qe(i,jj)*ue(i,jj)*ab
           endif
         enddo
@@ -172,6 +186,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
 
     astarbaro(:,:) = astarbaro(:,:)+(astar1(:,:,k)    &
     + astar2(:,:,k))*exp(-zk/h)*dc
+    ncforcebaro(:,:) = ncforcebaro(:,:) + ncforce3d(:,:,k)*exp(-zk/h)*dc
     ua1baro(:,:) = ua1baro(:,:)+ua1(:,:)*exp(-zk/h)*dc
     ua2baro(:,:) = ua2baro(:,:)+ua2(:,:)*exp(-zk/h)*dc
     ep1baro(:,:) = ep1baro(:,:)+ep1(:,:)*exp(-zk/h)*dc
