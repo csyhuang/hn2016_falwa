@@ -284,10 +284,10 @@ class QGDataset:
             "package": f"hn2016_falwa {__version__}"
         }
 
-    def interpolate_fields(self):
-        """Collect the output of `interpolate_fields` in a dataset.
+    def interpolate_fields(self, return_dataset=True):
+        """Call `interpolate_fields` on all contained fields.
 
-        See :py:meth:`.oopinterface.QGField.interpolate_fields`.
+        See :py:meth:`.oopinterface.QGFieldBase.interpolate_fields`.
 
         .. note::
             A QGField class may define static stability globally or
@@ -297,10 +297,20 @@ class QGDataset:
             (suffix ``_n`` for the northern hemisphere and ``_s`` for the
             southern hemisphere).
 
+        Parameters
+        ----------
+        return_dataset : bool
+            Whether to return the computed fields as a dataset.
+
         Returns
         -------
-        xarray.Dataset
+        xarray.Dataset or None
         """
+        # No-return call, just compute and let users access via properties
+        if not return_dataset:
+            for field in self._fields:
+                field.interpolate_fields(return_named_tuple=False)
+            return
         # Call interpolate_fields on all QGField objects
         out_fields = _map_collect(
             lambda field: field.interpolate_fields(),
@@ -364,15 +374,25 @@ class QGDataset:
         ["height", "ylat", "xlon"]
     )
 
-    def compute_reference_states(self):
-        """Collect the output of `compute_reference_states` in a dataset.
+    def compute_reference_states(self, return_dataset=True):
+        """Call `compute_reference_states` on all contained fields.
 
-        See :py:meth:`.oopinterface.QGField.compute_reference_states`.
+        See :py:meth:`.oopinterface.QGFieldBase.compute_reference_states`.
+
+        Parameters
+        ----------
+        return_dataset : bool
+            Whether to return the computed fields as a dataset.
 
         Returns
         -------
-        xarray.Dataset
+        xarray.Dataset or None
         """
+        # No-return call, just compute and let users access via properties
+        if not return_dataset:
+            for field in self._fields:
+                field.compute_reference_states(return_named_tuple=False)
+            return
         # Call compute_reference_states on all QGField objects
         out_fields = _map_collect(
             lambda field: field.compute_reference_states(),
@@ -420,15 +440,25 @@ class QGDataset:
         ["height", "ylat_ref_states"]
     )
 
-    def compute_lwa_and_barotropic_fluxes(self):
-        """Collect the output of `compute_lwa_and_barotropic_fluxes` in a dataset.
+    def compute_lwa_and_barotropic_fluxes(self, return_dataset=True):
+        """Call `compute_lwa_and_barotropic_fluxes` on all contained fields.
 
-        See :py:meth:`.oopinterface.QGField.compute_lwa_and_barotropic_fluxes`.
+        See :py:meth:`.oopinterface.QGFieldBase.compute_lwa_and_barotropic_fluxes`.
+
+        Parameters
+        ----------
+        return_dataset : bool
+            Whether to return the computed fields as a dataset.
 
         Returns
         -------
-        xarray.Dataset
+        xarray.Dataset or None
         """
+        # No-return call, just compute and let users access via properties
+        if not return_dataset:
+            for field in self._fields:
+                field.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+            return
         # Call compute_lwa_and_barotropic_fluxes on all QGField objects
         out_fields = _map_collect(
             lambda field: field.compute_lwa_and_barotropic_fluxes(),
