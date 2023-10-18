@@ -77,7 +77,7 @@ class _DataArrayCollector(property):
         self.dimnames = dimnames
         self.dimvars = dimvars if dimvars is not None else dimnames
         self.__doc__ = (
-            f"See :py:attr:`oopinterface.QGField.{name}`."
+            f"See :py:attr:`oopinterface.QGFieldBase.{name}`."
             "\n\nReturns\n-------\nxarray.DataArray"
         )
 
@@ -585,8 +585,9 @@ def integrate_budget(ds, var_names=None):
     Examples
     -------
     >>> qgds = QGDataset(data)
+    >>> ...
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
-    >>> compute_budget(terms.isel({ "time": slice(5, 10) }))
+    >>> integrate_budget(terms.isel({ "time": slice(5, 10) }))
     """
     name_time = _get_name(ds, _NAMES_TIME, var_names)
     name_lwa  = _get_name(ds, _NAMES_LWA,  var_names)
@@ -630,13 +631,13 @@ def hemisphere_to_globe(ds, var_names=None):
     and combines both hemispheres into a global dataset.
 
     If the meridional wind component is found in the dataset, its values will
-    be negated. This results in identical fields of local wave activity on both
-    hemispheres (since absolute vorticity is also the same except for the
-    sign), making it possible to use `northern_hemisphere_only` in the methods
-    of :py:class:`QGDataset` even if only southern hemisphere data is
-    available. Discontinuities in the meridional wind and derived fields arise
-    due to this at the equator but they generally have only a small effect on
-    the outputs.
+    be negated on the created hemisphere. This results in identical fields of
+    local wave activity on both hemispheres (since absolute vorticity is also
+    the same except for the sign), making it possible to use
+    `northern_hemisphere_only` in the methods of :py:class:`QGDataset` even if
+    only southern hemisphere data is available. Discontinuities in the
+    meridional wind and derived fields arise due to this at the equator but
+    they generally have only a small effect on the outputs.
 
     .. versionadded:: 0.6.1
 
