@@ -130,6 +130,7 @@ class _MetadataServiceProvider:
 
     def as_dataarray(self, arr, var):
         """Create a DataArray from the input array as the given variable"""
+        arr = np.asarray(arr)
         if arr.shape != self.shape(var):
             arr = self.restore_other(arr)
         assert arr.shape == self.shape(var)
@@ -235,24 +236,16 @@ class _DataArrayCollector(property):
     # Inherits from property, so instances are recognized as properties by
     # sphinx for the docs.
 
-    # TODO replace this completely with calls to the _MetadataServiceProvider
-
-    def __init__(self, name, dimnames, dimvars=None):
-        self.name = name
-        self.dimnames = dimnames
-        self.dimvars = dimvars if dimvars is not None else dimnames
+    def __init__(self, var):
+        self.var = var
         self.__doc__ = (
-            f"See :py:attr:`oopinterface.QGFieldBase.{name}`."
+            f"See :py:attr:`oopinterface.QGFieldBase.{self.var}`."
             "\n\nReturns\n-------\nxarray.DataArray"
         )
 
-    def __get__(self, obj, objtype=None):
-        fields = obj.fields
-        data = np.asarray([getattr(field, self.name) for field in fields])
-        coords = obj.metadata.coords(self.name)
-        dims = obj.metadata.dims(self.name)
-        shape = obj.metadata.shape(self.name)
-        return xr.DataArray(data.reshape(shape), coords, dims, self.name, obj.attrs)
+    def __get__(self, qgds, objtype=None):
+        arr = np.asarray([getattr(field, self.var) for field in qgds.fields])
+        return qgds.metadata.as_dataarray(arr, self.var)
 
 
 class QGDataset:
@@ -499,22 +492,10 @@ class QGDataset:
         )
 
     # Accessors for individual field properties computed in interpolate_fields
-    qgpv = _DataArrayCollector(
-        "qgpv",
-        ["height", "ylat", "xlon"]
-    )
-    interpolated_u = _DataArrayCollector(
-        "interpolated_u",
-        ["height", "ylat", "xlon"]
-    )
-    interpolated_v = _DataArrayCollector(
-        "interpolated_v",
-        ["height", "ylat", "xlon"]
-    )
-    interpolated_theta = _DataArrayCollector(
-        "interpolated_theta",
-        ["height", "ylat", "xlon"]
-    )
+    qgpv = _DataArrayCollector("qgpv")
+    interpolated_u = _DataArrayCollector("interpolated_u")
+    interpolated_v = _DataArrayCollector("interpolated_v")
+    interpolated_theta = _DataArrayCollector("interpolated_theta")
 
     def compute_reference_states(self, return_dataset=True):
         """Call `compute_reference_states` on all contained fields.
@@ -562,21 +543,9 @@ class QGDataset:
         )
 
     # Accessors for individual field properties computed in compute_reference_states
-    qref = _DataArrayCollector(
-        "qref",
-        ["height", "ylat"],
-        ["height", "ylat_ref_states"]
-    )
-    uref = _DataArrayCollector(
-        "uref",
-        ["height", "ylat"],
-        ["height", "ylat_ref_states"]
-    )
-    ptref = _DataArrayCollector(
-        "ptref",
-        ["height", "ylat"],
-        ["height", "ylat_ref_states"]
-    )
+    qref = _DataArrayCollector("qref")
+    uref = _DataArrayCollector("uref")
+    ptref = _DataArrayCollector("ptref")
 
     def compute_lwa_and_barotropic_fluxes(self, return_dataset=True):
         """Call `compute_lwa_and_barotropic_fluxes` on all contained fields.
@@ -635,51 +604,15 @@ class QGDataset:
         )
 
     # Accessors for individual field properties computed in compute_lwa_and_barotropic_fluxes
-    adv_flux_f1 = _DataArrayCollector(
-        "adv_flux_f1",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    adv_flux_f2 = _DataArrayCollector(
-        "adv_flux_f2",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    adv_flux_f3 = _DataArrayCollector(
-        "adv_flux_f3",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    convergence_zonal_advective_flux = _DataArrayCollector(
-        "convergence_zonal_advective_flux",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    divergence_eddy_momentum_flux = _DataArrayCollector(
-        "divergence_eddy_momentum_flux",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    meridional_heat_flux = _DataArrayCollector(
-        "meridional_heat_flux",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    lwa_baro = _DataArrayCollector(
-        "lwa_baro",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    u_baro = _DataArrayCollector(
-        "u_baro",
-        ["ylat", "xlon"],
-        ["ylat_ref_states", "xlon"]
-    )
-    lwa = _DataArrayCollector(
-        "lwa",
-        ["height", "ylat", "xlon"],
-        ["height", "ylat_ref_states", "xlon"]
-    )
+    adv_flux_f1 = _DataArrayCollector("adv_flux_f1")
+    adv_flux_f2 = _DataArrayCollector("adv_flux_f2")
+    adv_flux_f3 = _DataArrayCollector("adv_flux_f3")
+    convergence_zonal_advective_flux = _DataArrayCollector("convergence_zonal_advective_flux")
+    divergence_eddy_momentum_flux = _DataArrayCollector("divergence_eddy_momentum_flux")
+    meridional_heat_flux = _DataArrayCollector("meridional_heat_flux")
+    lwa_baro = _DataArrayCollector("lwa_baro")
+    u_baro = _DataArrayCollector("u_baro")
+    lwa = _DataArrayCollector("lwa")
 
 
 
