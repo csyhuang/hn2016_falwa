@@ -74,7 +74,7 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
           phi0 = dp*float(j-1)-0.5*pi
         endif
         cor = 2.*om*sin(phi0)          !Coriolis parameter
-        ab = a*dp*cos(phi0)
+        ab = a*dp  !constant length element
         do jj = 1,nd
           if (is_nhem) then  ! Northern Hemisphere
             phi1 = dp*float(jj-1)

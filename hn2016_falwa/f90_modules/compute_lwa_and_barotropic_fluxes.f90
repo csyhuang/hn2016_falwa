@@ -53,7 +53,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                 astar(i,j,k) = 0.       ! LWA*cos(phi)
                 ua2(i,j,k) = 0.         ! F2
                 cor = 2.*om*sinphi(j)          !Coriolis parameter
-                ab = a*dp*cosphi(j)
+                ab = a*dp !constant length element
                 ! South of the current latitude
                 do jj = 1,j-1
                     qe(i,jj) = pv(i,jj+jd-1,k)-qref(j,k)*cor   !qe; Q = qref*cor
