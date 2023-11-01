@@ -57,7 +57,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                 ! South of the current latitude
                 do jj = 1,j-1
                     qe(i,jj) = pv(i,jj+jd-1,k)-qref(j,k)*cor   !qe; Q = qref*cor
-                    ue(i,jj) = uu(i,jj+jd-1,k)-uref(j,k)       !ue
+                    ue(i,jj) = uu(i,jj+jd-1,k)*cosphi(j)-uref(j,k)*cosphi(jj)       !ue
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).gt.0.) then                    !LWA*cos(phi) and F2
                         astar(i,j,k)=astar(i,j,k)+qe(i,jj)*aa
@@ -67,7 +67,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                 ! North of the current latitude
                 do jj = j,jd
                     qe(i,jj) = pv(i,jj+jd-1,k)-qref(j,k)*cor   !qe; Q = qref*cor
-                    ue(i,jj) = uu(i,jj+jd-1,k)-uref(j,k)       !ue
+                    ue(i,jj) = uu(i,jj+jd-1,k)*cosphi(j)-uref(j,k)*cosphi(jj)       !ue
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).le.0.) then                    !LWA*cos(phi) and F2
                         astar(i,j,k)=astar(i,j,k)-qe(i,jj)*aa
