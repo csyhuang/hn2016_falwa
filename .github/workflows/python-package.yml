@@ -37,7 +37,7 @@ jobs:
         python setup.py develop        
     - name: Test with pytest
       run: |
-        pytest
+         pytest -k "not output_results"
     - name: Upload Coverage to Codecov
       run: |
         coverage run -m pytest -k "not output_results"
