@@ -2,7 +2,7 @@ import os
 import numpy as np
 from math import pi
 import xarray as xr
-from hn2016_falwa.oopinterface import QGFieldNH18
+from falwa.oopinterface import QGFieldNH18
 
 
 def extract_data_from_notebook_dir(dir: str, test_data_dir: str):

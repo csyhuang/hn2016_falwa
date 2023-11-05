@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from math import pi
 from netCDF4 import Dataset
-from hn2016_falwa.oopinterface import QGFieldNHN22
+from falwa.oopinterface import QGFieldNHN22
 
 sys.path.insert(0, os.getcwd())
 from graph_plot_module import plot_figure1a, plot_figure1b, plot_figure1c, plot_figure1d_2a, plot_figure3_and_S1, \

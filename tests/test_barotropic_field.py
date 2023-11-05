@@ -1,7 +1,7 @@
 import numpy as np
 
-from hn2016_falwa.barotropic_field import BarotropicField
-from hn2016_falwa.constant import EARTH_OMEGA
+from falwa.barotropic_field import BarotropicField
+from falwa.constant import EARTH_OMEGA
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 31

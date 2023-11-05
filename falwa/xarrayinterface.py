@@ -7,8 +7,8 @@ import functools
 import numpy as np
 import xarray as xr
 
-from hn2016_falwa import __version__
-from hn2016_falwa.oopinterface import QGFieldNH18
+from falwa import __version__
+from falwa.oopinterface import QGFieldNH18
 
 
 def _is_ascending(arr):

@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 from math import pi
-import hn2016_falwa.basis as basis
-from hn2016_falwa.constant import *
+import falwa.basis as basis
+from falwa.constant import *
 
 # === Parameters specific for testing the basis module ===
 nlat = 241

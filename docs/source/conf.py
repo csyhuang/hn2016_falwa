@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# hn2016_falwa documentation build configuration file, created by
+# falwa documentation build configuration file, created by
 # sphinx-quickstart on Mon Aug 21 13:58:59 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -20,14 +20,14 @@ import os
 import sys
 # Need to fix the issue below
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../")
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../hn2016_falwa/")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../../falwa/")
 
 # import sphinx_rtd_theme
 
 
 autodoc_mock_imports = [
     "matplotlib",  # for plot_utils.py
-    "hn2016_falwa",
+    "falwa",
     "interpolate_fields",
     "compute_reference_states",
     "compute_lwa_and_barotropic_fluxes",
@@ -69,7 +69,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'hn2016_falwa'
+project = u'falwa'
 copyright = u'2022, Clare S. Y. Huang'
 author = u'Clare S. Y. Huang'
 
@@ -150,7 +150,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'hn2016_falwa.tex', u'hn2016\\_falwa Documentation',
+    (master_doc, 'falwa.tex', u'hn2016falwa Documentation',
      u'Shao Ying (Clare) Huang', 'manual'),
 ]
 
@@ -160,7 +160,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'hn2016_falwa', u'hn2016_falwa Documentation',
+    (master_doc, 'falwa', u'falwa Documentation',
      [author], 1)
 ]
 
@@ -171,8 +171,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'hn2016_falwa', u'hn2016_falwa Documentation',
-     author, 'hn2016_falwa', 'Python package to compute finite-amplitude wave activity.',
+    (master_doc, 'falwa', u'falwa Documentation',
+     author, 'falwa', 'Python package to compute finite-amplitude wave activity.',
      'Miscellaneous'),
 ]
 

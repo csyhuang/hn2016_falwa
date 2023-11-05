@@ -13,6 +13,6 @@ dependencies:
 # 2. Activate the environment
 # $ conda activate env_nhn_grl2022
 # 3. Remove any existing compiled fortran modules by:
-# $ rm hn2016_falwa/*.so
-# 4. Install hn2016_falwa by running in command line:
+# $ rm falwa/*.so
+# 4. Install falwa by running in command line:
 # $ python setup.py develop

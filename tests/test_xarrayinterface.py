@@ -6,10 +6,10 @@ try:
 except ImportError:
     pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
-from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
-from hn2016_falwa.xarrayinterface import QGDataset
-from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
-from hn2016_falwa.xarrayinterface import _get_name
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from falwa.xarrayinterface import QGDataset
+from falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
+from falwa.xarrayinterface import _get_name
 
 
 def _generate_test_dataset(**additional_coords):

@@ -1,6 +1,6 @@
 import numpy as np
 from math import pi
-import hn2016_falwa.utilities as utilities
+import falwa.utilities as utilities
 
 
 def test_zonal_convergence():

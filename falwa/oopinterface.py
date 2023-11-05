@@ -11,13 +11,13 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgetrf, dgetri
 
-from hn2016_falwa import utilities
-from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
-from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
+from falwa import utilities
+from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
+from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+from falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple

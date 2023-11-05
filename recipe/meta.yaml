@@ -1,5 +1,5 @@
 package:
-  name: "hn2016_falwa"
+  name: "falwa"
   version: "1.0.0a0"
 
 source:
@@ -16,7 +16,7 @@ requirements:
 
 test:
   imports:
-    - hn2016_falwa
+    - falwa
 
 about:
   home: https://github.com/csyhuang/hn2016_falwa
