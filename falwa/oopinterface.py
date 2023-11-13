@@ -11,13 +11,13 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgetrf, dgetri
 
-from hn2016_falwa import utilities
-from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
-from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
+from falwa import utilities
+from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
+from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+from falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
@@ -139,12 +139,12 @@ class QGFieldBase(ABC):
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
-            interp_u = interp1d(self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate")
-            interp_v = interp1d(self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate")
-            interp_t = interp1d(self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate")
-            self.u_field = interp_u(self.ylat)
-            self.v_field = interp_v(self.ylat)
-            self.t_field = interp_t(self.ylat)
+            interp_u = interp1d(self._input_ylat, u_field, axis=1, fill_value="extrapolate")
+            interp_v = interp1d(self._input_ylat, v_field, axis=1, fill_value="extrapolate")
+            interp_t = interp1d(self._input_ylat, t_field, axis=1, fill_value="extrapolate")
+            self.u_field = interp_u(self._ylat)
+            self.v_field = interp_v(self._ylat)
+            self.t_field = interp_t(self._ylat)
         else:
             self.u_field = u_field
             self.v_field = v_field
@@ -283,25 +283,29 @@ class QGFieldBase(ABC):
         # Check if ylat is in ascending order and include the equator
         if np.diff(ylat)[0] < 0:
             raise TypeError("ylat must be in ascending order")
+        # Save ylat input by user first
+        self._input_ylat = ylat
         if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
             # Even grid
             self.need_latitude_interpolation = True
-            self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            self._ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
             self.equator_idx = \
-                np.argwhere(self.ylat == 0)[0][0] + 1
+                np.argwhere(self._ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
         elif sum(ylat == 0) == 1:
             # Odd grid
             self.need_latitude_interpolation = False
-            self.ylat_no_equator = None
-            self.ylat = ylat
+            self._ylat = ylat
             self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
         else:
             raise TypeError(
                 "There are more than 1 grid point with latitude 0."
             )
-        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+        self.clat = np.abs(np.cos(np.deg2rad(self._ylat)))
+
+    @property
+    def ylat(self):
+        return self._input_ylat
 
     @staticmethod
     def _check_dimension_of_fields(field, field_name, expected_dim):
@@ -319,7 +323,7 @@ class QGFieldBase(ABC):
         Private function to interpolate the results from odd grid to even grid.
         If the initial input to the QGField object is an odd grid, error will be raised.
         """
-        if self.ylat_no_equator is None:
+        if self._input_ylat is None:
             raise TypeError("No need for such interpolation.")
         else:
             return interp1d(
@@ -348,11 +352,11 @@ class QGFieldBase(ABC):
         if self.need_latitude_interpolation:
             if self.northern_hemisphere_results_only:
                 return self._interp_back(
-                    variable, self.ylat[-(self.nlat//2+1):],
-                    self.ylat_no_equator[-(self.nlat//2):],
+                    variable, self._ylat[-(self.nlat//2+1):],
+                    self._input_ylat[-(self.nlat // 2):],
                     which_axis=interp_axis)
             else:
-                return self._interp_back(variable, self.ylat, self.ylat_no_equator, which_axis=interp_axis)
+                return self._interp_back(variable, self._ylat, self._input_ylat, which_axis=interp_axis)
         else:
             return variable
 
@@ -646,8 +650,8 @@ class QGFieldBase(ABC):
         Latitude dimension of reference state
         """
         if self.northern_hemisphere_results_only:
-            return self.ylat[-(self.nlat//2+1):]
-        return self.ylat
+            return self._ylat[-(self.nlat//2+1):]
+        return self._ylat
 
     @property
     def northern_hemisphere_results_only(self) -> bool:
@@ -829,10 +833,7 @@ class QGFieldBase(ABC):
         """
         Return the latitude dimension of the input data.
         """
-        if self.need_latitude_interpolation:
-            return self.ylat_no_equator.size
-        else:
-            return self.nlat
+        return self._input_ylat.size
 
 
 class QGFieldNH18(QGFieldBase):
@@ -1226,7 +1227,7 @@ class QGFieldNHN22(QGFieldBase):
 
         # Turn qref back to correct unit
 
-        ylat_input = self.ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.ylat
+        ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 

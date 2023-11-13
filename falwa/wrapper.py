@@ -4,8 +4,8 @@ File name: wrapper.py
 Author: Clare Huang
 """
 import numpy as np
-from hn2016_falwa.constant import EARTH_RADIUS
-from hn2016_falwa import basis
+from falwa.constant import EARTH_RADIUS
+from falwa import basis
 
 
 def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS):

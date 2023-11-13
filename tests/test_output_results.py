@@ -7,7 +7,7 @@ import pytest
 from math import pi
 import numpy as np
 import xarray as xr
-from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 
 
 test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/data"
