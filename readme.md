@@ -29,7 +29,7 @@ To incorporate updates, pull the new version of the code from GitHub. Remove any
 ```
 # Assume you are already in the hn2016_falwa/ repo
 git pull
-rm hn2016_falwa/*.so
+rm falwa/*.so
 python setup.py develop
 pytest tests/ # to check if the package can be run properly
 ```
