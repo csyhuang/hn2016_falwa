@@ -83,21 +83,21 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
           else  ! Southern Hemisphere
             phi1 = dp*float(jj-1)-0.5*pi
             qe(i,jj) = pv(i,jj,k)-qref(j,k)     !qe; Q = qref
-            ue(i,jj) = uu(i,jj,k)*cos(phi0)-uref(j-jb,k)*cos(phi1)  !ue;
+            ue(i,jj) = uu(i,jj,k)*cos(phi0)-uref(j,k)*cos(phi1)  !ue;
           endif
           aa = a*dp*cos(phi1)   !cosine factor in the meridional integral
           if((qe(i,jj).le.0.).and.(jj.ge.j)) then  !LWA*cos and F2
-            if (is_nhem) then
+            if (is_nhem) then  ! Northern Hemisphere
               astar2(i,j,k)=astar2(i,j,k)-qe(i,jj)*aa  !anticyclonic
-            else
+            else  ! Southern Hemisphere
               astar1(i,j,k)=astar1(i,j,k)-qe(i,jj)*aa  !cyclonic
             endif
             ua2(i,j) = ua2(i,j)-qe(i,jj)*ue(i,jj)*ab
           endif
           if((qe(i,jj).gt.0.).and.(jj.lt.j)) then
-            if (is_nhem) then
+            if (is_nhem) then  ! Northern Hemisphere
               astar1(i,j,k)=astar1(i,j,k)+qe(i,jj)*aa  !cyclonic
-            else
+            else  ! Southern Hemisphere
               astar2(i,j,k)=astar2(i,j,k)+qe(i,jj)*aa  !anticyclonic
             endif
             ua2(i,j) = ua2(i,j)+qe(i,jj)*ue(i,jj)*ab
