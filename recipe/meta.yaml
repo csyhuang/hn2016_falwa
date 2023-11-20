@@ -1,6 +1,6 @@
 package:
   name: "falwa"
-  version: "1.0.0a0"
+  version: "1.0.0"
 
 source:
   path: ../
