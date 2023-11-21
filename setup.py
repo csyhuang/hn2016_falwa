@@ -1,8 +1,10 @@
-from numpy.distutils.core import setup, Extension
+from numpy.distutils.core import setup
 
 LONG_DESCRIPTION = \
     """
-    hn2016_falwa is a package that contains modules to compute the finite-amplitude
+    Important: this python package has been renamed from `hn2016_falwa` to `falwa` since version v1.0.0.
+    
+    This python package contains modules to compute the finite-amplitude
     local wave activity (FALWA) and reference state (U_ref) in the following papers:
     Huang and Nakamura (2016, JAS): http://dx.doi.org/10.1175/JAS-D-15-0194.1
     Huang and Nakamura (2017, GRL): http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full
@@ -20,48 +22,10 @@ LONG_DESCRIPTION = \
     - Source code: http://github.com/csyhuang/hn2016_falwa/
     """
 
-
-ext1 = Extension(name='hn2016_falwa.interpolate_fields',
-                 sources=['hn2016_falwa/f90_modules/interpolate_fields.f90'],
-                 f2py_options=['--quiet'])
-
-ext2 = Extension(name='hn2016_falwa.compute_reference_states',
-                 sources=['hn2016_falwa/f90_modules/compute_reference_states.f90'],
-                 f2py_options=['--quiet'])
-
-ext3 = Extension(name='hn2016_falwa.compute_lwa_and_barotropic_fluxes',
-                 sources=['hn2016_falwa/f90_modules/compute_lwa_and_barotropic_fluxes.f90'],
-                 f2py_options=['--quiet'])
-
-# *** Extensions 4-9 are used by the direct inversion algorithm ***
-ext4 = Extension(name='hn2016_falwa.interpolate_fields_direct_inv',
-                 sources=['hn2016_falwa/f90_modules/interpolate_fields_dirinv.f90'],
-                 f2py_options=['--quiet'])
-
-ext5 = Extension(name='hn2016_falwa.compute_qref_and_fawa_first',
-                 sources=['hn2016_falwa/f90_modules/compute_qref_and_fawa_first.f90'],
-                 f2py_options=['--quiet'])
-
-ext6 = Extension(name='hn2016_falwa.matrix_b4_inversion',
-                 sources=['hn2016_falwa/f90_modules/matrix_b4_inversion.f90'],
-                 f2py_options=['--quiet'])
-
-ext7 = Extension(name='hn2016_falwa.matrix_after_inversion',
-                 sources=['hn2016_falwa/f90_modules/matrix_after_inversion.f90'],
-                 f2py_options=['--quiet'])
-
-ext8 = Extension(name='hn2016_falwa.upward_sweep',
-                 sources=['hn2016_falwa/f90_modules/upward_sweep.f90'],
-                 f2py_options=['--quiet'])
-
-ext9 = Extension(name='hn2016_falwa.compute_flux_dirinv',
-                 sources=['hn2016_falwa/f90_modules/compute_flux_dirinv.f90'],
-                 f2py_options=['--quiet'])
-
 setup(
     name='hn2016_falwa',
-    version='0.7.2',
-    description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
+    version='0.7.3',
+    description='This python package has been renamed from `hn2016_falwa` to `falwa` since version v1.0.0.',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     url='https://github.com/csyhuang/hn2016_falwa',
@@ -69,12 +33,6 @@ setup(
     author_email='csyhuang@uchicago.edu',
     license='MIT',
     python_requires='>=3',
-    packages=['hn2016_falwa', 'tests', 'hn2016_falwa.legacy'],
-    setup_requires=['numpy'],
-    install_requires=['numpy', 'scipy', 'xarray'],
-    tests_require=['pytest'],
-    test_suite="tests",
-    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
-    zip_safe=False
-)
+    install_requires=['falwa'],
+    classifiers=["Development Status :: 7 - Inactive"])
 
