@@ -8,7 +8,6 @@ from math import pi
 import numpy as np
 import xarray as xr
 from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
-from oopinterface import QGFieldNH18
 
 
 class ArrayValueCheckMismatchException(Exception):
