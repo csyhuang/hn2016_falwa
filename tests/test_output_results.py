@@ -54,8 +54,41 @@ def files_with_expected_values_nh18():
 
 
 @pytest.fixture(scope="function")
+def offgrid_intput_data():
+    return xr.open_dataset(f"{test_data_dir}/offgrid_input_uvt_data.nc")
+
+
+@pytest.fixture(scope="function")
 def files_with_expected_values_nhn22():
     return xr.open_dataset(f"{test_data_dir}/expected_values_nhn22.nc")
+
+
+def test_offgrid_data_input(offgrid_intput_data):
+    qgfield = QGFieldNH18(
+        offgrid_intput_data.longitude.data, offgrid_intput_data.latitude.data, offgrid_intput_data.level.data,
+        offgrid_intput_data.u.data, offgrid_intput_data.v.data, offgrid_intput_data.t.data,
+        northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes()
+    assert np.isnan(qgfield.qref).sum() == 0
+    assert np.isnan(qgfield.uref).sum() == 0
+    assert np.isnan(qgfield.ptref).sum() == 0
+    assert np.isnan(qgfield.lwa).sum() == 0
+    assert qgfield.interpolated_u.shape == (49, 192, 288)
+    assert qgfield.qref.shape == (49, 192)
+    assert qgfield.uref.shape == (49, 192)
+    assert qgfield.lwa.shape == (49, 192, 288)
+    assert qgfield.convergence_zonal_advective_flux.shape == (192, 288)
+
+
+def test_offgrid_data_input_xarrayinterface(offgrid_intput_data):
+    from falwa.xarrayinterface import QGDataset
+    qgdataset = QGDataset(
+        offgrid_intput_data)
+    qgdataset.interpolate_fields()
+    qgdataset.compute_reference_states()
+    qgdataset.compute_lwa_and_barotropic_fluxes()
 
 
 @pytest.mark.xfail(raises=ArrayValueCheckMismatchException, reason="""

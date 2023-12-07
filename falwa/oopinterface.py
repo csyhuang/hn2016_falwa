@@ -120,6 +120,8 @@ class QGFieldBase(ABC):
             t_field = t_field.data
 
         # === Check if ylat is in ascending order and include the equator ===
+        self._ylat = None
+        self._clat = None
         self._check_and_flip_ylat(ylat)
 
         # === Check the validity of plev ===
@@ -154,8 +156,6 @@ class QGFieldBase(ABC):
         # === Coordinate-related ===
         self.dphi = np.deg2rad(180./(self._nlat_analysis-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
-        self.slat = np.sin(np.deg2rad(ylat))  # sin latitude
-        self.clat = np.cos(np.deg2rad(ylat))  # sin latitude
         self.npart = npart if npart is not None else self._nlat_analysis
         self.kmax = kmax
         self.height = np.array([i * dz for i in range(kmax)])
@@ -294,10 +294,13 @@ class QGFieldBase(ABC):
             raise TypeError(
                 "There are more than 1 grid point with latitude 0."
             )
-        self.clat = np.abs(np.cos(np.deg2rad(self._ylat)))
+        self._clat = np.abs(np.cos(np.deg2rad(self._ylat)))
 
     @property
     def ylat(self):
+        """
+        This is ylat grid input by user.
+        """
         return self._input_ylat
 
     @staticmethod
@@ -576,7 +579,7 @@ class QGFieldBase(ABC):
         self._compute_intermediate_flux_terms()
 
         # *** Compute named fluxes in NH18 ***
-        clat = self.clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.clat
+        clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
         self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
             np.swapaxes(
                 (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
