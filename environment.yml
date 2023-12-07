@@ -11,4 +11,6 @@ dependencies:
 - pytest=7.4.0
 - xarray=2023.2.0
 - netCDF4=1.5.8
+- jupyter
+- matplotlib
 
