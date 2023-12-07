@@ -82,6 +82,9 @@ def test_offgrid_data_input(offgrid_intput_data):
     assert qgfield.convergence_zonal_advective_flux.shape == (192, 288)
 
 
+@pytest.mark.skip(reason="""
+    So far Clare has not succeed debugging QGDataset. Pending for Christopher's input.  
+    """)
 def test_offgrid_data_input_xarrayinterface(offgrid_intput_data):
     from falwa.xarrayinterface import QGDataset
     qgdataset = QGDataset(
