@@ -643,6 +643,18 @@ class QGFieldBase(ABC):
     @property
     def ylat_ref_states(self) -> np.array:
         """
+        This is the reference state grid output to user
+        """
+        if self.northern_hemisphere_results_only:
+            if self.need_latitude_interpolation:
+                return self._input_ylat[-(self.nlat // 2):]
+            else:
+                return self._input_ylat[-(self.nlat // 2 + 1):]
+        return self._input_ylat
+
+    @property
+    def ylat_ref_states_analysis(self) -> np.array:
+        """
         Latitude dimension of reference state.
         This is input to ReferenceStatesStorage.qref_correct_unit.
         """
@@ -715,7 +727,7 @@ class QGFieldBase(ABC):
             raise ValueError('qref is not computed yet.')
         return self._return_interp_variables(
             variable=self._reference_states_storage.qref_correct_unit(
-                self.ylat_ref_states, self.omega), interp_axis=1)
+                self.ylat_ref_states_analysis, self.omega), interp_axis=1)
 
     @property
     def uref(self):
