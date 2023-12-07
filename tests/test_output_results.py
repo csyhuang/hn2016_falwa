@@ -8,6 +8,7 @@ from math import pi
 import numpy as np
 import xarray as xr
 from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from oopinterface import QGFieldNH18
 
 
 class ArrayValueCheckMismatchException(Exception):
@@ -177,3 +178,47 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
     except:
         ArrayValueCheckMismatchException()
 
+
+def test_offgrid_data_input(offgrid_input_data):
+    qgfield = QGFieldNH18(
+        offgrid_input_data.longitude.data, offgrid_input_data.latitude.data, offgrid_input_data.level.data,
+        offgrid_input_data.u.data, offgrid_input_data.v.data, offgrid_input_data.t.data,
+        northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes()
+    assert np.isnan(qgfield.qref).sum() == 0
+    assert np.isnan(qgfield.uref).sum() == 0
+    assert np.isnan(qgfield.ptref).sum() == 0
+    assert np.isnan(qgfield.lwa).sum() == 0
+    assert qgfield.interpolated_u.shape == (49, 192, 288)
+    assert qgfield.qref.shape == (49, 192)
+    assert qgfield.uref.shape == (49, 192)
+    assert qgfield.lwa.shape == (49, 192, 288)
+    assert qgfield.convergence_zonal_advective_flux.shape == (192, 288)
+
+
+def test_offgrid_data_input_xarrayinterface(offgrid_input_data):
+    from falwa.xarrayinterface import QGDataset
+    qgdataset = QGDataset(
+        offgrid_input_data)
+    qgdataset.interpolate_fields()
+    qgdataset.compute_reference_states()
+    qgdataset.compute_lwa_and_barotropic_fluxes()
+    assert np.isnan(qgdataset.qref).sum() == 0
+    assert np.isnan(qgdataset.uref).sum() == 0
+    assert np.isnan(qgdataset.ptref).sum() == 0
+    assert np.isnan(qgdataset.lwa).sum() == 0
+    assert qgdataset.interpolated_u.shape == (49, 192, 288)
+    assert qgdataset.qref.shape == (49, 192)
+    assert qgdataset.uref.shape == (49, 192)
+    assert qgdataset.lwa.shape == (49, 192, 288)
+    assert qgdataset.convergence_zonal_advective_flux.shape == (192, 288)
+
+
+@pytest.fixture(scope="module")
+def offgrid_input_data(test_data_dir):
+    """
+    Return dataset with latitude grids not including equator.
+    """
+    return xr.open_dataset(f"{test_data_dir}/offgrid_input_uvt_data.nc")
