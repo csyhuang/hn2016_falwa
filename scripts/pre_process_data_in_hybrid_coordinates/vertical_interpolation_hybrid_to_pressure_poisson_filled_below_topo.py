@@ -86,7 +86,7 @@ def vertical_interpolation_to_pressure(ds, variable, save_topography=False, logg
         time_taken = (end0-start0)
         logging_object.write('%d of %d interpolated - computed in %1.1f sec'%(t, TIME, time_taken))
              
-        ##### Fill-in the nan values (i.e. boundary below topography) with smooth values from x-y boundary                
+        ##### Replace the nan values (i.e. boundary below topography) with smooth values from x-y boundary                
         if save_topography:
             ## save a copy for topography file where there no values for certain pressure cooridinates. 
             topography[t, ...] = new_variable[t, ...]            
@@ -183,7 +183,7 @@ if __name__ == "__main__":
                             750, 725, 700, 650, 600, 550, 500, 450, 400, 350, \
                             300, 250, 225, 200, 175, 150, 125, 100, 70, 50, \
                             30,   20,  10,   7,   5,   3,])  ##### ERA5 pressure levels 
-    ### --> Not included 1 and 2 hPa pressure levels because 
+    ### --> Not included 1 and 2 hPa pressure levels because stratosphere is not so well resolved in the model.
     
     new_lev = new_lev[::-1] ## downwards
     flag    = -1
