@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
             
             ds.close()
-            ds_copy.to_netcdf(path='./%s_poisson_filled_%s'%(var))
+            ds_copy.to_netcdf(path='./%s_poisson_filled'%(var))
             ds_copy.close()
 
             gc.collect()
