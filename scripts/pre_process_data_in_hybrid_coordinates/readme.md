@@ -1,7 +1,7 @@
 
 # Author - P Barpanda, Dec. 14, 2023
 
-### 1) The sample data is in the following dropbox link. This is a sample data from historical runs from NorESM.
+### 1) The sample data is in the following dropbox link. This is a sample data from one of the historical runs in NorESM.
 - https://www.dropbox.com/scl/fo/tx1vbwl584unzl5qjjrmv/h?rlkey=wxqu67zb5lp9xsnfx6zogfjuw&dl=0
 Download the netcdf file and save it inside ./NorESM_data_sample/
 
