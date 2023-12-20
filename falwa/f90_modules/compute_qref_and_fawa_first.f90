@@ -26,7 +26,8 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   REAL :: qbar(nd,kmax)
 
   pi = acos(-1.)
-  dp = pi/float(jmax-1)
+  dp = pi/float(jmax-1)  !!!  This is dlat
+  dl = 2*pi/float(imax-1)  !!!! pragallva- correction added on Dec 13, 2023. This is dlon
   rkappa = rr/cp
 
   do nn = 1,nd
@@ -72,7 +73,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       phi0 = -0.5*pi+dp*float(j-1)
       do i = 1,imax
         ind = 1+int((qmax-pv2(i,j))/dq)
-        da = a*a*dp*dp*cos(phi0)
+        da = a*a*dp*dl*cos(phi0)
         an(ind) = an(ind) + da
         cn(ind) = cn(ind) + da*pv2(i,j)
       enddo
@@ -118,7 +119,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       phi0 = -0.5*pi+dp*float(j-1)
       do i = 1,imax
       ind = 1+int((qmax-vort2(i,j))/dq)
-      da = a*a*dp*dp*cos(phi0)
+      da = a*a*dp*dl*cos(phi0)
       an(ind) = an(ind) + da
       cn(ind) = cn(ind) + da*vort2(i,j)
       enddo

@@ -24,6 +24,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     pi = acos(-1.)
     dp = pi/float(nlat-1)
+    dl = 2*pi/float(nlon-1)
     zero = 0.
     half = 0.5
     qtr = 0.25
@@ -83,7 +84,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             phi0 = -0.5*pi+dp*float(j-1)
             do i = 1,nlon
                 ind = 1+int((qmax-pv2(i,j))/dq)
-                da = a*a*dp*dp*cos(phi0)
+                da = a*a*dp*dl*cos(phi0)
                 an(ind) = an(ind) + da
                 cn(ind) = cn(ind) + da*pv2(i,j)
             enddo
