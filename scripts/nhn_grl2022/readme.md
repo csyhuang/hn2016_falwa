@@ -46,7 +46,7 @@ conda activate env_nhn_grl2022
 
 Remove any existing compiled fortran modules by:
 ```bash
-rm hn2016_falwa/*.so
+rm falwa/*.so
 ```
 
 Install hn2016_falwa by running in command line:

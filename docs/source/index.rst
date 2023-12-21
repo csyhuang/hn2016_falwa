@@ -1,14 +1,14 @@
-.. hn2016_falwa documentation master file, created by
+.. falwa documentation master file, created by
    sphinx-quickstart on Mon Aug 21 13:58:59 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
    
-hn2016_falwa: Finite-amplitude local wave activity
+falwa: Finite-amplitude local wave activity
 ==================================================
 
 .. image:: https://github.com/csyhuang/csyhuang.github.io/raw/master/assets/img/hn2016_falwa_diagram.png
 
-`hn2016_falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
+`falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
 extreme weather events. It implements the finite-amplitude local wave activity and flux diagnostic introduced in:
 
 - `Huang and Nakamura (2016, JAS) <https://journals.ametsoc.org/doi/abs/10.1175/JAS-D-15-0194.1>`_
@@ -26,15 +26,15 @@ Since the package is still being actively developed, please use the *develop* mo
 To install the package for the first time, clone the GitHub repo and install via `develop` mode:::
 
  git clone https://github.com/csyhuang/hn2016_falwa.git
- cd hn2016_falwa
+ cd falwa
  python setup.py develop
 
 
 To incorporate updates, pull the new version of the code from GitHub. Remove any existing f2py modules and recompile.::
 
- # Assume you are already in the hn2016_falwa/ repo
+ # Assume you are already in the falwa/ repo
  git pull
- rm hn2016_falwa/*.so
+ rm falwa/*.so
  python setup.py develop
  pytest tests/ # to check if the package can be run properly
 

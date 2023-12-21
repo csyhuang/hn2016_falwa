@@ -1,7 +1,8 @@
-## Python Library: hn2016_falwa (v0.7.2)
+## Python Library: falwa (v1.1.0)
 
 [![Build Status](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 
+**Important:** this python package has been renamed from `hn2016_falwa` to `falwa` since version v1.0.0.
 
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/hn2016_falwa_diagram.png)
 
@@ -29,7 +30,7 @@ To incorporate updates, pull the new version of the code from GitHub. Remove any
 ```
 # Assume you are already in the hn2016_falwa/ repo
 git pull
-rm hn2016_falwa/*.so
+rm falwa/*.so
 python setup.py develop
 pytest tests/ # to check if the package can be run properly
 ```

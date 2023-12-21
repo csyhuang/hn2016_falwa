@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = hn2016_falwa
+SPHINXPROJ    = falwa
 SOURCEDIR     = source
 BUILDDIR      = build
 

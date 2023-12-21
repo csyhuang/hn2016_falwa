@@ -6,10 +6,10 @@ try:
 except ImportError:
     pytest.skip("Optional package Xarray is not installed.", allow_module_level=True)
 
-from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
-from hn2016_falwa.xarrayinterface import QGDataset
-from hn2016_falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
-from hn2016_falwa.xarrayinterface import _get_name, _map_collect
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from falwa.xarrayinterface import QGDataset
+from falwa.xarrayinterface import _is_ascending, _is_descending, _is_equator
+from falwa.xarrayinterface import _get_name
 
 
 def _generate_test_dataset(**additional_coords):
@@ -185,19 +185,4 @@ def test_get_name():
     # Bad override fails
     with pytest.raises(KeyError):
         _get_name(ds, ["bar", "baz"], { "bar": "xyz", "baz": "foo" })
-
-
-def test_map_collect():
-    out = _map_collect(
-        lambda x: (x, x*2, x**2), # function with 3 return values
-        [i * np.ones(3) for i in range(4)], # applied to 4 numpy arrays
-        ["foo", "bar", "baz"], # collect return values under these names
-        np.asarray # and convert each collected output to a numpy array
-    )
-    assert out["foo"].shape == (4, 3)
-    assert out["bar"].shape == (4, 3)
-    assert out["baz"].shape == (4, 3)
-    assert np.all(out["foo"] == [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]])
-    assert np.all(out["bar"] == [[0, 0, 0], [2, 2, 2], [4, 4, 4], [6, 6, 6]])
-    assert np.all(out["baz"] == [[0, 0, 0], [1, 1, 1], [4, 4, 4], [9, 9, 9]])
 

@@ -7,10 +7,7 @@ import pytest
 from math import pi
 import numpy as np
 import xarray as xr
-from hn2016_falwa.oopinterface import QGFieldNH18, QGFieldNHN22
-
-
-test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/data"
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 
 
 class ArrayValueCheckMismatchException(Exception):
@@ -22,7 +19,7 @@ class ArrayValueCheckMismatchException(Exception):
 
 
 @pytest.fixture(scope="module")
-def u_field():
+def u_field(test_data_dir):
     """
     Return u field arranged in ascending order in latitude and height from 2005-01-23 00:00
     """
@@ -31,7 +28,7 @@ def u_field():
 
 
 @pytest.fixture(scope="module")
-def v_field():
+def v_field(test_data_dir):
     """
     Return v field arranged in ascending order in latitude and height from 2005-01-23 00:00
     """
@@ -40,7 +37,7 @@ def v_field():
 
 
 @pytest.fixture(scope="module")
-def t_field():
+def t_field(test_data_dir):
     """
     Return t field arranged in ascending order in latitude and height from 2005-01-23 00:00
     """
@@ -49,12 +46,12 @@ def t_field():
 
 
 @pytest.fixture(scope="function")
-def files_with_expected_values_nh18():
+def files_with_expected_values_nh18(test_data_dir):
     return xr.open_dataset(f"{test_data_dir}/expected_values_nh18.nc")
 
 
 @pytest.fixture(scope="function")
-def files_with_expected_values_nhn22():
+def files_with_expected_values_nhn22(test_data_dir):
     return xr.open_dataset(f"{test_data_dir}/expected_values_nhn22.nc")
 
 
@@ -180,3 +177,70 @@ def test_expected_value_check_nhn22(u_field, v_field, t_field, files_with_expect
     except:
         ArrayValueCheckMismatchException()
 
+
+def test_offgrid_data_input(offgrid_input_data):
+    qgfield = QGFieldNH18(
+        offgrid_input_data.longitude.data, offgrid_input_data.latitude.data, offgrid_input_data.level.data,
+        offgrid_input_data.u.data, offgrid_input_data.v.data, offgrid_input_data.t.data,
+        northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes()
+    assert np.isnan(qgfield.qref).sum() == 0
+    assert np.isnan(qgfield.uref).sum() == 0
+    assert np.isnan(qgfield.ptref).sum() == 0
+    assert np.isnan(qgfield.lwa).sum() == 0
+    assert qgfield.interpolated_u.shape == (49, 192, 288)
+    assert qgfield.qref.shape == (49, 192)
+    assert qgfield.uref.shape == (49, 192)
+    assert qgfield.lwa.shape == (49, 192, 288)
+    assert qgfield.convergence_zonal_advective_flux.shape == (192, 288)
+
+
+def test_offgrid_data_input_xarrayinterface(offgrid_input_data):
+    from falwa.xarrayinterface import QGDataset
+    qgdataset = QGDataset(
+        offgrid_input_data)
+    qgdataset.interpolate_fields()
+    qgdataset.compute_reference_states()
+    qgdataset.compute_lwa_and_barotropic_fluxes()
+    assert np.isnan(qgdataset.qref).sum() == 0
+    assert np.isnan(qgdataset.uref).sum() == 0
+    assert np.isnan(qgdataset.ptref).sum() == 0
+    assert np.isnan(qgdataset.lwa).sum() == 0
+    assert qgdataset.interpolated_u.shape == (49, 192, 288)
+    assert qgdataset.qref.shape == (49, 192)
+    assert qgdataset.uref.shape == (49, 192)
+    assert qgdataset.lwa.shape == (49, 192, 288)
+    assert qgdataset.convergence_zonal_advective_flux.shape == (192, 288)
+
+
+@pytest.fixture(scope="module")
+def offgrid_input_data(test_data_dir):
+    """
+    Return dataset with latitude grids not including equator.
+    """
+    xlon = np.arange(0, 360, 1.25)
+    ylat = np.linspace(-90, 90, 192, endpoint=True)
+    plev = [
+        1000, 975, 950, 925, 900, 875, 850, 825, 800, 775,
+        750, 700, 650, 600, 550, 500, 450, 400, 350, 300, 250,
+        225, 200, 175, 150, 125, 100, 70, 50, 30, 20, 10,
+        7, 5, 3, 2, 1]
+
+    test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/data"
+    u_file = xr.open_dataset(f"{test_data_dir}/2005-01-23-0000-u.nc").interp(
+        {"longitude": xlon, "latitude": ylat, "level": plev}, method="linear", kwargs={"fill_value": "extrapolate"})
+    v_file = xr.open_dataset(f"{test_data_dir}/2005-01-23-0000-v.nc").interp(
+        {"longitude": xlon, "latitude": ylat, "level": plev}, method="linear", kwargs={"fill_value": "extrapolate"})
+    t_file = xr.open_dataset(f"{test_data_dir}/2005-01-23-0000-t.nc").interp(
+        {"longitude": xlon, "latitude": ylat, "level": plev}, method="linear", kwargs={"fill_value": "extrapolate"})
+    ds = xr.Dataset({
+        "u": (("level", "latitude", "longitude"), u_file.u.data),
+        "v": (("level", "latitude", "longitude"), v_file.v.data),
+        "t": (("level", "latitude", "longitude"), t_file.t.data)},
+        coords={
+            "level": plev,
+            "latitude": ylat,
+            "longitude": xlon})
+    return ds

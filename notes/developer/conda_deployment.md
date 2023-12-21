@@ -30,7 +30,7 @@ is changed to (the version numbers below come from [MDTF base environment](https
 setup(
     ...
     python_requires='>=3',
-    packages=['hn2016_falwa', 'tests', 'hn2016_falwa.legacy'],
+    packages=['falwa', 'tests', 'falwa.legacy'],
     setup_requires=['numpy==1.22.3'],
     install_requires=['numpy==1.22.3', 'scipy==1.9', 'xarray==2023.2.0'],
     ...
@@ -55,12 +55,12 @@ conda build recipe/
 
 To convert the package to format suitable for all platforms:
 ```bash
-conda convert -f --platform all $HOME/miniconda3/envs/test_env/conda-bld/linux-64/hn2016_falwa-0.7.0-py310_0.tar.bz2 -o outputdir/
+conda convert -f --platform all $HOME/miniconda3/envs/test_env/conda-bld/linux-64/falwa-0.7.0-py310_0.tar.bz2 -o outputdir/
 ```
 You can then find all the distributions in the directory `outputdir/`.
 
 To upload the packages, login with `anaconda login`. Then, do: 
 
 ```bash
-anaconda upload osx-64/hn2016_falwa-0.7.0-py310_0.tar.bz2
+anaconda upload osx-64/falwa-0.7.0-py310_0.tar.bz2
 ```

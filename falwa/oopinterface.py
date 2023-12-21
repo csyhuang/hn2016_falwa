@@ -11,13 +11,13 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.linalg.lapack import dgetrf, dgetri
 
-from hn2016_falwa import utilities
-from hn2016_falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
-from hn2016_falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
+from falwa import utilities
+from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
+from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from hn2016_falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+from falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
@@ -120,6 +120,8 @@ class QGFieldBase(ABC):
             t_field = t_field.data
 
         # === Check if ylat is in ascending order and include the equator ===
+        self._ylat = None
+        self._clat = None
         self._check_and_flip_ylat(ylat)
 
         # === Check the validity of plev ===
@@ -139,23 +141,22 @@ class QGFieldBase(ABC):
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
-            interp_u = interp1d(self.ylat_no_equator, u_field, axis=1, fill_value="extrapolate")
-            interp_v = interp1d(self.ylat_no_equator, v_field, axis=1, fill_value="extrapolate")
-            interp_t = interp1d(self.ylat_no_equator, t_field, axis=1, fill_value="extrapolate")
-            self.u_field = interp_u(self.ylat)
-            self.v_field = interp_v(self.ylat)
-            self.t_field = interp_t(self.ylat)
+            interp_u = interp1d(self._input_ylat, u_field, axis=1, fill_value="extrapolate")
+            interp_v = interp1d(self._input_ylat, v_field, axis=1, fill_value="extrapolate")
+            interp_t = interp1d(self._input_ylat, t_field, axis=1, fill_value="extrapolate")
+            self.u_field = interp_u(self._ylat)
+            self.v_field = interp_v(self._ylat)
+            self.t_field = interp_t(self._ylat)
         else:
             self.u_field = u_field
             self.v_field = v_field
             self.t_field = t_field
+        self._nlat_analysis = self._ylat.size  # This is the number of latitude grid point used in analysis
 
         # === Coordinate-related ===
-        self.dphi = np.deg2rad(180./(self.nlat-1))
+        self.dphi = np.deg2rad(180./(self._nlat_analysis-1))
         self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
-        self.slat = np.sin(np.deg2rad(ylat))  # sin latitude
-        self.clat = np.cos(np.deg2rad(ylat))  # sin latitude
-        self.npart = npart if npart is not None else self.nlat
+        self.npart = npart if npart is not None else self._nlat_analysis
         self.kmax = kmax
         self.height = np.array([i * dz for i in range(kmax)])
 
@@ -178,8 +179,8 @@ class QGFieldBase(ABC):
 
         # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
         self._interpolated_field_storage = InterpolatedFieldsStorage(
-            pydim=(self.kmax, self.nlat, self.nlon),
-            fdim=(self.nlon, self.nlat, self.kmax),
+            pydim=(self.kmax, self._nlat_analysis, self.nlon),
+            fdim=(self.nlon, self._nlat_analysis, self.kmax),
             swapaxis_1=0,
             swapaxis_2=2,
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
@@ -192,7 +193,7 @@ class QGFieldBase(ABC):
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # Reference states
-        lat_dim = self.nlat // 2 + 1 if self.northern_hemisphere_results_only else self.nlat
+        lat_dim = self.equator_idx if self.northern_hemisphere_results_only else self._nlat_analysis
         self._reference_states_storage = ReferenceStatesStorage(
             pydim=(self.kmax, lat_dim),
             fdim=(lat_dim, self.kmax),
@@ -223,14 +224,6 @@ class QGFieldBase(ABC):
             swapaxis_1=0,
             swapaxis_2=1,
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
-
-        # Temporary solution for GRL computation
-        self._ua1baro_nhem = None
-        self._ua2baro_nhem = None
-        self._ep1baro_nhem = None
-        self._ep2baro_nhem = None
-        self._ep3baro_nhem = None
-        self._ep4_nhem = None
 
     def _compute_prefactor(self):
         """
@@ -283,25 +276,32 @@ class QGFieldBase(ABC):
         # Check if ylat is in ascending order and include the equator
         if np.diff(ylat)[0] < 0:
             raise TypeError("ylat must be in ascending order")
+        # Save ylat input by user first
+        self._input_ylat = ylat
         if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
             # Even grid
             self.need_latitude_interpolation = True
-            self.ylat_no_equator = ylat
-            self.ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            self._ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
             self.equator_idx = \
-                np.argwhere(self.ylat == 0)[0][0] + 1
+                np.argwhere(self._ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
         elif sum(ylat == 0) == 1:
             # Odd grid
             self.need_latitude_interpolation = False
-            self.ylat_no_equator = None
-            self.ylat = ylat
+            self._ylat = ylat
             self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
         else:
             raise TypeError(
                 "There are more than 1 grid point with latitude 0."
             )
-        self.clat = np.abs(np.cos(np.deg2rad(self.ylat)))
+        self._clat = np.abs(np.cos(np.deg2rad(self._ylat)))
+
+    @property
+    def ylat(self):
+        """
+        This is ylat grid input by user.
+        """
+        return self._input_ylat
 
     @staticmethod
     def _check_dimension_of_fields(field, field_name, expected_dim):
@@ -319,7 +319,7 @@ class QGFieldBase(ABC):
         Private function to interpolate the results from odd grid to even grid.
         If the initial input to the QGField object is an odd grid, error will be raised.
         """
-        if self.ylat_no_equator is None:
+        if self._input_ylat is None:
             raise TypeError("No need for such interpolation.")
         else:
             return interp1d(
@@ -348,11 +348,11 @@ class QGFieldBase(ABC):
         if self.need_latitude_interpolation:
             if self.northern_hemisphere_results_only:
                 return self._interp_back(
-                    variable, self.ylat[-(self.nlat//2+1):],
-                    self.ylat_no_equator[-(self.nlat//2):],
+                    variable, self._ylat[-(self._nlat_analysis//2+1):],
+                    self._input_ylat[-(self.nlat // 2):],
                     which_axis=interp_axis)
             else:
-                return self._interp_back(variable, self.ylat, self.ylat_no_equator, which_axis=interp_axis)
+                return self._interp_back(variable, self._ylat, self._input_ylat, which_axis=interp_axis)
         else:
             return variable
 
@@ -579,7 +579,7 @@ class QGFieldBase(ABC):
         self._compute_intermediate_flux_terms()
 
         # *** Compute named fluxes in NH18 ***
-        clat = self.clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.clat
+        clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
         self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
             np.swapaxes(
                 (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
@@ -643,11 +643,24 @@ class QGFieldBase(ABC):
     @property
     def ylat_ref_states(self) -> np.array:
         """
-        Latitude dimension of reference state
+        This is the reference state grid output to user
         """
         if self.northern_hemisphere_results_only:
-            return self.ylat[-(self.nlat//2+1):]
-        return self.ylat
+            if self.need_latitude_interpolation:
+                return self._input_ylat[-(self.nlat // 2):]
+            else:
+                return self._input_ylat[-(self.nlat // 2 + 1):]
+        return self._input_ylat
+
+    @property
+    def ylat_ref_states_analysis(self) -> np.array:
+        """
+        Latitude dimension of reference state.
+        This is input to ReferenceStatesStorage.qref_correct_unit.
+        """
+        if self.northern_hemisphere_results_only:
+            return self._ylat[-(self._nlat_analysis//2+1):]
+        return self._ylat
 
     @property
     def northern_hemisphere_results_only(self) -> bool:
@@ -714,7 +727,7 @@ class QGFieldBase(ABC):
             raise ValueError('qref is not computed yet.')
         return self._return_interp_variables(
             variable=self._reference_states_storage.qref_correct_unit(
-                self.ylat_ref_states, self.omega), interp_axis=1)
+                self.ylat_ref_states_analysis, self.omega), interp_axis=1)
 
     @property
     def uref(self):
@@ -724,7 +737,8 @@ class QGFieldBase(ABC):
         if self._reference_states_storage.uref is None:
             raise ValueError('uref is not computed yet.')
         return self._return_interp_variables(
-            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.uref), interp_axis=1)
+            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.uref),
+            interp_axis=1)
 
     @property
     def ptref(self):
@@ -829,10 +843,7 @@ class QGFieldBase(ABC):
         """
         Return the latitude dimension of the input data.
         """
-        if self.need_latitude_interpolation:
-            return self.ylat_no_equator.size
-        else:
-            return self.nlat
+        return self._input_ylat.size
 
 
 class QGFieldNH18(QGFieldBase):
@@ -1050,7 +1061,7 @@ class QGFieldNHN22(QGFieldBase):
 
         # === Latitude domain boundary ===
         self._eq_boundary_index = eq_boundary_index
-        self._jd = self.nlat // 2 + self.nlat % 2 - self.eq_boundary_index
+        self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self.eq_boundary_index
 
     def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
         """
@@ -1065,7 +1076,7 @@ class QGFieldNHN22(QGFieldBase):
             self._domain_average_storage.static_stability_s, \
             self._domain_average_storage.tn0, self._domain_average_storage.ts0 = interpolate_fields_direct_inv(  # f2py module
                 self.kmax,
-                self.nlat // 2 + self.nlat % 2,
+                self.equator_idx,
                 np.swapaxes(self.u_field, 0, 2),
                 np.swapaxes(self.v_field, 0, 2),
                 np.swapaxes(self.t_field, 0, 2),
@@ -1128,8 +1139,8 @@ class QGFieldNHN22(QGFieldBase):
             vort=avort,
             pt=theta,
             tn0=t0,
-            nd=self.nlat//2 + self.nlat % 2,  # 91
-            nnd=self.nlat,                    # 181
+            nd=self._nlat_analysis//2 + self._nlat_analysis % 2,  # 91
+            nnd=self._nlat_analysis,                    # 181
             jb=self.eq_boundary_index,        # 5
             jd=self.jd,
             a=self.planet_radius,
@@ -1150,7 +1161,7 @@ class QGFieldNHN22(QGFieldBase):
         for k in range(self.kmax-1, 1, -1):  # Fortran indices
             ans = matrix_b4_inversion(
                 k=k,
-                jmax=self.nlat,
+                jmax=self._nlat_analysis,
                 jb=self.eq_boundary_index,  # 5
                 jd=self.jd,
                 z=np.arange(0, self.kmax*self.dz, self.dz),
@@ -1181,7 +1192,7 @@ class QGFieldNHN22(QGFieldBase):
                 tjk=tjk)
 
         tref, qref, uref = upward_sweep(
-            jmax=self.nlat,
+            jmax=self._nlat_analysis,
             jb=self.eq_boundary_index,
             sjk=sjk,
             tjk=tjk,
@@ -1226,7 +1237,7 @@ class QGFieldNHN22(QGFieldBase):
 
         # Turn qref back to correct unit
 
-        ylat_input = self.ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self.ylat
+        ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 

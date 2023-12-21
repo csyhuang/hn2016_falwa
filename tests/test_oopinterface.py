@@ -5,8 +5,8 @@ import numpy as np
 from math import pi
 from scipy.interpolate import interp1d
 
-from hn2016_falwa.constant import *
-from hn2016_falwa.oopinterface import QGFieldNH18
+from falwa.constant import *
+from falwa.oopinterface import QGFieldNH18
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 121
