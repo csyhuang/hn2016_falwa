@@ -5,8 +5,9 @@
 3. Set this repo as the `upstream` remote and pull the latest commits to your own repo. 
 4. Create a new branch from `master` and make changes there.
 5. Before submitting a pull request, make sure you:
-   1. no longer have new commits to push, and
-   2. have merged all commits from `master` of this repo onto your branch.
+   1. no longer have new commits to push,
+   2. run through all unit tests `pytest tests/` and make sure they all pass (if your changes cause some tests to fail, check and fix them), and
+   3. have merged all commits from `master` of this repo onto your branch.
 6. Please include the maintainers of this repo as reviewers of your pull request:
    - Clare Huang `@csyhuang`
    - Christopher Polster `@chpolste`
