@@ -7,15 +7,16 @@ from scipy.interpolate import interp1d
 import sys
 import os
 import time as ti
-import gridfill
+import gridfill  # Gridfill package by Andrew Dawson: https://github.com/ajdawson/gridfill
 sys.path.append('./module/')
 import logruns as logruns
 
 
-
 def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    #### copied from Clare's MDTF function
     """
+    This is a function copied from Clare's MDTF repo:
+        https://github.com/csyhuang/MDTF-diagnostics/blob/finite_amplitude_wave_diag/diagnostics/finite_amplitude_wave_diag/finite_amplitude_wave_diag_zonal_mean.py
+
     Fill missing values in lat-lon grids with values derived by solving Poisson's equation
     using a relaxation scheme.
 
