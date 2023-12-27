@@ -1,10 +1,10 @@
 SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits,&
-               a,om,dz,eps,h,r,cp,rjac,qref,u,tref,num_of_iter)
+               a,om,dz,eps,h,dphi,dlambda,r,cp,rjac,qref,u,tref,num_of_iter)
 
 
     integer, intent(in) :: nlon,nlat,kmax,jd,npart,maxits
     real, intent(in) :: pv(nlon,nlat,kmax),uu(nlon,nlat,kmax),pt(nlon,nlat,kmax),stat(kmax)
-    real, intent(in) :: a, om, dz,eps,h, r, cp, rjac
+    real, intent(in) :: a, om, dz,eps, h, dphi, dlambda, r, cp, rjac
     real, intent(out) :: qref(jd,kmax),u(jd,kmax),tref(jd,kmax)
     integer, intent(out) :: num_of_iter
 
@@ -20,10 +20,11 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     real :: cref(jd,kmax)
     real :: qbar(jd,kmax),ubar(jd,kmax),tbar(jd,kmax)
-    real :: pi, dp, zero, half, qtr, one, rkappa
+    real :: pi, zero, half, qtr, one, rkappa
 
     pi = acos(-1.)
-    dp = pi/float(nlat-1)
+    !dphi = pi/float(nlat-1)
+    !dlambda = 2*pi/float(nlon)
     zero = 0.
     half = 0.5
     qtr = 0.25
@@ -32,7 +33,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
 
     do nn = 1,jd
-        phi(nn) = dp*float(nn-1)
+        phi(nn) = dphi*float(nn-1)
         alat(nn) = 2.*pi*a*a*(1.-sin(phi(nn)))
     enddo
 
@@ -57,7 +58,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     tb(:) = 0.
     wt = 0.
     do j = jd,nlat
-        phi0 = dp*float(j-1)-0.5*pi
+        phi0 = dphi*float(j-1)-0.5*pi
         !tb(:) = tb(:)+cos(phi0)*tbar(j,:)
         tb(:) = tb(:)+cos(phi0)*tbar(j-(jd-1),:)
         wt = wt + cos(phi0)
@@ -80,10 +81,10 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             qn(nn) = qmax - dq*float(nn-1)
         enddo            
         do j = 1,nlat
-            phi0 = -0.5*pi+dp*float(j-1)
+            phi0 = -0.5*pi+dphi*float(j-1)
             do i = 1,nlon
                 ind = 1+int((qmax-pv2(i,j))/dq)
-                da = a*a*dp*dp*cos(phi0)
+                da = a*a*dphi*dlambda*cos(phi0)
                 an(ind) = an(ind) + da
                 cn(ind) = cn(ind) + da*pv2(i,j)
             enddo
@@ -108,9 +109,9 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
         cbar(jd,k) = 0.
         do j=(jd-1),1,-1
-            phi0 = dp*(float(j)-0.5)
+            phi0 = dphi*(float(j)-0.5)
             cbar(j,k) = cbar(j+1,k)+0.5*(qbar(j+1,k)+qbar(j,k)) &
-            *a*dp*2.*pi*a*cos(phi0)
+            *a*dphi*2.*pi*a*cos(phi0)
         enddo 
 
     enddo
@@ -119,7 +120,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     ! ***** normalize QGPV by the Coriolis parameter ****
 
     do j = 2,jd
-        phi0 = dp*float(j-1)
+        phi0 = dphi*float(j-1)
         cor = 2.*om*sin(phi0)
         qref(j,:) = qref(j,:)/cor
     enddo
@@ -132,9 +133,9 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     ! **** SOR (elliptic solver a la Numerical Recipes) ****
 
     do j = 2,(jd-1)
-        phi0 = float(j-1)*dp 
-        phip = (float(j)-0.5)*dp
-        phim = (float(j)-1.5)*dp
+        phi0 = float(j-1)*dphi
+        phip = (float(j)-0.5)*dphi
+        phim = (float(j)-1.5)*dphi
         cos0 = cos(phi0)
         cosp = cos(phip)
         cosm = cos(phim)
@@ -146,7 +147,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             zm = 0.5*(z(k-1)+z(k))
             statp = 0.5*(stat(k+1)+stat(k))
             statm = 0.5*(stat(k-1)+stat(k))
-            fact = 4.*om*om*h*a*a*sin0*dp*dp/(dz*dz*r*cos0)
+            fact = 4.*om*om*h*a*a*sin0*dphi*dphi/(dz*dz*r*cos0)
             amp = exp(-zp/h)*exp(rkappa*zp/h)/statp
             amp = amp*fact*exp(z(k)/h)
             amm = exp(-zm/h)*exp(rkappa*zm/h)/statm
@@ -156,7 +157,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             cjk(j,k) = amp
             djk(j,k) = amm
             ejk(j,k) = -ajk(j,k)-bjk(j,k)-cjk(j,k)-djk(j,k)
-            fjk(j,k) = -om*a*dp*(qref(j+1,k)-qref(j-1,k))
+            fjk(j,k) = -om*a*dphi*(qref(j+1,k)-qref(j-1,k))
         enddo
     enddo
 
@@ -184,9 +185,9 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
                 endif
             enddo
             u(j,1) = 0.
-            phi0 = dp*float(j-1)
+            phi0 = dphi*float(j-1)
             uz = dz*r*cos(phi0)*exp(-z(KMAX-1)*rkappa/h)
-            uz = uz*(tbar(j+1,KMAX-1)-tbar(j-1,KMAX-1))/(2.*om*sin(phi0)*dp*h*a)
+            uz = uz*(tbar(j+1,KMAX-1)-tbar(j-1,KMAX-1))/(2.*om*sin(phi0)*dphi*h*a)
             u(j,KMAX) = u(j,KMAX-2)-uz
         enddo
 
@@ -221,7 +222,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     num_of_iter = nnn
 
     do j = 2,(jd-1)
-        phi0 = dp*float(j-1)
+        phi0 = dphi*float(j-1)
         u(j,:) = u(j,:)/cos(phi0)
     enddo
     u(1,:) = ubar(1,:)
@@ -235,17 +236,17 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
         tref(1,k) = t00
         tref(2,k) = t00
         do j = 2,(jd-1)
-            phi0 = dp*float(j-1)
+            phi0 = dphi*float(j-1)
             cor = 2.*om*sin(phi0)  
             uz = (u(j,k+1)-u(j,k-1))/(2.*dz)
             ty = -cor*uz*a*h*exp(rkappa*zz/h)
             ty = ty/r
-            tref(j+1,k) = tref(j-1,k)+2.*ty*dp
+            tref(j+1,k) = tref(j-1,k)+2.*ty*dphi
         enddo
         tg(k) = 0.
         wt = 0.
         do j = 1,jd
-            phi0 = dp*float(j-1)
+            phi0 = dphi*float(j-1)
             tg(k) = tg(k)+cos(phi0)*tref(j,k)
             wt = wt + cos(phi0)
         enddo
