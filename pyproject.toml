@@ -7,7 +7,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hn2016_falwa"
+name = "falwa"
 authors = [
     { name="Clare S. Y. Huang", email="csyhuang@uchicago.edu" },
     { name="Christopher Polster", email="cpolster@uni-mainz.de" },
@@ -43,8 +43,8 @@ test = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["hn2016_falwa*"]
+include = ["falwa*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "hn2016_falwa.__version__"}
+version = {attr = "falwa.__version__"}
 
