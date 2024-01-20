@@ -154,8 +154,8 @@ class QGFieldBase(ABC):
         self._nlat_analysis = self._ylat.size  # This is the number of latitude grid point used in analysis
 
         # === Coordinate-related ===
-        self.dphi = np.deg2rad(180./(self._nlat_analysis-1))
-        self.dlambda = np.deg2rad(self.xlon[1] - self.xlon[0])
+        self.dphi = np.deg2rad(180./(self._nlat_analysis-1))     # F90 code: dphi = pi/float(nlat-1)
+        self.dlambda = np.deg2rad(360./self.nlon)                # F90 code: dlambda = 2*pi/float(nlon)
         self.npart = npart if npart is not None else self._nlat_analysis
         self.kmax = kmax
         self.height = np.array([i * dz for i in range(kmax)])
@@ -947,21 +947,23 @@ class QGFieldNH18(QGFieldBase):
             PTref(numpy.ndarray): Reference state of potential temperature of dimension [nlat, kmax]
         """
         return compute_reference_states(
-            qgpv,
-            u,
-            theta,
-            self._domain_average_storage.static_stability,
-            self.equator_idx,
-            self.npart,
-            self.maxit,
-            self.planet_radius,
-            self.omega,
-            self.dz,
-            self.tol,
-            self.scale_height,
-            self.dry_gas_constant,
-            self.cp,
-            self.rjac,
+            pv=qgpv,
+            uu=u,
+            pt=theta,
+            stat=self._domain_average_storage.static_stability,
+            jd=self.equator_idx,
+            npart=self.npart,
+            maxits=self.maxit,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            eps=self.tol,
+            h=self.scale_height,
+            dphi=self.dphi,
+            dlambda=self.dlambda,
+            r=self.dry_gas_constant,
+            cp=self.cp,
+            rjac=self.rjac,
         )
 
     def _compute_intermediate_flux_terms(self):
@@ -1147,6 +1149,8 @@ class QGFieldNHN22(QGFieldBase):
             omega=self.omega,
             dz=self.dz,
             h=self.scale_height,
+            dphi=self.dphi,
+            dlambda=self.dlambda,
             rr=self.dry_gas_constant,
             cp=self.cp)
 

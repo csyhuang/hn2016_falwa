@@ -1,13 +1,13 @@
 SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, nd, nnd, jb, jd, &
-        a, omega, dz, h, rr, cp, &
+        a, omega, dz, h, dphi, dlambda, rr, cp, &
         qref, ubar, tbar, fawa, ckref, tjk, sjk)
 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
 
-  INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
-  REAL, INTENT(in) :: a, omega, dz, h, rr, cp
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),tn0(kmax)
+  INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
+  REAL, INTENT(in) :: a, omega, dz, h, dphi, dlambda, rr, cp
   REAL, INTENT(OUT) :: qref(nd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
           tjk(jd-2,kmax-1),sjk(jd-2,jd-2,kmax-1)
 
@@ -26,11 +26,12 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   REAL :: qbar(nd,kmax)
 
   pi = acos(-1.)
-  dp = pi/float(jmax-1)
+  !dphi = pi/float(jmax-1)  !!!  This is dlat
+  !dlambda = 2*pi/float(imax)  !!!! pragallva- correction added on Dec 13, 2023. This is dlon
   rkappa = rr/cp
 
   do nn = 1,nd
-    phi(nn) = dp*float(nn-1)
+    phi(nn) = dphi*float(nn-1)
     alat(nn) = 2.*pi*a*a*(1.-sin(phi(nn)))
   enddo
 
@@ -69,10 +70,10 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       qn(nn) = qmax - dq*float(nn-1)
     enddo
     do j = 1,jmax
-      phi0 = -0.5*pi+dp*float(j-1)
+      phi0 = -0.5*pi+dphi*float(j-1)
       do i = 1,imax
         ind = 1+int((qmax-pv2(i,j))/dq)
-        da = a*a*dp*dp*cos(phi0)
+        da = a*a*dphi*dlambda*cos(phi0)
         an(ind) = an(ind) + da
         cn(ind) = cn(ind) + da*pv2(i,j)
       enddo
@@ -97,9 +98,9 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
 
     cbar(nd,k) = 0.
     do j=nd-1,1,-1
-      phi0 = dp*(float(j)-0.5)
+      phi0 = dphi*(float(j)-0.5)
       cbar(j,k) = cbar(j+1,k)+0.5*(qbar(j+1,k)+qbar(j,k)) &
-      *a*dp*2.*pi*a*cos(phi0)
+      *a*dphi*2.*pi*a*cos(phi0)
     enddo
 
     ! **** compute Kelvin's circulation based on absolute vorticity (for b.c.) ****
@@ -115,10 +116,10 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       qn(nn) = qmax - dq*float(nn-1)
     enddo
     do j = 1,jmax
-      phi0 = -0.5*pi+dp*float(j-1)
+      phi0 = -0.5*pi+dphi*float(j-1)
       do i = 1,imax
       ind = 1+int((qmax-vort2(i,j))/dq)
-      da = a*a*dp*dp*cos(phi0)
+      da = a*a*dphi*dlambda*cos(phi0)
       an(ind) = an(ind) + da
       cn(ind) = cn(ind) + da*vort2(i,j)
       enddo
@@ -143,7 +144,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   ! ***** normalize QGPV by sine (latitude)  ****
 
   do j = 2,nd
-    phi0 = dp*float(j-1)
+    phi0 = dphi*float(j-1)
     cor = sin(phi0)
     qref(j,:) = qref(j,:)/cor
   enddo
@@ -164,12 +165,12 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   sjk(:,:,:) = 0.
   do jj = jb+2,(nd-1)
     j = jj-jb
-    phi0 = float(jj-1)*dp
+    phi0 = float(jj-1)*dphi
     cos0 = cos(phi0)
     sin0 = sin(phi0)
     tjk(j-1,kmax-1) = -dz*rr*cos0*exp(-z(kmax-1)*rkappa/h)
     tjk(j-1,kmax-1) = tjk(j-1,kmax-1)*(tbar(j+1,kmax)-tbar(j-1,kmax))
-    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*omega*sin0*dp*h*a)
+    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*omega*sin0*dphi*h*a)
     sjk(j-1,j-1,kmax-1) = 1.
   enddo
 END
