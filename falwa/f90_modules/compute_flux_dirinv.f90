@@ -178,19 +178,17 @@ SUBROUTINE compute_flux_dirinv_nshem(pv,uu,vv,pt,tn0,qref,uref,tref,&
     ep2baro(:,:) = ep2baro(:,:)+ep2(:,:)*exp(-zk/h)*dc
     ep3baro(:,:) = ep3baro(:,:)+ep3(:,:)*exp(-zk/h)*dc
 
-    ! Bounds of y-indices in N/SHem
-    if (is_nhem) then  ! 5N and higher latitude
-      jstart = jb+1  ! 6
-      jend = nd
+    if (is_nhem) then
+      do j = jstart,jend
+        ubaro(:,j) = ubaro(:,j)+uu(:,nd-1+j,k)*exp(-zk/h)*dc
+        urefbaro(j) = urefbaro(j)+uref(j-jb,k)*exp(-zk/h)*dc
+      enddo
     else
-      jstart = 1
-      jend = nd-jb   ! nd - 5
+      do j = jstart,jend
+        ubaro(:,j) = ubaro(:,j)+uu(:,j,k)*exp(-zk/h)*dc
+        urefbaro(j) = urefbaro(j)+uref(j,k)*exp(-zk/h)*dc
+      enddo
     endif
-
-    do j = jstart,jend  ! ### yet to be multiplied by cosine
-      ubaro(:,j) = ubaro(:,j)+uu(:,j+nd-1,k)*exp(-zk/h)*dc
-      urefbaro(j) = urefbaro(j)+uref(j-jb,k)*exp(-zk/h)*dc
-    enddo
   enddo
 
 END SUBROUTINE
