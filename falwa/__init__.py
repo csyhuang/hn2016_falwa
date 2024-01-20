@@ -4,7 +4,7 @@ File name: __init__.py
 Author: Clare Huang, Christopher Polster
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 from .interpolate_fields import interpolate_fields
 from .interpolate_fields_direct_inv import interpolate_fields_direct_inv
 from .compute_qref_and_fawa_first import compute_qref_and_fawa_first
