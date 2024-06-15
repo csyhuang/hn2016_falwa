@@ -57,7 +57,7 @@ def vertical_interpolation_to_pressure(ds, variable, save_topography=False, logg
         start0 = ti.time()
         P_2levs = (ai[:, np.newaxis, np.newaxis] * (P0) + bi[:, np.newaxis, np.newaxis] * (PS[t, np.newaxis, :, :]))
         P = (P_2levs[1:] + P_2levs[:-1]) / 2  # P.shape = (32,)
-        old_lev = P / 100  ### converting from Pa to hPa old_lev.shape = (32, 192, 288)
+        old_lev = P / 100  # converting from Pa to hPa old_lev.shape = (32, 192, 288)
 
         # *** Original method: loop over lat-lon grid ***
         logging_method("Use original method")
@@ -172,7 +172,11 @@ if __name__ == "__main__":
     file       = "cesm_10tslices.nc"
     ds         = show_vars(file = file)
 
-    varsi            = ["U"] # [sys.argv[1]] ## ['V', 'U', 'T', 'Z3']
+    if len(sys.argv) > 1:
+        varsi = [sys.argv[1]]  # ['V', 'U', 'T', 'Z3']
+    else:
+        varsi = ["U"]
+
     save_topographys = [mapval[var] for var in varsi]  ## [True, False, False, False]
 
     new_lev    = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775,
@@ -222,7 +226,7 @@ if __name__ == "__main__":
         gc.collect()
     
     end = ti.time()
-    total_time_taken = (end-start)/(60)
+    total_time_taken = (end-start)/(60.)
     logging_object.write('Congratulations - You had a good day today !! %1.1f min'%(total_time_taken))
     
     
