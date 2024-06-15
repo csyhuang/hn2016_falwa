@@ -171,17 +171,17 @@ def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longit
 
     Parameters
     ----------
-        filepath : str
-            path to the netCDF file
-        variable_name : str
-            name of the variable to be plotted
-        latitude_name : str
-            name of latitudinal coordinates
-        longitude_name : str
-            name of latitudinal coordinates
-        tstep : int
-            index of timestep to be plotted
-        zonal_axis : int
+    filepath : str
+        path to the netCDF file
+    variable_name : str
+        name of the variable to be plotted
+    latitude_name : str
+        name of latitudinal coordinates
+    longitude_name : str
+        name of latitudinal coordinates
+    tstep : int
+        index of timestep to be plotted
+    zonal_axis : int
             axis of zonal dimension
     """
     file_handle = xr.open_dataset(filepath)

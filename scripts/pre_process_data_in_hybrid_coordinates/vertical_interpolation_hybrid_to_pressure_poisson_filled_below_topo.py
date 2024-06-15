@@ -1,41 +1,16 @@
 import numpy as np
 import xarray as xr
 from datetime import datetime
-import pylab as py
 import gc
 from scipy.interpolate import interp1d
 import sys
 import os
 import time as ti
-import gridfill  # Gridfill package by Andrew Dawson: https://github.com/ajdawson/gridfill
+
+from falwa.preprocessing import gridfill_each_level
+
 sys.path.append('./module/')
 import logruns as logruns
-
-
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    This is a function copied from Clare's MDTF repo:
-        https://github.com/csyhuang/MDTF-diagnostics/blob/finite_amplitude_wave_diag/diagnostics/finite_amplitude_wave_diag/finite_amplitude_wave_diag_zonal_mean.py
-
-    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
-    using a relaxation scheme.
-
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
-
-    Returns:
-        A 2D array of the same dimension with all nan filled.
-    """
-    if np.isnan(lat_lon_field).sum() == 0:
-        return lat_lon_field
-
-    lat_lon_filled, converged = gridfill.fill(
-        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.001,
-        cyclic=True, itermax=itermax, verbose=verbose)
-
-    return lat_lon_filled
 
 
 def gridfill_all_levels_each_time(new_variable_each_time, logging_object):
@@ -51,8 +26,7 @@ def gridfill_all_levels_each_time(new_variable_each_time, logging_object):
     time_taken = (end0-start0)  
                               
     return new_variable_each_time                      
-    
-                         
+
 
 def vertical_interpolation_to_pressure(ds, variable, save_topography=False, logging_object=None, \
                                        new_lev = np.array([200, 300]), var='U'):
@@ -168,18 +142,8 @@ if __name__ == "__main__":
     start = ti.time()
     
     current_datetime = datetime.now()
-    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")    
-    
-    logfilename    = formatted_datetime+'-'+os.path.basename(__file__).split('/')[-1].split('.py')[0]
-    logging_object = logruns.default_log(logfilename = logfilename,  log_directory = './logs/')
+    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
 
-    
-    file       = "NHISTfrc2_f09_tn14_20191025.cam.h3.1950-01-01-21600.nc"
-    ds         = show_vars(file = file)
-    
-    varsi            = [sys.argv[1]] ## ['V', 'U', 'T', 'Z3']
-    save_topographys = [mapval[var] for var in varsi]  ## [True, False, False, False]
-    
     new_lev    = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775, \
                             750, 725, 700, 650, 600, 550, 500, 450, 400, 350, \
                             300, 250, 225, 200, 175, 150, 125, 100, 70, 50, \

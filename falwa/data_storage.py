@@ -1,7 +1,7 @@
 """
 ------------------------------------------
 File name: data_storage.py
-Author: Clare Huang
+Author: Clare Huang, Christopher Polster
 """
 from typing import Tuple, Optional, Union, List, NamedTuple
 import numpy as np
