@@ -1,7 +1,7 @@
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, UnivariateSpline
 from falwa.oopinterface import QGFieldNHN22, QGFieldNHN22
 from falwa.constant import *
 
@@ -39,8 +39,9 @@ dz = 1000.
 kmax = 49
 height = np.arange(0, kmax) * dz
 new_plev = P_GROUND * np.exp(-height / SCALE_HEIGHT)
-new = uvt_qrl_data.interp(coords={"level": new_plev})
 tstep = 0
+original_temp = uvt_qrl_data.variables["T"].isel(time=tstep).values
+new = uvt_qrl_data.interp(coords={"level": new_plev})
 interp_to_regular_zgrid = lambda field_to_interp: interp1d(
     zlev, field_to_interp, axis=0, kind='linear', fill_value="extrapolate")(height)
 uu = new.variables["U"].isel(time=tstep)
@@ -50,6 +51,35 @@ qrl = new.variables['QRL'].isel(time=tstep)
 qq = qdot_data.variables["Q"].isel(time=tstep)
 xlon = new.coords['lon'].values
 ylat = new.coords['lat'].values
+
+
+def calculate_static_stability(temperature, area, clat):
+    """
+        ! reference theta
+    do kk = 1,kmax
+        t0(kk) = 0.
+        csm = 0.
+        do j = 1,nlat
+            phi0 = -90.+float(j-1)*180./float(nlat-1)
+            phi0 = phi0*pi/180.
+            t0(kk) = t0(kk) + tzd(j,kk)*cos(phi0)
+            csm = csm + cos(phi0)
+        enddo
+        t0(kk) = t0(kk)/csm
+
+    Parameters
+    ----------
+    temperature
+    area
+
+    Returns
+    -------
+
+    """
+    csm = clat.sum()
+    t0 = np.mean(temperature * clat[np.newaxis, :, np.newaxis], axis=-1).sum(axis=-1) / csm  # t0.shape = temperature.shape[0]
+    return t0
+
 
 qgfield_object = QGFieldNHN22(
     xlon, ylat, new_plev, uu, vv, tt,
@@ -63,12 +93,6 @@ cal_qdot = np.zeros_like(qrl)
 # static_stability = qgfield_object.static_stability  # HN18
 # static_stability = 0.5*(qgfield_object.static_stability[0] + qgfield_object.static_stability[1])  # NHN22 average of both hem
 static_stability = qgfield_object.static_stability[1]  # NHN22 NHem static stability
-cal_qdot[1:-1, :, :] = \
-    2. * EARTH_OMEGA * np.sin(np.deg2rad(ylat[np.newaxis, :, np.newaxis])) * np.exp(height[1:-1, np.newaxis, np.newaxis] / SCALE_HEIGHT) * \
-    (np.exp(-height[2:, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[2:, :, :]/static_stability[2:, np.newaxis, np.newaxis]
-     - np.exp(-height[:-2, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[:-2, :, :] / static_stability[:-2, np.newaxis, np.newaxis]) / (2.*dz)
-cal_qdot[0, :, :] = 2 * cal_qdot[1, :, :] - cal_qdot[2, :, :]
-cal_qdot[-1, :, :] = 2 * cal_qdot[-2, :, :] - cal_qdot[-3, :, :]
 
 qgfield_object2 = QGFieldNHN22(
     xlon, ylat, new_plev, uu, vv, tt,
@@ -78,24 +102,44 @@ qgfield_object2.interpolate_fields(return_named_tuple=False)
 qgfield_object2.compute_reference_states(return_named_tuple=False)
 qgfield_object2.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=cal_qdot)
 
-# *** Compare different layers ***
-f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
-from_qq = qgfield_object.ncforce_baro
-from_cal_qdot = qgfield_object2.ncforce_baro
-max_value = max([np.abs(from_qq).max(), np.abs(from_cal_qdot).max()])
-caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
-cx1 = ax1.contourf(xlon, ylat, from_cal_qdot, caxis, cmap='bwr')
-plt.colorbar(cx1, ax=ax1)
-ax1.set_title(f"from cal_qdot")
-cx2 = ax2.contourf(xlon, ylat, from_qq, caxis, cmap='bwr')
-plt.colorbar(cx2, ax=ax2)
-ax2.set_title(f"Sandro's cal from_qq")
-plt.tight_layout()
-plt.savefig(f"comparison_NHN22_integrated_ncforce.png")
-plt.show()
+# *** Compute static stability from original data ***
+original_theta = original_temp * np.exp(DRY_GAS_CONSTANT / CP * zlev[:, np.newaxis, np.newaxis] / SCALE_HEIGHT)
+t0_from_data = calculate_static_stability(original_theta, np.cos(np.deg2rad(ylat)), np.cos(np.deg2rad(ylat)))
+uni_spline = UnivariateSpline(x=zlev, y=t0_from_data)
+uni_spline_derivative = uni_spline.derivative()
+plt.plot(t0_from_data, zlev, "bx-"); plt.plot(qgfield_object2._domain_average_storage.tn0, height, "rx-"); plt.show()
+plt.plot(uni_spline_derivative(zlev), zlev, "b"); plt.plot(qgfield_object2.static_stability[1], height, "r"); plt.title('static stability');plt.show()
+recompute_static_stability = uni_spline_derivative(height)
+
+cal_qdot[1:-1, :, :] = \
+    2. * EARTH_OMEGA * np.sin(np.deg2rad(ylat[np.newaxis, :, np.newaxis])) \
+    * np.exp(height[1:-1, np.newaxis, np.newaxis] / SCALE_HEIGHT) * \
+    (np.exp(-height[2:, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[2:, :, :]/recompute_static_stability[2:, np.newaxis, np.newaxis]
+     - np.exp(-height[:-2, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[:-2, :, :] / recompute_static_stability[:-2, np.newaxis, np.newaxis]) / (2.*dz)
+cal_qdot[0, :, :] = 2 * cal_qdot[1, :, :] - cal_qdot[2, :, :]
+cal_qdot[-1, :, :] = 2 * cal_qdot[-2, :, :] - cal_qdot[-3, :, :]
 
 
-for k_level in [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45]:
+print("Pause")
+
+# # *** Compare different layers ***
+# f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
+# from_qq = qgfield_object.ncforce_baro
+# from_cal_qdot = qgfield_object2.ncforce_baro
+# max_value = max([np.abs(from_qq).max(), np.abs(from_cal_qdot).max()])
+# caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
+# cx1 = ax1.contourf(xlon, ylat, from_cal_qdot, caxis, cmap='bwr')
+# plt.colorbar(cx1, ax=ax1)
+# ax1.set_title(f"from cal_qdot")
+# cx2 = ax2.contourf(xlon, ylat, from_qq, caxis, cmap='bwr')
+# plt.colorbar(cx2, ax=ax2)
+# ax2.set_title(f"Sandro's cal from_qq")
+# plt.tight_layout()
+# plt.savefig(f"comparison_NHN22_integrated_ncforce.png")
+# plt.show()
+
+
+for k_level in [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40]:
     # *** Compare different layers ***
     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
     max_value = max([np.abs(qq[k_level, :, :]).max(), np.abs(cal_qdot[k_level, :, :]).max()])
@@ -105,7 +149,7 @@ for k_level in [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45]:
     ax1.set_title(f"my cal at k={k_level} (NHN22)")
     cx2 = ax2.contourf(xlon, ylat, qq[k_level, :, :], caxis, cmap='bwr')
     plt.colorbar(cx2, ax=ax2)
-    ax2.set_title(f"Sandro's cal cal at k={k_level}")
+    ax2.set_title(f"Sandro's cal at k={k_level}")
     plt.tight_layout()
     plt.savefig(f"comparison_NHN22_at_k_{k_level}.png")
     plt.show()
