@@ -298,7 +298,7 @@ def test_skip_vertical_interpolation():
         kmax=kmax, maxit=100000, dz=1000., npart=None,
         tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
         omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True,
-        data_on_even_spaced_pseudoheight_grid=False)
+        data_on_evenly_spaced_pseudoheight_grid=False)
     qgfield.interpolate_fields(return_named_tuple=False)
 
     # *** Do interpolation outside QGField object ***
@@ -313,7 +313,7 @@ def test_skip_vertical_interpolation():
         kmax=kmax, maxit=100000, dz=1000., npart=None,
         tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
         omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True,
-        data_on_even_spaced_pseudoheight_grid=True)
+        data_on_evenly_spaced_pseudoheight_grid=True)
     qgfield_intact.interpolate_fields(return_named_tuple=False)
     assert np.allclose(qgfield_intact.height, qgfield.height, rtol=1e-03, atol=1e-05)
     assert np.allclose(qgfield_intact.interpolated_u, qgfield.interpolated_u, rtol=1e-03, atol=1e-05)

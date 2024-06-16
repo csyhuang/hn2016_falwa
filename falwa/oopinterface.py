@@ -82,7 +82,7 @@ class QGFieldBase(ABC):
        Default = 6.378e+6 (Earth's radius).
     northern_hemisphere_results_only : bool, optional
         whether only to return northern hemispheric results. Default = False
-    data_on_even_spaced_pseudoheight_grid : bool, optional
+    data_on_evenly_spaced_pseudoheight_grid : bool, optional
         whether the input data sits on an evenly spaced pseudoheight grid. Default = False
         If Ture, the method interpolate_fields (i.e. vertical interpolation) would not do vertical interpolation,
         but only calculate potential temperature, QGPV and static stability. New in version 1.3.
@@ -91,7 +91,7 @@ class QGFieldBase(ABC):
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False,
-                 data_on_even_spaced_pseudoheight_grid=False):
+                 data_on_evenly_spaced_pseudoheight_grid=False):
 
         """
         Create a QGField object.
@@ -123,8 +123,8 @@ class QGFieldBase(ABC):
         self._check_dimension_of_fields(field=t_field, field_name='t_field', expected_dim=expected_dimension)
 
         # === Variables related to the Vertical grid ===
-        self._data_on_even_spaced_pseudoheight_grid = data_on_even_spaced_pseudoheight_grid
-        if self._data_on_even_spaced_pseudoheight_grid:
+        self._data_on_evenly_spaced_pseudoheight_grid = data_on_evenly_spaced_pseudoheight_grid
+        if self._data_on_evenly_spaced_pseudoheight_grid:
             self.plev = plev
             self.kmax = plev.size
             self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
@@ -440,7 +440,7 @@ class QGFieldBase(ABC):
 
         rkappa = self.dry_gas_constant / self.cp
         exp_factor = np.exp(rkappa * self.height / self.scale_height)
-        if self._data_on_even_spaced_pseudoheight_grid:
+        if self._data_on_evenly_spaced_pseudoheight_grid:
             print("No need to do interpolation. Directly initialize")
             interpolated_u = self.u_field
             interpolated_v = self.v_field
@@ -1094,7 +1094,7 @@ class QGFieldNH18(QGFieldBase):
                     self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_v[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    ncforce[:, ::-1, :],
+                    -ncforce[:, ::-1, :],
                     self._reference_states_storage.qref_shem[::-1, :],
                     self._reference_states_storage.uref_shem[::-1, :],
                     self._reference_states_storage.ptref_shem[::-1, :])
@@ -1145,9 +1145,11 @@ class QGFieldNHN22(QGFieldBase):
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
-                 northern_hemisphere_results_only=False, eq_boundary_index=5):
+                 northern_hemisphere_results_only=False, eq_boundary_index=5,
+                 data_on_evenly_spaced_pseudoheight_grid=False):
         super().__init__(xlon, ylat, plev, u_field, v_field, t_field, kmax, maxit, dz, npart, tol, rjac, scale_height,
-                         cp, dry_gas_constant, omega, planet_radius, northern_hemisphere_results_only)
+                         cp, dry_gas_constant, omega, planet_radius, northern_hemisphere_results_only,
+                         data_on_evenly_spaced_pseudoheight_grid)
 
         # === Latitude domain boundary ===
         self._eq_boundary_index = eq_boundary_index

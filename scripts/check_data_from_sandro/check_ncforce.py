@@ -1,0 +1,119 @@
+import xarray as xr
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+from falwa.oopinterface import QGFieldNHN22, QGFieldNHN22
+from falwa.constant import *
+
+data_path = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage/for_clare_ncforce_e3sm/"
+
+uvt_qrl_data = xr.open_mfdataset([
+    f"{data_path}u.1902.nc",
+    f"{data_path}v.1902.nc",
+    f"{data_path}t.1902.nc",
+    f"{data_path}qrl.1902.nc"])
+qdot_data = xr.open_dataset(
+    "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage/for_clare_ncforce_e3sm/qdot_qrl.1902.nc")
+
+"""
+Dimensions:  (time: 31, lon: 360, lat: 181, level: 37)
+Coordinates:
+  * time     (time) object 1902-01-01 09:00:00 ... 1902-01-31 09:00:00
+  * lon      (lon) float64 0.0 1.0 2.0 3.0 4.0 ... 355.0 356.0 357.0 358.0 359.0
+  * lat      (lat) float64 -90.0 -89.0 -88.0 -87.0 -86.0 ... 87.0 88.0 89.0 90.0
+  * level    (level) float32 1e+03 975.0 950.0 925.0 900.0 ... 5.0 3.0 2.0 1.0
+Data variables:
+    T        (time, level, lat, lon) float32 dask.array<chunksize=(31, 37, 181, 360), meta=np.ndarray>
+    U        (time, level, lat, lon) float32 dask.array<chunksize=(31, 37, 181, 360), meta=np.ndarray>
+    V        (time, level, lat, lon) float32 dask.array<chunksize=(31, 37, 181, 360), meta=np.ndarray>
+Attributes:
+    CDI:          Climate Data Interface version 1.9.10 (https://mpimet.mpg.d...
+    Conventions:  CF-1.6
+    history:      Sat Jun 08 16:28:57 2024: cdo selmon,1 ../../../../t/intp/r...
+    CDO:          Climate Data Operators version 1.9.10 (https://mpimet.mpg.d...
+"""
+
+plev = uvt_qrl_data.coords['level'].values
+zlev = -SCALE_HEIGHT * np.log(plev / P_GROUND)
+dz = 1000.
+kmax = 49
+height = np.arange(0, kmax) * dz
+new_plev = P_GROUND * np.exp(-height / SCALE_HEIGHT)
+new = uvt_qrl_data.interp(coords={"level": new_plev})
+tstep = 0
+interp_to_regular_zgrid = lambda field_to_interp: interp1d(
+    zlev, field_to_interp, axis=0, kind='linear', fill_value="extrapolate")(height)
+uu = new.variables["U"].isel(time=tstep)
+vv = new.variables["V"].isel(time=tstep)
+tt = new.variables["T"].isel(time=tstep)
+qrl = new.variables['QRL'].isel(time=tstep)
+qq = qdot_data.variables["Q"].isel(time=tstep)
+xlon = new.coords['lon'].values
+ylat = new.coords['lat'].values
+
+qgfield_object = QGFieldNHN22(
+    xlon, ylat, new_plev, uu, vv, tt,
+    northern_hemisphere_results_only=False,
+    data_on_evenly_spaced_pseudoheight_grid=True)
+equator_idx = qgfield_object.equator_idx
+qgfield_object.interpolate_fields(return_named_tuple=False)
+qgfield_object.compute_reference_states(return_named_tuple=False)
+qgfield_object.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=qq)
+cal_qdot = np.zeros_like(qrl)
+# static_stability = qgfield_object.static_stability  # HN18
+# static_stability = 0.5*(qgfield_object.static_stability[0] + qgfield_object.static_stability[1])  # NHN22 average of both hem
+static_stability = qgfield_object.static_stability[1]  # NHN22 NHem static stability
+cal_qdot[1:-1, :, :] = \
+    2. * EARTH_OMEGA * np.sin(np.deg2rad(ylat[np.newaxis, :, np.newaxis])) * np.exp(height[1:-1, np.newaxis, np.newaxis] / SCALE_HEIGHT) * \
+    (np.exp(-height[2:, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[2:, :, :]/static_stability[2:, np.newaxis, np.newaxis]
+     - np.exp(-height[:-2, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[:-2, :, :] / static_stability[:-2, np.newaxis, np.newaxis]) / (2.*dz)
+cal_qdot[0, :, :] = 2 * cal_qdot[1, :, :] - cal_qdot[2, :, :]
+cal_qdot[-1, :, :] = 2 * cal_qdot[-2, :, :] - cal_qdot[-3, :, :]
+
+qgfield_object2 = QGFieldNHN22(
+    xlon, ylat, new_plev, uu, vv, tt,
+    northern_hemisphere_results_only=False,
+    data_on_evenly_spaced_pseudoheight_grid=True)
+qgfield_object2.interpolate_fields(return_named_tuple=False)
+qgfield_object2.compute_reference_states(return_named_tuple=False)
+qgfield_object2.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=cal_qdot)
+
+# *** Compare different layers ***
+f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
+from_qq = qgfield_object.ncforce_baro
+from_cal_qdot = qgfield_object2.ncforce_baro
+max_value = max([np.abs(from_qq).max(), np.abs(from_cal_qdot).max()])
+caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
+cx1 = ax1.contourf(xlon, ylat, from_cal_qdot, caxis, cmap='bwr')
+plt.colorbar(cx1, ax=ax1)
+ax1.set_title(f"from cal_qdot")
+cx2 = ax2.contourf(xlon, ylat, from_qq, caxis, cmap='bwr')
+plt.colorbar(cx2, ax=ax2)
+ax2.set_title(f"Sandro's cal from_qq")
+plt.tight_layout()
+plt.savefig(f"comparison_NHN22_integrated_ncforce.png")
+plt.show()
+
+
+for k_level in [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45]:
+    # *** Compare different layers ***
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
+    max_value = max([np.abs(qq[k_level, :, :]).max(), np.abs(cal_qdot[k_level, :, :]).max()])
+    caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
+    cx1 = ax1.contourf(xlon, ylat, cal_qdot[k_level, :, :], caxis, cmap='bwr')
+    plt.colorbar(cx1, ax=ax1)
+    ax1.set_title(f"my cal at k={k_level} (NHN22)")
+    cx2 = ax2.contourf(xlon, ylat, qq[k_level, :, :], caxis, cmap='bwr')
+    plt.colorbar(cx2, ax=ax2)
+    ax2.set_title(f"Sandro's cal cal at k={k_level}")
+    plt.tight_layout()
+    plt.savefig(f"comparison_NHN22_at_k_{k_level}.png")
+    plt.show()
+
+print("Pause")
+
+
+
+
+
+
