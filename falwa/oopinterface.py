@@ -1154,7 +1154,6 @@ class QGFieldNHN22(QGFieldBase):
             self._domain_average_storage.static_stability_n, \
             self._domain_average_storage.static_stability_s, \
             self._domain_average_storage.tn0, self._domain_average_storage.ts0 = compute_qgpv_direct_inv(  # f2py module
-                self.kmax,
                 self.equator_idx,
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
