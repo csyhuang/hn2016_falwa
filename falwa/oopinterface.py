@@ -17,7 +17,7 @@ from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, 
     LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
@@ -41,52 +41,57 @@ class QGFieldBase(ABC):
     Parameters
     ----------
     xlon : numpy.array
-           Array of evenly-spaced longitude (in degree) of size nlon.
+       Array of evenly-spaced longitude (in degree) of size nlon.
     ylat : numpy.array
-           Array of evenly-spaced latitude (in degree) of size nlat.
-           If it is a masked array, the value ylat.data will be used.
+       Array of evenly-spaced latitude (in degree) of size nlat.
+       If it is a masked array, the value ylat.data will be used.
     plev : numpy.
-           Array of pressure level (in hPa) of size nlev.
+       Array of pressure level (in hPa) of size nlev.
     u_field : numpy.ndarray
-           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value u_field.data will be used.
+       Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value u_field.data will be used.
     v_field : numpy.ndarray
-           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value v_field.data will be used.
+       Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value v_field.data will be used.
     t_field : numpy.ndarray
-           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value t_field.data will be used.
+       Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value t_field.data will be used.
     kmax : int, optional
-           Dimension of uniform pseudoheight grids used for interpolation.
+       Dimension of uniform pseudoheight grids used for interpolation.
     maxit : int, optional
-           Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
+       Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
     dz : float, optional
-           Size of uniform pseudoheight grids (in meters).
+       Size of uniform pseudoheight grids (in meters).
     npart : int, optional
-           Number of partitions used to compute equivalent latitude.
-           If not initialized, it will be set to nlat.
+       Number of partitions used to compute equivalent latitude.
+       If not initialized, it will be set to nlat.
     tol : float, optional
-           Tolerance that defines the convergence of solution in SOR solver.
+       Tolerance that defines the convergence of solution in SOR solver.
     rjac : float, optional
-           Spectral radius of the Jacobi iteration in the SOR solver.
+       Spectral radius of the Jacobi iteration in the SOR solver.
     scale_height : float, optional
-           Scale height of the atmosphere in meters. Default = 7000.
+       Scale height of the atmosphere in meters. Default = 7000.
     cp : float, optional
-           Heat capacity of dry air in J/kg-K. Default = 1004.
+       Heat capacity of dry air in J/kg-K. Default = 1004.
     dry_gas_constant : float, optional
-           Gas constant for dry air in J/kg-K. Default = 287.
+       Gas constant for dry air in J/kg-K. Default = 287.
     omega : float, optional
-           Rotation rate of the earth in 1/s. Default = 7.29e-5.
+       Rotation rate of the earth in 1/s. Default = 7.29e-5.
     planet_radius : float, optional
-           Radius of the planet in meters.
-           Default = 6.378e+6 (Earth's radius).
+       Radius of the planet in meters.
+       Default = 6.378e+6 (Earth's radius).
     northern_hemisphere_results_only : bool, optional
-           whether only to return northern hemispheric results. Default = False
+        whether only to return northern hemispheric results. Default = False
+    data_on_even_spaced_pseudoheight_grid : bool, optional
+        whether the input data sits on an evenly spaced pseudoheight grid. Default = False
+        If Ture, the method interpolate_fields (i.e. vertical interpolation) would not do vertical interpolation,
+        but only calculate potential temperature, QGPV and static stability. New in version 1.3.
     """
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False):
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False,
+                 data_on_even_spaced_pseudoheight_grid=False):
 
         """
         Create a QGField object.
@@ -95,37 +100,15 @@ class QGFieldBase(ABC):
         """
 
         # === Check whether the input field is masked array. If so, turn them to normal array ===
-        if np.ma.is_masked(ylat) or isinstance(ylat, np.ma.core.MaskedArray):
-            warnings.warn(
-                'ylat is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=ylat.shape, num=ylat.mask.sum(), fill=ylat.fill_value))
-            ylat = ylat.data
-
-        if np.ma.is_masked(u_field) or isinstance(u_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                'u_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=u_field.shape, num=u_field.mask.sum(), fill=u_field.fill_value))
-            u_field = u_field.data
-
-        if np.ma.is_masked(v_field) or isinstance(v_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                'v_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=v_field.shape, num=v_field.mask.sum(), fill=v_field.fill_value))
-            v_field = v_field.data
-
-        if np.ma.is_masked(t_field) or isinstance(t_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                't_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=t_field.shape, num=t_field.mask.sum(), fill=t_field.fill_value))
-            t_field = t_field.data
+        ylat = self._convert_masked_data(ylat, "ylat")
+        u_field = self._convert_masked_data(u_field, "u_field")
+        v_field = self._convert_masked_data(v_field, "v_field")
+        t_field = self._convert_masked_data(t_field, "t_field")
 
         # === Check if ylat is in ascending order and include the equator ===
         self._ylat = None
         self._clat = None
         self._check_and_flip_ylat(ylat)
-
-        # === Check the validity of plev ===
-        self._check_valid_plev(plev, scale_height, kmax, dz)
 
         # === Initialize longitude grid ===
         self.xlon = xlon
@@ -138,6 +121,22 @@ class QGFieldBase(ABC):
         self._check_dimension_of_fields(field=u_field, field_name='u_field', expected_dim=expected_dimension)
         self._check_dimension_of_fields(field=v_field, field_name='v_field', expected_dim=expected_dimension)
         self._check_dimension_of_fields(field=t_field, field_name='t_field', expected_dim=expected_dimension)
+
+        # === Variables related to the Vertical grid ===
+        self._data_on_even_spaced_pseudoheight_grid = data_on_even_spaced_pseudoheight_grid
+        if self._data_on_even_spaced_pseudoheight_grid:
+            self.plev = plev
+            self.kmax = plev.size
+            self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
+            self.height = -scale_height * np.log(plev/P_GROUND)
+            self.dz = np.diff(self.height)[0]
+        else:
+            # === Check the validity of plev ===
+            self._check_valid_plev(plev, scale_height, kmax, dz)
+            self.kmax = kmax
+            self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
+            self.height = np.array([i * dz for i in range(self.kmax)])
+            self.dz = dz
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
@@ -157,15 +156,12 @@ class QGFieldBase(ABC):
         self.dphi = np.deg2rad(180./(self._nlat_analysis-1))     # F90 code: dphi = pi/float(nlat-1)
         self.dlambda = np.deg2rad(360./self.nlon)                # F90 code: dlambda = 2*pi/float(nlon)
         self.npart = npart if npart is not None else self._nlat_analysis
-        self.kmax = kmax
-        self.height = np.array([i * dz for i in range(kmax)])
 
         # === Moved here in v0.7.0 ===
         self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
         # === Other parameters ===
         self.maxit = maxit
-        self.dz = dz
         self.tol = tol
         self.rjac = rjac
 
@@ -176,7 +172,12 @@ class QGFieldBase(ABC):
         self.omega = omega
         self.planet_radius = planet_radius
         self._compute_prefactor()  # Compute normalization prefactor
+        self._initialize_storage()  # Create storage instances to store variables
 
+    def _initialize_storage(self):
+        """
+        Create storage instances to store output variables
+        """
         # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
         self._interpolated_field_storage = InterpolatedFieldsStorage(
             pydim=(self.kmax, self._nlat_analysis, self.nlon),
@@ -233,6 +234,15 @@ class QGFieldBase(ABC):
         TODO: evaluate numerical integration scheme used in the fortran module.
         """
         self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+
+    @staticmethod
+    def _convert_masked_data(variable: np.ndarray, varname: str):
+        if np.ma.is_masked(variable) or isinstance(variable, np.ma.core.MaskedArray):
+            warnings.warn(
+                '{var} is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(var=varname, dim=variable.shape, num=variable.mask.sum(), fill=variable.fill_value))
+            variable = variable.data
+        return variable
 
     def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
@@ -420,18 +430,40 @@ class QGFieldBase(ABC):
 
         """
 
+        rkappa = self.dry_gas_constant / self.cp
+        exp_factor = np.exp(rkappa * self.height / self.scale_height)
+        if self._data_on_even_spaced_pseudoheight_grid:
+            print("No need to do interpolation. Directly initialize")
+            interpolated_u = self.u_field
+            interpolated_v = self.v_field
+            interpolated_t = self.t_field * exp_factor[np.newaxis, np.newaxis, :]
+        else:
+            print("Do scipy interpolation")
+            interpolated_u = self._vertical_interpolation(self.u_field, kind="linear", axis=0)
+            interpolated_v = self._vertical_interpolation(self.v_field, kind="linear", axis=0)
+            interpolated_t = self._vertical_interpolation(self.t_field, kind="linear", axis=0)
+        self._interpolated_field_storage.interpolated_u = np.swapaxes(interpolated_u, 0, 2)
+        self._interpolated_field_storage.interpolated_v = np.swapaxes(interpolated_v, 0, 2)
+        self._interpolated_field_storage.interpolated_theta = \
+            np.swapaxes(interpolated_t, 0, 2) * exp_factor[np.newaxis, np.newaxis, :]
+
         # Return a named tuple
         Interpolated_fields_to_return = namedtuple(
             'Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
 
-        interpolated_fields_tuple = self._interpolate_fields(Interpolated_fields_to_return, return_named_tuple)
+        interpolated_fields_tuple = self._compute_qgpv(Interpolated_fields_to_return, return_named_tuple)
 
         # TODO: warn that for NHN22, static stability returned would be a tuple of ndarray
         if return_named_tuple:
             return interpolated_fields_tuple
 
+    def _vertical_interpolation(self, variable, kind, axis=0):
+        return interp1d(
+            self._plev_to_height, variable, axis=axis, bounds_error=False, kind=kind, fill_value='extrapolate')(
+            self.height)
+
     @abstractmethod
-    def _interpolate_fields(self, Interpolated_fields_to_return: NamedTuple, return_named_tuple: bool) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, Interpolated_fields_to_return: NamedTuple, return_named_tuple: bool) -> Optional[NamedTuple]:
         """
         The specific interpolation procedures w.r.t the particular procedures in the paper will be implemented here.
         """
@@ -899,20 +931,18 @@ class QGFieldNH18(QGFieldBase):
     :doc:`notebooks/demo_script_for_nh2018`
     """
 
-    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
         """
-        .. versionadded:: 0.7.0
+        .. versionadded:: 1.3.0
         """
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, \
             self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, \
-            self._domain_average_storage.static_stability = interpolate_fields(  # f2py module
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
+            self._domain_average_storage.static_stability = compute_qgpv(  # f2py module
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
                 self.plev,
+                self.zlev,
                 self.height,
                 self.planet_radius,
                 self.omega,
@@ -1115,24 +1145,23 @@ class QGFieldNHN22(QGFieldBase):
         self._eq_boundary_index = eq_boundary_index
         self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self.eq_boundary_index
 
-    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
         """
-        .. versionadded:: 0.7.0
+        .. versionadded:: 1.3.0
         """
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, \
             self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, \
             self._domain_average_storage.static_stability_n, \
             self._domain_average_storage.static_stability_s, \
-            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = interpolate_fields_direct_inv(  # f2py module
+            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = compute_qgpv_direct_inv(  # f2py module
                 self.kmax,
                 self.equator_idx,
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
                 self.plev,
+                self.zlev,
+                self.height,
                 self.planet_radius,
                 self.omega,
                 self.dz,
