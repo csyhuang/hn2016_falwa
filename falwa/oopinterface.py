@@ -132,11 +132,19 @@ class QGFieldBase(ABC):
             self.dz = np.diff(self.height)[0]
         else:
             # === Check the validity of plev ===
-            self._check_valid_plev(plev, scale_height, kmax, dz)
+            self._check_valid_plev(plev, scale_height, kmax, dz)  # initialized self.plev and self._plev_to_height
             self.kmax = kmax
             self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
             self.height = np.array([i * dz for i in range(self.kmax)])
             self.dz = dz
+        print(
+            f"""
+            self.plev = {self.plev}
+            self.kmax = {self.kmax}
+            self._plev_to_height = {self._plev_to_height}
+            self.height = {self.height}
+            self.dz = {self.dz}
+            """)
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
@@ -265,7 +273,7 @@ class QGFieldBase(ABC):
         if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
         self.plev = plev
-        self.zlev = -scale_height * np.log(plev/P_GROUND)
+        self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
 
         # Check if kmax is valid given the max pseudoheight in the input data
         hmax = -scale_height*np.log(plev[-1]/P_GROUND)
@@ -436,7 +444,7 @@ class QGFieldBase(ABC):
             print("No need to do interpolation. Directly initialize")
             interpolated_u = self.u_field
             interpolated_v = self.v_field
-            interpolated_t = self.t_field * exp_factor[np.newaxis, np.newaxis, :]
+            interpolated_t = self.t_field
         else:
             print("Do scipy interpolation")
             interpolated_u = self._vertical_interpolation(self.u_field, kind="linear", axis=0)
@@ -942,7 +950,7 @@ class QGFieldNH18(QGFieldBase):
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
                 self.plev,
-                self.zlev,
+                self._plev_to_height,
                 self.height,
                 self.planet_radius,
                 self.omega,
@@ -1159,7 +1167,7 @@ class QGFieldNHN22(QGFieldBase):
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
                 self.plev,
-                self.zlev,
+                self._plev_to_height,
                 self.height,
                 self.planet_radius,
                 self.omega,

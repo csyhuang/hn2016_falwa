@@ -273,3 +273,49 @@ def test_interpolate_fields_even_grids():
     assert 0 == np.isnan(qgpv).sum()
     assert 0 == (qgpv == float('Inf')).sum()
 
+
+def test_skip_vertical_interpolation():
+    """
+    To test whether the new features of even-to-odd grid interpolation works well.
+
+    .. versionadded:: 1.3
+
+    """
+    from scipy.interpolate import interp1d
+
+    zlev = -SCALE_HEIGHT * np.log(plev / P_GROUND)
+    height = np.arange(0, kmax) * 1000.
+    new_plev = P_GROUND * np.exp(-height/SCALE_HEIGHT)
+    interp_to_regular_zgrid = lambda field_to_interp: interp1d(
+        zlev, field_to_interp, axis=0, kind='linear', fill_value="extrapolate")(height)
+
+    # *** Do interpolation within QGField object ***
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=np.ma.masked_equal(ylat, 0.0), plev=plev,
+        u_field=np.ma.masked_equal(u_field, 0.0),
+        v_field=np.ma.masked_equal(v_field, 0.0),
+        t_field=np.ma.masked_equal(t_field, 0.0),
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
+        omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True,
+        data_on_even_spaced_pseudoheight_grid=False)
+    qgfield.interpolate_fields(return_named_tuple=False)
+
+    # *** Do interpolation outside QGField object ***
+    interp_u_field = interp_to_regular_zgrid(u_field)
+    interp_v_field = interp_to_regular_zgrid(v_field)
+    interp_t_field = interp_to_regular_zgrid(t_field)
+    qgfield_intact = QGFieldNH18(
+        xlon=xlon, ylat=np.ma.masked_equal(ylat, 0.0), plev=new_plev,
+        u_field=np.ma.masked_equal(interp_u_field, 0.0),
+        v_field=np.ma.masked_equal(interp_v_field, 0.0),
+        t_field=np.ma.masked_equal(interp_t_field, 0.0),
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
+        omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True,
+        data_on_even_spaced_pseudoheight_grid=True)
+    qgfield_intact.interpolate_fields(return_named_tuple=False)
+    assert np.allclose(qgfield_intact.height, qgfield.height, rtol=1e-03, atol=1e-05)
+    assert np.allclose(qgfield_intact.interpolated_u, qgfield.interpolated_u, rtol=1e-03, atol=1e-05)
+    assert np.allclose(qgfield_intact.interpolated_v, qgfield.interpolated_v, rtol=1e-03, atol=1e-05)
+    assert np.allclose(qgfield_intact.interpolated_theta, qgfield.interpolated_theta, rtol=1e-03, atol=1e-05)
