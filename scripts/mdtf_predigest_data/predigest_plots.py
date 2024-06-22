@@ -97,6 +97,6 @@ if __name__ == "__main__":
         uref[tstep, :, :] = qgfield.uref
         ubar[tstep, :, :] = qgfield.interpolated_u.mean(axis=-1)
 
-        print(f"{datetime.datetime.now()}: Finished output for tsteps = {tstep}/{total_tsteps}")
+        print(f"{datetime.datetime.now()}: Finished output to {output_filename}\ntsteps = {tstep}/{total_tsteps}")
     output_file.close()
     print(f"Close output file {output_filename}")
