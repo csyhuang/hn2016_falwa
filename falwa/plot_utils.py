@@ -229,7 +229,7 @@ class LatLonMapPlotter(object):
             self._xgrid, self._ygrid,
             variable,
             num_level,
-            cmap=cmap, transform_first=True)
+            cmap=cmap, transform=ccrs.PlateCarree(), transform_first=True)
         ax.scatter(self._xgrid[self._xland], self._ygrid[self._yland], s=1, c='gray')
         if self._exclude_equator:
             ax.axhline(y=0, c='w', lw=self._white_space_width)
