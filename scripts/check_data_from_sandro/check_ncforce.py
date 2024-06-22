@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
 from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from cartopy.crs import PlateCarree
+from cartopy.mpl.ticker import LatitudeFormatter, LongitudeFormatter
+from cartopy.util import add_cyclic_point
 from falwa.constant import *
 
 data_path = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage/for_clare_ncforce_e3sm/"
@@ -82,6 +85,34 @@ def calculate_static_stability(temperature, clat):
     return t0
 
 
+def plot_two_graphs(cal_qdot_2d, int_qdot):
+    # *** Plot on map distribution ***
+    projection = PlateCarree(central_longitude=180.)
+    transform = PlateCarree()
+    fig, axs = plt.subplots(2, 1, figsize=(12, 6), subplot_kw={"projection": projection})
+
+    axs[0].set_title(f"Qdot_QRL at lowest level")
+    QGPV_plot, lons = add_cyclic_point(cal_qdot_2d, xlon)
+    cs = axs[0].contourf(lons, ylat, QGPV_plot, 21, transform=transform, cmap="turbo")
+    cb = fig.colorbar(cs, ax=axs[0])
+
+    axs[1].set_title(f"Vertically averaged Qdot")
+    LWA_plot, lons = add_cyclic_point(int_qdot, xlon)
+    cs = axs[1].contourf(lons, ylat, LWA_plot, 21, transform=transform, cmap="turbo")
+    cb = fig.colorbar(cs, ax=axs[1])
+
+    for ax in axs:
+        ax.coastlines()
+        ax.set_xticks([0, 60, 120, 180, 240, 300], crs=transform)
+        ax.set_yticks([30, 40, 50, 60, 70, 80], crs=transform)
+        ax.xaxis.set_major_formatter(LongitudeFormatter(number_format='.0f'))
+        ax.yaxis.set_major_formatter(LatitudeFormatter(number_format='.0f'))
+        ax.gridlines()
+        ax.set_extent([0., 360., 20., 81.], crs=transform)
+        ax.set_aspect(2.2)
+    plt.show()
+
+
 qgfield_object = QGFieldNHN22(
     xlon, ylat, new_plev, uu, vv, tt,
     northern_hemisphere_results_only=False,
@@ -101,7 +132,7 @@ qgfield_object2 = QGFieldNHN22(
     data_on_evenly_spaced_pseudoheight_grid=True)
 qgfield_object2.interpolate_fields(return_named_tuple=False)
 qgfield_object2.compute_reference_states(return_named_tuple=False)
-qgfield_object2.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=cal_qdot)
+
 
 # *** Compute static stability from original data ***
 original_theta = original_temp * np.exp(DRY_GAS_CONSTANT / CP * zlev[:, np.newaxis, np.newaxis] / SCALE_HEIGHT)
@@ -119,8 +150,9 @@ cal_qdot[1:-1, :, :] = \
      - np.exp(-height[:-2, np.newaxis, np.newaxis] / SCALE_HEIGHT) * qrl[:-2, :, :] / recompute_static_stability[:-2, np.newaxis, np.newaxis]) / (2.*dz)
 cal_qdot[0, :, :] = 2 * cal_qdot[1, :, :] - cal_qdot[2, :, :]
 cal_qdot[-1, :, :] = 2 * cal_qdot[-2, :, :] - cal_qdot[-3, :, :]
+qgfield_object2.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=cal_qdot)
 
-
+plot_two_graphs(cal_qdot[0, :, :], qgfield_object2.ncforce_baro)
 print("Pause")
 
 # # *** Compare different layers ***
@@ -140,20 +172,20 @@ print("Pause")
 # plt.show()
 
 
-for k_level in [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40]:
-    # *** Compare different layers ***
-    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
-    max_value = max([np.abs(qq[k_level, :, :]).max(), np.abs(cal_qdot[k_level, :, :]).max()])
-    caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
-    cx1 = ax1.contourf(xlon, ylat, cal_qdot[k_level, :, :], caxis, cmap='bwr')
-    plt.colorbar(cx1, ax=ax1)
-    ax1.set_title(f"my cal at k={k_level} (NHN22)")
-    cx2 = ax2.contourf(xlon, ylat, qq[k_level, :, :], caxis, cmap='bwr')
-    plt.colorbar(cx2, ax=ax2)
-    ax2.set_title(f"Sandro's cal at k={k_level}")
-    plt.tight_layout()
-    plt.savefig(f"comparison_NHN22_at_k_{k_level}.png")
-    plt.show()
+# for k_level in [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40]:
+#     # *** Compare different layers ***
+#     f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(8, 3))
+#     max_value = max([np.abs(qq[k_level, :, :]).max(), np.abs(cal_qdot[k_level, :, :]).max()])
+#     caxis = np.linspace(-max_value, max_value, 21, endpoint=True)
+#     cx1 = ax1.contourf(xlon, ylat, cal_qdot[k_level, :, :], caxis, cmap='bwr')
+#     plt.colorbar(cx1, ax=ax1)
+#     ax1.set_title(f"my cal at k={k_level} (NHN22)")
+#     cx2 = ax2.contourf(xlon, ylat, qq[k_level, :, :], caxis, cmap='bwr')
+#     plt.colorbar(cx2, ax=ax2)
+#     ax2.set_title(f"Sandro's cal at k={k_level}")
+#     plt.tight_layout()
+#     plt.savefig(f"comparison_NHN22_at_k_{k_level}.png")
+#     plt.show()
 
 print("Pause")
 
