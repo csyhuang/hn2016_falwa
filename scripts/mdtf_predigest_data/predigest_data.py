@@ -31,10 +31,10 @@ if __name__ == "__main__":
     u_path = f"{vol1_loc}{year}/{year}_{month:02d}_u.nc"
     v_path = f"{vol1_loc}{year}/{year}_{month:02d}_v.nc"
     t_path = f"{vol1_loc}{year}/{year}_{month:02d}_t.nc"
-
+    output_dir = "/mnt/winds/data/csyhuang/predigest/"
     # --- parameters ---
     kmax = 49
-    output_filename = f"output_{year}_{month:02d}.nc"
+    output_filename = f"{output_dir}output_{year}_{month:02d}.nc"
 
     # --- Load the zonal wind and QGPV at 240hPa --- #
     u_file = Dataset(u_path, mode='r')
