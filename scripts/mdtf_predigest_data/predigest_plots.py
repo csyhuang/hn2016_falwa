@@ -86,7 +86,7 @@ if __name__ == "__main__":
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
 
-        qgfield = QGFieldNH18(xlon, ylat, plev, uu, vv, tt, kmax=49, dz=1000)
+        qgfield = QGFieldNH18(xlon, ylat, plev, uu, vv, tt, kmax=kmax, dz=1000)
         qgfield.interpolate_fields()
         qgfield.compute_reference_states()
         qgfield.compute_lwa_and_barotropic_fluxes()
