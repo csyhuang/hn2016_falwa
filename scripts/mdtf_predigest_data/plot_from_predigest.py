@@ -42,7 +42,7 @@ for season, month_range in season_to_month_range.items():
     # *** Computation ***
     print("Start computing covariance.")
     lwa_u_covariance = calculate_covariance(df.variables['lwa_baro'].data, df.variables['u_baro'])
-    print(f"Finished computing covariance.\n{lwa_u_covariance}\nStart plotting.")
+    print(f"Finished computing covariance.\n{lwa_u_covariance}\n")
 
     # *** Output predigested data ***
     lwa_u_covariance_da = xr.DataArray(lwa_u_covariance, {"latitude": lat, "longitude": lon})
@@ -65,6 +65,7 @@ for season, month_range in season_to_month_range.items():
     print(f"Finished outputing predigest_dataset {predigest_dataset_filename}")
 
     # *** Classes for plotting ***
+    print("Start plotting.")
     lat_lon_map_plotter = LatLonMapPlotter(
         figsize=(6, 4), title_str=title_str,
         xgrid=lon, ygrid=lat, xland=[], yland=[],
@@ -98,8 +99,9 @@ for season, month_range in season_to_month_range.items():
         cmap="jet", var_title_str="COV(<LWA>, <U>)",
         save_path=f"{filename_prefix}_lwa_u_baro_cov.png",
         num_level=30)
+    print("Finished plotting. Close datafile.")
+    df.close()
 
-    print("Done with calculation!")
     end_time = datetime.datetime.now()
     print(f"Finished computing digested data for season {season}. Time now is {end_time}.")
     print(f"Time used = {end_time-start_time}")
