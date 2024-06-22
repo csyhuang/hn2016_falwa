@@ -263,9 +263,10 @@ class HeightLatPlotter(object):
         spec = gridspec.GridSpec(ncols=1, nrows=1)
         ax = fig.add_subplot(spec[0])
         # *** Zonal mean U ***
+        mesh_x, mesh_y = np.meshgrid(self._xgrid, self._ygrid)
         main_fig = ax.contourf(
-            self._xgrid,
-            self._ygrid,
+            mesh_x,
+            mesh_y,
             variable,
             num_level,
             cmap=cmap)
