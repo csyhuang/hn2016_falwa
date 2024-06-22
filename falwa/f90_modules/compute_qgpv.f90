@@ -1,16 +1,16 @@
-SUBROUTINE compute_qgpv(nlon, nlat, nlev, kmax, ut, vt, theta, height, t0, stat, &
+SUBROUTINE compute_qgpv(nlon, nlat, kmax, ut, vt, theta, height, t0, stat, &
                         aa, omega, dz, hh, rr, cp, &
                         pv, avort)
 
    
-    INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax
+    INTEGER, INTENT(IN) :: nlon, nlat, kmax
     REAL, INTENT(IN) :: ut(nlon,nlat,kmax), vt(nlon,nlat,kmax), theta(nlon,nlat,kmax), &
                         height(kmax), t0(kmax), stat(kmax)
     REAL, INTENT(in) :: aa, omega, hh, rr, cp
     REAL, INTENT(out) :: pv(nlon,nlat,kmax), avort(nlon,nlat,kmax)
 
 
-    REAL ::  tt(nlon,nlat,nlev),tz(nlat,kmax),tzd(nlat,kmax)
+    REAL ::  tz(nlat,kmax),tzd(nlat,kmax)
     REAL ::  uz(nlat,kmax),uzd(nlat,kmax)
     REAL ::  vz(nlat,kmax),vzd(nlat,kmax)
     REAL ::  st(nlon,nlat),zmst(nlat)

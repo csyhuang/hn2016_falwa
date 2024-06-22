@@ -1,10 +1,10 @@
-SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, nlev, kmax, jd, uq, vq, tq, height, &
+SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, kmax, jd, uq, vq, tq, height, &
         ts0, tn0, stats, statn, &
         aa, omega, dz, hh, rr, cp, &
         pv, avort)
 
 
-  INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax, jd
+  INTEGER, INTENT(IN) :: nlon, nlat, kmax, jd
   REAL, INTENT(IN) :: uq(nlon,nlat,kmax), vq(nlon,nlat,kmax), tq(nlon,nlat,kmax), height(kmax)
   REAL, INTENT(in) :: stats(kmax), statn(kmax), ts0(kmax), tn0(kmax)
   REAL, INTENT(in) :: aa, omega, dz,  hh, rr, cp
@@ -20,8 +20,8 @@ SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, nlev, kmax, jd, uq, vq, tq, heigh
    pi = acos(-1.)
    dphi = pi/float(nlat-1)
 
-  write(6,*) 'nlon, nlat, nlev, kmax, jd'
-  write(6,*) nlon, nlat, nlev, kmax, jd
+  write(6,*) 'nlon, nlat, kmax, jd'
+  write(6,*) nlon, nlat, kmax, jd
 
   ! interior abs. vort
 
