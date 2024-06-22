@@ -11,7 +11,7 @@ vol1_loc = paths['vol1']  # 1979-2018
 vol2_loc = paths['vol2']  # 2019-2023
 
 year = 2023
-for month in range(1, 13):
+for month in range(1, 3):
     datapath = f"{vol2_loc}{year}_{month:02d}_[uvt].nc"
     data = xr.open_mfdataset(datapath)
     qgds = QGDataset(data)
