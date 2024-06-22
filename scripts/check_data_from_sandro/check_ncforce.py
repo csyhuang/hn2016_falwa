@@ -2,7 +2,7 @@ import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d, UnivariateSpline
-from falwa.oopinterface import QGFieldNHN22, QGFieldNHN22
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
 from falwa.constant import *
 
 data_path = "/Users/claresyhuang/Dropbox/GitHub/hn2016_falwa/github_data_storage/for_clare_ncforce_e3sm/"
@@ -53,7 +53,7 @@ xlon = new.coords['lon'].values
 ylat = new.coords['lat'].values
 
 
-def calculate_static_stability(temperature, area, clat):
+def calculate_static_stability(temperature, clat):
     """
         ! reference theta
     do kk = 1,kmax
@@ -77,7 +77,8 @@ def calculate_static_stability(temperature, area, clat):
 
     """
     csm = clat.sum()
-    t0 = np.mean(temperature * clat[np.newaxis, :, np.newaxis], axis=-1).sum(axis=-1) / csm  # t0.shape = temperature.shape[0]
+    t0 = np.mean(temperature * clat[np.newaxis, :, np.newaxis], axis=-1).sum(axis=-1) / csm
+    # t0.shape = temperature.shape[0]
     return t0
 
 
@@ -104,7 +105,7 @@ qgfield_object2.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncfo
 
 # *** Compute static stability from original data ***
 original_theta = original_temp * np.exp(DRY_GAS_CONSTANT / CP * zlev[:, np.newaxis, np.newaxis] / SCALE_HEIGHT)
-t0_from_data = calculate_static_stability(original_theta, np.cos(np.deg2rad(ylat)), np.cos(np.deg2rad(ylat)))
+t0_from_data = calculate_static_stability(original_theta, np.cos(np.deg2rad(ylat)))
 uni_spline = UnivariateSpline(x=zlev, y=t0_from_data)
 uni_spline_derivative = uni_spline.derivative()
 plt.plot(t0_from_data, zlev, "bx-"); plt.plot(qgfield_object2._domain_average_storage.tn0, height, "rx-"); plt.show()

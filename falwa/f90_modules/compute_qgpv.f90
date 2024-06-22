@@ -1,20 +1,18 @@
-SUBROUTINE compute_qgpv(nlon, nlat, nlev, kmax, ut, vt, theta, plev, zlev, height, &
+SUBROUTINE compute_qgpv(nlon, nlat, nlev, kmax, ut, vt, theta, plev, zlev, height, t0, stat, &
                         aa, omega, dz, hh, rr, cp, &
-                        pv, avort, stat)
+                        pv, avort)
 
    
     INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax
     REAL, INTENT(IN) :: ut(nlon,nlat,kmax), vt(nlon,nlat,kmax), theta(nlon,nlat,kmax), &
-                        plev(nlev), zlev(nlev), height(kmax)
+                        plev(nlev), zlev(nlev), height(kmax), t0(kmax), stat(kmax)
     REAL, INTENT(in) :: aa, omega, hh, rr, cp
     REAL, INTENT(out) :: pv(nlon,nlat,kmax), avort(nlon,nlat,kmax)
-    REAL, INTENT(out) :: stat(kmax)
 
 
     REAL ::  tt(nlon,nlat,nlev),tz(nlat,kmax),tzd(nlat,kmax)
     REAL ::  uz(nlat,kmax),uzd(nlat,kmax)
     REAL ::  vz(nlat,kmax),vzd(nlat,kmax)
-    REAL ::  t0(kmax)
     REAL ::  st(nlon,nlat),zmst(nlat)
     REAL ::  zmav(nlat,kmax)
     REAL ::  zmpv(nlat,kmax)
@@ -86,24 +84,24 @@ SUBROUTINE compute_qgpv(nlon, nlat, nlev, kmax, ut, vt, theta, plev, zlev, heigh
 
 
     ! reference theta
-    do kk = 1,kmax
-        t0(kk) = 0.
-        csm = 0.
-        do j = 1,nlat
-            phi0 = -90.+float(j-1)*180./float(nlat-1)
-            phi0 = phi0*pi/180.
-            t0(kk) = t0(kk) + tzd(j,kk)*cos(phi0)
-            csm = csm + cos(phi0)
-        enddo
-        t0(kk) = t0(kk)/csm
-    enddo
+    !do kk = 1,kmax
+    !    t0(kk) = 0.
+    !    csm = 0.
+    !    do j = 1,nlat
+    !        phi0 = -90.+float(j-1)*180./float(nlat-1)
+    !        phi0 = phi0*pi/180.
+    !        t0(kk) = t0(kk) + tzd(j,kk)*cos(phi0)
+    !        csm = csm + cos(phi0)
+    !    enddo
+    !    t0(kk) = t0(kk)/csm
+    !enddo
 
     ! static stability
-    do kk = 2,kmax-1
-        stat(kk) = (t0(kk+1)-t0(kk-1))/(height(kk+1)-height(kk-1))
-    enddo
-    stat(kmax) = (t0(kmax)-t0(kmax-1))/(height(kmax)-height(kmax-1))
-    stat(1) = (t0(2)-t0(1))/(height(2)-height(1))
+    !do kk = 2,kmax-1
+    !    stat(kk) = (t0(kk+1)-t0(kk-1))/(height(kk+1)-height(kk-1))
+    !enddo
+    !stat(kmax) = (t0(kmax)-t0(kmax-1))/(height(kmax)-height(kmax-1))
+    !stat(1) = (t0(2)-t0(1))/(height(2)-height(1))
 
 
     ! surface temp
