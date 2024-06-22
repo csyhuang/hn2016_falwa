@@ -1,7 +1,7 @@
 import json
 import datetime
 import xarray as xr
-import matplotlib.pyplot as plt
+import argparse
 from falwa.xarrayinterface import QGDataset
 
 # *** Path to data ***
@@ -10,8 +10,15 @@ with open('path.json', "r") as f:
 vol1_loc = paths['vol1']  # 1979-2018
 vol2_loc = paths['vol2']  # 2019-2023
 
-year = 2023
-for month in range(1, 3):
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("year", type=int, help="year")
+    parser.add_argument("month", type=int, help="month")
+    args = parser.parse_args()
+    print(f"args = {args}")
+
+    year = 2023
+    month = 1
     datapath = f"{vol2_loc}{year}_{month:02d}_[uvt].nc"
     data = xr.open_mfdataset(datapath)
     qgds = QGDataset(data)
