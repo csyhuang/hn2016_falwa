@@ -3,9 +3,10 @@ import numpy as np
 import xarray as xr
 import matplotlib.pyplot as plt
 
+data_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/predigest/output_2023_01.nc"
 
-df = xr.open_dataset(
-    f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/predigest/output_2023_01.nc",
+df = xr.open_mfdataset(
+    data_path,
     decode_times=False)
 lat = df.coords['latitude']
 lon = df.coords['longitude']

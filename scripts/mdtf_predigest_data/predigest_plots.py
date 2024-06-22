@@ -28,9 +28,9 @@ if __name__ == "__main__":
     # v_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_v.nc"
     # t_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_t.nc"
 
-    u_path = f"{vol2_loc}{year}_{month:02d}_u.nc"
-    v_path = f"{vol2_loc}{year}_{month:02d}_v.nc"
-    t_path = f"{vol2_loc}{year}_{month:02d}_t.nc"
+    u_path = f"{vol1_loc}{year}/{year}_{month:02d}_u.nc"
+    v_path = f"{vol1_loc}{year}/{year}_{month:02d}_v.nc"
+    t_path = f"{vol1_loc}{year}/{year}_{month:02d}_t.nc"
 
     # --- parameters ---
     kmax = 49
