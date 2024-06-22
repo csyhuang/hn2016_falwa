@@ -278,4 +278,5 @@ class HeightLatPlotter(object):
         ax.set_xlim(self._xlim)
         plt.tight_layout()
         plt.savefig(save_path, bbox_inches='tight')
-        plt.show()
+        print(f"Finished saving: {save_path}")
+        # plt.show()
