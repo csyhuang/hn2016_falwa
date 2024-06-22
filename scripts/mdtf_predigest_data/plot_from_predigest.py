@@ -67,7 +67,7 @@ for season, month_range in season_to_month_range.items():
     print("Finished computing covariance. Start plotting.")
     lat_lon_map_plotter.plot_and_save_variable(
         variable=lwa_u_covariance,
-        cmap="jet", var_title_str="COV(<LWA>, <U>)$", save_path=f"{season}_lwa_u_baro_cov.png", num_level=30)
+        cmap="jet", var_title_str="COV(<LWA>, <U>)", save_path=f"{season}_lwa_u_baro_cov.png", num_level=30)
     print("Done with calculation!")
     end_time = datetime.datetime.now()
     print(f"Finished computing digested data for season {season}. Time now is {end_time}.")
