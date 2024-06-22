@@ -10,7 +10,7 @@ from falwa.stat_utils import calculate_covariance
 # data_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/predigest/output_2023_01.nc"
 # Waves
 data_path = "/mnt/winds/data/csyhuang/predigest/"
-start_year = 2019
+start_year = 2003
 end_year = 2023
 year_range = np.arange(start_year, end_year+1)
 season_to_month_range = {
@@ -34,7 +34,7 @@ for season, month_range in season_to_month_range.items():
     # *** For plotting ***
     lon_range = np.arange(-180, 181, 60)
     lat_range = np.arange(-90, 91, 30)
-    title_str = f"ERA5 {start_year}-{end_year}{season}"
+    title_str = f"ERA5 {start_year}-{end_year} {season}"
     lat_lon_map_plotter = LatLonMapPlotter(
         figsize=(6, 4), title_str=title_str,
         xgrid=lon, ygrid=lat, xland=[], yland=[],
@@ -71,4 +71,4 @@ for season, month_range in season_to_month_range.items():
     print("Done with calculation!")
     end_time = datetime.datetime.now()
     print(f"Finished computing digested data for season {season}. Time now is {end_time}.")
-    print("Time used = {end_time-start_time}")
+    print(f"Time used = {end_time-start_time}")
