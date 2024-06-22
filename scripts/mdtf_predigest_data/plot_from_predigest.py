@@ -35,6 +35,7 @@ for season, month_range in season_to_month_range.items():
     lon_range = np.arange(-180, 181, 60)
     lat_range = np.arange(-90, 91, 30)
     title_str = f"ERA5 {start_year}-{end_year} {season}"
+    filename_prefix = f"ERA5_{start_year}-{end_year}_{season}"
     lat_lon_map_plotter = LatLonMapPlotter(
         figsize=(6, 4), title_str=title_str,
         xgrid=lon, ygrid=lat, xland=[], yland=[],
@@ -48,26 +49,28 @@ for season, month_range in season_to_month_range.items():
     # *** Lat-lon plots ***
     lat_lon_map_plotter.plot_and_save_variable(
         variable=df.variables['lwa_baro'].data.mean(axis=0),
-        cmap="jet", var_title_str="<LWA>$\cos\phi$", save_path=f"{season}_lwa_baro.png", num_level=30)
+        cmap="jet", var_title_str="<LWA>$\cos\phi$", save_path=f"{filename_prefix}_lwa_baro.png", num_level=30)
     lat_lon_map_plotter.plot_and_save_variable(
         variable=df.variables['u_baro'].data.mean(axis=0),
-        cmap="jet", var_title_str="<u>$\cos\phi$", save_path=f"{season}_u_baro.png", num_level=30)
+        cmap="jet", var_title_str="<u>$\cos\phi$", save_path=f"{filename_prefix}_u_baro.png", num_level=30)
     height_lat_plotter.plot_and_save_variable(
         variable=df.variables['uref'].data.mean(axis=0),
-        cmap="jet", var_title_str="Uref", save_path=f"{season}_uref.png", num_level=30)
+        cmap="jet", var_title_str="Uref", save_path=f"{filename_prefix}_uref.png", num_level=30)
     height_lat_plotter.plot_and_save_variable(
         variable=df.variables['ubar'].data.mean(axis=0),
-        cmap="jet", var_title_str="ubar", save_path=f"{season}_ubar.png", num_level=30)
+        cmap="jet", var_title_str="ubar", save_path=f"{filename_prefix}_ubar.png", num_level=30)
     height_lat_plotter.plot_and_save_variable(
         variable=df.variables['uref'].data.mean(axis=0) - df.variables['ubar'].data.mean(axis=0),
-        cmap="jet", var_title_str="$\Delta$ u", save_path="delta_u.png", num_level=30)
+        cmap="jet", var_title_str="$\Delta$ u", save_path=f"{filename_prefix}_delta_u.png", num_level=30)
 
     print("Start computing covariance.")
     lwa_u_covariance = calculate_covariance(df.variables['lwa_baro'].data, df.variables['u_baro'])
     print(f"Finished computing covariance.\n{lwa_u_covariance}\nStart plotting.")
     lat_lon_map_plotter.plot_and_save_variable(
         variable=lwa_u_covariance,
-        cmap="jet", var_title_str="COV(<LWA>, <U>)", save_path=f"{season}_lwa_u_baro_cov.png", num_level=30)
+        cmap="jet", var_title_str="COV(<LWA>, <U>)",
+        save_path=f"{filename_prefix}_lwa_u_baro_cov.png",
+        num_level=30)
     print("Done with calculation!")
     end_time = datetime.datetime.now()
     print(f"Finished computing digested data for season {season}. Time now is {end_time}.")
