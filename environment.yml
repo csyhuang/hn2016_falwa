@@ -15,5 +15,6 @@ dependencies:
 - jupyter
 - matplotlib
 - twine
+- cartopy
 # Other useful packages to visualize plots in notebooks
 # - cartopy
