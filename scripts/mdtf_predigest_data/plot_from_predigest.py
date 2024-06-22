@@ -14,9 +14,9 @@ start_year = 2019
 end_year = 2023
 year_range = np.arange(start_year, end_year+1)
 season_to_month_range = {
-    "DJF": [1, 2, 12],
+    # "DJF": [1, 2, 12],
     "MAM": [3, 4, 5],
-    "JJA": [6, 7, 8],
+    # "JJA": [6, 7, 8],
     "SON": [9, 10, 11]}
 
 for season, month_range in season_to_month_range.items():
@@ -64,7 +64,7 @@ for season, month_range in season_to_month_range.items():
 
     print("Start computing covariance.")
     lwa_u_covariance = calculate_covariance(df.variables['lwa_baro'].data, df.variables['u_baro'])
-    print("Finished computing covariance. Start plotting.")
+    print(f"Finished computing covariance.\n{lwa_u_covariance}\nStart plotting.")
     lat_lon_map_plotter.plot_and_save_variable(
         variable=lwa_u_covariance,
         cmap="jet", var_title_str="COV(<LWA>, <U>)", save_path=f"{season}_lwa_u_baro_cov.png", num_level=30)
