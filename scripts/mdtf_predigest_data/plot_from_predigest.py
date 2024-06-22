@@ -45,13 +45,13 @@ for season, month_range in season_to_month_range.items():
     print(f"Finished computing covariance.\n{lwa_u_covariance}\nStart plotting.")
 
     # *** Output predigested data ***
-    lwa_u_covariance_da = xr.DataArray(lwa_u_covariance, ("latitude", "longitude"))
-    lwa_baro_da = xr.DataArray(df.variables['lwa_baro'].data.mean(axis=0), ("latitude", "longitude"))
-    u_baro_da = xr.DataArray(df.variables['u_baro'].data.mean(axis=0), ("latitude", "longitude"))
-    uref_da = xr.DataArray(df.variables['uref'].data.mean(axis=0), ("height", "latitude"))
-    ubar_da = xr.DataArray(df.variables['ubar'].data.mean(axis=0), ("height", "latitude"))
+    lwa_u_covariance_da = xr.DataArray(lwa_u_covariance, [("latitude", "longitude")])
+    lwa_baro_da = xr.DataArray(df.variables['lwa_baro'].data.mean(axis=0), [("latitude", "longitude")])
+    u_baro_da = xr.DataArray(df.variables['u_baro'].data.mean(axis=0), [("latitude", "longitude")])
+    uref_da = xr.DataArray(df.variables['uref'].data.mean(axis=0), [("height", "latitude")])
+    ubar_da = xr.DataArray(df.variables['ubar'].data.mean(axis=0), [("height", "latitude")])
     delta_u_da = xr.DataArray(df.variables['ubar'].data.mean(axis=0) - df.variables['uref'].data.mean(axis=0),
-                              ("height", "latitude"))
+                              [("height", "latitude")])
     predigest_dataset_filename = f"{filename_prefix}_predigest_dataset.nc"
     print(f"Start outputing predigest_dataset {predigest_dataset_filename}")
     predigest_dataset = xr.Dataset({
