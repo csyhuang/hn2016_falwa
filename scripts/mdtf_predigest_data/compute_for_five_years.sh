@@ -1,7 +1,14 @@
 #!/bin/bash
-for i in {2..9}
+for year in {2020..2022}
 do
-   python predigest_plots.py 2023 $i
-   mv output_2023_0$i.nc /mnt/winds/data/csyhuang/predigest/
+  for i in {2..9}
+  do
+     python predigest_plots.py $year $i
+     mv output_$year_0$i.nc /mnt/winds/data/csyhuang/predigest/
+  done
+  for i in {10..12}
+  do
+     python predigest_plots.py $year $i
+     mv output_$year_$i.nc /mnt/winds/data/csyhuang/predigest/
+  done
 done
-
