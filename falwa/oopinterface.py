@@ -980,8 +980,6 @@ class QGFieldNH18(QGFieldBase):
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
-                self.plev,
-                self._plev_to_height,
                 self.height,
                 0.5 * (t0_s + t0_n),
                 0.5 * (stat_s + stat_n),
@@ -1187,22 +1185,25 @@ class QGFieldNHN22(QGFieldBase):
         self._eq_boundary_index = eq_boundary_index
         self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self.eq_boundary_index
 
-    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_n, t0_s, stat_n, stat_s) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_s, t0_n, stat_s, stat_n) -> Optional[NamedTuple]:
         """
         .. versionadded:: 1.3.0
         """
+        self._domain_average_storage.ts0 = t0_s
+        self._domain_average_storage.tn0 = t0_n
+        self._domain_average_storage.static_stability_s = stat_s
+        self._domain_average_storage.static_stability_n = stat_n
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_avort, \
-            self._domain_average_storage.static_stability_n, \
-            self._domain_average_storage.static_stability_s, \
-            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = compute_qgpv_direct_inv(  # f2py module
+            self._interpolated_field_storage.interpolated_avort = compute_qgpv_direct_inv(  # f2py module
                 self.equator_idx,
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
-                self.plev,
-                self._plev_to_height,
                 self.height,
+                t0_s,
+                t0_n,
+                stat_s,
+                stat_n,
                 self.planet_radius,
                 self.omega,
                 self.dz,
