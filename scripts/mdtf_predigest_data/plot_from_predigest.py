@@ -8,8 +8,8 @@ from falwa.plot_utils import LatLonMapPlotter, HeightLatPlotter
 data_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/github_data_storage/predigest/output_2023_01.nc"
 # Waves
 data_path = "/mnt/winds/data/csyhuang/predigest/"
-year_range = np.arange(2022, 2023+1)
-month_range = np.arange(1, 12+1)
+year_range = np.arange(2019, 2023+1)
+month_range, season = [1, 2, 12], "DJF"
 ncfiles = [
     f"{data_path}output_{year}_{month:02d}.nc" for year, month in itertools.product(year_range, month_range)]
 
