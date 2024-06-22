@@ -1,7 +1,7 @@
 #!/bin/bash
 for year in {2020..2022}
 do
-  for i in {2..9}
+  for i in {1..9}
   do
      python predigest_plots.py $year $i
      mv output_$year_0$i.nc /mnt/winds/data/csyhuang/predigest/
