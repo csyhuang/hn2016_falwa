@@ -114,14 +114,6 @@ class QGFieldBase(ABC):
             self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
             self.height = np.array([i * dz for i in range(self.kmax)])
             self.dz = dz
-        print(
-            f"""
-            self.plev = {self.plev}
-            self.kmax = {self.kmax}
-            self._plev_to_height = {self._plev_to_height}
-            self.height = {self.height}
-            self.dz = {self.dz}
-            """)
 
         # === Check whether the input field is masked array. If so, turn them to normal array ===
         u_field = self._convert_masked_data(u_field, "u_field")

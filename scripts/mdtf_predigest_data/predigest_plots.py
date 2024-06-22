@@ -1,3 +1,5 @@
+import os
+import calendar
 import json
 import datetime
 import numpy as np
@@ -20,11 +22,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(f"args = {args}")
 
-    year = 2023
-    month = 1
+    year = args['year'] #2023
+    month = args['month'] #1
+    total_tsteps = calendar.monthrange(year, month)[1] * 4
+
+    # u_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_u.nc"
+    # v_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_v.nc"
+    # t_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_t.nc"
+
     u_path = f"{vol2_loc}{year}_{month:02d}_u.nc"
     v_path = f"{vol2_loc}{year}_{month:02d}_v.nc"
     t_path = f"{vol2_loc}{year}_{month:02d}_t.nc"
+
+    # --- parameters ---
+    kmax = 49
+    output_filename = f"output_{year}_{month:02d}.nc"
 
     # --- Load the zonal wind and QGPV at 240hPa --- #
     u_file = Dataset(u_path, mode='r')
@@ -39,11 +51,11 @@ if __name__ == "__main__":
     time_calendar = u_file.variables['time'].calendar
     ntimes = time_array.shape[0]
 
-    output_file = Dataset(f"output_{year}_{month:02d}.nc", 'w')
-    output_file.createDimension('height', 49)
-    output_file.createDimension('latitude', 181)
-    output_file.createDimension('longitude', 360)
-    output_file.createDimension('time', 31*4)
+    output_file = Dataset(output_filename, 'w')
+    output_file.createDimension('height', kmax)
+    output_file.createDimension('latitude', ylat.size)
+    output_file.createDimension('longitude', xlon.size)
+    output_file.createDimension('time', total_tsteps)
     height = output_file.createVariable(
         'height', np.dtype('float32').char,
         ('height',))  # Define the coordinate variables
@@ -70,8 +82,7 @@ if __name__ == "__main__":
     ubar = output_file.createVariable('ubar', np.dtype('float32').char, ('time', 'height', 'latitude'))
     ubar.units = 'm/s'
 
-    total_steps = 31 * 4
-    for tstep in range(total_steps):
+    for tstep in range(total_tsteps):
         uu = u_file.variables['u'][tstep, ::-1, ::-1, :].data
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
         tt = t_file.variables['t'][tstep, ::-1, ::-1, :].data
@@ -88,6 +99,5 @@ if __name__ == "__main__":
         ubar[tstep, :, :] = qgfield.interpolated_u.mean(axis=-1)
 
         print(f"{datetime.datetime.now()}: Finished output for_predigest_{year}_{month}.nc")
-
-
-
+    output_file.close()
+    print(f"Close output file {output_filename}")
