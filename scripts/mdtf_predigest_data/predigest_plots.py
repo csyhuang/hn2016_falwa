@@ -22,8 +22,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(f"args = {args}")
 
-    year = args['year'] #2023
-    month = args['month'] #1
+    year = args.year     # 2023
+    month = args.month   # 1
     total_tsteps = calendar.monthrange(year, month)[1] * 4
 
     # u_path = f"{os.environ['HOME']}/Dropbox/GitHub/hn2016_falwa/notebooks/nh2018_science/2005-01-23_to_2005-01-30_u.nc"
