@@ -80,6 +80,7 @@ if __name__ == "__main__":
     ubar = output_file.createVariable('ubar', np.dtype('float32').char, ('time', 'height', 'latitude'))
     ubar.units = 'm/s'
 
+    print(f"Start computing for year = {year}, month = {month}")
     for tstep in range(total_tsteps):
         uu = u_file.variables['u'][tstep, ::-1, ::-1, :].data
         vv = v_file.variables['v'][tstep, ::-1, ::-1, :].data
