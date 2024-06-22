@@ -14,9 +14,9 @@ start_year = 2019
 end_year = 2023
 year_range = np.arange(start_year, end_year+1)
 season_to_month_range = {
-    # "DJF": [1, 2, 12],
+    "DJF": [1, 2, 12],
     "MAM": [3, 4, 5],
-    # "JJA": [6, 7, 8],
+    "JJA": [6, 7, 8],
     "SON": [9, 10, 11]}
 
 for season, month_range in season_to_month_range.items():
