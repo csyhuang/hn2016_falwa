@@ -3,11 +3,9 @@ import calendar
 import json
 import datetime
 import numpy as np
-import xarray as xr
 import argparse
 from netCDF4 import Dataset
 from falwa.oopinterface import QGFieldNH18
-from falwa.xarrayinterface import QGDataset
 
 # *** Path to data ***
 with open('path.json', "r") as f:
@@ -98,6 +96,6 @@ if __name__ == "__main__":
         uref[tstep, :, :] = qgfield.uref
         ubar[tstep, :, :] = qgfield.interpolated_u.mean(axis=-1)
 
-        print(f"{datetime.datetime.now()}: Finished output for_predigest_{year}_{month}.nc")
+        print(f"{datetime.datetime.now()}: Finished output for tsteps = {tstep}/{total_tsteps}")
     output_file.close()
     print(f"Close output file {output_filename}")
