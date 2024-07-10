@@ -3,12 +3,12 @@
 File name: oopinterface.py
 Author: Clare Huang
 """
-from typing import Tuple, Optional, Union, NamedTuple
+from typing import Tuple, Optional, Union, NamedTuple, Type
 from abc import ABC, abstractmethod
 import math
 import warnings
 import numpy as np
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d, UnivariateSpline
 from scipy.linalg.lapack import dgetrf, dgetri
 
 from falwa import utilities
@@ -17,7 +17,7 @@ from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, 
     LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from falwa import interpolate_fields, interpolate_fields_direct_inv, compute_qref_and_fawa_first,\
+from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first,\
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
     compute_lwa_and_barotropic_fluxes
 from collections import namedtuple
@@ -41,52 +41,57 @@ class QGFieldBase(ABC):
     Parameters
     ----------
     xlon : numpy.array
-           Array of evenly-spaced longitude (in degree) of size nlon.
+       Array of evenly-spaced longitude (in degree) of size nlon.
     ylat : numpy.array
-           Array of evenly-spaced latitude (in degree) of size nlat.
-           If it is a masked array, the value ylat.data will be used.
+       Array of evenly-spaced latitude (in degree) of size nlat.
+       If it is a masked array, the value ylat.data will be used.
     plev : numpy.
-           Array of pressure level (in hPa) of size nlev.
+       Array of pressure level (in hPa) of size nlev.
     u_field : numpy.ndarray
-           Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value u_field.data will be used.
+       Three-dimensional array of zonal wind field (in m/s) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value u_field.data will be used.
     v_field : numpy.ndarray
-           Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value v_field.data will be used.
+       Three-dimensional array of meridional wind field (in m/s) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value v_field.data will be used.
     t_field : numpy.ndarray
-           Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
-           If it is a masked array, the value t_field.data will be used.
+       Three-dimensional array of temperature field (in K) of dimension [nlev, nlat, nlon].
+       If it is a masked array, the value t_field.data will be used.
     kmax : int, optional
-           Dimension of uniform pseudoheight grids used for interpolation.
+       Dimension of uniform pseudoheight grids used for interpolation.
     maxit : int, optional
-           Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
+       Number of iteration by the Successive over-relaxation (SOR) solver to compute the reference states.
     dz : float, optional
-           Size of uniform pseudoheight grids (in meters).
+       Size of uniform pseudoheight grids (in meters).
     npart : int, optional
-           Number of partitions used to compute equivalent latitude.
-           If not initialized, it will be set to nlat.
+       Number of partitions used to compute equivalent latitude.
+       If not initialized, it will be set to nlat.
     tol : float, optional
-           Tolerance that defines the convergence of solution in SOR solver.
+       Tolerance that defines the convergence of solution in SOR solver.
     rjac : float, optional
-           Spectral radius of the Jacobi iteration in the SOR solver.
+       Spectral radius of the Jacobi iteration in the SOR solver.
     scale_height : float, optional
-           Scale height of the atmosphere in meters. Default = 7000.
+       Scale height of the atmosphere in meters. Default = 7000.
     cp : float, optional
-           Heat capacity of dry air in J/kg-K. Default = 1004.
+       Heat capacity of dry air in J/kg-K. Default = 1004.
     dry_gas_constant : float, optional
-           Gas constant for dry air in J/kg-K. Default = 287.
+       Gas constant for dry air in J/kg-K. Default = 287.
     omega : float, optional
-           Rotation rate of the earth in 1/s. Default = 7.29e-5.
+       Rotation rate of the earth in 1/s. Default = 7.29e-5.
     planet_radius : float, optional
-           Radius of the planet in meters.
-           Default = 6.378e+6 (Earth's radius).
+       Radius of the planet in meters.
+       Default = 6.378e+6 (Earth's radius).
     northern_hemisphere_results_only : bool, optional
-           whether only to return northern hemispheric results. Default = False
+        whether only to return northern hemispheric results. Default = False
+    data_on_evenly_spaced_pseudoheight_grid : bool, optional
+        whether the input data sits on an evenly spaced pseudoheight grid. Default = False
+        If Ture, the method interpolate_fields (i.e. vertical interpolation) would not do vertical interpolation,
+        but only calculate potential temperature, QGPV and static stability. New in version 1.3.
     """
 
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
-                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False):
+                 omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False,
+                 data_on_evenly_spaced_pseudoheight_grid=False):
 
         """
         Create a QGField object.
@@ -94,38 +99,32 @@ class QGFieldBase(ABC):
         computation are done by calling various methods.
         """
 
+        # === Variables related to the Vertical grid ===
+        self._data_on_evenly_spaced_pseudoheight_grid = data_on_evenly_spaced_pseudoheight_grid
+        if self._data_on_evenly_spaced_pseudoheight_grid:
+            self.plev = plev
+            self.kmax = plev.size
+            self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
+            self.height = -scale_height * np.log(plev/P_GROUND)
+            self.dz = np.diff(self.height)[0]
+        else:
+            # === Check the validity of plev ===
+            self._check_valid_plev(plev, scale_height, kmax, dz)  # initialized self.plev and self._plev_to_height
+            self.kmax = kmax
+            self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
+            self.height = np.array([i * dz for i in range(self.kmax)])
+            self.dz = dz
+
         # === Check whether the input field is masked array. If so, turn them to normal array ===
-        if np.ma.is_masked(ylat) or isinstance(ylat, np.ma.core.MaskedArray):
-            warnings.warn(
-                'ylat is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=ylat.shape, num=ylat.mask.sum(), fill=ylat.fill_value))
-            ylat = ylat.data
-
-        if np.ma.is_masked(u_field) or isinstance(u_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                'u_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=u_field.shape, num=u_field.mask.sum(), fill=u_field.fill_value))
-            u_field = u_field.data
-
-        if np.ma.is_masked(v_field) or isinstance(v_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                'v_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=v_field.shape, num=v_field.mask.sum(), fill=v_field.fill_value))
-            v_field = v_field.data
-
-        if np.ma.is_masked(t_field) or isinstance(t_field, np.ma.core.MaskedArray):
-            warnings.warn(
-                't_field is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
-                .format(dim=t_field.shape, num=t_field.mask.sum(), fill=t_field.fill_value))
-            t_field = t_field.data
+        u_field = self._convert_masked_data(u_field, "u_field")
+        v_field = self._convert_masked_data(v_field, "v_field")
+        theta_field = self._convert_masked_data(t_field, "t_field") * np.exp(
+            dry_gas_constant / cp * self._plev_to_height[:, np.newaxis, np.newaxis] / scale_height)
 
         # === Check if ylat is in ascending order and include the equator ===
-        self._ylat = None
-        self._clat = None
-        self._check_and_flip_ylat(ylat)
-
-        # === Check the validity of plev ===
-        self._check_valid_plev(plev, scale_height, kmax, dz)
+        ylat = self._convert_masked_data(ylat, "ylat")
+        self._input_ylat, self.need_latitude_interpolation, self._ylat, self.equator_idx, self._clat = \
+            self._check_and_flip_ylat(ylat)
 
         # === Initialize longitude grid ===
         self.xlon = xlon
@@ -137,35 +136,34 @@ class QGFieldBase(ABC):
         expected_dimension = (self.nlev, self.nlat, self.nlon)
         self._check_dimension_of_fields(field=u_field, field_name='u_field', expected_dim=expected_dimension)
         self._check_dimension_of_fields(field=v_field, field_name='v_field', expected_dim=expected_dimension)
-        self._check_dimension_of_fields(field=t_field, field_name='t_field', expected_dim=expected_dimension)
+        self._check_dimension_of_fields(field=theta_field, field_name='theta_field', expected_dim=expected_dimension)
 
         # === Do Interpolation on latitude grid if needed ===
         if self.need_latitude_interpolation:
             interp_u = interp1d(self._input_ylat, u_field, axis=1, fill_value="extrapolate")
             interp_v = interp1d(self._input_ylat, v_field, axis=1, fill_value="extrapolate")
-            interp_t = interp1d(self._input_ylat, t_field, axis=1, fill_value="extrapolate")
+            interp_t = interp1d(self._input_ylat, theta_field, axis=1, fill_value="extrapolate")
             self.u_field = interp_u(self._ylat)
             self.v_field = interp_v(self._ylat)
-            self.t_field = interp_t(self._ylat)
+            self.theta_field = interp_t(self._ylat)
         else:
             self.u_field = u_field
             self.v_field = v_field
-            self.t_field = t_field
-        self._nlat_analysis = self._ylat.size  # This is the number of latitude grid point used in analysis
+            self.theta_field = theta_field
 
         # === Coordinate-related ===
+        self._nlat_analysis = self._ylat.size  # This is the number of latitude grid point used in analysis
+        self._eq_boundary_index = 0   # Latitude domain boundary. Will be updated in QGFieldNHN22.__init__
+        self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self._eq_boundary_index
         self.dphi = np.deg2rad(180./(self._nlat_analysis-1))     # F90 code: dphi = pi/float(nlat-1)
         self.dlambda = np.deg2rad(360./self.nlon)                # F90 code: dlambda = 2*pi/float(nlon)
         self.npart = npart if npart is not None else self._nlat_analysis
-        self.kmax = kmax
-        self.height = np.array([i * dz for i in range(kmax)])
 
         # === Moved here in v0.7.0 ===
         self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
         # === Other parameters ===
         self.maxit = maxit
-        self.dz = dz
         self.tol = tol
         self.rjac = rjac
 
@@ -176,7 +174,12 @@ class QGFieldBase(ABC):
         self.omega = omega
         self.planet_radius = planet_radius
         self._compute_prefactor()  # Compute normalization prefactor
+        self._initialize_storage()  # Create storage instances to store variables
 
+    def _initialize_storage(self):
+        """
+        Create storage instances to store output variables
+        """
         # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
         self._interpolated_field_storage = InterpolatedFieldsStorage(
             pydim=(self.kmax, self._nlat_analysis, self.nlon),
@@ -225,6 +228,28 @@ class QGFieldBase(ABC):
             swapaxis_2=1,
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
+    def _compute_static_stability_func(self):
+        """
+        Private function to compute hemispheric static stability from input pressure grids.
+        TODO: add more description
+
+        Returns
+        -------
+        """
+        # Total area
+        csm = self._clat[:self._jd].sum()
+
+        # (Hemispheric) global potential temperature mean per pressure level
+        t0_s = np.mean(self.theta_field[:, :self._jd, :] * self._clat[np.newaxis, :self._jd, np.newaxis], axis=-1)\
+            .sum(axis=-1) / csm  # SHem
+        t0_n = np.mean(self.theta_field[:, -self._jd:, :] * self._clat[np.newaxis, -self._jd:, np.newaxis], axis=-1)\
+            .sum(axis=-1) / csm  # NHem
+
+        # Create an interpolation function
+        uni_spline_s = UnivariateSpline(x=self._plev_to_height, y=t0_s)
+        uni_spline_n = UnivariateSpline(x=self._plev_to_height, y=t0_n)
+        return uni_spline_s, uni_spline_n, uni_spline_s.derivative(), uni_spline_n.derivative()
+
     def _compute_prefactor(self):
         """
         Private function. Compute prefactor for normalization by evaluating
@@ -233,6 +258,15 @@ class QGFieldBase(ABC):
         TODO: evaluate numerical integration scheme used in the fortran module.
         """
         self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+
+    @staticmethod
+    def _convert_masked_data(variable: np.ndarray, varname: str):
+        if np.ma.is_masked(variable) or isinstance(variable, np.ma.core.MaskedArray):
+            warnings.warn(
+                '{var} is a masked array of dimension {dim} with {num} masked elements and fill value {fill}. '
+                .format(var=varname, dim=variable.shape, num=variable.mask.sum(), fill=variable.fill_value))
+            variable = variable.data
+        return variable
 
     def _check_valid_plev(self, plev, scale_height, kmax, dz):
         """
@@ -255,7 +289,7 @@ class QGFieldBase(ABC):
         if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
         self.plev = plev
-        self.zlev = -scale_height * np.log(plev/P_GROUND)
+        self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
 
         # Check if kmax is valid given the max pseudoheight in the input data
         hmax = -scale_height*np.log(plev[-1]/P_GROUND)
@@ -263,7 +297,8 @@ class QGFieldBase(ABC):
             raise ValueError('Input kmax = {} but the maximum valid kmax'.format(kmax) +
                              '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax//dz)+1))
 
-    def _check_and_flip_ylat(self, ylat):
+    @staticmethod
+    def _check_and_flip_ylat(ylat):
         """
         Private function. Check if ylat is in ascending order and include the equator. If not, create a new grid with
         odd number of grid points that include the equator.
@@ -277,24 +312,25 @@ class QGFieldBase(ABC):
         if np.diff(ylat)[0] < 0:
             raise TypeError("ylat must be in ascending order")
         # Save ylat input by user first
-        self._input_ylat = ylat
+        _input_ylat = ylat
         if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
             # Even grid
-            self.need_latitude_interpolation = True
-            self._ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
-            self.equator_idx = \
-                np.argwhere(self._ylat == 0)[0][0] + 1
+            need_latitude_interpolation = True
+            _ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            equator_idx = \
+                np.argwhere(_ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
         elif sum(ylat == 0) == 1:
             # Odd grid
-            self.need_latitude_interpolation = False
-            self._ylat = ylat
-            self.equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
+            need_latitude_interpolation = False
+            _ylat = ylat
+            equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
         else:
             raise TypeError(
                 "There are more than 1 grid point with latitude 0."
             )
-        self._clat = np.abs(np.cos(np.deg2rad(self._ylat)))
+        _clat = np.abs(np.cos(np.deg2rad(_ylat)))
+        return _input_ylat, need_latitude_interpolation, _ylat, equator_idx, _clat
 
     @property
     def ylat(self):
@@ -356,13 +392,29 @@ class QGFieldBase(ABC):
         else:
             return variable
 
-    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp):
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, ncforce, qref_temp, uref_temp, ptref_temp):
         """
         Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
+
+        pv, uu, vv, pt, ncforce, qref, uref, tref
+        a, om, dz, h, r, cp, prefactor
         """
         return compute_lwa_and_barotropic_fluxes(
-            qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp,
-            self.planet_radius, self.omega, self.dz, self.scale_height, self.dry_gas_constant, self.cp, self.prefactor)
+            pv=qgpv,
+            uu=u,
+            vv=v,
+            pt=theta,
+            ncforce=ncforce,
+            qref=qref_temp,
+            uref=uref_temp,
+            tref=ptref_temp,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            r=self.dry_gas_constant,
+            cp=self.cp,
+            prefactor=self.prefactor)
 
     def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
 
@@ -403,19 +455,46 @@ class QGFieldBase(ABC):
         >>> interpolated_fields.QGPV  # This is to access the QGPV field
 
         """
+        # === Computed static stability function d(\tilde{theta})/dz (z) ===
+        t0_s_func, t0_n_func, static_stability_func_s, static_stability_func_n = self._compute_static_stability_func()
+
+        # === Interpolate onto evenly spaced pseudoheight grid ===
+        if self._data_on_evenly_spaced_pseudoheight_grid:
+            print("No need to do interpolation. Directly initialize")
+            interpolated_u = self.u_field
+            interpolated_v = self.v_field
+            interpolated_theta = self.theta_field
+        else:
+            print("Do scipy interpolation")
+            interpolated_u = self._vertical_interpolation(self.u_field, kind="linear", axis=0)
+            interpolated_v = self._vertical_interpolation(self.v_field, kind="linear", axis=0)
+            interpolated_theta = self._vertical_interpolation(self.theta_field, kind="linear", axis=0)
+        self._interpolated_field_storage.interpolated_u = np.swapaxes(interpolated_u, 0, 2)
+        self._interpolated_field_storage.interpolated_v = np.swapaxes(interpolated_v, 0, 2)
+        self._interpolated_field_storage.interpolated_theta = np.swapaxes(interpolated_theta, 0, 2)
 
         # Return a named tuple
-        Interpolated_fields_to_return = namedtuple(
+        interpolated_fields_to_return: Type[namedtuple] = namedtuple(
             'Interpolated_fields', ['QGPV', 'U', 'V', 'Theta', 'Static_stability'])
 
-        interpolated_fields_tuple = self._interpolate_fields(Interpolated_fields_to_return, return_named_tuple)
+        interpolated_fields_tuple = self._compute_qgpv(
+            interpolated_fields_to_return, return_named_tuple,
+            t0_s=t0_s_func(self.height), t0_n=t0_n_func(self.height),
+            stat_s=static_stability_func_s(self.height), stat_n=static_stability_func_n(self.height))
 
         # TODO: warn that for NHN22, static stability returned would be a tuple of ndarray
         if return_named_tuple:
             return interpolated_fields_tuple
 
+    def _vertical_interpolation(self, variable, kind, axis=0):
+        return interp1d(
+            self._plev_to_height, variable, axis=axis, bounds_error=False, kind=kind, fill_value='extrapolate')(
+            self.height)
+
     @abstractmethod
-    def _interpolate_fields(self, Interpolated_fields_to_return: NamedTuple, return_named_tuple: bool) -> Optional[NamedTuple]:
+    def _compute_qgpv(
+        self, interpolated_fields_to_return: NamedTuple, return_named_tuple: bool,
+            t0_n: np.ndarray, t0_s: np.ndarray, stat_n: np.ndarray, stat_s: np.ndarray) -> Optional[NamedTuple]:
         """
         The specific interpolation procedures w.r.t the particular procedures in the paper will be implemented here.
         """
@@ -474,7 +553,7 @@ class QGFieldBase(ABC):
 
         self._compute_reference_states()
 
-        # *** Return a named tuple ***
+        # === Return a named tuple ===
         if return_named_tuple:
             Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
             reference_states = Reference_states(
@@ -490,7 +569,8 @@ class QGFieldBase(ABC):
         implemented here.
         """
 
-    def compute_lwa_and_barotropic_fluxes(self, return_named_tuple: bool = True, northern_hemisphere_results_only=None):
+    def compute_lwa_and_barotropic_fluxes(
+        self, return_named_tuple: bool = True, northern_hemisphere_results_only=None, ncforce=None):
 
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
@@ -508,6 +588,9 @@ class QGFieldBase(ABC):
            Whether to returned a named tuple with variables in python indexing. Default: True. If False, nothing will be
            returned from this method. The variables can be retrieved from the QGField object after all computation is
            finished. This may save run time in some use case.
+
+        ncforce (optional, np.ndarray):
+           This is experimental for Sandro's use.
 
         Returns
         -------
@@ -576,9 +659,9 @@ class QGFieldBase(ABC):
             raise ValueError("QGField.interpolate_fields has to be called before QGField.compute_reference_states.")
 
         # TODO: need a check for reference states computed. If not, throw an error.
-        self._compute_intermediate_flux_terms()
+        self._compute_intermediate_flux_terms(ncforce=ncforce)
 
-        # *** Compute named fluxes in NH18 ***
+        # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
         self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
             np.swapaxes(
@@ -603,8 +686,10 @@ class QGFieldBase(ABC):
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ep1baro)
         self._output_barotropic_flux_terms_storage.meridional_heat_flux = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ep4)
+        self._output_barotropic_flux_terms_storage.ncforce_baro = \
+            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
-        # *** Return the named tuple ***
+        # === Return the named tuple ===
         if return_named_tuple:
             LWA_and_fluxes = namedtuple(
                 'LWA_and_fluxes',
@@ -623,7 +708,7 @@ class QGFieldBase(ABC):
             return lwa_and_fluxes
 
     @abstractmethod
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
         """
@@ -634,7 +719,7 @@ class QGFieldBase(ABC):
         if nan_num > 0:
             print(f"num of nan in {name}: {np.count_nonzero(np.isnan(var))}.")
 
-    # *** Fixed properties (since creation of instance) ***
+    # === Fixed properties (since creation of instance) ===
     @property
     def prefactor(self):
         """Normalization constant for vertical weighted-averaged integration"""
@@ -670,7 +755,7 @@ class QGFieldBase(ABC):
         """
         return self._northern_hemisphere_results_only
 
-    # *** Derived physical quantities ***
+    # === Derived physical quantities ===
     @property
     def qgpv(self):
         """
@@ -817,6 +902,20 @@ class QGFieldBase(ABC):
             interp_axis=0)
 
     @property
+    def ncforce_baro(self):
+        """
+        ===== Below is temporary added for Sandro's use. =====
+        Computation of barotropic component of non-conservative forces may be incorporated in future release.
+        We are still testing if the computation is correct.
+        """
+        if self._barotropic_flux_terms_storage.ncforce_baro is None:
+            raise ValueError('ncforce_baro is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._barotropic_flux_terms_storage.fortran_to_python(
+                self._barotropic_flux_terms_storage.ncforce_baro),
+            interp_axis=0)
+
+    @property
     def u_baro(self):
         """
         Two-dimensional array of barotropic zonal wind (without cosine weighting).
@@ -863,30 +962,27 @@ class QGFieldNH18(QGFieldBase):
     :doc:`notebooks/demo_script_for_nh2018`
     """
 
-    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_n, t0_s, stat_n, stat_s) -> Optional[NamedTuple]:
         """
-        .. versionadded:: 0.7.0
+        .. versionadded:: 1.3.0
         """
+        self._domain_average_storage.static_stability = 0.5 * (stat_s + stat_n)
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, \
-            self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, \
-            self._domain_average_storage.static_stability = interpolate_fields(  # f2py module
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
-                self.plev,
+            self._interpolated_field_storage.interpolated_avort = compute_qgpv(  # f2py module
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
                 self.height,
+                0.5 * (t0_s + t0_n),
+                0.5 * (stat_s + stat_n),
                 self.planet_radius,
                 self.omega,
                 self.dz,
                 self.scale_height,
                 self.dry_gas_constant,
                 self.cp)
-
         if return_named_tuple:
-            interpolated_fields = Interpolated_fields_to_return(
+            interpolated_fields = interpolated_fields_to_return(
                 self.qgpv,
                 self.interpolated_u,
                 self.interpolated_v,
@@ -898,7 +994,7 @@ class QGFieldNH18(QGFieldBase):
         """
         .. versionadded:: 0.7.0
         """
-        # *** Compute reference states in Northern Hemisphere using SOR ***
+        # === Compute reference states in Northern Hemisphere using SOR ===
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
             self._reference_states_storage.ptref_nhem, num_of_iter = \
@@ -966,11 +1062,21 @@ class QGFieldNH18(QGFieldBase):
             rjac=self.rjac,
         )
 
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         The flux term computation from NH18 is currently shared by both interface.
         .. versionadded:: 0.7.0
         """
+        # ===== Below is temporary added for Sandro's use. =====
+        # Computation of barotropic component of non-conservative forces may be incorporated in future release.
+        # We are still testing if the computation is correct.
+        if ncforce is None:
+            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
+        else:  # There is input
+            ncforce = np.swapaxes(ncforce, 0, 2)
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+        # ===== Above is temporary added for Sandro's use. =====
+
         # === Compute barotropic flux terms (NHem) ===
         self._lwa_storage.lwa_nhem, \
             self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -980,12 +1086,14 @@ class QGFieldNH18(QGFieldBase):
             self._barotropic_flux_terms_storage.ep1baro_nhem, \
             self._barotropic_flux_terms_storage.ep2baro_nhem, \
             self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem = \
+            self._barotropic_flux_terms_storage.ep4_nhem, \
+            self._barotropic_flux_terms_storage.ncforce_nhem = \
             self._compute_lwa_and_barotropic_fluxes_wrapper(
                 self._interpolated_field_storage.qgpv,
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
+                ncforce,
                 self._reference_states_storage.qref_nhem,
                 self._reference_states_storage.uref_nhem,
                 self._reference_states_storage.ptref_nhem)
@@ -1001,12 +1109,14 @@ class QGFieldNH18(QGFieldBase):
                 self._barotropic_flux_terms_storage.ep1baro_shem, \
                 self._barotropic_flux_terms_storage.ep2baro_shem, \
                 self._barotropic_flux_terms_storage.ep3baro_shem, \
-                ep4_shem = \
+                ep4_shem, \
+                self._barotropic_flux_terms_storage.ncforce_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
                     -self._interpolated_field_storage.qgpv[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_v[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    -ncforce[:, ::-1, :],
                     self._reference_states_storage.qref_shem[::-1, :],
                     self._reference_states_storage.uref_shem[::-1, :],
                     self._reference_states_storage.ptref_shem[::-1, :])
@@ -1057,32 +1167,35 @@ class QGFieldNHN22(QGFieldBase):
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
-                 northern_hemisphere_results_only=False, eq_boundary_index=5):
+                 northern_hemisphere_results_only=False, eq_boundary_index=5,
+                 data_on_evenly_spaced_pseudoheight_grid=False):
         super().__init__(xlon, ylat, plev, u_field, v_field, t_field, kmax, maxit, dz, npart, tol, rjac, scale_height,
-                         cp, dry_gas_constant, omega, planet_radius, northern_hemisphere_results_only)
+                         cp, dry_gas_constant, omega, planet_radius, northern_hemisphere_results_only,
+                         data_on_evenly_spaced_pseudoheight_grid)
 
         # === Latitude domain boundary ===
         self._eq_boundary_index = eq_boundary_index
         self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self.eq_boundary_index
 
-    def _interpolate_fields(self, Interpolated_fields_to_return, return_named_tuple) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_s, t0_n, stat_s, stat_n) -> Optional[NamedTuple]:
         """
-        .. versionadded:: 0.7.0
+        .. versionadded:: 1.3.0
         """
+        self._domain_average_storage.ts0 = t0_s
+        self._domain_average_storage.tn0 = t0_n
+        self._domain_average_storage.static_stability_s = stat_s
+        self._domain_average_storage.static_stability_n = stat_n
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_u, \
-            self._interpolated_field_storage.interpolated_v, \
-            self._interpolated_field_storage.interpolated_avort, \
-            self._interpolated_field_storage.interpolated_theta, \
-            self._domain_average_storage.static_stability_n, \
-            self._domain_average_storage.static_stability_s, \
-            self._domain_average_storage.tn0, self._domain_average_storage.ts0 = interpolate_fields_direct_inv(  # f2py module
-                self.kmax,
+            self._interpolated_field_storage.interpolated_avort = compute_qgpv_direct_inv(  # f2py module
                 self.equator_idx,
-                np.swapaxes(self.u_field, 0, 2),
-                np.swapaxes(self.v_field, 0, 2),
-                np.swapaxes(self.t_field, 0, 2),
-                self.plev,
+                self._interpolated_field_storage.interpolated_u,
+                self._interpolated_field_storage.interpolated_v,
+                self._interpolated_field_storage.interpolated_theta,
+                self.height,
+                t0_s,
+                t0_n,
+                stat_s,
+                stat_n,
                 self.planet_radius,
                 self.omega,
                 self.dz,
@@ -1091,7 +1204,7 @@ class QGFieldNHN22(QGFieldBase):
                 self.cp)
 
         if return_named_tuple:
-            interpolated_fields = Interpolated_fields_to_return(
+            interpolated_fields = interpolated_fields_to_return(
                 self.qgpv,
                 self.interpolated_u,
                 self.interpolated_v,
@@ -1231,10 +1344,14 @@ class QGFieldNHN22(QGFieldBase):
     def jd(self):
         return self._jd
 
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
         so please used with caution.
+
+        Args:
+            ncforce(numpy.ndarray, optional): non-conservative forcing already interpolated on regular grid
+                of dimension (kmax, nlat, nlon)
 
         .. versionadded:: 0.7.0
         """
@@ -1244,6 +1361,16 @@ class QGFieldNHN22(QGFieldBase):
         ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
+
+        # ===== Below is temporary added for Sandro's use. =====
+        # Computation of barotropic component of non-conservative forces may be incorporated in future release.
+        # We are still testing if the computation is correct.
+        if ncforce is None:
+            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
+        else:  # There is input
+            ncforce = np.swapaxes(ncforce, 0, 2)
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+        # ===== Above is temporary added for Sandro's use. =====
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -1256,12 +1383,14 @@ class QGFieldNHN22(QGFieldBase):
             self._barotropic_flux_terms_storage.ep3baro_nhem, \
             self._barotropic_flux_terms_storage.ep4_nhem, \
             astar1, \
-            astar2 = \
+            astar2, \
+            self._barotropic_flux_terms_storage.ncforce_nhem = \
             compute_flux_dirinv_nshem(
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
                 vv=self._interpolated_field_storage.interpolated_v,
                 pt=self._interpolated_field_storage.interpolated_theta,
+                ncforce=ncforce,
                 tn0=self._domain_average_storage.tn0,
                 qref=qref_correct_unit[-self.equator_idx:],
                 uref=self._reference_states_storage.uref_nhem,
@@ -1290,12 +1419,14 @@ class QGFieldNHN22(QGFieldBase):
                 self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
                 self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
                 astar1, \
-                astar2 = \
+                astar2, \
+                self._barotropic_flux_terms_storage.ncforce_baro[:, :self.equator_idx] = \
                 compute_flux_dirinv_nshem(
                     pv=self._interpolated_field_storage.qgpv,
                     uu=self._interpolated_field_storage.interpolated_u,
                     vv=self._interpolated_field_storage.interpolated_v,
                     pt=self._interpolated_field_storage.interpolated_theta,
+                    ncforce=ncforce,
                     tn0=self._domain_average_storage.ts0,
                     qref=qref_correct_unit[:self.equator_idx],
                     uref=self._reference_states_storage.uref_shem,

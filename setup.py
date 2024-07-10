@@ -21,8 +21,8 @@ LONG_DESCRIPTION = \
     """
 
 
-ext1 = Extension(name='falwa.interpolate_fields',
-                 sources=['falwa/f90_modules/interpolate_fields.f90'],
+ext1 = Extension(name='falwa.compute_qgpv',
+                 sources=['falwa/f90_modules/compute_qgpv.f90'],
                  f2py_options=['--quiet'])
 
 ext2 = Extension(name='falwa.compute_reference_states',
@@ -34,8 +34,8 @@ ext3 = Extension(name='falwa.compute_lwa_and_barotropic_fluxes',
                  f2py_options=['--quiet'])
 
 # *** Extensions 4-9 are used by the direct inversion algorithm ***
-ext4 = Extension(name='falwa.interpolate_fields_direct_inv',
-                 sources=['falwa/f90_modules/interpolate_fields_dirinv.f90'],
+ext4 = Extension(name='falwa.compute_qgpv_direct_inv',
+                 sources=['falwa/f90_modules/compute_qgpv_dirinv.f90'],
                  f2py_options=['--quiet'])
 
 ext5 = Extension(name='falwa.compute_qref_and_fawa_first',

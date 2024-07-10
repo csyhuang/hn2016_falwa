@@ -5,8 +5,8 @@ Author: Clare Huang, Christopher Polster
 """
 
 __version__ = "1.2.1"
-from .interpolate_fields import interpolate_fields
-from .interpolate_fields_direct_inv import interpolate_fields_direct_inv
+from .compute_qgpv import compute_qgpv
+from .compute_qgpv_direct_inv import compute_qgpv_direct_inv
 from .compute_qref_and_fawa_first import compute_qref_and_fawa_first
 from .matrix_b4_inversion import matrix_b4_inversion
 from .matrix_after_inversion import matrix_after_inversion

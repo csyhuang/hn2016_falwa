@@ -1,19 +1,18 @@
-SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height, &
-                              aa, omega, dz, hh, rr, cp, pv, ut, vt, avort, theta, stat)
+SUBROUTINE compute_qgpv(nlon, nlat, kmax, ut, vt, theta, height, t0, stat, &
+                        aa, omega, dz, hh, rr, cp, &
+                        pv, avort)
 
    
-    INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax
-    REAL, INTENT(IN) :: uu(nlon,nlat,nlev), vv(nlon,nlat,nlev), temp(nlon,nlat,nlev), &
-                        plev(nlev), height(kmax)
+    INTEGER, INTENT(IN) :: nlon, nlat, kmax
+    REAL, INTENT(IN) :: ut(nlon,nlat,kmax), vt(nlon,nlat,kmax), theta(nlon,nlat,kmax), &
+                        height(kmax), t0(kmax), stat(kmax)
     REAL, INTENT(in) :: aa, omega, hh, rr, cp
-    REAL, INTENT(out) :: pv(nlon,nlat,kmax), ut(nlon,nlat,kmax), vt(nlon,nlat,kmax), avort(nlon,nlat,kmax)
-    REAL, INTENT(out) :: theta(nlon,nlat,kmax), stat(kmax)
+    REAL, INTENT(out) :: pv(nlon,nlat,kmax), avort(nlon,nlat,kmax)
 
 
-    REAL ::  tt(nlon,nlat,nlev),tz(nlat,kmax),tzd(nlat,kmax)
+    REAL ::  tz(nlat,kmax),tzd(nlat,kmax)
     REAL ::  uz(nlat,kmax),uzd(nlat,kmax)
     REAL ::  vz(nlat,kmax),vzd(nlat,kmax)
-    REAL ::  t0(kmax),zlev(nlev)
     REAL ::  st(nlon,nlat),zmst(nlat)
     REAL ::  zmav(nlat,kmax)
     REAL ::  zmpv(nlat,kmax)
@@ -23,42 +22,6 @@ SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height
     rkappa = rr/cp
     pi = acos(-1.)
     dphi = pi/float(nlat-1)
-
-
-    ! ====  vertical interpolation ====
-    do k = 1,nlev
-        zlev(k) = -hh*alog(plev(k)/1000.)
-    enddo
-
-    do i = 1,nlon
-        do j = 1,nlat
-
-            do k = 1,nlev
-                tt(i,j,k) = temp(i,j,k)*((1000./plev(k))**rkappa)
-            enddo
-
-
-
-            st(i,j) = tt(i,j,1)      ! surface pot. temp
-
-            do kk = 1,kmax   ! vertical interpolation 
-                ttt = height(kk)
-                do k = 1,nlev-1
-                    tt2 = zlev(k+1)
-                    tt1 = zlev(k)
-                    if((ttt.ge.tt1).and.(ttt.lt.tt2)) then
-                        dd1 = (ttt-tt1)/(tt2-tt1)
-                        dd2 = 1.-dd1
-                        theta(i,j,kk) = tt(i,j,k)*dd2 + tt(i,j,k+1)*dd1
-                        ut(i,j,kk) = uu(i,j,k)*dd2 + uu(i,j,k+1)*dd1
-                        vt(i,j,kk) = vv(i,j,k)*dd2 + vv(i,j,k+1)*dd1
-                        goto 348
-                    endif
-                enddo
-                348 continue
-            enddo
-        enddo
-    enddo
 
     !  **** compute zonal mean ****
     tz = 0.
@@ -83,30 +46,7 @@ SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height
         enddo
     enddo
 
-
-    ! reference theta
-    do kk = 1,kmax
-        t0(kk) = 0.
-        csm = 0.
-        do j = 1,nlat
-            phi0 = -90.+float(j-1)*180./float(nlat-1)
-            phi0 = phi0*pi/180.
-            t0(kk) = t0(kk) + tzd(j,kk)*cos(phi0)
-            csm = csm + cos(phi0)
-        enddo
-        t0(kk) = t0(kk)/csm
-    enddo
-
-    ! static stability
-    do kk = 2,kmax-1
-        stat(kk) = (t0(kk+1)-t0(kk-1))/(height(kk+1)-height(kk-1))
-    enddo
-    stat(kmax) = (t0(kmax)-t0(kmax-1))/(height(kmax)-height(kmax-1))
-    stat(1) = (t0(2)-t0(1))/(height(2)-height(1))
-
-
     ! surface temp
-
     do j = 1,nlat
         zmst(j) = 0.
         do i = 1,nlon
@@ -193,13 +133,5 @@ SUBROUTINE interpolate_fields(nlon, nlat, nlev, kmax, uu, vv, temp, plev, height
             enddo
         enddo
     enddo
-
-
-!     write(6,*) 'U ',maxval(uz),minval(uz)
-!     write(6,*) 'V ',maxval(vz),minval(vz)
-!     write(6,*) 'T ',maxval(tz),minval(tz)    
-!     write(6,*) 'AVORT',maxval(avort),minval(avort)    
-!     write(6,*) 'PV ',maxval(zmpv),minval(zmpv)
-!     write(6,*) 'zmpv', sum(zmpv, dim=1)
 
 END SUBROUTINE
