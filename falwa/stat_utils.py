@@ -1,3 +1,8 @@
+"""
+------------------------------------------
+File name: stat_utils.py
+Author: Clare Huang
+"""
 import itertools
 import numpy as np
 

@@ -73,16 +73,18 @@ Modules
 .. toctree::
    :maxdepth: 2
 
-   Object Oriented Interface
-   Xarray Interface
-   Barotropic Field
-   Basis Functions
-   Plot Utilities
-   Utility Functions
-   Wrapper Functions
-   Data Storage
    Example Notebooks
-
+   Object Oriented Interface
+   Data Storage
+   Xarray Interface
+   Preprocessing
+   Barotropic Field
+   Utility Functions
+   Plot Utilities
+   netCDF Utilities
+   Statistics Utilities
+   Basis Functions
+   Wrapper Functions
 
 Indices and tables
 ==================
