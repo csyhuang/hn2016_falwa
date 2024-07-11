@@ -58,9 +58,13 @@ ext9 = Extension(name='falwa.compute_flux_dirinv',
                  sources=['falwa/f90_modules/compute_flux_dirinv.f90'],
                  f2py_options=['--quiet'])
 
+ext10 = Extension(name='falwa.compute_lwa_only_nhn22',
+                 sources=['falwa/f90_modules/compute_lwa_only_nhn22.f90'],
+                 f2py_options=['--quiet'])
+
 setup(
     name='falwa',
-    version='1.2.1',
+    version='1.3.0',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
@@ -75,7 +79,7 @@ setup(
     tests_require=['pytest'],
     test_suite="tests",
     obsoletes_dist="hn2016_falwa",
-    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
+    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9, ext10],
     zip_safe=False
 )
 
