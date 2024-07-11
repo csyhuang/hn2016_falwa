@@ -1,115 +1,110 @@
+import itertools
 import numpy as np
 import xarray as xr
 from datetime import datetime
-import pylab as py
+import matplotlib.pyplot as plt
 import gc
 from scipy.interpolate import interp1d
 import sys
 import os
 import time as ti
-import gridfill  # Gridfill package by Andrew Dawson: https://github.com/ajdawson/gridfill
+
+from falwa.preprocessing import gridfill_each_level
 sys.path.append('./module/')
-import logruns as logruns
-
-
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    This is a function copied from Clare's MDTF repo:
-        https://github.com/csyhuang/MDTF-diagnostics/blob/finite_amplitude_wave_diag/diagnostics/finite_amplitude_wave_diag/finite_amplitude_wave_diag_zonal_mean.py
-
-    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
-    using a relaxation scheme.
-
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
-
-    Returns:
-        A 2D array of the same dimension with all nan filled.
-    """
-    if np.isnan(lat_lon_field).sum() == 0:
-        return lat_lon_field
-
-    lat_lon_filled, converged = gridfill.fill(
-        grids=np.ma.masked_invalid(lat_lon_field), xdim=1, ydim=0, eps=0.001,
-        cyclic=True, itermax=itermax, verbose=verbose)
-
-    return lat_lon_filled
+import logruns
 
 
 def gridfill_all_levels_each_time(new_variable_each_time, logging_object):
-    
+
     PLEVS, LAT, LON = new_variable_each_time.shape
-    
+
     start0 = ti.time()
     for plev in range(PLEVS):
-        
         lat_lon_field = new_variable_each_time[plev, ...]
-        new_variable_each_time[plev, ...] = gridfill_each_level(lat_lon_field, itermax=30000, verbose=False)   
-    end0       = ti.time() 
-    time_taken = (end0-start0)  
-                              
-    return new_variable_each_time                      
-    
-                         
+        new_variable_each_time[plev, ...] = gridfill_each_level(lat_lon_field, itermax=30000, verbose=False)
+    end0 = ti.time()
+    time_taken = (end0 - start0)
 
-def vertical_interpolation_to_pressure(ds, variable, save_topography=False, logging_object=None, \
+    return new_variable_each_time
+
+
+def vertical_interpolation_to_pressure(ds, variable, save_topography=False, logging_method=None,
                                        new_lev = np.array([200, 300]), var='U'):
-    
-    start_interp= ti.time()
-    
-    KIND='linear'
-    ai, bi, PS, P0 = ds.hyai.values, ds.hybi.values, ds.PS.values, ds.P0.values
-    
-    TIME, OLD_LEV, LAT, LON = variable.shape
-    NEW_LEVS       = len(new_lev)
-    new_variable   = np.zeros((TIME, NEW_LEVS, LAT, LON))
+    start_interp = ti.time()
 
-                         
+    KIND = 'linear'
+    ai, bi, PS, P0 = ds.hyai.values, ds.hybi.values, ds.PS.values, ds.P0.values
+    # ai.shape = (33,)
+    # bi.shape = (33,)
+    # PS.shape = (2, 192, 288)
+    # P0 = array(100000.)
+
+    time_dim = ds.coords['time'].size
+    old_lev_dim = ds.coords['lev'].size
+    lat_dim = ds.coords['lat'].size
+    lon_dim = ds.coords['lon'].size
+
+    # time_dim, old_lev_dim, lat_dim, lon_dim = variable.shape  # (2, 32, 192, 288)
+    new_lev_dim = len(new_lev)
+    new_variable = np.zeros((time_dim, new_lev_dim, lat_dim, lon_dim))
+
     if save_topography:
         topography = np.copy(new_variable)
     else:
         topography = None
-                         
-    for t in range(TIME):
+
+    for t in range(time_dim):
         start0 = ti.time()
-        for la in range(LAT):
-            for lo in range(LON):
-                         
-                P             = (ai*(P0) + bi*(PS[t,la,lo]))
-                P             = (P[1:]+P[:-1])/2   
-                old_lev       =  P/100 ### converting from Pa to hPa
-                f_interp      =  interp1d(old_lev, variable[t,:,la, lo], fill_value=np.nan, bounds_error=False, kind=KIND)
-                new_variable[t, :, la, lo] = f_interp(new_lev)
-            
-        end0       = ti.time() 
-        time_taken = (end0-start0)
-        logging_object.write('%d of %d interpolated - computed in %1.1f sec'%(t, TIME, time_taken))
-             
-        ##### Replace the nan values (i.e. boundary below topography) with smooth values from x-y boundary                
+        P_2levs = (ai[:, np.newaxis, np.newaxis] * (P0) + bi[:, np.newaxis, np.newaxis] * (PS[t, np.newaxis, :, :]))
+        P = (P_2levs[1:] + P_2levs[:-1]) / 2  # P.shape = (32,)
+        old_lev = P / 100  # converting from Pa to hPa old_lev.shape = (32, 192, 288)
+
+        # *** Original method: loop over lat-lon grid ***
+        logging_method("Use original method")
+        for la, lo in itertools.product(range(lat_dim), range(lon_dim)):
+            f_interp = interp1d(old_lev[:, la, lo], variable[t, :, la, lo], fill_value=np.nan, bounds_error=False,
+                                kind=KIND)
+            new_variable[t, :, la, lo] = f_interp(new_lev)
+        # *** End of original method ***
+
+        # *** Try new method: unfold into 2D array, then interpolate in first axis ***
+        # logging_method("Try new method - but not any faster")
+        # draft_func = lambda la, lo: interp1d(
+        #         old_lev[:, la, lo], variable[t, :, la, lo], fill_value=np.nan, bounds_error=False,
+        #         kind=KIND)(new_lev)
+        # tuple_list = list(itertools.product(range(lat_dim), range(lon_dim)))
+        # first_list = [tt[0] for tt in tuple_list]
+        # second_list = [tt[1] for tt in tuple_list]
+        # new_variable[t, :, :, :] = np.array(list(map(draft_func, first_list, second_list))).T\
+        #     .reshape(new_lev.size, lat_dim, lon_dim)
+        # *** End of new method ***
+
+        end0 = ti.time()
+        time_taken = (end0 - start0)
+        logging_method('%d of %d interpolated - computed in %1.1f sec' % (t, time_dim, time_taken))
+
+        ##### Replace the nan values (i.e. boundary below topography) with smooth values from x-y boundary
         if save_topography:
-            ## save a copy for topography file where there no values for certain pressure cooridinates. 
-            topography[t, ...] = new_variable[t, ...]            
-        
-        new_variable[t, ...]   = gridfill_all_levels_each_time(new_variable[t, ...], logging_object)
-                         
-                         
+            ## save a copy for topography file where there no values for certain pressure cooridinates.
+            topography[t, ...] = new_variable[t, ...]
+
+        new_variable[t, ...] = gridfill_all_levels_each_time(new_variable[t, ...], logging_object)
+
     if save_topography:
-        topography[~np.isnan(topography)]  = 1
-        ### This is a time varying 4d array (time, pressure, lat, lon) but it should be more or less constant. Can save a time mean value as well. 
-        ### Its 1 above topography and nan below topography. 
+        topography[~np.isnan(topography)] = 1
+        ### This is a time varying 4d array (time, pressure, lat, lon) but it should be more or less constant. Can save a time mean value as well.
+        ### Its 1 above topography and nan below topography.
         ### To-do : Use this variable later for doing topography correction during computation of vertically avergaed LWA budget later.
-                         
+
     for var in [v for v in list(locals()) if v not in ['new_variable', 'topography', 'new_lev']]:
         del locals()[var]
     gc.collect()
-    
-    end_interp= ti.time()
-    time_diff = (end_interp - start_interp)/60
-    logging_object.write('%s interpolated in %d min'%(var, time_diff))
-    logging_object.write('---------------------------------------')
-        
+
+    end_interp = ti.time()
+    time_diff = (end_interp - start_interp) / 60
+    logging_method('%s interpolated in %d min' % (var, time_diff))
+    logging_method('---------------------------------------')
+
     return new_variable, topography, new_lev
 
 
@@ -155,7 +150,7 @@ def update_new_variable_to_pressure(var, new_data, ds, ds_copy, default_attrs=No
     return ds_copy
 
 
-def show_vars(file = "NHISTfrc2_f09_tn14_20191025.cam.h3.1950-01-01-21600.nc"):
+def show_vars(file):
     source = './NorESM_data_sample/'
     dataset = xr.open_dataset(source+file)
     return dataset
@@ -168,21 +163,25 @@ if __name__ == "__main__":
     start = ti.time()
     
     current_datetime = datetime.now()
-    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")    
-    
+    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
     logfilename    = formatted_datetime+'-'+os.path.basename(__file__).split('/')[-1].split('.py')[0]
     logging_object = logruns.default_log(logfilename = logfilename,  log_directory = './logs/')
 
-    
-    file       = "NHISTfrc2_f09_tn14_20191025.cam.h3.1950-01-01-21600.nc"
+
+    file       = "cesm_10tslices.nc"
     ds         = show_vars(file = file)
-    
-    varsi            = [sys.argv[1]] ## ['V', 'U', 'T', 'Z3']
+
+    if len(sys.argv) > 1:
+        varsi = [sys.argv[1]]  # ['V', 'U', 'T', 'Z3']
+    else:
+        varsi = ["U"]
+
     save_topographys = [mapval[var] for var in varsi]  ## [True, False, False, False]
-    
-    new_lev    = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775, \
-                            750, 725, 700, 650, 600, 550, 500, 450, 400, 350, \
-                            300, 250, 225, 200, 175, 150, 125, 100, 70, 50, \
+
+    new_lev    = np.array([1000, 975, 950, 925, 900, 875, 850, 825, 800, 775,
+                            750, 725, 700, 650, 600, 550, 500, 450, 400, 350,
+                            300, 250, 225, 200, 175, 150, 125, 100, 70, 50,
                             30,   20,  10,   7,   5,   3,])  ##### ERA5 pressure levels 
     ### --> Not included 1 and 2 hPa pressure levels because stratosphere is not so well resolved in the model.
     
@@ -193,30 +192,41 @@ if __name__ == "__main__":
     
     for var, save_topography in zip(varsi, save_topographys):
                 
-            logging_object.write('########################################')
-            logging_object.write('---> %s <------'%(var))
+        logging_object.write('########################################')
+        logging_object.write('---> %s <------'%(var))
+
+        interpolated_val, topography, new_lev = vertical_interpolation_to_pressure(
+            ds=ds, variable=ds[var].values, new_lev=new_lev,
+            save_topography=save_topography, logging_method=print, var=var)
+            #save_topography=save_topography, logging_method=logging_object.write, var=var)
+
+        ds_copy = update_new_variable_to_pressure(
+            var, interpolated_val, ds, ds_copy, default_attrs=None,
+            new_coordinate_system=new_coordinate_system)
+
+        if topography is not None:
+            ds_copy = update_new_variable_to_pressure('topo', topography, ds, ds_copy, default_attrs={}, new_coordinate_system = new_coordinate_system)
 
 
-            interpolated_val, topography, new_lev = vertical_interpolation_to_pressure(\
-                                                    ds=ds, variable = ds[var].values, new_lev=new_lev, \
-                                                    save_topography=save_topography, logging_object=logging_object, var=var) 
+        ds.close()
+        ds_copy.to_netcdf(path='./%s_poisson_filled'%(var))
 
+        # To save a plot to compare before and after refactoring
+        # ds_1step = ds_copy.isel(time=0)
+        # ds_zmean = ds_1step.mean(dim="lon")
+        # arr = ds_zmean.to_array()
+        # plt.contourf(ds_copy['lat'], ds_copy['plev'], arr[1, :, :].T, 20)
+        # plt.colorbar()
+        # plt.gca().invert_yaxis()
+        # plt.savefig("to_compare_after_refactoring.png")
+        # plt.show()
 
-            ds_copy = update_new_variable_to_pressure(var, interpolated_val, ds, ds_copy, default_attrs=None, \
-                                                      new_coordinate_system = new_coordinate_system)
+        ds_copy.close()
 
-            if topography is not None:
-                ds_copy = update_new_variable_to_pressure('topo', topography, ds, ds_copy, default_attrs={}, new_coordinate_system = new_coordinate_system) 
-
-            
-            ds.close()
-            ds_copy.to_netcdf(path='./%s_poisson_filled'%(var))
-            ds_copy.close()
-
-            gc.collect()
+        gc.collect()
     
     end = ti.time()
-    total_time_taken = (end-start)/(60)
+    total_time_taken = (end-start)/(60.)
     logging_object.write('Congratulations - You had a good day today !! %1.1f min'%(total_time_taken))
     
     
