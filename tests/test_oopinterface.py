@@ -201,8 +201,10 @@ def test_raise_error_for_unrealistic_fields():
         dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
         raise_error_for_nonconvergence=True)
     qgfield.interpolate_fields()
+    assert not qgfield.nonconvergent_uref  # before calling compute_reference_states
     with pytest.raises(ValueError):
         qgfield.compute_reference_states()
+    assert qgfield.nonconvergent_uref  # after calling compute_reference_states
 
     # Check the case when error is suppressed for unrealistic fields
     qgfield._raise_error_for_nonconvergence = False
