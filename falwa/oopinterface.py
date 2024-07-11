@@ -572,19 +572,23 @@ class QGFieldBase(ABC):
         implemented here.
         """
 
-    def compute_lwa_only(self):
+    def compute_lwa_only(self) -> None:
         """
         New in version 1.3. After calling compute_reference_state, if the reference state Uref was not solved properly,
-        this method would compute LWA (and its barotropic component) based on QGPV and Qref obtained from previous step.
+        this method would compute LWA (and its barotropic component) based on `QGPV` and `Qref` obtained from previous
+        step.
 
-        Note with caution that, the implementation of this method in QGFieldNH18 behaves slightly differently from
-        compute_lwa_and_barotropic_fluxes in the Southern Hemisphere (while it produces the same results for the
+        Note with caution that, the implementation of this method in `QGFieldNH18` behaves slightly differently from
+        `compute_lwa_and_barotropic_fluxes` in the Southern Hemisphere (while it produces the same results for the
         Northern Hemisphere) probably due to indexing difference.
 
         To retrieve LWA and barotropic fluxes computed:
-        >> QGField.lwa_baro  # barotropic LWA
-        >> QGField.u_baro    # barotropic U
-        >> QGField.lwa       # 3-D LWA
+        --------
+
+        >>> QGField.compute_lwa_only()
+        >>> lwa_baro = QGField.lwa_baro  # barotropic LWA
+        >>> u_baro = QGField.u_baro    # barotropic U
+        >>> lwa = QGField.lwa       # 3-D LWA
         """
 
         ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
@@ -829,13 +833,11 @@ class QGFieldBase(ABC):
     @property
     def nonconvergent_uref(self) -> bool:
         """
-        If True, QGField.compute_lwa_and_barotropic_flux cannot be called. If user deems appropriate to proceed with
-        LWA calculation, call QGField.compute_lwa_only instead.
+        If True, `QGField.compute_lwa_and_barotropic_flux` cannot be called. If user deems appropriate to proceed with LWA calculation, call `QGField.compute_lwa_only` instead.
 
         Returns
         -------
-        A boolean. Initial value is False. After calling QGField.compute_reference_state, if Uref cannot be solved,
-        its value will be changed to True.
+        A boolean. Initial value is False. After calling QGField.compute_reference_state, if Uref cannot be solved, its value will be changed to True.
         """
         return self._nonconvergent_uref
 
