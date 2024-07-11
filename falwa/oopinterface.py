@@ -825,6 +825,20 @@ class QGFieldBase(ABC):
         """
         return self._northern_hemisphere_results_only
 
+    # === Boolean related to the state of the input field ===
+    @property
+    def nonconvergent_uref(self) -> bool:
+        """
+        If True, QGField.compute_lwa_and_barotropic_flux cannot be called. If user deems appropriate to proceed with
+        LWA calculation, call QGField.compute_lwa_only instead.
+
+        Returns
+        -------
+        A boolean. Initial value is False. After calling QGField.compute_reference_state, if Uref cannot be solved,
+        its value will be changed to True.
+        """
+        return self._nonconvergent_uref
+
     # === Derived physical quantities ===
     @property
     def qgpv(self):
