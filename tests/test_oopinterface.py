@@ -1,4 +1,5 @@
 import os
+import warnings
 import pytest
 
 import numpy as np
@@ -197,10 +198,19 @@ def test_raise_error_for_unrealistic_fields():
     qgfield = QGFieldNH18(
         xlon=xlon, ylat=ylat, plev=plev, u_field=u_field, v_field=u_field, t_field=u_field, kmax=kmax,
         maxit=100000, dz=1000., npart=None, tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS)
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
+        raise_error_for_nonconvergence=True)
     qgfield.interpolate_fields()
     with pytest.raises(ValueError):
         qgfield.compute_reference_states()
+
+    # Check the case when error is suppressed for unrealistic fields
+    qgfield._raise_error_for_nonconvergence = False
+    with pytest.warns(UserWarning):
+        qgfield.compute_reference_states()
+    assert qgfield.nonconvergent_uref
+    qgfield.compute_lwa_only()
+    assert qgfield.lwa.sum() > 0
 
 
 def test_raise_error_for_unrealistic_kmax():
