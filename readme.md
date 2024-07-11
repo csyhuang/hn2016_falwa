@@ -1,6 +1,6 @@
 ## Python Library: falwa (v1.3.0)
 
-[![Build Status](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/workflow.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
+[![Python package](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 
 **Important:** this python package has been renamed from `hn2016_falwa` to `falwa` since version v1.0.0.
 
