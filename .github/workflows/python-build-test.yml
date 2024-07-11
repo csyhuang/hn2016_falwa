@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "draft_branch_for_v1.3c" ]
   pull_request:
     branches: [ "master" ]
 
@@ -31,7 +31,7 @@ jobs:
         python -m pip install -U pytest
         python -m pip install --upgrade pip setuptools wheel
         sudo apt-get install gfortran
-        python -m pip install numpy
+        python -m pip install numpy==1.22.3
         python -m pip install scipy
         python -m pip install xarray
         python setup.py develop        
