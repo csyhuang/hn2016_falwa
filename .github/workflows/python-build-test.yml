@@ -31,10 +31,10 @@ jobs:
         python -m pip install -U pytest
         python -m pip install --upgrade pip setuptools wheel
         sudo apt-get install gfortran
-        python -m pip install numpy==1.22.3
-        python -m pip install scipy==1.9
-        python -m pip install xarray==2023.2.0
-        python setup.py develop        
+        python -m pip install scipy==1.11.2
+        python -m pip install xarray==2024.1.1
+        python -m pip install numpy==1.24.4
+        python setup.py develop
     - name: Test with pytest
       run: |
         coverage run -m pytest -k "not output_results"
