@@ -574,27 +574,17 @@ class QGFieldBase(ABC):
 
     def compute_lwa_only(self):
         """
-        New in version 1.3. If reference state was not solved properly, compute LWA (and its barotropic component)
-        from stored QGPV and Qref.
+        New in version 1.3. After calling compute_reference_state, if the reference state Uref was not solved properly,
+        this method would compute LWA (and its barotropic component) based on QGPV and Qref obtained from previous step.
 
-        Parameters
-        ----------
-        pv : input rank-3 array('f') with bounds (imax,jmax,kmax)
-        uu : input rank-3 array('f') with bounds (imax,jmax,kmax)
-        qref : input rank-2 array('f') with bounds (nd,kmax)
-        jb : input int
-        is_nhem : input int
-        a : input float
-        om : input float
-        dz : input float
-        h : input float
-        rr : input float
-        cp : input float
-        prefac : input float
+        Note with caution that, the implementation of this method in QGFieldNH18 behaves slightly differently from
+        compute_lwa_and_barotropic_fluxes in the Southern Hemisphere (while it produces the same results for the
+        Northern Hemisphere) probably due to indexing difference.
 
-        Returns
-        -------
-        LWA, LWA_baro, U, u_baro
+        To retrieve LWA and barotropic fluxes computed:
+        >> QGField.lwa_baro  # barotropic LWA
+        >> QGField.u_baro    # barotropic U
+        >> QGField.lwa       # 3-D LWA
         """
 
         ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
