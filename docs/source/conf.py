@@ -44,7 +44,7 @@ autodoc_mock_imports = [
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-# needs_sphinx = '1.0'
+needs_sphinx = '4.0.2'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -70,7 +70,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'falwa'
-copyright = u'2022, Clare S. Y. Huang'
+copyright = u'2024, Clare S. Y. Huang'
 author = u'Clare S. Y. Huang'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -52,12 +52,6 @@ THe conda environment for running the notebook can be found in `environment.yml`
 conda env create -f environment.yml
 ```
 
-## Sponsorship acknowledgement
-
-<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png"  width="100">
-
-This project is sponsored by JetBrains as one of the non-commercial open source projects. JetBrains provides core project contributors with a set of best-in-class developer tools free of charge. Please check out their [Open Source Support page](https://www.jetbrains.com/community/opensource/) for details.  
-
 ## Inquiries / Issues reporting
 
 - If you are interested in using the package, please leave your contact [here](https://goo.gl/forms/5L8fv0mUordugq6v2) or email me(csyhuang@uchicago.edu) such that I can keep you updated of any changes made.
