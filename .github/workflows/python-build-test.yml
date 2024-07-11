@@ -31,9 +31,9 @@ jobs:
         python -m pip install -U pytest
         python -m pip install --upgrade pip setuptools wheel
         sudo apt-get install gfortran
-        python -m pip install numpy==1.22.3
-        python -m pip install scipy
-        python -m pip install xarray
+        python -m pip3 install numpy==1.22.3
+        python -m pip3 install scipy==1.9
+        python -m pip3 install xarray==2023.2.0
         python setup.py develop        
     - name: Test with pytest
       run: |
