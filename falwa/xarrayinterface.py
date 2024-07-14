@@ -568,11 +568,6 @@ class QGDataset:
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
 
-    # Accessors for individual field properties computed in compute_lwa_and_barotropic_fluxes
-    lwa_baro = _DataArrayCollector("lwa_baro")
-    u_baro = _DataArrayCollector("u_baro")
-    lwa = _DataArrayCollector("lwa")
-
 
 def integrate_budget(ds, var_names=None):
     """Compute the integrated LWA budget terms for the given data.
