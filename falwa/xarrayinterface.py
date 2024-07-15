@@ -548,6 +548,25 @@ class QGDataset:
     u_baro = _DataArrayCollector("u_baro")
     lwa = _DataArrayCollector("lwa")
 
+    def compute_lwa_only(self, return_dataset=True):
+        """
+        Call `compute_lwa_only` on all contained fields.
+
+        See :py:meth:`.oopinterface.QGFieldBase.compute_lwa_only`.
+
+        Returns
+        -------
+        xarray.Dataset or None
+        """
+        for field in self._fields:
+            field.compute_lwa_only()
+        if return_dataset:
+            data_vars = {
+                "lwa_baro": self.lwa_baro,
+                "u_baro": self.u_baro,
+                "lwa": self.lwa,
+            }
+            return xr.Dataset(data_vars, attrs=self.attrs)
 
 
 def integrate_budget(ds, var_names=None):

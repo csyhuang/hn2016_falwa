@@ -21,8 +21,8 @@ LONG_DESCRIPTION = \
     """
 
 
-ext1 = Extension(name='falwa.interpolate_fields',
-                 sources=['falwa/f90_modules/interpolate_fields.f90'],
+ext1 = Extension(name='falwa.compute_qgpv',
+                 sources=['falwa/f90_modules/compute_qgpv.f90'],
                  f2py_options=['--quiet'])
 
 ext2 = Extension(name='falwa.compute_reference_states',
@@ -34,8 +34,8 @@ ext3 = Extension(name='falwa.compute_lwa_and_barotropic_fluxes',
                  f2py_options=['--quiet'])
 
 # *** Extensions 4-9 are used by the direct inversion algorithm ***
-ext4 = Extension(name='falwa.interpolate_fields_direct_inv',
-                 sources=['falwa/f90_modules/interpolate_fields_dirinv.f90'],
+ext4 = Extension(name='falwa.compute_qgpv_direct_inv',
+                 sources=['falwa/f90_modules/compute_qgpv_dirinv.f90'],
                  f2py_options=['--quiet'])
 
 ext5 = Extension(name='falwa.compute_qref_and_fawa_first',
@@ -58,9 +58,13 @@ ext9 = Extension(name='falwa.compute_flux_dirinv',
                  sources=['falwa/f90_modules/compute_flux_dirinv.f90'],
                  f2py_options=['--quiet'])
 
+ext10 = Extension(name='falwa.compute_lwa_only_nhn22',
+                 sources=['falwa/f90_modules/compute_lwa_only_nhn22.f90'],
+                 f2py_options=['--quiet'])
+
 setup(
     name='falwa',
-    version='1.2.1',
+    version='1.3.0',
     description='python package to compute finite-amplitude local wave activity (Huang and Nakamura 2016, JAS)',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
@@ -75,7 +79,7 @@ setup(
     tests_require=['pytest'],
     test_suite="tests",
     obsoletes_dist="hn2016_falwa",
-    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9],
+    ext_modules=[ext1, ext2, ext3, ext4, ext5, ext6, ext7, ext8, ext9, ext10],
     zip_safe=False
 )
 

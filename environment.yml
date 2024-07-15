@@ -11,6 +11,10 @@ dependencies:
 - pytest=7.4.0
 - xarray=2023.2.0
 - netCDF4=1.5.8
+- gridfill
 - jupyter
 - matplotlib
 - twine
+- cartopy
+# Other useful packages to visualize plots in notebooks
+# - cartopy

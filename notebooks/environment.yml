@@ -1,10 +1,11 @@
 name: test_f2py_2021 # default is root
 channels:
+  - intel
   - conda-forge
   - bioconda
 dependencies:         # everything under this, installed by conda
-  - numpy
-  - scipy
+  - intel::numpy
+  - intel::scipy
   - netcdf4
   - pytest
   - jupyterlab

@@ -28,6 +28,7 @@ def test_qgdataset_with_dataset():
     qgds.interpolate_fields()
     qgds.compute_reference_states()
     qgds.compute_lwa_and_barotropic_fluxes()
+    qgds.compute_lwa_only()
 
 def test_qgdataset_with_dataarray():
     data = _generate_test_dataset()
@@ -135,6 +136,10 @@ def test_basic_qgdataset_calls(QGField, nh_only):
     np.testing.assert_allclose(out3["lwa_baro"], qgds.lwa_baro)
     np.testing.assert_allclose(out3["u_baro"], qgds.u_baro)
     np.testing.assert_allclose(out3["lwa"], qgds.lwa)
+    out4 = qgds.compute_lwa_only()
+    np.testing.assert_allclose(out4["lwa_baro"], qgds.lwa_baro)
+    np.testing.assert_allclose(out4["u_baro"], qgds.u_baro)
+    np.testing.assert_allclose(out4["lwa"], qgds.lwa)
 
 
 # Tests for internals

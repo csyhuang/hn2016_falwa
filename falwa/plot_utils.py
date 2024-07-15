@@ -5,7 +5,7 @@ Author: Clare Huang
 """
 import numpy as np
 import xarray as xr
-from matplotlib import pyplot as plt  # Optional dependency
+from matplotlib import gridspec, pyplot as plt  # Optional dependency
 from cartopy import crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 
@@ -171,17 +171,17 @@ def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longit
 
     Parameters
     ----------
-        filepath : str
-            path to the netCDF file
-        variable_name : str
-            name of the variable to be plotted
-        latitude_name : str
-            name of latitudinal coordinates
-        longitude_name : str
-            name of latitudinal coordinates
-        tstep : int
-            index of timestep to be plotted
-        zonal_axis : int
+    filepath : str
+        path to the netCDF file
+    variable_name : str
+        name of the variable to be plotted
+    latitude_name : str
+        name of latitudinal coordinates
+    longitude_name : str
+        name of latitudinal coordinates
+    tstep : int
+        index of timestep to be plotted
+    zonal_axis : int
             axis of zonal dimension
     """
     file_handle = xr.open_dataset(filepath)
@@ -194,3 +194,150 @@ def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longit
         file_handle.coords[latitude_name],
         file_handle.variables[variable_name].isel(time=tstep))
     plt.show()
+
+
+class LatLonMapPlotter(object):
+    """
+    Utility for plotting latitude-longitude maps with Cartopy.
+
+
+    Parameters
+    ----------
+    figsize : Tuple[int, int]
+        figure size in inch
+    title_str : str
+        Title of the plot
+    xgrid : np.array
+        Longitude grid points (in deg)
+    ygrid : np.array
+        Latiitude grid points (in deg)
+    xland : np.ndarray
+        With dimension same as np.meshgrid(xgrid, ygrid). Longitude grid points to be masked out
+    yland : np.ndarray
+        With dimension same as np.meshgrid(xgrid, ygrid). Latitude grid points to be masked out
+    lon_range : np.array
+        Longitude ticks/marks displayed on the plot
+    lat_range : np.array
+        Latiitude ticks/marks displayed on the plot
+    wspace : float
+        width space size
+    hspace : float
+        height space size
+    coastlines_alpha : float
+        Degree of transparency of coastlines (in percent)
+    exclude_equator : bool
+        whether to exclude equator or not
+    white_space_width : float
+        The width of white space centered at equator if exclude_equator = True
+    x_axis_title : str
+        Label of the x-axis [Longitude]
+    y_axis_title : str
+        Label of the y-axis [Latiitude]
+    """
+    def __init__(self, figsize, title_str, xgrid, ygrid, xland, yland, lon_range, lat_range,
+                 wspace=0.3, hspace=0.3, coastlines_alpha=0.7, exclude_equator=True, white_space_width=20,
+                 x_axis_title="Longitude[deg]", y_axis_title="Latitude[deg]"):
+
+
+        self._figsize = figsize
+        self._title_str = title_str
+        self._xgrid = xgrid
+        self._ygrid = ygrid
+        self._xland = xland
+        self._yland = yland
+        self._lon_range = lon_range
+        self._lat_range = lat_range
+        self._wspace = wspace
+        self._hspace = hspace
+        self._coastlines_alpha = coastlines_alpha
+        self._exclude_equator = exclude_equator
+        self._white_space_width = white_space_width
+        self._x_axis_title = x_axis_title
+        self._y_axis_title = y_axis_title
+
+
+    def plot_and_save_variable(self, variable, cmap, var_title_str, save_path="figure.png", num_level=30):
+        from cartopy import crs as ccrs
+        fig = plt.figure(figsize=self._figsize)
+        spec = gridspec.GridSpec(
+            ncols=1, nrows=1, wspace=self._wspace, hspace=self._hspace)
+        ax = fig.add_subplot(spec[0], projection=ccrs.PlateCarree())
+        ax.coastlines(color='black', alpha=self._coastlines_alpha)
+        ax.set_aspect('auto', adjustable=None)
+        mesh_x, mesh_y = np.meshgrid(self._xgrid, self._ygrid)
+        main_fig = ax.contourf(
+            mesh_x, mesh_y,
+            variable,
+            num_level,
+            cmap=cmap, transform=ccrs.PlateCarree(), transform_first=True)
+        ax.scatter(self._xgrid[self._xland], self._ygrid[self._yland], s=1, c='gray')
+        if self._exclude_equator:
+            ax.axhline(y=0, c='w', lw=self._white_space_width)
+        ax.set_xticks(self._lon_range, crs=ccrs.PlateCarree())
+        ax.set_yticks(self._lat_range, crs=ccrs.PlateCarree())
+        fig.colorbar(main_fig, ax=ax)
+        ax.set_title(f"{self._title_str}\n{var_title_str}")
+        ax.set_xlabel(self._x_axis_title)
+        ax.set_ylabel(self._y_axis_title)
+        if save_path:  # input save path is not None
+            plt.savefig(save_path, bbox_inches='tight')
+        plt.show()
+
+
+class HeightLatPlotter(object):
+    """
+     Utility for plotting Height-latitude plot with `matplotlib.pyplot.contourf`.
+
+     Parameters
+     ----------
+     figsize : Tuple[int, int]
+         figure size in inch
+     title_str : str
+         Title of the plot
+     xgrid : np.array
+         Longitude grid points (in deg)
+     ygrid : np.array
+         Latiitude grid points (in deg)
+     xlim : Tuple[float, float]
+         Lower and Upper bound of x-axis
+     exclude_equator : bool
+         whether to exclude equator or not
+     white_space_width : float
+         The width of white space centered at equator if exclude_equator = True
+     x_axis_title : str
+         Label of the x-axis [Longitude]
+     y_axis_title : str
+         Label of the y-axis [Latiitude]
+     """
+    def __init__(self, figsize, title_str, xgrid, ygrid, xlim, exclude_equator=True, white_space_width=20,
+                 x_axis_title="Latitude[deg]", y_axis_title="Pseudoheight[m]"):
+        self._figsize = figsize
+        self._title_str = title_str
+        self._xgrid = xgrid
+        self._ygrid = ygrid
+        self._xlim = xlim  # [-80, 80]
+        self._exclude_equator = exclude_equator
+        self._white_space_width = white_space_width
+        self._x_axis_title = x_axis_title
+        self._y_axis_title = y_axis_title
+
+    def plot_and_save_variable(self, variable, cmap, var_title_str, save_path, num_level=30):
+        fig = plt.figure(figsize=self._figsize)
+        spec = gridspec.GridSpec(ncols=1, nrows=1)
+        ax = fig.add_subplot(spec[0])
+        # *** Zonal mean U ***
+        main_fig = ax.contourf(
+            self._xgrid, self._ygrid,
+            variable,
+            num_level,
+            cmap=cmap)
+        ax.set_xlabel(self._x_axis_title)
+        ax.set_ylabel(self._y_axis_title)
+        fig.colorbar(main_fig, ax=ax)
+        if self._exclude_equator:
+            ax.axvline(x=0, c='w', lw=self._white_space_width)
+        ax.set_title(f"{self._title_str}\n{var_title_str}")
+        ax.set_xlim(self._xlim)
+        plt.tight_layout()
+        plt.savefig(save_path, bbox_inches='tight')
+        print(f"Finished saving: {save_path}")
