@@ -55,5 +55,5 @@ With the LWA column budget as formulated by `Nakamura and Huang, Science (2018) 
             & \boxed{ + \frac{\cos(\phi)}{2} \left\langle v_e^2 - u_e^2 - \frac{R}{H} \frac{e^{-\kappa z / H} \theta_e^2}{\partial \tilde\theta / \partial z} \right\rangle }_\mathtt{~ep1baro} \\
 
        \langle F_{\phi'} \rangle ~ = ~
-            & - \langle u_e v_e A \cos(\phi + \phi') \rangle
+            & - \langle u_e v_e \cos(\phi + \phi') \rangle
 
