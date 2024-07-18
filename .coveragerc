@@ -4,5 +4,5 @@ source=falwa
 [report]
 show_missing = True
 omit =
-    hn2016_falwa/legacy/*
-    hn2016_falwa/f90_modules/*
+    falwa/legacy/*
+    falwa/f90_modules/*
