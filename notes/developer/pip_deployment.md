@@ -15,5 +15,12 @@ Deploy the package onto PyPI for real:
 ```
 python3 -m twine upload dist/*
 ```
+# Update of deployment after using pyproject.toml
 
+```
+pip install build
+python -m build . --sdist
+python3 -m pip install --upgrade twine
+
+```
  
