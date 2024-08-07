@@ -13,9 +13,9 @@ dependencies:
 - xarray=2024.1.1
 - pytest=7.4.0
 - jupyter
-# - matplotlib
+- matplotlib=3.8.2
+- cartopy=0.22.0
 # - twine
-# - cartopy
 # - gridfill
 # Other useful packages to visualize plots in notebooks
 # - cartopy
