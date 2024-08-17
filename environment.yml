@@ -5,18 +5,16 @@ channels:
 - defaults
 
 dependencies:
-- python=3.12
-- numpy=1.26.4
-- scipy=1.14.0
-- netCDF4=1.6.5
-- cftime=1.6.2
-- xarray=2024.1.1
+- python=3.10
+- numpy=1.22.3
+- scipy=1.9
 - pytest=7.4.0
-- matplotlib=3.8.2
-- cartopy=0.22.0
+- xarray=2023.2.0
+- netCDF4=1.5.8
+- gridfill
 - jupyter
-- pip
-# - twine
-# - gridfill
+- matplotlib
+- twine
+- cartopy
 # Other useful packages to visualize plots in notebooks
 # - cartopy

@@ -4,7 +4,7 @@ File name: __init__.py
 Author: Clare Huang, Christopher Polster
 """
 
-__version__ = "2.0.0"
+__version__ = "1.3.0"
 from .compute_qgpv import compute_qgpv
 from .compute_qgpv_direct_inv import compute_qgpv_direct_inv
 from .compute_qref_and_fawa_first import compute_qref_and_fawa_first

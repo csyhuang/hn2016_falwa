@@ -90,7 +90,7 @@ class _MetadataServiceProvider:
     @property
     def other_size(self):
         """Size of non-core dimensions"""
-        return np.prod(self.other_shape)
+        return np.product(self.other_shape)
 
     # numpy convenience functions
 
@@ -358,7 +358,7 @@ class QGDataset:
         # fields. These dimensions are restored in the output datasets.
         other_dims = da_u.dims[:-3]
         other_shape = tuple(da_u[dim].size for dim in other_dims)
-        other_size = np.prod(other_shape, dtype=np.int64)
+        other_size = np.product(other_shape, dtype=np.int64)
         _shape = (other_size, *da_u.shape[-3:])
         # Extract value arrays and collapse all additional dimensions
         u = da_u.data.reshape(_shape)
