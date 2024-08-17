@@ -19,25 +19,25 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 Package Installation
 ------------------------------
 
-This current version works for Python 3.x. Note that since v0.3.0, some functions have backend in Fortran. To build the package from source, you need a fortran compiler (e.g. `gfortran <http://hpc.sourceforge.net/>`_) to implement the installation.
+**Attention: substantial changes took place in release v2.0.0. Installation in develop mode is no longer available.**
 
-Since the package is still being actively developed, please use the *develop* mode for installation.
+Since release v2.0.0, the F2PY modules in `falwa` is compiled with `meson` (See Issue #95 for details) to cope with the deprecation of `numpy.disutils` in python 3.12.
 
-To install the package for the first time, clone the GitHub repo and install via `develop` mode:::
+### First-time installation
 
- git clone https://github.com/csyhuang/hn2016_falwa.git
- cd falwa
- python setup.py develop
+1. To build the package from source, you need a fortran compiler (e.g., [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
+2. Clone the package repo by `git clone https://github.com/csyhuang/hn2016_falwa.git` .
+3. Navigate into the repository and set up a python environment satisfying the installation requirement by `conda env create -f environment.yml`. The environment name in the file is set to be `falwa_env` (which users can change).
+4. Install the package with the command `python -m pip install .`
+5. If the installation is successful, you should be able to run through all unit tests in the folder `tests/` by executing `pytest tests/`.
 
+### Get updated code from new releases
 
-To incorporate updates, pull the new version of the code from GitHub. Remove any existing f2py modules and recompile.::
-
- # Assume you are already in the falwa/ repo
- git pull
- rm falwa/*.so
- python setup.py develop
- pytest tests/ # to check if the package can be run properly
-
+1. To incorporate updates, first, pull the new version of the code from GitHub by `git pull`.
+2. Uninstall existing version of `falwa`: `pip uninstall falwa`
+3. If there is change in `environment.yml`, remove the existing environment by `conda remove --name falwa_env --all` and create the environment again from the updated YML file: `conda env create -f environment.yml`.
+4. Reinstall the updated version by `python -m pip install .`.
+5. Run through all unit tests in the folder `tests/` by executing `pytest tests/` to make sure the package has been properly installed.
 
 Quick start
 -----------------------------------------
@@ -51,21 +51,12 @@ Depending on what you want to do, the methods to be use may be different.
 
 2. If you want to compute zonal wind reference states and wave activity fluxes in QG Formalism, look at `notebooks/nh2018_science/demo_script_for_nh2018.ipynb` for the usage of `QGField`. This notebook demonstrates how to compute wave activity and reference states presented in Nakamura and Huang (2018). To make sure the package is properly installed in your environment, run through the notebook after installation to see if there is error.
 
-THe conda environment for running the notebook can be found in `environment.yml`. To create the conda environment, execute:::
-
- conda env create -f environment.yml
-
-
-
-
 Issues Reporting
 ------------------------------
 
-- If you are interested in using the package, please leave your contact `here <https://goo.gl/forms/5L8fv0mUordugq6v2>`_ or email me(csyhuang@uchicago.edu) such that I can keep you updated of any changes made.
-
+- If you are interested in getting email message related to update of this package, please leave your contact `here <https://goo.gl/forms/5L8fv0mUordugq6v2>`_ such that I can keep you updated of any changes made.
 - If you encounter *coding issues/bugs* when using the package, please create an `Issue ticket <https://github.com/csyhuang/hn2016_falwa/issues>`_.
-
-- If you have scientific questions, please contact Clare S. Y. Huang via email(csyhuang@uchicago.edu).
+- If you have scientific questions, please create a thread in the `Discussion Board <https://github.com/csyhuang/hn2016_falwa/discussions>`_ with the category "General" or "Q&A" according to the circumstance.
 
 Modules
 ========
