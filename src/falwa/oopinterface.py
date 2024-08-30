@@ -661,8 +661,11 @@ class QGFieldBase(ABC):
            returned from this method. The variables can be retrieved from the QGField object after all computation is
            finished. This may save run time in some use case.
 
-        ncforce (optional, np.ndarray):
-           This is experimental for Sandro's use.
+        ncforce : optional, np.ndarray
+           This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
+           the integrand of equation (11) in Lubis et al. "Importance of Cloud-Radiative Effects in Wintertime
+           Atmospheric Blocking over the Euro-Atlantic Sector" (in prep). The integrated barotropic component
+           of ncforce is accessible via QGField.ncforce_baro.
 
         Returns
         -------
@@ -999,9 +1002,9 @@ class QGFieldBase(ABC):
     @property
     def ncforce_baro(self):
         """
-        ===== Below is temporary added for Sandro's use. =====
-        Computation of barotropic component of non-conservative forces may be incorporated in future release.
-        We are still testing if the computation is correct.
+        If input `ncforce` of method compute_lwa_and_barotropic_fluxes is not None, this would return the
+        corresponding barotropic component of non-conservative force contribution with respect to the wave
+        activity budget equation in Lubis et al. Eq.(11).
         """
         if self._barotropic_flux_terms_storage.ncforce_baro is None:
             raise ValueError('ncforce_baro is not computed yet.')
@@ -1170,15 +1173,11 @@ class QGFieldNH18(QGFieldBase):
         The flux term computation from NH18 is currently shared by both interface.
         .. versionadded:: 0.7.0
         """
-        # ===== Below is temporary added for Sandro's use. =====
-        # Computation of barotropic component of non-conservative forces may be incorporated in future release.
-        # We are still testing if the computation is correct.
         if ncforce is None:
             ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
         else:  # There is input
             ncforce = np.swapaxes(ncforce, 0, 2)
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
-        # ===== Above is temporary added for Sandro's use. =====
 
         # === Compute barotropic flux terms (NHem) ===
         self._lwa_storage.lwa_nhem, \
@@ -1461,15 +1460,11 @@ class QGFieldNHN22(QGFieldBase):
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 
-        # ===== Below is temporary added for Sandro's use. =====
-        # Computation of barotropic component of non-conservative forces may be incorporated in future release.
-        # We are still testing if the computation is correct.
         if ncforce is None:
             ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
         else:  # There is input
             ncforce = np.swapaxes(ncforce, 0, 2)
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
-        # ===== Above is temporary added for Sandro's use. =====
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
