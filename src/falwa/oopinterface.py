@@ -665,7 +665,7 @@ class QGFieldBase(ABC):
            This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
            the integrand of equation (11) in Lubis et al. "Importance of Cloud-Radiative Effects in Wintertime
            Atmospheric Blocking over the Euro-Atlantic Sector" (in prep). The integrated barotropic component
-           of ncforce is accessible via QGField.ncforce_baro.
+           of ncforce is accessible via `QGField.ncforce_baro`.
 
         Returns
         -------
