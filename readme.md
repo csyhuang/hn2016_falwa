@@ -24,7 +24,7 @@ Since release v2.0.0, the F2PY modules in `falwa` is compiled with `meson` (See 
 1. To build the package from source, you need a fortran compiler (e.g., [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 2. Clone the package repo by `git clone https://github.com/csyhuang/hn2016_falwa.git` .
 3. Navigate into the repository and set up a python environment satisfying the installation requirement by `conda env create -f environment.yml`. The environment name in the file is set to be `falwa_env` (which users can change).
-4. Install the package with the command `python -m pip install .` 
+4. Install the package with the command `python -m pip install .`. The compile modules will be saved to python site-packages directory.
 5. If the installation is successful, you should be able to run through all unit tests in the folder `tests/` by executing `pytest tests/`.
 
 ### Get updated code from new releases
