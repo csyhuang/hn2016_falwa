@@ -399,15 +399,19 @@ class QGFieldBase(ABC):
         else:
             return variable
 
-    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, qref_temp, uref_temp, ptref_temp):
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, ncforce, qref_temp, uref_temp, ptref_temp):
         """
         Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
+
+        pv, uu, vv, pt, ncforce, qref, uref, tref
+        a, om, dz, h, r, cp, prefactor
         """
         return compute_lwa_and_barotropic_fluxes(
             pv=qgpv,
             uu=u,
             vv=v,
             pt=theta,
+            ncforce=ncforce,
             qref=qref_temp,
             uref=uref_temp,
             tref=ptref_temp,
@@ -638,7 +642,7 @@ class QGFieldBase(ABC):
             self._lwa_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
 
     def compute_lwa_and_barotropic_fluxes(
-        self, return_named_tuple: bool = True, northern_hemisphere_results_only=None):
+            self, return_named_tuple: bool = True, northern_hemisphere_results_only=None, ncforce=None):
 
         """
         Compute barotropic components of local wave activity and flux terms in eqs.(2) and (3) in
@@ -656,6 +660,12 @@ class QGFieldBase(ABC):
            Whether to returned a named tuple with variables in python indexing. Default: True. If False, nothing will be
            returned from this method. The variables can be retrieved from the QGField object after all computation is
            finished. This may save run time in some use case.
+
+        ncforce : optional, np.ndarray
+           This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
+           the integrand of equation (11) in Lubis et al. "Importance of Cloud-Radiative Effects in Wintertime
+           Atmospheric Blocking over the Euro-Atlantic Sector" (in prep). The integrated barotropic component
+           of ncforce is accessible via `QGField.ncforce_baro`.
 
         Returns
         -------
@@ -731,7 +741,7 @@ class QGFieldBase(ABC):
                 """)
 
         # TODO: need a check for reference states computed. If not, throw an error.
-        self._compute_intermediate_flux_terms()
+        self._compute_intermediate_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
@@ -758,6 +768,8 @@ class QGFieldBase(ABC):
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ep1baro)
         self._output_barotropic_flux_terms_storage.meridional_heat_flux = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ep4)
+        self._output_barotropic_flux_terms_storage.ncforce_baro = \
+            self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
         # === Return the named tuple ===
         if return_named_tuple:
@@ -778,7 +790,7 @@ class QGFieldBase(ABC):
             return lwa_and_fluxes
 
     @abstractmethod
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
         """
@@ -988,6 +1000,20 @@ class QGFieldBase(ABC):
             interp_axis=0)
 
     @property
+    def ncforce_baro(self):
+        """
+        If input `ncforce` of method compute_lwa_and_barotropic_fluxes is not None, this would return the
+        corresponding barotropic component of non-conservative force contribution with respect to the wave
+        activity budget equation in Lubis et al. Eq.(11).
+        """
+        if self._barotropic_flux_terms_storage.ncforce_baro is None:
+            raise ValueError('ncforce_baro is not computed yet.')
+        return self._return_interp_variables(
+            variable=self._barotropic_flux_terms_storage.fortran_to_python(
+                self._barotropic_flux_terms_storage.ncforce_baro),
+            interp_axis=0)
+
+    @property
     def u_baro(self):
         """
         Two-dimensional array of barotropic zonal wind (without cosine weighting).
@@ -1142,11 +1168,17 @@ class QGFieldNH18(QGFieldBase):
             rjac=self.rjac,
         )
 
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         The flux term computation from NH18 is currently shared by both interface.
         .. versionadded:: 0.7.0
         """
+        if ncforce is None:
+            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
+        else:  # There is input
+            ncforce = np.swapaxes(ncforce, 0, 2)
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+
         # === Compute barotropic flux terms (NHem) ===
         self._lwa_storage.lwa_nhem, \
             self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -1156,12 +1188,14 @@ class QGFieldNH18(QGFieldBase):
             self._barotropic_flux_terms_storage.ep1baro_nhem, \
             self._barotropic_flux_terms_storage.ep2baro_nhem, \
             self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem = \
+            self._barotropic_flux_terms_storage.ep4_nhem, \
+            self._barotropic_flux_terms_storage.ncforce_nhem = \
             self._compute_lwa_and_barotropic_fluxes_wrapper(
                 self._interpolated_field_storage.qgpv,
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
+                ncforce,
                 self._reference_states_storage.qref_nhem,
                 self._reference_states_storage.uref_nhem,
                 self._reference_states_storage.ptref_nhem)
@@ -1177,12 +1211,14 @@ class QGFieldNH18(QGFieldBase):
                 self._barotropic_flux_terms_storage.ep1baro_shem, \
                 self._barotropic_flux_terms_storage.ep2baro_shem, \
                 self._barotropic_flux_terms_storage.ep3baro_shem, \
-                ep4_shem = \
+                ep4_shem, \
+                self._barotropic_flux_terms_storage.ncforce_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
                     -self._interpolated_field_storage.qgpv[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_v[:, ::-1, :],
                     self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
+                    -ncforce[:, ::-1, :],
                     self._reference_states_storage.qref_shem[::-1, :],
                     self._reference_states_storage.uref_shem[::-1, :],
                     self._reference_states_storage.ptref_shem[::-1, :])
@@ -1406,10 +1442,14 @@ class QGFieldNHN22(QGFieldBase):
     def jd(self):
         return self._jd
 
-    def _compute_intermediate_flux_terms(self):
+    def _compute_intermediate_flux_terms(self, ncforce=None):
         """
         Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
         so please used with caution.
+
+        Args:
+            ncforce(numpy.ndarray, optional): non-conservative forcing already interpolated on regular grid
+                of dimension (kmax, nlat, nlon)
 
         .. versionadded:: 0.7.0
         """
@@ -1419,6 +1459,12 @@ class QGFieldNHN22(QGFieldBase):
         ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
+
+        if ncforce is None:
+            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
+        else:  # There is input
+            ncforce = np.swapaxes(ncforce, 0, 2)
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -1431,12 +1477,14 @@ class QGFieldNHN22(QGFieldBase):
             self._barotropic_flux_terms_storage.ep3baro_nhem, \
             self._barotropic_flux_terms_storage.ep4_nhem, \
             astar1, \
-            astar2 = \
+            astar2, \
+            self._barotropic_flux_terms_storage.ncforce_nhem = \
             compute_flux_dirinv_nshem(
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
                 vv=self._interpolated_field_storage.interpolated_v,
                 pt=self._interpolated_field_storage.interpolated_theta,
+                ncforce=ncforce,
                 tn0=self._domain_average_storage.tn0,
                 qref=qref_correct_unit[-self.equator_idx:],
                 uref=self._reference_states_storage.uref_nhem,
@@ -1465,12 +1513,14 @@ class QGFieldNHN22(QGFieldBase):
                 self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
                 self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
                 astar1, \
-                astar2 = \
+                astar2, \
+                self._barotropic_flux_terms_storage.ncforce_baro[:, :self.equator_idx] = \
                 compute_flux_dirinv_nshem(
                     pv=self._interpolated_field_storage.qgpv,
                     uu=self._interpolated_field_storage.interpolated_u,
                     vv=self._interpolated_field_storage.interpolated_v,
                     pt=self._interpolated_field_storage.interpolated_theta,
+                    ncforce=ncforce,
                     tn0=self._domain_average_storage.ts0,
                     qref=qref_correct_unit[:self.equator_idx],
                     uref=self._reference_states_storage.uref_shem,

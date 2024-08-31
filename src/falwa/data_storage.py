@@ -228,6 +228,7 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.convergence_zonal_advective_flux = np.zeros(self.pydim)
         self.divergence_eddy_momentum_flux = np.zeros(self.pydim)
         self.meridional_heat_flux = np.zeros(self.pydim)
+        self.ncforce_baro = np.zeros(self.pydim)
 
 
 class BarotropicFluxTermsStorage(DerivedQuantityStorage):
@@ -247,6 +248,7 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.ep2baro = np.zeros(self.fdim)
         self.ep3baro = np.zeros(self.fdim)
         self.ep4 = np.zeros(self.fdim)
+        self.ncforce_baro = np.zeros(self.fdim)
         self.u_baro = np.zeros(self.fdim)
         self.lwa_baro = np.zeros(self.fdim)  # This is barotropic LWA (astarbaro)
 
@@ -267,6 +269,9 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
 
     ep4_nhem = NHemProperty("ep4", (1, 0))
     ep4_shem = SHemProperty("ep4", (1, 0))
+
+    ncforce_nhem = NHemProperty("ncforce_baro", (1, 0))
+    ncforce_shem = SHemProperty("ncforce_baro", (1, 0))
 
     u_baro_nhem = NHemProperty("u_baro", (1, 0))
     u_baro_shem = SHemProperty("u_baro", (1, 0))
