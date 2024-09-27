@@ -4,7 +4,7 @@
 
 **Important:** this python package has been renamed from `hn2016_falwa` to `falwa` since version v1.0.0.
 
-![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/hn2016_falwa_diagram.png)
+![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/falwa_diagram.png)
 
 Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms introduced in:
 

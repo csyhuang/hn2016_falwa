@@ -6,7 +6,7 @@
 falwa: Finite-amplitude local wave activity
 ==================================================
 
-.. image:: https://github.com/csyhuang/csyhuang.github.io/raw/master/assets/img/hn2016_falwa_diagram.png
+.. image:: https://github.com/csyhuang/csyhuang.github.io/raw/master/assets/img/falwa_diagram.png
 
 `falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
 extreme weather events. It implements the finite-amplitude local wave activity and flux diagnostic introduced in:
