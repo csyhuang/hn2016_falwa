@@ -14,6 +14,6 @@ dependencies:         # everything under this, installed by conda
   #- cartopy # This packages is optional for plotting
   #- earthengine-api # This package is optional for running analysis on Google Earth Engine
   ## The packages below are optional for downloading ERA5
-  #- pip
-  #- pip:
-  #    - cdsapi
+  - pip
+  - pip:
+      - cdsapi
