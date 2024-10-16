@@ -21,10 +21,10 @@ def _is_equator(x):
     return abs(x) < 1.0e-4
 
 # Coordinate name lookup
-_NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa"]
+_NAMES_PLEV = ["plev", "lev", "level", "isobaricInhPa", "pressure_level"]
 _NAMES_YLAT = ["ylat", "lat", "latitude"]
 _NAMES_XLON = ["xlon", "lon", "longitude"]
-_NAMES_TIME = ["time", "date", "datetime"]
+_NAMES_TIME = ["time", "date", "datetime", "valid_time"]
 # Wind and temperature name lookup
 _NAMES_U = ["u", "U"]
 _NAMES_V = ["v", "V"]
