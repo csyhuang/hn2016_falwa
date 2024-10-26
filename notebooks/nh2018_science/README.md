@@ -46,8 +46,7 @@ python setup.py install
 ```
 
 The sample data can be downloaded with the script `download_example.py`, given that you installed 
-the python package `ecmwfapi` and have an account on ECMWF server. [Update for Release 0.6.1: this package seems to 
-have deprecated. The download script will use `cdsapi` in the upcoming release.]
+the python package `cdsapi` and have an account on ECMWF server.
 
 The functionalities are enhanced and included in the class object `QGField` under 
 `hn2016_falwa.oopinterface`. Please refer to the [documentation](http://hn2016-falwa.readthedocs.io/) (search `QGField`) 
