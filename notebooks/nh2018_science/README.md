@@ -1,5 +1,15 @@
 ## Demo script for the analyses done in Nakamura and Huang (2018, Science)
 
+### Update on 2024/10/13: ERA-Interim dataset is replaced by the ERA5 version
+
+Given the download API for ERA-Interim has been deprecated, the version of notebooks after commit 0081017 consumes ERA5 data which can be downloaded from [Clare's dropbox folder](https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/h?dl=0&rlkey=f8c1gm2xaxvx3c7cf06vop6or):
+
+`notebooks/nh2018_science/2005-01-23_to_2005-01-30_[uvt].nc`
+
+The legacy ERA-Interim data can be found in the same folder:
+
+`notebooks/nh2018_science/legacy_erai_2005-01-23_to_2005-01-30_[uvt].nc`
+
 ### Update in Release 0.6.1: xarray interface
 
 Thanks [Christopher Polster](https://github.com/chpolste) for creating an Xarray interface for the `QGField` class! 
@@ -36,8 +46,7 @@ python setup.py install
 ```
 
 The sample data can be downloaded with the script `download_example.py`, given that you installed 
-the python package `ecmwfapi` and have an account on ECMWF server. [Update for Release 0.6.1: this package seems to 
-have deprecated. The download script will use `cdsapi` in the upcoming release.]
+the python package `cdsapi` and have an account on ECMWF server.
 
 The functionalities are enhanced and included in the class object `QGField` under 
 `hn2016_falwa.oopinterface`. Please refer to the [documentation](http://hn2016-falwa.readthedocs.io/) (search `QGField`) 
