@@ -3,7 +3,6 @@ SUBROUTINE compute_flux_dirinv_nshem( &
     imax, JMAX, kmax, nd, jb, jd, is_nhem, &
     a, om, dz, h, rr, cp, prefac,&
     astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4)
-    !astarbaro,ubaro,urefbaro,ua1baro,ua2baro,ep1baro,ep2baro,ep3baro,ep4,astar1,astar2,ncforcebaro)
 
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax), &
           ncforce(imax, jmax, kmax), &
@@ -13,9 +12,6 @@ SUBROUTINE compute_flux_dirinv_nshem( &
   REAL, INTENT(IN) :: a, om, dz, h, rr, cp, prefac
   REAL, INTENT(OUT) :: astar1(imax,nd,kmax), astar2(imax,nd,kmax), ncforce3d(imax,nd,kmax), &
           ua1(imax,nd,kmax),  ua2(imax,nd,kmax), ep1(imax,nd,kmax), ep2(imax,nd,kmax), ep3(imax,nd,kmax), ep4(imax,nd)
-  !REAL, INTENT(OUT) :: astarbaro(imax,nd),ubaro(imax,nd),urefbaro(nd),ua1baro(imax,nd),ua2baro(imax,nd),&
-          !ep1baro(imax,nd),ep2baro(imax,nd),ep3baro(imax,nd),&
-          !ncforcebaro(imax,nd)
 
   REAL :: tg(kmax)
   REAL :: qe(imax,nd),ue(imax,nd)
@@ -182,30 +178,6 @@ SUBROUTINE compute_flux_dirinv_nshem( &
       ep2(i,jb,k) = (uu(i,nd+jb+1,k)-uref(2,k))*cosp*cosp*vv(i,nd+jb+1,k)
       ep3(i,jb,k) = (uu(i,nd+jb,k)-uref(1,k))*cos0*cos0*vv(i,nd+jb,k)
     enddo
-
-    ! ******** Column average: (25) of SI-HN17 ********
-    ! return astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4
-
-!    astarbaro(:,:) = astarbaro(:,:)+(astar1(:,:,k)    &
-!    + astar2(:,:,k))*exp(-zk/h)*dc
-!    ncforcebaro(:,:) = ncforcebaro(:,:) + ncforce3d(:,:,k)*exp(-zk/h)*dc
-!    ua1baro(:,:) = ua1baro(:,:)+ua1(:,:)*exp(-zk/h)*dc
-!    ua2baro(:,:) = ua2baro(:,:)+ua2(:,:)*exp(-zk/h)*dc
-!    ep1baro(:,:) = ep1baro(:,:)+ep1(:,:)*exp(-zk/h)*dc
-!    ep2baro(:,:) = ep2baro(:,:)+ep2(:,:)*exp(-zk/h)*dc
-!    ep3baro(:,:) = ep3baro(:,:)+ep3(:,:)*exp(-zk/h)*dc
-!
-!    if (is_nhem) then
-!      do j = jstart,jend
-!        ubaro(:,j) = ubaro(:,j)+uu(:,nd-1+j,k)*exp(-zk/h)*dc
-!        urefbaro(j) = urefbaro(j)+uref(j-jb,k)*exp(-zk/h)*dc
-!      enddo
-!    else
-!      do j = jstart,jend
-!        ubaro(:,j) = ubaro(:,j)+uu(:,j,k)*exp(-zk/h)*dc
-!        urefbaro(j) = urefbaro(j)+uref(j,k)*exp(-zk/h)*dc
-!      enddo
-!    endif
   enddo
 
 END SUBROUTINE compute_flux_dirinv_nshem
