@@ -450,7 +450,9 @@ class QGFieldBase(ABC):
     @abstractmethod
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, *args):
         """
-        Wrapper for the underlying fortran code and python script combo
+        Private function. It computes layerwise fluxes (via F2PY modules) first, and then do vertical integration.
+        Returns variable in the following order:
+            astar, astar_baro, ua1_baro, u_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, ncforce_baro
         """
 
     def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
@@ -772,7 +774,7 @@ class QGFieldBase(ABC):
                 """)
 
         # TODO: need a check for reference states computed. If not, throw an error.
-        self._compute_intermediate_flux_terms(ncforce=ncforce)
+        self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
@@ -821,9 +823,10 @@ class QGFieldBase(ABC):
             return lwa_and_fluxes
 
     @abstractmethod
-    def _compute_intermediate_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
         """
-        Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
+        Compute all the barotropic components stored in self._barotropic_flux_terms_storage
+        (ua1, ua2, ep1, ep2, ep3, ep4) depending on which BC protocol to use
         """
 
     @staticmethod
@@ -1203,7 +1206,7 @@ class QGFieldNH18(QGFieldBase):
 
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, ncforce, qref_temp, uref_temp, ptref_temp):
         """
-        Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
+        Private function. It computes layerwise fluxes (via F2PY modules) first, and then do vertical integration.
         Returns variable in the following order:
             astar, astar_baro, ua1_baro, u_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, ncforce_baro
         """
@@ -1235,7 +1238,7 @@ class QGFieldNH18(QGFieldBase):
         ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1)
         return astar, astar_baro, ua1_baro, u_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, ncforce_baro
 
-    def _compute_intermediate_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
         """
         The flux term computation from NH18 is currently shared by both interface.
         .. versionadded:: 0.7.0
@@ -1549,7 +1552,7 @@ class QGFieldNHN22(QGFieldBase):
         return astar_baro, u_baro, uref_baro, ua1_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, \
             astar1, astar2, ncforce_baro
 
-    def _compute_intermediate_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
         """
         Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
         so please used with caution.
