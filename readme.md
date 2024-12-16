@@ -1,4 +1,4 @@
-## Python Library: falwa (v2.1.0a)
+## Python Library: falwa (v2.2.0)
 
 [![Python package](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 

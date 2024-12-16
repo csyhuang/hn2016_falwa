@@ -246,10 +246,10 @@ class QGFieldBase(ABC):
         csm = self._clat[:self._jd].sum()
 
         # (Hemispheric) global potential temperature mean per pressure level
-        t0_s = np.mean(self.theta_field[:, :self._jd, :] * self._clat[np.newaxis, :self._jd, np.newaxis], axis=-1) \
-                   .sum(axis=-1) / csm  # SHem
-        t0_n = np.mean(self.theta_field[:, -self._jd:, :] * self._clat[np.newaxis, -self._jd:, np.newaxis], axis=-1) \
-                   .sum(axis=-1) / csm  # NHem
+        t0_s = np.mean(self.theta_field[:, :self._jd, :] * self._clat[np.newaxis, :self._jd, np.newaxis], axis=-1)\
+            .sum(axis=-1) / csm  # SHem
+        t0_n = np.mean(self.theta_field[:, -self._jd:, :] * self._clat[np.newaxis, -self._jd:, np.newaxis], axis=-1)\
+            .sum(axis=-1) / csm  # NHem
 
         # Create an interpolation function
         uni_spline_s = UnivariateSpline(x=self._plev_to_height, y=t0_s)
@@ -1210,7 +1210,7 @@ class QGFieldNH18(QGFieldBase):
         Returns variable in the following order:
             astar, astar_baro, ua1_baro, u_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, ncforce_baro
         """
-        astar, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_lwa_and_layerwise_fluxes(
+        astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_lwa_and_layerwise_fluxes(
             pv=qgpv,
             uu=u,
             vv=v,
@@ -1226,7 +1226,7 @@ class QGFieldNH18(QGFieldBase):
             r=self.dry_gas_constant,
             cp=self.cp,
             prefactor=self.prefactor)
-
+        astar = astar1 + astar2
         jd = uref_temp.shape[0]
         astar_baro = self._vertical_average(astar, lowest_layer_index=1)
         ua1_baro = self._vertical_average(ua1, lowest_layer_index=1)
