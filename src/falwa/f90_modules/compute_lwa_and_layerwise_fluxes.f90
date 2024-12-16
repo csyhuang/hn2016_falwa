@@ -12,8 +12,8 @@ SUBROUTINE compute_lwa_and_layerwise_fluxes(nlon, nlat, kmax, jd, &
     ! Comment from Clare on 2023/10/10:
     ! ncforce is an optional argument in QGField interface. If not required, simply put in zero array.
     real, intent(in) ::  a, om, dz, h, r, cp, prefactor
-    real, intent(out) :: astar1(nlon,jd,kmax), astar2(nlon,jd,kmax), ncforce3d(nlon,jd,kmax), ua1(nlon,jd,kmax), ua2(nlon,jd,kmax), &
-        ep1(nlon,jd,kmax), ep2(nlon,jd,kmax), ep3(nlon,jd,kmax), ep4(nlon,jd)
+    real, intent(out) :: astar1(nlon,jd,kmax), astar2(nlon,jd,kmax), ncforce3d(nlon,jd,kmax), &
+        ua1(nlon,jd,kmax), ua2(nlon,jd,kmax), ep1(nlon,jd,kmax), ep2(nlon,jd,kmax), ep3(nlon,jd,kmax), ep4(nlon,jd)
     ! === dummy variables ===
     integer :: i, j, jj, k
     real :: qe(nlon,nlat),ue(nlon,nlat)
