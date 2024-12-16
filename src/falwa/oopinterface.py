@@ -14,7 +14,7 @@ from scipy.linalg.lapack import dgetrf, dgetri
 from falwa import utilities
 from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
-    LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
+    LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
 from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first, \
@@ -211,7 +211,7 @@ class QGFieldBase(ABC):
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # LWA storage (3D)
-        self._lwa_storage = LWAStorage(
+        self._lwa_storage = LayerwiseFluxTermsStorage(
             pydim=(self.kmax, lat_dim, self.nlon),
             fdim=(self.nlon, lat_dim, self.kmax),
             swapaxis_1=0,
@@ -406,46 +406,15 @@ class QGFieldBase(ABC):
             axis=height_axis)
         return var_baro
 
-    def compute_layerwise_lwa_fluxes(self, qgpv, u, v, theta, ncforce, qref_temp, uref_temp, ptref_temp):
+    def compute_layerwise_lwa_fluxes(self, ncforce=None):
         """
-        Private function. Compute layerwise lwa flux in Fortran except the stretching term, which will be calculated in
-        python.
+        Compute layerwise lwa flux in Fortran except the stretching term, which will be calculated in python.
         Shall be in parallel with compute_lwa_and_barotropic_fluxes.
-        Now the input are in fortran indices...
-
-        Parameters
-        ----------
-        qgpv
-        u
-        v
-        theta
-        ncforce
-        qref_temp
-        uref_temp
-        ptref_temp
-
-        Returns
-        -------
-
+        Now the input are in fortran indices...(?)
         """
-        astar, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_lwa_and_layerwise_fluxes(
-            pv=qgpv,
-            uu=u,
-            vv=v,
-            pt=theta,
-            ncforce=ncforce,
-            qref=qref_temp,
-            uref=uref_temp,
-            tref=ptref_temp,
-            a=self.planet_radius,
-            om=self.omega,
-            dz=self.dz,
-            h=self.scale_height,
-            r=self.dry_gas_constant,
-            cp=self.cp,
-            prefactor=self.prefactor)
-
-        # *** Compute stretching term layerwise ***
+        # *** Compute layerwise flux from `compute_lwa_and_layerwise_fluxes`
+        # *** Compute stretching term (differentiate in z) layerwise ***
+        # *** Initialize Storage unit ***
 
     @abstractmethod
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, *args):
