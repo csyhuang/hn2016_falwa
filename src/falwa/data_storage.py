@@ -196,18 +196,25 @@ class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
                  northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
         self.nlat = self.fdim[1]
-        self.lwa = np.zeros(self.fdim)
+        self.lwa = np.zeros(self.fdim)    # TODO: lwa = astar1+astar2 - redundant
+        self.astar1 = np.zeros(self.fdim)
+        self.astar2 = np.zeros(self.fdim)
         self.ua1 = np.zeros(self.fdim)
         self.ua2 = np.zeros(self.fdim)
         self.ep1 = np.zeros(self.fdim)
         self.ep2 = np.zeros(self.fdim)
         self.ep3 = np.zeros(self.fdim)
-        self.ep4 = np.zeros(self.fdim)
         self.stretch_term = np.zeros(self.fdim)
         self.ncforce = np.zeros(self.fdim)
 
     lwa_nhem = NHemProperty("lwa", (1, 1))
     lwa_shem = SHemProperty("lwa", (1, 1))
+
+    astar1_nhem = NHemProperty("astar1", (1, 1))
+    astar1_shem = SHemProperty("astar1", (1, 1))
+
+    astar2_nhem = NHemProperty("astar2", (1, 1))
+    astar2_shem = SHemProperty("astar2", (1, 1))
 
     ua1_nhem = NHemProperty("ua1", (1, 1))
     ua1_shem = SHemProperty("ua1", (1, 1))
