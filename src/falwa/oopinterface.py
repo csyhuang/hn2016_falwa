@@ -1673,7 +1673,9 @@ class QGFieldNHN22(QGFieldBase):
             density_decay=np.exp(-self.height/self.scale_height),
             gfunc=self._interpolated_field_storage.fortran_to_python(v_e_theta_e_clat),
             multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(self.height[:, np.newaxis]/self.scale_height))
-        self._layerwise_flux_terms_storage.stretch_term = np.swapaxes(inner_ep4, 0, 2)
+        # Note that there is a minus sign below in order to have consistent sign with ep4 that is
+        # the (positive) low-level meridional heat flux
+        self._layerwise_flux_terms_storage.stretch_term = -np.swapaxes(inner_ep4, 0, 2)
 
     def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
         """
