@@ -744,6 +744,14 @@ class QGFieldBase(ABC):
                 """)
 
         # TODO: need a check for reference states computed. If not, throw an error.
+        if ncforce is None:
+            print("line 748: ncforce is None")
+            ncforce = np.zeros((self.nlon, self._nlat_analysis, self.kmax))  # fortran indexing
+        else:  # There is input
+            print("line 751: ncforce has values")
+            ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+
         self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
@@ -793,7 +801,7 @@ class QGFieldBase(ABC):
             return lwa_and_fluxes
 
     @abstractmethod
-    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce):
         """
         Compute all the barotropic components stored in self._barotropic_flux_terms_storage
         (ua1, ua2, ep1, ep2, ep3, ep4) depending on which BC protocol to use
@@ -1180,6 +1188,7 @@ class QGFieldNH18(QGFieldBase):
         Returns variable in the following order:
             astar, astar_baro, ua1_baro, u_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, ncforce_baro
         """
+
         astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_lwa_and_layerwise_fluxes(
             pv=qgpv,
             uu=u,
@@ -1213,7 +1222,7 @@ class QGFieldNH18(QGFieldBase):
         TODO: create this counterpart for NH18
         """
 
-    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce):
         """
         The flux term computation from NH18 is currently shared by both interface.
         .. versionadded:: 0.7.0
@@ -1677,7 +1686,7 @@ class QGFieldNHN22(QGFieldBase):
         # the (positive) low-level meridional heat flux
         self._layerwise_flux_terms_storage.stretch_term = -np.swapaxes(inner_ep4, 0, 2)
 
-    def _compute_intermediate_barotropic_flux_terms(self, ncforce=None):
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce):
         """
         Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
         so please used with caution.
@@ -1688,11 +1697,6 @@ class QGFieldNHN22(QGFieldBase):
 
         .. versionadded:: 0.7.0
         """
-        if ncforce is None:
-            ncforce = np.zeros((self.nlon, self.nlat, self.kmax))  # fortran indexing
-        else:  # There is input
-            ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
-            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
 
         # Turn qref back to correct unit
         ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
