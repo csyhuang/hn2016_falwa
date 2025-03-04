@@ -175,9 +175,7 @@ def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=Non
 
     """
 
-    anticyclonic = np.zeros((nlat, nlon))
-    cyclonic = np.zeros((nlat, nlon))
-    return_array = np.zeros((2, nlat, nlon))
+    return_array = np.zeros((2, nlat, nlon))  # First dim being anticyclonic and second being cyclonic
     if ncforce is not None:
         bigsigma = np.zeros((nlat, nlon))
 
