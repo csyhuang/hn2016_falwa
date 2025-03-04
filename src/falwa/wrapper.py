@@ -8,7 +8,7 @@ from falwa.constant import EARTH_RADIUS
 from falwa import basis
 
 
-def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS):
+def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS, return_partitioned_lwa=False):
     """
     Compute equivalent latitude and wave activity on a barotropic sphere.
 
@@ -26,14 +26,18 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
         Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat*.
     planet_radius : float, default 6.378e+6
         radius of spherical planet of interest consistent with input 'area'.
+    return_partitioned_lwa : bool
+        If True, return local wave activity as a stacked field of cyclonic and anticyclonic components.
+        If False, return a single field of local wave activity of dimension (nlat, nlon). Default is False.
+
 
     Returns
     -------
     qref : numpy.array
         1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
     lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values;
-                    dimension = [nlat_s x nlon]
+        if return_partitioned_lwa = True, 3-d numpy array of dimension [2, nlat_s, nlon], first dimension being anticyclonic and cyclonic components
+        if return_partitioned_lwa = False, 2-d numpy array of local wave activity values; dimension = [nlat_s, nlon]
 
     Examples
     --------
@@ -45,8 +49,8 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
         n_points = nlat
 
     qref, fawa = basis.eqvlat_fawa(
-        ylat, vort, area, n_points)
-    lwa_result, _ = basis.lwa(nlon, nlat, vort, qref, dmu)
+        ylat, vort, area, n_points, planet_radius=planet_radius)
+    lwa_result, _ = basis.lwa(nlon, nlat, vort, qref, dmu, return_partitioned_lwa=return_partitioned_lwa)
 
     return qref, lwa_result
 

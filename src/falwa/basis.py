@@ -134,7 +134,7 @@ def eqvlat_vgrad(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None)
     return q_part, brac_return
 
 
-def lwa(nlon, nlat, vort, q_part, dmu, ncforce=None):
+def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=None):
 
     """
     At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
@@ -156,14 +156,19 @@ def lwa(nlon, nlat, vort, q_part, dmu, ncforce=None):
         1-d numpy array of Q (vorticity reference state) as a function of latitude. Size = nlat.
     dmu: sequence or array_like
         1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    return_partitioned_lwa: bool
+        If True, return local wave activity as a stacked field of cyclonic and anticyclonic components.
+        If False, return a single field of local wave activity of dimension (nlat, nlon). Default is False.
+
     ncforce: ndarray or None, optional
         2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b))
-
 
     Returns
     -------
     lwact : ndarray
-        2-d numpy array of local wave activity calculated; dimension = (nlat,nlon).
+        If return_partitioned_lwa = True, return the cyclonic and anticyclonic components of local wave activity in a
+        numpy array of dimension (2, nlat, nlon).
+        If return_partitioned_lwa = True, return a single field of local wave activity in a numpy array of dimension (nlat, nlon).
     bigsigma : ndarray or None
         2-d numpy array of the nonconservative forces acting on local wave activity computed from *ncforce*.
         If *ncforce* = None, *bigsigma* = None.
@@ -171,17 +176,29 @@ def lwa(nlon, nlat, vort, q_part, dmu, ncforce=None):
     """
 
     lwact = np.zeros((nlat, nlon))
+    anticyclonic = np.zeros((nlat, nlon))
+    cyclonic = np.zeros((nlat, nlon))
+    return_array = np.zeros((2, nlat, nlon))
     if ncforce is not None:
         bigsigma = np.zeros((nlat, nlon))
 
     for j in np.arange(0, nlat - 1):
         vort_e = vort[:, :] - q_part[j]
+        # *** Initialize empty arrays ***
         vort_boo = np.zeros((nlat, nlon))
+        cyclonic_mask = np.zeros((nlat, nlon))
+        anticyclonic_mask = np.zeros((nlat, nlon))
+        # *** anticyclonic ***
         vort_boo[np.where(vort_e[:, :] < 0)] = -1
+        anticyclonic_mask[np.where(vort_e[:, :] < 0)] = -1
         vort_boo[:j + 1, :] = 0
+        anticyclonic_mask[:j + 1, :] = 0
+        # *** Cyclonic ***
         vort_boo[np.where(vort_e[:j + 1, :] > 0)] = 1
-        lwact[j, :] = np.sum(vort_e * vort_boo *
-                             dmu[:, np.newaxis], axis=0)
+        cyclonic_mask[np.where(vort_e[:j + 1, :] > 0)] = 1
+        lwact[j, :] = np.sum(vort_e * vort_boo * dmu[:, np.newaxis], axis=0)
+        anticyclonic[j, :] = np.sum(vort_e * anticyclonic_mask * dmu[:, np.newaxis], axis=0)
+        cyclonic[j, :] = np.sum(vort_e * cyclonic_mask * dmu[:, np.newaxis], axis=0)
         if ncforce is not None:
             bigsigma[j, :] = np.sum(ncforce * vort_boo *
                                     dmu[:, np.newaxis], axis=0)
@@ -189,4 +206,9 @@ def lwa(nlon, nlat, vort, q_part, dmu, ncforce=None):
     if ncforce is None:
         bigsigma = None
 
-    return lwact, bigsigma
+    if return_partitioned_lwa:
+        return_array[0, :, :] = anticyclonic
+        return_array[1, :, :] = cyclonic
+        return return_array, bigsigma
+    else:
+        return lwact, bigsigma
