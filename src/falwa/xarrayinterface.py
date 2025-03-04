@@ -211,6 +211,7 @@ _MetadataServiceProvider.register_var("ptref", ("height", "ylat"), dim_names=("h
 # Column-averaged fields (x-y horizontal fields)
 _MetadataServiceProvider.register_var("u_baro", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("lwa_baro", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ncforce_baro", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("adv_flux_f1", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("adv_flux_f2", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("adv_flux_f3", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
@@ -219,6 +220,7 @@ _MetadataServiceProvider.register_var("divergence_eddy_momentum_flux", ("ylat", 
 _MetadataServiceProvider.register_var("meridional_heat_flux", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 # 3-dimensional LWA (full x-y-z fields)
 _MetadataServiceProvider.register_var("lwa", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ncforce", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
 
 
 class _DataArrayCollector(property):
@@ -507,13 +509,19 @@ class QGDataset:
     uref = _DataArrayCollector("uref")
     ptref = _DataArrayCollector("ptref")
 
-    def compute_lwa_and_barotropic_fluxes(self, return_dataset=True):
+    def compute_lwa_and_barotropic_fluxes(self, ncforce=None, return_dataset=True):
         """Call `compute_lwa_and_barotropic_fluxes` on all contained fields.
 
         See :py:meth:`.oopinterface.QGFieldBase.compute_lwa_and_barotropic_fluxes`.
 
         Parameters
         ----------
+        ncforce : xarray.DataArray, optional
+           This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
+           the integrand of equation (12) in Lubis et al. "Cloud-Radiative Effects Significantly Increase Wintertime
+           Atmospheric Blocking in the Euro-Atlantic Sector". The integrated barotropic component
+           of ncforce is accessible the attribute `ncforce_baro`.
+
         return_dataset : bool
             Whether to return the computed fields as a dataset.
 
@@ -521,8 +529,10 @@ class QGDataset:
         -------
         xarray.Dataset or None
         """
-        for field in self._fields:
-            field.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+        # TODO: add dimension checks in v2.2.0
+        for i, field in enumerate(self._fields):
+            ncforce_sliced = ncforce.isel(time=i) if ncforce is not None else None
+            field.compute_lwa_and_barotropic_fluxes(ncforce=ncforce_sliced, return_named_tuple=False)
         if return_dataset:
             data_vars = {
                 "adv_flux_f1": self.adv_flux_f1,
@@ -533,6 +543,7 @@ class QGDataset:
                 "meridional_heat_flux": self.meridional_heat_flux,
                 "lwa_baro": self.lwa_baro,
                 "u_baro": self.u_baro,
+                "ncforce_baro": self.ncforce_baro,
                 "lwa": self.lwa,
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
@@ -546,6 +557,7 @@ class QGDataset:
     meridional_heat_flux = _DataArrayCollector("meridional_heat_flux")
     lwa_baro = _DataArrayCollector("lwa_baro")
     u_baro = _DataArrayCollector("u_baro")
+    ncforce_baro = _DataArrayCollector("ncforce_baro")
     lwa = _DataArrayCollector("lwa")
 
     def compute_lwa_only(self, return_dataset=True):
@@ -567,6 +579,26 @@ class QGDataset:
                 "lwa": self.lwa,
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
+
+    def compute_ncforce_from_heating_rate(self, heating_rate):
+        """
+        Call `compute_ncforce_from_heating_rate` on all contained fields given heating rate input.
+
+        See :py:meth:`.oopinterface.QGFieldBase.compute_ncforce_from_heating_rate`.
+
+        Parameters
+        ----------
+        heating_rate(xarray.DataArray): the diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+
+        Returns
+        -------
+        xarray.DataArray or None
+        """
+        ncforce_input_list = []
+        for i, field in enumerate(self._fields):
+            output = field.compute_ncforce_from_heating_rate(heating_rate=heating_rate.isel(time=i))
+            ncforce_input_list.append(output)
+        return self.metadata.as_dataarray(ncforce_input_list, var="ncforce")
 
 
 def integrate_budget(ds, var_names=None):

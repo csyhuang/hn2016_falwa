@@ -182,6 +182,9 @@ class QGFieldBase(ABC):
         self._compute_prefactor()  # Compute normalization prefactor
         self._initialize_storage()  # Create storage instances to store variables
 
+        # === Stage completion indicator ===
+        self._reference_states_computed: bool = False
+
     def _initialize_storage(self):
         """
         Create storage instances to store output variables
@@ -563,6 +566,9 @@ class QGFieldBase(ABC):
 
         self._compute_reference_states()
 
+        if not self._nonconvergent_uref:  # Successfully compute reference states
+            self._reference_states_computed = True
+
         # === Return a named tuple ===
         if return_named_tuple:
             Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
@@ -666,8 +672,8 @@ class QGFieldBase(ABC):
 
         ncforce : optional, np.ndarray
            This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
-           the integrand of equation (11) in Lubis et al. "Importance of Cloud-Radiative Effects in Wintertime
-           Atmospheric Blocking over the Euro-Atlantic Sector" (in prep). The integrated barotropic component
+           the integrand of equation (12) in Lubis et al. "Cloud-Radiative Effects Significantly Increase Wintertime
+           Atmospheric Blocking in the Euro-Atlantic Sector". The integrated barotropic component
            of ncforce is accessible via `QGField.ncforce_baro`.
 
         Returns
@@ -743,6 +749,9 @@ class QGFieldBase(ABC):
                 Try compute_lwa_only instead if you deem appropriate.
                 """)
 
+        if not self._reference_states_computed:
+            raise ValueError("Reference states have not been computed yet.")
+
         # TODO: need a check for reference states computed. If not, throw an error.
         if ncforce is None:
             print("line 748: ncforce is None")
@@ -752,7 +761,7 @@ class QGFieldBase(ABC):
             ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
 
-        self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
+        self._compute_intermediate_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
@@ -762,9 +771,9 @@ class QGFieldBase(ABC):
                 (2 * self.planet_radius * self.dphi * clat), 0, 1)
 
         zonal_adv_flux_sum = np.swapaxes((
-                self._barotropic_flux_terms_storage.ua1baro
-                + self._barotropic_flux_terms_storage.ua2baro
-                + self._barotropic_flux_terms_storage.ep1baro), 0, 1)
+            self._barotropic_flux_terms_storage.ua1baro
+            + self._barotropic_flux_terms_storage.ua2baro
+            + self._barotropic_flux_terms_storage.ep1baro), 0, 1)
         self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux = \
             zonal_convergence(
                 field=zonal_adv_flux_sum,
