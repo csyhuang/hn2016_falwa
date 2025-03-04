@@ -175,7 +175,6 @@ def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=Non
 
     """
 
-    lwact = np.zeros((nlat, nlon))
     anticyclonic = np.zeros((nlat, nlon))
     cyclonic = np.zeros((nlat, nlon))
     return_array = np.zeros((2, nlat, nlon))
@@ -185,30 +184,24 @@ def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=Non
     for j in np.arange(0, nlat - 1):
         vort_e = vort[:, :] - q_part[j]
         # *** Initialize empty arrays ***
-        vort_boo = np.zeros((nlat, nlon))
         cyclonic_mask = np.zeros((nlat, nlon))
         anticyclonic_mask = np.zeros((nlat, nlon))
         # *** anticyclonic ***
-        vort_boo[np.where(vort_e[:, :] < 0)] = -1
         anticyclonic_mask[np.where(vort_e[:, :] < 0)] = -1
-        vort_boo[:j + 1, :] = 0
         anticyclonic_mask[:j + 1, :] = 0
         # *** Cyclonic ***
-        vort_boo[np.where(vort_e[:j + 1, :] > 0)] = 1
         cyclonic_mask[np.where(vort_e[:j + 1, :] > 0)] = 1
-        lwact[j, :] = np.sum(vort_e * vort_boo * dmu[:, np.newaxis], axis=0)
-        anticyclonic[j, :] = np.sum(vort_e * anticyclonic_mask * dmu[:, np.newaxis], axis=0)
-        cyclonic[j, :] = np.sum(vort_e * cyclonic_mask * dmu[:, np.newaxis], axis=0)
+        # *** Calculate, for each equivalent latitude ***
+        return_array[0, j, :] = np.sum(vort_e * anticyclonic_mask * dmu[:, np.newaxis], axis=0)
+        return_array[1, j, :] = np.sum(vort_e * cyclonic_mask * dmu[:, np.newaxis], axis=0)
         if ncforce is not None:
-            bigsigma[j, :] = np.sum(ncforce * vort_boo *
+            bigsigma[j, :] = np.sum(ncforce * (anticyclonic_mask+cyclonic_mask) *
                                     dmu[:, np.newaxis], axis=0)
 
     if ncforce is None:
         bigsigma = None
 
     if return_partitioned_lwa:
-        return_array[0, :, :] = anticyclonic
-        return_array[1, :, :] = cyclonic
         return return_array, bigsigma
     else:
-        return lwact, bigsigma
+        return return_array.sum(axis=0), bigsigma
