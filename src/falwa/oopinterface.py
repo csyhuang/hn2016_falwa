@@ -761,7 +761,7 @@ class QGFieldBase(ABC):
             ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
 
-        self._compute_intermediate_flux_terms(ncforce=ncforce)
+        self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
