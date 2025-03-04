@@ -253,3 +253,43 @@ def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
                       ufield[:-2, -1] * clat[:-2]) / (2. * dphi))
     ans[1:-1, :] = ans[1:-1, :] / planet_radius / clat[1:-1, np.newaxis]
     return ans
+
+
+def z_derivative_of_prod(
+    stat_n: np.array, stat_s: np.array, kmax: int, equator_idx: int, dz: float, density_decay: np.array,
+    gfunc: np.ndarray, multiplier: np.ndarray):
+    """
+    Compute the expression:
+        f exp^{z/H} d/dz [ exp^{-z/H}/static_stability * g(z, \phi, \lambda) ]
+
+    Parameters
+    ----------
+    stat_n : numpy.ndarray of dim (kmax). Static stability per pressure level.
+    stat_s : numpy.ndarray of dim (kmax). Static stability per pressure level.
+    kmax : integer. Number of pseudoheight levels.
+    equator_idx: integer. Latitudinal index of the equator (\phi = 0).
+    dz : float. Differential element of pseudoheight.
+    density_decay : numpy.ndarray of dim (kmax). Explicitly, exp^{-z/H}.
+    gfunc : numpy.ndarray of dim (kmax, nlat, nlon). Explicitly, g(z, \phi, \lambda)
+    multiplier: numpy.ndarray of dim (kmax, nlat). Explicitly, f * exp^{-z/H} where f is Coriolis parameter.
+
+    Returns
+    -------
+    A numpy.ndarray of dim (kmax, nlat, nlon) that is the result
+    """
+    # Make static_stability_temp (kmax, nlat) ndarray
+    static_stability_temp = np.concatenate([
+        np.ones((kmax, equator_idx - 1)) * stat_s[:, np.newaxis],
+        np.ones((kmax, 1)) * 0.5 * (stat_s+stat_n)[:, np.newaxis],
+        np.ones((kmax, equator_idx - 1)) * stat_n[:, np.newaxis]], axis=1)
+
+    # the term to be differentiated in z is of dim (kmax, nlat, nlon)
+    to_be_diff = density_decay[:, np.newaxis, np.newaxis] * gfunc / static_stability_temp[:, :, np.newaxis]
+    z_der = np.zeros_like(to_be_diff)
+    z_der[1:-1, :, :] = (to_be_diff[2:, :, :] - to_be_diff[:-2, :, :])/(2 * dz) * multiplier[1:-1, :, np.newaxis]
+
+    # Estimate boundary term with no-so-good approximation...
+    z_der[0, :, :] = multiplier[0, :, np.newaxis] * (to_be_diff[1, :, :] - to_be_diff[0, :, :]) / dz
+    z_der[-1, :, :] = multiplier[-1, :, np.newaxis] * (to_be_diff[-1, :, :] - to_be_diff[-2, :, :]) / dz
+
+    return z_der

@@ -42,7 +42,7 @@ class BarotropicField(object):
     """
 
     def __init__(self, xlon, ylat, pv_field, area=None, dphi=None,
-                 n_partitions=None, planet_radius=6.378e+6):
+                 n_partitions=None, planet_radius=6.378e+6, return_partitioned_lwa=False):
 
         """
         Create a BarotropicField object.
@@ -65,6 +65,10 @@ class BarotropicField(object):
                 Absolute vorticity field with dimension = [nlat, nlon].
                 If none, pv_field is expected to be computed with u,v,t field.
 
+            return_partitioned_lwa : bool
+                If True, return local wave activity as a stacked field of cyclonic and anticyclonic components.
+                If False, return a single field of local wave activity of dimension (nlat, nlon). Default is False.
+
         """
 
         self.xlon = xlon
@@ -73,6 +77,7 @@ class BarotropicField(object):
         self.nlon = xlon.size
         self.nlat = ylat.size
         self.planet_radius = planet_radius
+        self.return_partitioned_lwa = return_partitioned_lwa
         if dphi is None:
             self.dphi = pi/(self.nlat-1) * np.ones((self.nlat))
         else:
@@ -114,7 +119,8 @@ class BarotropicField(object):
         if self._lwa is None:
             self._lwa, dummy = basis.lwa(
                 self.nlon, self.nlat, self.pv_field, eqvlat,
-                self.planet_radius * self.clat * self.dphi
+                self.planet_radius * self.clat * self.dphi,
+                return_partitioned_lwa=self.return_partitioned_lwa
             )
         return self.lwa
 
