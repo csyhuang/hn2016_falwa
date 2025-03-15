@@ -1454,11 +1454,13 @@ class QGFieldNHN22(QGFieldBase):
         """
         Parameters
         ----------
-        heating_rate(np.array): the diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+        heating_rate : np.array
+            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
 
         Returns
         -------
-        A numpy array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \theta_dot / d\theta/dz)
+        np.ndarray
+            Array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \\theta_dot / d\\theta/dz)
         """
 
         # Interpolate DTDTLWR onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
