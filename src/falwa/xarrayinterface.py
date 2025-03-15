@@ -584,11 +584,12 @@ class QGDataset:
         """
         Call `compute_ncforce_from_heating_rate` on all contained fields given heating rate input.
 
-        See :py:meth:`.oopinterface.QGFieldBase.compute_ncforce_from_heating_rate`.
+        See :py:meth:`.oopinterface.QGFieldNHN22.compute_ncforce_from_heating_rate`.
 
         Parameters
         ----------
-        heating_rate(xarray.DataArray): the diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+        heating_rate : xarray.DataArray
+            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
 
         Returns
         -------
