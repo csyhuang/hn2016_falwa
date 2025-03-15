@@ -24,6 +24,14 @@ Additional packages to be installed if compiling documentation locally:
 - sphinx_rtd_theme
 - nbsphinx
 
+To run coverage test
+
+.. code-block:: bash
+
+   pip install pytest-cov
+   coverage run -m pytest
+   coverage report -m
+
 
 .. automodule:: memo-for-developers
    :members:
