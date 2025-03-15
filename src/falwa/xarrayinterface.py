@@ -3,6 +3,7 @@
 File name: xarrayinterface.py
 Author: Christopher Polster
 """
+import itertools
 import functools
 import numpy as np
 import xarray as xr
@@ -114,6 +115,12 @@ class _MetadataServiceProvider:
         return arr.reshape(self.other_shape + arr.shape[1:])
 
     # xarray convenience functions
+
+    def iter_other(self):
+        """Iterate over coordinates in flattened order"""
+        coords = (self.other_coords[dim].values for dim in self.other_dims)
+        for values in itertools.product(*coords):
+            yield dict(zip(self.other_dims, values))
 
     def dims(self, var):
         """Dimension names (non-core and core dims)"""
@@ -529,9 +536,8 @@ class QGDataset:
         -------
         xarray.Dataset or None
         """
-        # TODO: add dimension checks in v2.2.0
-        for i, field in enumerate(self._fields):
-            ncforce_sliced = ncforce.isel(time=i) if ncforce is not None else None
+        for field, coord in zip(self._fields, self.metadata.iter_other()):
+            ncforce_sliced = ncforce.sel(coord) if ncforce is not None else None
             field.compute_lwa_and_barotropic_fluxes(ncforce=ncforce_sliced, return_named_tuple=False)
         if return_dataset:
             data_vars = {
@@ -595,8 +601,9 @@ class QGDataset:
         xarray.DataArray or None
         """
         ncforce_input_list = []
-        for i, field in enumerate(self._fields):
-            output = field.compute_ncforce_from_heating_rate(heating_rate=heating_rate.isel(time=i))
+
+        for field, coord in zip(self._fields, self.metadata.iter_other()):
+            output = field.compute_ncforce_from_heating_rate(heating_rate=heating_rate.sel(coord))
             ncforce_input_list.append(output)
         return self.metadata.as_dataarray(ncforce_input_list, var="ncforce")
 
