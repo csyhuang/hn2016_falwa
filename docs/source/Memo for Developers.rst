@@ -32,6 +32,3 @@ To run coverage test
    coverage run -m pytest
    coverage report -m
 
-
-.. automodule:: memo-for-developers
-   :members:
