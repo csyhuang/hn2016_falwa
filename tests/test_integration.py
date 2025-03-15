@@ -58,10 +58,10 @@ def test_qgdataset_nhn22_ncforce_integration(test_data_dir):
 
     qgds = QGDataset(uvt_data, qgfield=QGFieldNHN22)
 
-    uvtinterp = qgds.interpolate_fields()
-    refstates = qgds.compute_reference_states()
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
     ncforce = qgds.compute_ncforce_from_heating_rate(heating_rate=dtdtlwr_data['DTDTLWR'])
-    lwadiags = qgds.compute_lwa_and_barotropic_fluxes(ncforce=ncforce)
+    qgds.compute_lwa_and_barotropic_fluxes(ncforce=ncforce)
 
     convergence_zonal_advective_flux = qgds.convergence_zonal_advective_flux.isel(time=0)
     ncforce_baro = qgds.ncforce_baro.isel(time=0)
