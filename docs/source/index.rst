@@ -68,7 +68,6 @@ Modules
    Object Oriented Interface
    Data Storage
    Xarray Interface
-   Preprocessing
    Barotropic Field
    Utility Functions
    Plot Utilities
@@ -76,6 +75,16 @@ Modules
    Statistics Utilities
    Basis Functions
    Wrapper Functions
+
+Notes
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   Preprocessing
+   Memo for Developers
+
 
 Indices and tables
 ==================
