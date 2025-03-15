@@ -183,6 +183,9 @@ class QGFieldBase(ABC):
         self._compute_prefactor()  # Compute normalization prefactor
         self._initialize_storage()  # Create storage instances to store variables
 
+        # === Stage completion indicator ===
+        self._reference_states_computed: bool = False
+
     def _initialize_storage(self):
         """
         Create storage instances to store output variables
@@ -560,6 +563,9 @@ class QGFieldBase(ABC):
 
         self._compute_reference_states()
 
+        if not self._nonconvergent_uref:  # Successfully compute reference states
+            self._reference_states_computed = True
+
         # === Return a named tuple ===
         if return_named_tuple:
             Reference_states = namedtuple('Reference_states', ['Qref', 'Uref', 'PTref'])
@@ -663,8 +669,8 @@ class QGFieldBase(ABC):
 
         ncforce : optional, np.ndarray
            This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
-           the integrand of equation (11) in Lubis et al. "Importance of Cloud-Radiative Effects in Wintertime
-           Atmospheric Blocking over the Euro-Atlantic Sector" (in prep). The integrated barotropic component
+           the integrand of equation (12) in Lubis et al. "Cloud-Radiative Effects Significantly Increase Wintertime
+           Atmospheric Blocking in the Euro-Atlantic Sector". The integrated barotropic component
            of ncforce is accessible via `QGField.ncforce_baro`.
 
         Returns
@@ -740,7 +746,9 @@ class QGFieldBase(ABC):
                 Try compute_lwa_only instead if you deem appropriate.
                 """)
 
-        # TODO: need a check for reference states computed. If not, throw an error.
+        if not self._reference_states_computed:
+            raise ValueError("Reference states have not been computed yet.")
+
         self._compute_intermediate_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
@@ -1441,6 +1449,35 @@ class QGFieldNHN22(QGFieldBase):
     @property
     def jd(self):
         return self._jd
+
+    def compute_ncforce_from_heating_rate(self, heating_rate):
+        """
+        Parameters
+        ----------
+        heating_rate : np.array
+            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+
+        Returns
+        -------
+        np.ndarray
+            Array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \\theta_dot / d\\theta/dz)
+        """
+
+        # Interpolate DTDTLWR onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
+        interpolated_heating_rate = self._vertical_interpolation(heating_rate, kind="linear", axis=0)
+
+        # Calculate q_dot on regular z-grid (kmax, nlat, nlon)
+        ncforce_input = utilities.z_derivative_of_prod(
+            stat_n=self._domain_average_storage.static_stability_n,
+            stat_s=self._domain_average_storage.static_stability_s,
+            kmax=self.kmax,
+            equator_idx=self.equator_idx,
+            dz=self.dz,
+            density_decay=np.exp(-self.height / self.scale_height),
+            gfunc=interpolated_heating_rate,
+            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
+                self.height[:, np.newaxis] / self.scale_height))
+        return ncforce_input
 
     def _compute_intermediate_flux_terms(self, ncforce=None):
         """
