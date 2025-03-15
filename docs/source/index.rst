@@ -23,7 +23,8 @@ Package Installation
 
 Since release v2.0.0, the F2PY modules in `falwa` is compiled with `meson` (See Issue #95 for details) to cope with the deprecation of `numpy.disutils` in python 3.12.
 
-### First-time installation
+First-time installation
+^^^^^^^^^^^^^^^^^^^^^^^
 
 1. To build the package from source, you need a fortran compiler (e.g., [gfortran](http://hpc.sourceforge.net/)) to implement the installation.
 2. Clone the package repo by `git clone https://github.com/csyhuang/hn2016_falwa.git` .
@@ -31,7 +32,8 @@ Since release v2.0.0, the F2PY modules in `falwa` is compiled with `meson` (See 
 4. Install the package with the command `python -m pip install .`. The compile modules will be saved to python site-packages directory.
 5. If the installation is successful, you should be able to run through all unit tests in the folder `tests/` by executing `pytest tests/`.
 
-### Get updated code from new releases
+Get updated code from new releases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. To incorporate updates, first, pull the new version of the code from GitHub by `git pull`.
 2. Uninstall existing version of `falwa`: `pip uninstall falwa`
@@ -68,7 +70,6 @@ Modules
    Object Oriented Interface
    Data Storage
    Xarray Interface
-   Preprocessing
    Barotropic Field
    Utility Functions
    Plot Utilities
@@ -76,6 +77,16 @@ Modules
    Statistics Utilities
    Basis Functions
    Wrapper Functions
+
+Notes
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   Preprocessing
+   Memo for Developers
+
 
 Indices and tables
 ==================

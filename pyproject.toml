@@ -29,7 +29,8 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "netcdf4"
+    "netcdf4",
+    "dask"
 ]
 
 [project.urls]

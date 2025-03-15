@@ -260,22 +260,24 @@ def z_derivative_of_prod(
     gfunc: np.ndarray, multiplier: np.ndarray):
     """
     Compute the expression:
-        f exp^{z/H} d/dz [ exp^{-z/H}/static_stability * g(z, \phi, \lambda) ]
+
+        f exp^{z/H} d/dz [ exp^{-z/H}/static_stability * g(z, \\phi, \\lambda) ]
 
     Parameters
     ----------
     stat_n : numpy.ndarray of dim (kmax). Static stability per pressure level.
     stat_s : numpy.ndarray of dim (kmax). Static stability per pressure level.
     kmax : integer. Number of pseudoheight levels.
-    equator_idx: integer. Latitudinal index of the equator (\phi = 0).
+    equator_idx: integer. Latitudinal index of the equator (\\phi = 0).
     dz : float. Differential element of pseudoheight.
     density_decay : numpy.ndarray of dim (kmax). Explicitly, exp^{-z/H}.
-    gfunc : numpy.ndarray of dim (kmax, nlat, nlon). Explicitly, g(z, \phi, \lambda)
+    gfunc : numpy.ndarray of dim (kmax, nlat, nlon). Explicitly, g(z, \\phi, \\lambda)
     multiplier: numpy.ndarray of dim (kmax, nlat). Explicitly, f * exp^{-z/H} where f is Coriolis parameter.
 
     Returns
     -------
-    A numpy.ndarray of dim (kmax, nlat, nlon) that is the result
+    numpy.ndarray
+        Array of dim (kmax, nlat, nlon) that is the result
     """
     # Make static_stability_temp (kmax, nlat) ndarray
     static_stability_temp = np.concatenate([
