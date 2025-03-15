@@ -1,22 +1,42 @@
+"""
+These are integration tests that mirrors the implementation in notebook examples.
+This shall be merged with test_output_results.py in the next iterations.
+"""
+import pytest
+from math import pi
 import numpy as np
 import xarray as xr
 from falwa.oopinterface import QGFieldNHN22
 from falwa.xarrayinterface import QGDataset
 
 
-def test_qgfield_nhn22_ncforce_integration(test_data_dir):
+@pytest.fixture(scope="module")
+def merra_uvt_data(test_data_dir):
+    """
+    load sampled MERRA2 data
+    """
+    merra_uvt_data = xr.open_mfdataset(f"{test_data_dir}/[UVT].daily.merra.sample.nc")
+    return merra_uvt_data
+
+
+@pytest.fixture(scope="module")
+def merra_dtdtlwr_data(test_data_dir):
+    """
+    load sampled MERRA2 diabatic heating data
+    """
+    merra_dtdtlwr_data = xr.open_mfdataset(f"{test_data_dir}/DTDTLWR.daily.merra.sample.nc")
+    return merra_dtdtlwr_data
+
+
+def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
     Mirroring the implementation in notebooks/lubis_et_al_2024/ncforce_qgfield_2.1.0.ipynb
     """
 
-    # Load MERRA2 dataset
-    uvt_data = xr.open_mfdataset(f"{test_data_dir}/[UVT].daily.merra.sample.nc")
-    dtdtlwr_data = xr.open_mfdataset(f"{test_data_dir}/DTDTLWR.daily.merra.sample.nc")
-
     # Prepare coordinates
-    xlon = uvt_data['lon'].values
-    ylat = uvt_data['lat'].values  # latitude has to be in ascending order
-    plev = uvt_data['level'].values  # pressure level has to be in descending order (ascending height)
+    xlon = merra_uvt_data['lon'].values
+    ylat = merra_uvt_data['lat'].values  # latitude has to be in ascending order
+    plev = merra_uvt_data['level'].values  # pressure level has to be in descending order (ascending height)
 
     nlon = xlon.size
     nlat = ylat.size
@@ -24,10 +44,10 @@ def test_qgfield_nhn22_ncforce_integration(test_data_dir):
     print(f"nlon: {nlon}, nlat: {nlat}, nlev:{nlev}")
 
     # Get once slice of data to test
-    uu = uvt_data['U'].values[0, :, :, :]
-    vv = uvt_data['V'].values[0, :, :, :]
-    tt = uvt_data['T'].values[0, :, :, :]
-    dtdtlwr = dtdtlwr_data['DTDTLWR'].values[0, :, :, :]
+    uu = merra_uvt_data['U'].values[0, :, :, :]
+    vv = merra_uvt_data['V'].values[0, :, :, :]
+    tt = merra_uvt_data['T'].values[0, :, :, :]
+    dtdtlwr = merra_dtdtlwr_data['DTDTLWR'].values[0, :, :, :]
 
     qgfield_nhn22 = QGFieldNHN22(xlon, ylat, plev, uu, vv, tt, northern_hemisphere_results_only=False, eq_boundary_index=5)
     qgfield_nhn22.interpolate_fields(return_named_tuple=False)
@@ -47,20 +67,16 @@ def test_qgfield_nhn22_ncforce_integration(test_data_dir):
     assert np.abs(np.nan_to_num(qgfield_nhn22.ncforce_baro)).sum() > 0
 
 
-def test_qgdataset_nhn22_ncforce_integration(test_data_dir):
+def test_qgdataset_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
     Mirroring the implementation in notebooks/lubis_et_al_2024/ncforce_qgdataset_2.1.0.ipynb
     """
 
-    # Load MERRA2 dataset
-    uvt_data = xr.open_mfdataset(f"{test_data_dir}/[UVT].daily.merra.sample.nc")
-    dtdtlwr_data = xr.open_mfdataset(f"{test_data_dir}/DTDTLWR.daily.merra.sample.nc")
-
-    qgds = QGDataset(uvt_data, qgfield=QGFieldNHN22)
+    qgds = QGDataset(merra_uvt_data, qgfield=QGFieldNHN22)
 
     qgds.interpolate_fields()
     qgds.compute_reference_states()
-    ncforce = qgds.compute_ncforce_from_heating_rate(heating_rate=dtdtlwr_data['DTDTLWR'])
+    ncforce = qgds.compute_ncforce_from_heating_rate(heating_rate=merra_dtdtlwr_data['DTDTLWR'])
     qgds.compute_lwa_and_barotropic_fluxes(ncforce=ncforce)
 
     convergence_zonal_advective_flux = qgds.convergence_zonal_advective_flux.isel(time=0)
@@ -71,3 +87,35 @@ def test_qgdataset_nhn22_ncforce_integration(test_data_dir):
     assert np.abs(np.nan_to_num(convergence_zonal_advective_flux)).sum() > 0
     assert np.isnan(ncforce_baro).sum() < 30
     assert np.abs(np.nan_to_num(ncforce_baro)).sum() > 0
+
+
+# **** BarotropicField example ****
+@pytest.fixture(scope="module")
+def barotropic_field_data(test_data_dir):
+    """
+    load sampled barotropic vorticity data
+    """
+    barotropic_field_data = xr.open_dataset(
+        f"{test_data_dir}/barotropic_vorticity.nc")  # This is a soft link to notebook data
+    return barotropic_field_data
+
+
+def test_barotropic_field(barotropic_field_data):
+    from falwa.barotropic_field import BarotropicField
+
+    # === Load data and coordinates ===
+    abs_vorticity = barotropic_field_data.absolute_vorticity.values
+
+    xlon = np.linspace(0, 360., 512, endpoint=False)
+    ylat = np.linspace(-90, 90., 256, endpoint=True)
+
+    cc1 = BarotropicField(xlon, ylat, pv_field=abs_vorticity)  # area computed in the class assumed uniform grid
+    cc1_eqvlat = cc1.equivalent_latitudes  # Compute Equivalent Latitudes
+    cc1_lwa = cc1.lwa  # Compute Local Wave Activity
+
+    cc2 = BarotropicField(xlon, ylat, pv_field=abs_vorticity, return_partitioned_lwa=True)  # area computed in the class assumed uniform grid
+    cc2_eqvlat = cc2.equivalent_latitudes  # Compute Equivalent Latitudes
+    cc2_lwa = cc2.lwa  # Compute Local Wave Activity
+
+    assert np.isclose(cc1_eqvlat, cc2_eqvlat).all()
+    assert np.isclose(cc1_lwa, cc2_lwa.sum(axis=0)).all()
