@@ -35,11 +35,16 @@ jobs:
           python -m pip install build
           python -m build . --sdist
 
-      - name: Publish Python 🐍 distribution 📦 to TestPyPI
-        uses: actions/upload-artifact@v4
+      - name: Publish distribution 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          path: dist/
           repository-url: https://test.pypi.org/legacy/
+
+#      - name: Publish Python 🐍 distribution 📦 to TestPyPI
+#        uses: actions/upload-artifact@v4
+#        with:
+#          path: dist/
+#          repository-url: https://test.pypi.org/legacy/
 
 
 
