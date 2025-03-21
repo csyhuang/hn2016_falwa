@@ -35,37 +35,38 @@ jobs:
           python -m pip install build
           python -m build . --sdist
 
-      - name: Upload distributions
+      - name: Publish Python 🐍 distribution 📦 to TestPyPI
         uses: actions/upload-artifact@v4
         with:
-          name: release-dists
           path: dist/
-
-
-  publish-to-testpypi:
-    name: Publish Python 🐍 distribution 📦 to TestPyPI
-#    needs:
-#    - build
-    runs-on: ubuntu-latest
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/falwa/
-
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
-
-      - name: Publish distribution 📦 to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
           repository-url: https://test.pypi.org/legacy/
+
+
+
+#  publish-to-testpypi:
+#    name: Publish Python 🐍 distribution 📦 to TestPyPI
+##    needs:
+##    - build
+#    runs-on: ubuntu-latest
+#
+#    environment:
+#      name: testpypi
+#      url: https://test.pypi.org/p/falwa/
+#
+#    permissions:
+#      id-token: write  # IMPORTANT: mandatory for trusted publishing
+#
+#    steps:
+#      - name: Retrieve release distributions
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: release-dists
+#          path: dist/
+#
+#      - name: Publish distribution 📦 to TestPyPI
+#        uses: pypa/gh-action-pypi-publish@release/v1
+#        with:
+#          repository-url: https://test.pypi.org/legacy/
 
 
 #    steps:
