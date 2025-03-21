@@ -44,8 +44,8 @@ jobs:
 
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
-    needs:
-    - build
+#    needs:
+#    - build
     runs-on: ubuntu-latest
 
     environment:
@@ -56,15 +56,28 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@v4
-      with:
-        name: python-package-distributions
-        path: dist/
-    - name: Publish distribution 📦 to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish distribution 📦 to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+
+#    steps:
+#    - name: Download all the dists
+#      uses: actions/download-artifact@v4
+#      with:
+#        name: python-package-distributions
+#        path: dist/
+#    - name: Publish distribution 📦 to TestPyPI
+#      uses: pypa/gh-action-pypi-publish@release/v1
+#      with:
+#        repository-url: https://test.pypi.org/legacy/
 
 #  pypi-publish:
 #    runs-on: ubuntu-latest
