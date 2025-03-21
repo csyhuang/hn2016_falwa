@@ -16,7 +16,8 @@ on: push
 #    types: [published]
 
 permissions:
-  contents: read
+  id-token: write  # IMPORTANT: mandatory for trusted publishing
+
 
 jobs:
   release-build:
