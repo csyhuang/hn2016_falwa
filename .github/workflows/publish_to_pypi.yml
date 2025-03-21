@@ -1,4 +1,5 @@
 # Copied from: https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-python#publishing-to-package-registries
+# Better reference from: https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 # This workflow uses actions that are not certified by GitHub.
 # They are provided by a third-party and are governed by
 # separate terms of service, privacy policy, and support
@@ -10,15 +11,12 @@
 
 name: Upload Python Package
 
-on: push
-
-#on:
-#  release:
-#    types: [published]
+on:
+  release:
+    types: [published]
 
 permissions:
   id-token: write  # IMPORTANT: mandatory for trusted publishing
-
 
 jobs:
   release-build:
@@ -39,76 +37,5 @@ jobs:
 
       - name: Publish distribution 📦 to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-
-#      - name: Publish Python 🐍 distribution 📦 to TestPyPI
-#        uses: actions/upload-artifact@v4
-#        with:
-#          path: dist/
-#          repository-url: https://test.pypi.org/legacy/
-
-
-
-#  publish-to-testpypi:
-#    name: Publish Python 🐍 distribution 📦 to TestPyPI
-##    needs:
-##    - build
-#    runs-on: ubuntu-latest
-#
-#    environment:
-#      name: testpypi
-#      url: https://test.pypi.org/p/falwa/
-#
-#    permissions:
-#      id-token: write  # IMPORTANT: mandatory for trusted publishing
-#
-#    steps:
-#      - name: Retrieve release distributions
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: release-dists
-#          path: dist/
-#
-#      - name: Publish distribution 📦 to TestPyPI
-#        uses: pypa/gh-action-pypi-publish@release/v1
-#        with:
-#          repository-url: https://test.pypi.org/legacy/
-
-
-#    steps:
-#    - name: Download all the dists
-#      uses: actions/download-artifact@v4
-#      with:
-#        name: python-package-distributions
-#        path: dist/
-#    - name: Publish distribution 📦 to TestPyPI
-#      uses: pypa/gh-action-pypi-publish@release/v1
-#      with:
-#        repository-url: https://test.pypi.org/legacy/
-
-#  pypi-publish:
-#    runs-on: ubuntu-latest
-#
-#    needs:
-#      - release-build
-#
-#    permissions:
-#      # IMPORTANT: this permission is mandatory for trusted publishing
-#      id-token: write
-#
-#    # Dedicated environments with protections for publishing are strongly recommended.
-#    environment:
-#      name: pypi
-#      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-#      # url: https://pypi.org/p/YOURPROJECT
-#
-#    steps:
-#      - name: Retrieve release distributions
-#        uses: actions/download-artifact@v4
-#        with:
-#          name: release-dists
-#          path: dist/
-#
-#      - name: Publish release distributions to PyPI
-#        uses: pypa/gh-action-pypi-publish@release/v1
+        #with:  # This is only necessary if publishing onto TestPyPI
+          #repository-url: https://test.pypi.org/legacy/
