@@ -10,9 +10,10 @@
 
 name: Upload Python Package
 
-on:
-  release:
-    types: [published]
+on: push
+#on:
+#  release:
+#    types: [published]
 
 permissions:
   contents: read
@@ -40,28 +41,53 @@ jobs:
           name: release-dists
           path: dist/
 
-  pypi-publish:
+
+  publish-to-testpypi:
+    name: Publish Python 🐍 distribution 📦 to TestPyPI
+    needs:
+    - build
     runs-on: ubuntu-latest
 
-    needs:
-      - release-build
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/falwa/
 
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
-
-    # Dedicated environments with protections for publishing are strongly recommended.
-    environment:
-      name: pypi
-      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
 
-      - name: Publish release distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+#  pypi-publish:
+#    runs-on: ubuntu-latest
+#
+#    needs:
+#      - release-build
+#
+#    permissions:
+#      # IMPORTANT: this permission is mandatory for trusted publishing
+#      id-token: write
+#
+#    # Dedicated environments with protections for publishing are strongly recommended.
+#    environment:
+#      name: pypi
+#      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
+#      # url: https://pypi.org/p/YOURPROJECT
+#
+#    steps:
+#      - name: Retrieve release distributions
+#        uses: actions/download-artifact@v4
+#        with:
+#          name: release-dists
+#          path: dist/
+#
+#      - name: Publish release distributions to PyPI
+#        uses: pypa/gh-action-pypi-publish@release/v1
