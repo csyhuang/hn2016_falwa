@@ -20,7 +20,7 @@ inc_np = include_directories(incdir_numpy, incdir_f2py)
 
 f90_basenames = [
     'compute_flux_dirinv',
-    'compute_lwa_and_barotropic_fluxes',
+    'compute_lwa_and_layerwise_fluxes',
     'compute_lwa_only_nhn22',
     'compute_qgpv_direct_inv',
     'compute_qgpv',

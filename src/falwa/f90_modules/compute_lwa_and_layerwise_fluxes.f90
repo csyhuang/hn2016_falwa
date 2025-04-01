@@ -1,7 +1,7 @@
-SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
+SUBROUTINE compute_lwa_and_layerwise_fluxes(nlon, nlat, kmax, jd, &
                          pv, uu, vv, pt, ncforce, qref, uref, tref, &
                          a, om, dz, h, r, cp, prefactor, &
-                         astar, astarbaro, ua1baro, ubaro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, ncforcebaro)
+                         astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4)
 
     implicit none
 
@@ -12,14 +12,11 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
     ! Comment from Clare on 2023/10/10:
     ! ncforce is an optional argument in QGField interface. If not required, simply put in zero array.
     real, intent(in) ::  a, om, dz, h, r, cp, prefactor
-    real, intent(out) :: astar(nlon,jd,kmax),astarbaro(nlon,jd),ua1baro(nlon,jd),ubaro(nlon,jd), &
-                         ua2baro(nlon,jd),ep1baro(nlon,jd),ep2baro(nlon,jd),ep3baro(nlon,jd),ep4(nlon,jd), &
-                         ncforcebaro(nlon,jd)
+    real, intent(out) :: astar1(nlon,jd,kmax), astar2(nlon,jd,kmax), ncforce3d(nlon,jd,kmax), &
+        ua1(nlon,jd,kmax), ua2(nlon,jd,kmax), ep1(nlon,jd,kmax), ep2(nlon,jd,kmax), ep3(nlon,jd,kmax), ep4(nlon,jd)
     ! === dummy variables ===
     integer :: i, j, jj, k
     real :: qe(nlon,nlat),ue(nlon,nlat)
-    real :: ua1(nlon,jd,kmax), ua2(nlon,jd,kmax), ep1(nlon,jd,kmax), ep2(nlon,jd,kmax), ep3(nlon,jd,kmax)
-    real :: ncforce3d(nlon,jd,kmax)
     real :: tg(kmax)
     real :: aa, ab, cor, dc, ep11, ep41, ep42, ep43, wt, zk, zz, dp, rkappa
     real :: cosphi(0:jd+1), sinphi(0:jd+1)
@@ -49,7 +46,6 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
     tg(:) = tg(:)/wt       ! averaging
 
     ! **** Computing ncforce (testing) ***
-    ncforcebaro(:,:) = 0.0
     ncforce3d(:,:,:) = 0.0
 
     ! **** wave activity and nonlinear zonal flux F2 ****
@@ -57,7 +53,8 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
     do k = 2,kmax-1
         do i = 1,nlon
             do j = 1,jd-1            ! 13.5N and higher latitude
-                astar(i,j,k) = 0.       ! LWA*cos(phi)
+                astar1(i,j,k) = 0.       ! LWA*cos(phi)
+                astar2(i,j,k) = 0.       ! LWA*cos(phi)
                 ncforce3d(i,j,k) = 0.
                 ua2(i,j,k) = 0.         ! F2
                 cor = 2.*om*sinphi(j)          !Coriolis parameter
@@ -68,7 +65,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                     ue(i,jj) = uu(i,jj+jd-1,k)*cosphi(j)-uref(j,k)*cosphi(jj)       !ue
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).gt.0.) then                    !LWA*cos(phi) and F2
-                        astar(i,j,k)=astar(i,j,k)+qe(i,jj)*aa
+                        astar1(i,j,k)=astar1(i,j,k)+qe(i,jj)*aa ! cyclonic in N Hem
                         ncforce3d(i,j,k)=ncforce3d(i,j,k)+ncforce(i,jj+jd-1,k)*aa
                         ua2(i,j,k) = ua2(i,j,k)+qe(i,jj)*ue(i,jj)*ab
                     endif  
@@ -79,7 +76,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
                     ue(i,jj) = uu(i,jj+jd-1,k)*cosphi(j)-uref(j,k)*cosphi(jj)       !ue
                     aa = a*dp*cosphi(jj)                       !length element
                     if(qe(i,jj).le.0.) then                    !LWA*cos(phi) and F2
-                        astar(i,j,k)=astar(i,j,k)-qe(i,jj)*aa
+                        astar2(i,j,k)=astar2(i,j,k)-qe(i,jj)*aa  ! anticyclonic in N Hem
                         ncforce3d(i,j,k)=ncforce3d(i,j,k)-ncforce(i,jj+jd-1,k)*aa
                         ua2(i,j,k) = ua2(i,j,k)-qe(i,jj)*ue(i,jj)*ab
                     endif  
@@ -87,7 +84,7 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
 
                 !    *********  Other fluxes *********
 
-                ua1(i,j,k) = uref(j,k)*astar(i,j,k)            !F1     
+                ua1(i,j,k) = uref(j,k)*(astar1(i,j,k)+astar2(i,j,k))            !F1
                 ep1(i,j,k) = -0.5*(uu(i,j+jd-1,k)-uref(j,k))**2  !F3a
                 ep1(i,j,k) = ep1(i,j,k)+0.5*vv(i,j+jd-1,k)**2    !F3a+b
                 ep11 = 0.5*(pt(i,j+jd-1,k)-tref(j,k))**2         !F3c
@@ -116,31 +113,4 @@ SUBROUTINE compute_lwa_and_barotropic_fluxes(nlon, nlat, kmax, jd, &
         enddo
     enddo
 
-    ! ******** Column average: (25) of SI-HN17 ********
-
-    astarbaro(:,:) = 0.
-    ncforcebaro(:,:) = 0.
-    ubaro(:,:) = 0.
-    ua1baro(:,:) = 0.
-    ua2baro(:,:) = 0.
-    ep1baro(:,:) = 0.
-    ep2baro(:,:) = 0.
-    ep3baro(:,:) = 0.
-    dc = dz/prefactor
-
-    do k = 2,kmax-1
-        zk = dz*float(k-1)
-        astarbaro(:,:) = astarbaro(:,:)+astar(:,:,k)*exp(-zk/h)*dc
-        ncforcebaro(:,:) = ncforcebaro(:,:)+ncforce3d(:,:,k)*exp(-zk/h)*dc
-        ua1baro(:,:) = ua1baro(:,:)+ua1(:,:,k)*exp(-zk/h)*dc
-        ua2baro(:,:) = ua2baro(:,:)+ua2(:,:,k)*exp(-zk/h)*dc
-        ep1baro(:,:) = ep1baro(:,:)+ep1(:,:,k)*exp(-zk/h)*dc
-        ep2baro(:,:) = ep2baro(:,:)+ep2(:,:,k)*exp(-zk/h)*dc
-        ep3baro(:,:) = ep3baro(:,:)+ep3(:,:,k)*exp(-zk/h)*dc
-        do j = 1,jd  ! ### yet to be multiplied by cosine
-            ubaro(:,j) = ubaro(:,j)+uu(:,j+jd-1,k)*exp(-zk/h)*dc
-        enddo
-    enddo
-
-
-end subroutine
+END SUBROUTINE compute_lwa_and_layerwise_fluxes
