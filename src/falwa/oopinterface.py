@@ -445,7 +445,10 @@ class QGFieldBase(ABC):
         astar2_baro = self._vertical_average(astar2, lowest_layer_index=1)
         astar_baro = astar1_baro + astar2_baro
         ua1_baro = self._vertical_average(ua1, lowest_layer_index=1)
-        u_baro = self._vertical_average(uu, lowest_layer_index=1)
+        if is_nhem:
+            u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
+        else:
+            u_baro = self._vertical_average(uu[:,:self.equator_idx,:], lowest_layer_index=1)
         ua2_baro = self._vertical_average(ua2, lowest_layer_index=1)
         ep1_baro = self._vertical_average(ep1, lowest_layer_index=1)
         ep2_baro = self._vertical_average(ep2, lowest_layer_index=1)
@@ -753,7 +756,7 @@ class QGFieldBase(ABC):
         # TODO: check signs!
         if not self.northern_hemisphere_results_only:
             self._barotropic_flux_terms_storage.lwa_baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.u_baro[:, :], \
+                self._barotropic_flux_terms_storage.u_baro[:, :self.equator_idx], \
                 urefbaro, \
                 self._barotropic_flux_terms_storage.ua1baro[:, :self.equator_idx], \
                 self._barotropic_flux_terms_storage.ua2baro[:, :self.equator_idx], \
