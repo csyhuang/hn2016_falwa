@@ -1,7 +1,7 @@
 SUBROUTINE compute_flux_dirinv_nshem( &
     pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, &
     imax, JMAX, kmax, nd, jb, jd, is_nhem, &
-    a, om, dz, h, rr, cp, prefac,&
+    a, om, dz, h, rr, cp, prefac, &
     astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4)
 
   REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vv(imax,jmax,kmax),pt(imax,jmax,kmax), &
@@ -145,7 +145,6 @@ SUBROUTINE compute_flux_dirinv_nshem( &
         cosm = cos(phim)          ! cosine for one grid south
         sin0 = sin(phi0)          ! sine for latitude grid
         ep1(i,j,k) = ep1(i,j,k)*cos0 ! correct for cosine factor
-
 
         ! meridional eddy momentum flux one grid north and south
         if (is_nhem) then
