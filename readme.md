@@ -6,12 +6,28 @@
 
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/falwa_diagram.png)
 
-Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms introduced in:
+Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms presented in:
 
 - [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1)
 - [Huang and Nakamura (2017, GRL)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full).
 - [Nakamura and Huang (2018, Science)](https://doi.org/10.1126/science.aat0721) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
-- [Neal et al (2022, GRL)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699) *The 2021 Pacific Northwest Heat Wave and Associated Blocking: Meteorology and the Role of an Upstream Cyclone as a Diabatic Source of Wave Activity*
+- [Neal et al (2022, GRL)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699) *The 2021 Pacific Northwest Heat Wave and Associated Blocking: Meteorology and the Role of an Upstream Cyclone as a Diabatic Source of Wave Activity*.
+- Lubis et al (submitted). *Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the Euro-Atlantic Sector*.
+
+## Citing this package
+
+We would be grateful if you mention `falwa` and cite our [software package paper](https://doi.org/10.22541/essoar.173179959.91611195/v2) published in the Geoscience Data Journal upon usage:
+
+```
+@article{falwa_csyhuang_cpolster,
+  author={Clare S. Y. Huang and Christopher Polster and Noboru Nakamura},
+  title={falwa: Python package to implement Finite-amplitude Local Wave Activity diagnostics on climate data},
+  journal={Geoscience Data Journal},
+  note = {(in press)},
+  year = {2025},
+  doi = {10.1002/GDJ3.70006},
+  publisher={Wiley Online Library}}
+```
 
 ## Package Installation
 

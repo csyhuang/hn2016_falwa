@@ -9,12 +9,29 @@ falwa: Finite-amplitude local wave activity
 .. image:: https://github.com/csyhuang/csyhuang.github.io/raw/master/assets/img/falwa_diagram.png
 
 `falwa <https://github.com/csyhuang/hn2016_falwa>`_ is a python library that provides tools to measure and study life cycle of large-scale
-extreme weather events. It implements the finite-amplitude local wave activity and flux diagnostic introduced in:
+extreme weather events. It implements the finite-amplitude local wave activity and flux diagnostic presented in:
 
 - `Huang and Nakamura (2016, JAS) <https://journals.ametsoc.org/doi/abs/10.1175/JAS-D-15-0194.1>`_
 - `Huang and Nakamura (2017, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2017GL073760>`_
 - `Nakamura and Huang (2018, Science) <https://doi.org/10.1126/science.aat0721>`_
 - `Neal et al (2022, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699>`_
+- Lubis et al (submitted). *Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the Euro-Atlantic Sector*.
+
+Citing this package
+---------------------
+
+We would be grateful if you mention `falwa` and cite our `software package paper <https://doi.org/10.22541/essoar.173179959.91611195/v2>`_ published in the Geoscience Data Journal upon usage:
+
+.. code-block:: language
+
+   @article{falwa_csyhuang_cpolster,
+     author={Clare S. Y. Huang and Christopher Polster and Noboru Nakamura},
+     title={falwa: Python package to implement Finite-amplitude Local Wave Activity diagnostics on climate data},
+     journal={Geoscience Data Journal},
+     note = {(in press)},
+     year = {2025},
+     doi = {10.1002/GDJ3.70006},
+     publisher={Wiley Online Library}}
 
 Package Installation
 ------------------------------
