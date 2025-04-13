@@ -1343,7 +1343,8 @@ class QGFieldBase(ABC):
     @property
     def layerwise_flux_terms_storage(self) -> LayerwiseFluxTermsStorage:
         """
-        Return the LayerwiseFluxTermsStorage object that stored the following 3D LWA and flux terms on pseudo-height levels:
+        Return the LayerwiseFluxTermsStorage object that stored the following 3D LWA and flux terms on pseudo-height levels.
+        The layerwise flux terms are only computed after calling the method `QGField.compute_layerwise_lwa_fluxes`.
 
         Returns
         -------
