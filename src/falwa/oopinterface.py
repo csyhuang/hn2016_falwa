@@ -414,11 +414,7 @@ class QGFieldBase(ABC):
         """
         Compute layerwise lwa flux in Fortran except the stretching term, which will be calculated in python.
         Shall be in parallel with compute_lwa_and_barotropic_fluxes.
-        Now the input are in fortran indices...(?)
         """
-        # *** Compute layerwise flux from `compute_lwa_and_layerwise_fluxes`
-        # *** Compute stretching term (differentiate in z) layerwise ***
-        # *** Initialize Storage unit ***
 
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb, is_nhem):
         astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(
@@ -444,21 +440,25 @@ class QGFieldBase(ABC):
         astar1_baro = self._vertical_average(astar1, lowest_layer_index=1)
         astar2_baro = self._vertical_average(astar2, lowest_layer_index=1)
         astar_baro = astar1_baro + astar2_baro
-        ua1_baro = self._vertical_average(ua1, lowest_layer_index=1)
+        ua1baro = self._vertical_average(ua1, lowest_layer_index=1)
         if is_nhem:
             u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
         else:
             u_baro = self._vertical_average(uu[:,:self.equator_idx,:], lowest_layer_index=1)
-        ua2_baro = self._vertical_average(ua2, lowest_layer_index=1)
-        ep1_baro = self._vertical_average(ep1, lowest_layer_index=1)
-        ep2_baro = self._vertical_average(ep2, lowest_layer_index=1)
-        ep3_baro = self._vertical_average(ep3, lowest_layer_index=1)
+        ua2baro = self._vertical_average(ua2, lowest_layer_index=1)
+        ep1baro = self._vertical_average(ep1, lowest_layer_index=1)
+        ep2baro = self._vertical_average(ep2, lowest_layer_index=1)
+        ep3baro = self._vertical_average(ep3, lowest_layer_index=1)
         ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1)
-        uref_baro = np.sum(
-            uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,
-            axis=-1)
 
-        return astar_baro, u_baro, uref_baro, ua1_baro, ua2_baro, ep1_baro, ep2_baro, ep3_baro, ep4, \
+        if is_nhem:
+            uref_baro = np.sum(
+                uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
+        else:
+            uref_baro = np.sum(
+                uref[:jd, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor, axis=-1)
+
+        return astar_baro, u_baro, uref_baro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, \
             astar1, astar2, ncforce_baro
 
     def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
@@ -1339,6 +1339,27 @@ class QGFieldBase(ABC):
         Return the latitude dimension of the input data.
         """
         return self._input_ylat.size
+
+    @property
+    def layerwise_flux_terms_storage(self) -> LayerwiseFluxTermsStorage:
+        """
+        Return the LayerwiseFluxTermsStorage object that stored the following 3D LWA and flux terms on pseudo-height levels:
+
+        Returns
+        -------
+        A LayerwiseFluxTermsStorage object that contains the following 3D fields of LWA and flux terms:
+            - lwa: Total local wave activity
+            - astar1: cyclonic (for N. Hem.) local wave activity
+            - astar2: anti-cyclonic (for N. Hem.) local wave activity
+            - ua1: first/linear term of zonal advective flux
+            - ua2: second/nonlinear term of zonal advective flux
+            - ep1: third term (F3 in NH18) of zonal advective flux
+            - ep2: northward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
+            - ep3: southward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
+            - stretch_term: layerwise stretch term corresponding to III in NH18 eq (2)
+            - ncforce: layerwise contribution of input heating term
+        """
+        return self._layerwise_flux_terms_storage
 
 
 class QGFieldNH18(QGFieldBase):
