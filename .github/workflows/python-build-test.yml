@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ "master", "csyhuang-layerwise-fluxes", "csyhuang-v2.1.0" ]
+    branches: [ "master", "csyhuang-layerwise-fluxes" ]
   pull_request:
     branches: [ "master" ]
 
