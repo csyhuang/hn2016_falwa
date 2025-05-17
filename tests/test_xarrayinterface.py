@@ -144,6 +144,27 @@ def test_basic_qgdataset_calls(QGField, nh_only):
 
 # Tests for internals
 
+def test_MetadataServiceProvider_iter_other():
+    data = xr.concat([
+        xr.concat([_generate_test_dataset(time=t, number=n) for t in range(3)], dim="time")
+        for n in range(4)
+    ], dim="number")
+    print(data)
+    qgds = QGDataset(data)
+    coords = list(qgds.metadata.iter_other())
+    assert len(coords) == len(qgds._fields)
+    assert len(coords) == qgds.metadata.other_size
+    for coord in coords:
+        assert len(coord) == 2
+        assert "time" in coord
+        assert "number" in coord
+    assert coords[0] == {"time": 0, "number": 0}
+    assert coords[1] == {"time": 1, "number": 0}
+    assert coords[2] == {"time": 2, "number": 0}
+    assert coords[3] == {"time": 0, "number": 1}
+    assert coords[4] == {"time": 1, "number": 1}
+    assert coords[-1] == {"time": 2, "number": 3}
+
 def test_is_ascending():
     assert _is_ascending([4])
     assert _is_ascending([0, 1, 2, 3, 4, 5])

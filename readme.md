@@ -1,4 +1,4 @@
-## Python Library: falwa (v2.1.0)
+## Python Library: falwa (v2.2.0)
 
 [![Python package](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml/badge.svg)](https://github.com/csyhuang/hn2016_falwa/actions/workflows/python-build-test.yml)[![codecov.io](https://codecov.io/gh/csyhuang/hn2016_falwa/branch/master/graph/badge.svg)](https://codecov.io/gh/csyhuang/hn2016_falwa)[![Documentation Status](https://readthedocs.org/projects/hn2016-falwa/badge/?version=latest)](http://hn2016-falwa.readthedocs.io/en/latest/?badge=latest)[![DOI](https://zenodo.org/badge/63908662.svg)](https://zenodo.org/badge/latestdoi/63908662)
 
@@ -6,12 +6,32 @@
 
 ![hn2016_falwa_diagram](https://github.com/csyhuang/csyhuang.github.io/blob/master/assets/img/falwa_diagram.png)
 
-Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms introduced in:
+Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALWA) and flux terms presented in:
 
 - [Huang and Nakamura (2016, JAS)](http://dx.doi.org/10.1175/JAS-D-15-0194.1)
 - [Huang and Nakamura (2017, GRL)](http://onlinelibrary.wiley.com/doi/10.1002/2017GL073760/full).
 - [Nakamura and Huang (2018, Science)](https://doi.org/10.1126/science.aat0721) *Atmospheric Blocking as a Traffic Jam in the Jet Stream*.
-- [Neal et al (2022, GRL)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699) *The 2021 Pacific Northwest Heat Wave and Associated Blocking: Meteorology and the Role of an Upstream Cyclone as a Diabatic Source of Wave Activity*
+- [Neal et al (2022, GRL)](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699) *The 2021 Pacific Northwest Heat Wave and Associated Blocking: Meteorology and the Role of an Upstream Cyclone as a Diabatic Source of Wave Activity*.
+- Lubis et al (in review). *Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the Euro-Atlantic Sector*.
+
+## Citing this package
+
+We would be grateful if you mention `falwa` and cite our [software package paper](https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.70006) published in the Geoscience Data Journal upon usage:
+
+Huang, C. S. Y., Polster, C., & Nakamura, N. (2025). **Falwa: Python Package to Implement Finite‐Amplitude Local Wave Activity Diagnostics on Climate Data**. *Geoscience Data Journal, 12*(2), e70006.
+
+```
+@article{huang_polster_nakamura_2025,
+  title={Falwa: Python Package to Implement Finite-Amplitude Local Wave Activity Diagnostics on Climate Data},
+  author={Huang, Clare S Y and Polster, Christopher and Nakamura, Noboru},
+  journal={Geoscience Data Journal},
+  volume={12},
+  number={2},
+  pages={e70006},
+  year={2025},
+  doi = {10.1002/GDJ3.70006},
+  publisher={Wiley Online Library}}
+```
 
 ## Package Installation
 

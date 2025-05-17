@@ -11,20 +11,19 @@ import numpy as np
 from scipy.interpolate import interp1d, UnivariateSpline
 from scipy.linalg.lapack import dgetrf, dgetri
 
-from falwa import utilities
+from falwa.utilities import zonal_convergence, z_derivative_of_prod
 from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
-    LWAStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
+    LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import f2py modules ***
-from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first,\
-    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states,\
-    compute_lwa_and_barotropic_fluxes, compute_lwa_only_nhn22
+from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first, \
+    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states, \
+    compute_lwa_only_nhn22
 from collections import namedtuple
 
 
 class QGFieldBase(ABC):
-
     """
     Local wave activity and flux analysis in the quasi-geostrophic framework.
 
@@ -111,8 +110,8 @@ class QGFieldBase(ABC):
         if self._data_on_evenly_spaced_pseudoheight_grid:
             self.plev = plev
             self.kmax = plev.size
-            self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
-            self.height = -scale_height * np.log(plev/P_GROUND)
+            self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
+            self.height = -scale_height * np.log(plev / P_GROUND)
             self.dz = np.diff(self.height)[0]
         else:
             # === Check the validity of plev ===
@@ -160,10 +159,10 @@ class QGFieldBase(ABC):
 
         # === Coordinate-related ===
         self._nlat_analysis = self._ylat.size  # This is the number of latitude grid point used in analysis
-        self._eq_boundary_index = 0   # Latitude domain boundary. Will be updated in QGFieldNHN22.__init__
+        self._eq_boundary_index = 0  # Latitude domain boundary. Will be updated in QGFieldNHN22.__init__
         self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self._eq_boundary_index
-        self.dphi = np.deg2rad(180./(self._nlat_analysis-1))     # F90 code: dphi = pi/float(nlat-1)
-        self.dlambda = np.deg2rad(360./self.nlon)                # F90 code: dlambda = 2*pi/float(nlon)
+        self.dphi = np.deg2rad(180. / (self._nlat_analysis - 1))  # F90 code: dphi = pi/float(nlat-1)
+        self.dlambda = np.deg2rad(360. / self.nlon)  # F90 code: dlambda = 2*pi/float(nlon)
         self.npart = npart if npart is not None else self._nlat_analysis
 
         # === Moved here in v0.7.0 ===
@@ -215,7 +214,7 @@ class QGFieldBase(ABC):
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # LWA storage (3D)
-        self._lwa_storage = LWAStorage(
+        self._layerwise_flux_terms_storage = LayerwiseFluxTermsStorage(
             pydim=(self.kmax, lat_dim, self.nlon),
             fdim=(self.nlon, lat_dim, self.kmax),
             swapaxis_1=0,
@@ -267,7 +266,7 @@ class QGFieldBase(ABC):
         using rectangular rule consistent with the integral evaluation in compute_lwa_and_barotropic_fluxes.f90.
         TODO: evaluate numerical integration scheme used in the fortran module.
         """
-        self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax-1)])
+        self._prefactor = sum([math.exp(-k * self.dz / self.scale_height) * self.dz for k in range(1, self.kmax - 1)])
 
     @staticmethod
     def _convert_masked_data(variable: np.ndarray, varname: str):
@@ -299,13 +298,13 @@ class QGFieldBase(ABC):
         if np.diff(plev)[0] > 0:
             raise TypeError("plev must be in decending order (i.e. from ground level to aloft)")
         self.plev = plev
-        self._plev_to_height = -scale_height * np.log(plev/P_GROUND)
+        self._plev_to_height = -scale_height * np.log(plev / P_GROUND)
 
         # Check if kmax is valid given the max pseudoheight in the input data
-        hmax = -scale_height*np.log(plev[-1]/P_GROUND)
-        if hmax < (kmax-1) * dz:
+        hmax = -scale_height * np.log(plev[-1] / P_GROUND)
+        if hmax < (kmax - 1) * dz:
             raise ValueError('Input kmax = {} but the maximum valid kmax'.format(kmax) +
-                             '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax//dz)+1))
+                             '(constrainted by the vertical grid of your input data) is {}'.format(int(hmax // dz) + 1))
 
     @staticmethod
     def _check_and_flip_ylat(ylat):
@@ -326,7 +325,7 @@ class QGFieldBase(ABC):
         if (ylat.size % 2 == 0) & (sum(ylat == 0.0) == 0):
             # Even grid
             need_latitude_interpolation = True
-            _ylat = np.linspace(-90., 90., ylat.size+1, endpoint=True)
+            _ylat = np.linspace(-90., 90., ylat.size + 1, endpoint=True)
             equator_idx = \
                 np.argwhere(_ylat == 0)[0][0] + 1
             # Fortran indexing starts from 1
@@ -334,7 +333,7 @@ class QGFieldBase(ABC):
             # Odd grid
             need_latitude_interpolation = False
             _ylat = ylat
-            equator_idx = np.argwhere(ylat == 0)[0][0] + 1 # Fortran indexing starts from 1
+            equator_idx = np.argwhere(ylat == 0)[0][0] + 1  # Fortran indexing starts from 1
         else:
             raise TypeError(
                 "There are more than 1 grid point with latitude 0."
@@ -394,7 +393,7 @@ class QGFieldBase(ABC):
         if self.need_latitude_interpolation:
             if self.northern_hemisphere_results_only:
                 return self._interp_back(
-                    variable, self._ylat[-(self._nlat_analysis//2+1):],
+                    variable, self._ylat[-(self._nlat_analysis // 2 + 1):],
                     self._input_ylat[-(self.nlat // 2):],
                     which_axis=interp_axis)
             else:
@@ -402,29 +401,65 @@ class QGFieldBase(ABC):
         else:
             return variable
 
-    def _compute_lwa_and_barotropic_fluxes_wrapper(self, qgpv, u, v, theta, ncforce, qref_temp, uref_temp, ptref_temp):
-        """
-        Private function. Wrapper to call the fortran subroutine compute_lwa_and_barotropic_fluxes.
+    def _vertical_average(self, var_3d, lowest_layer_index=1, height_axis=-1):
+        dc = self.dz / self.prefactor
+        var_baro = np.sum(
+            var_3d[:, :, lowest_layer_index:]
+            * np.exp(-self.height[np.newaxis, np.newaxis, lowest_layer_index:] / self.scale_height) * dc,
+            axis=height_axis)
+        return var_baro
 
-        pv, uu, vv, pt, ncforce, qref, uref, tref
-        a, om, dz, h, r, cp, prefactor
+    @abstractmethod
+    def compute_layerwise_lwa_fluxes(self, ncforce=None):
         """
-        return compute_lwa_and_barotropic_fluxes(
-            pv=qgpv,
-            uu=u,
-            vv=v,
-            pt=theta,
+        Compute layerwise lwa flux in Fortran except the stretching term, which will be calculated in python.
+        Shall be in parallel with compute_lwa_and_barotropic_fluxes.
+        """
+
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb, is_nhem):
+        astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(
+            pv=pv,
+            uu=uu,
+            vv=vv,
+            pt=pt,
             ncforce=ncforce,
-            qref=qref_temp,
-            uref=uref_temp,
-            tref=ptref_temp,
+            tn0=tn0,
+            qref=qref,
+            uref=uref,
+            tref=tref,
+            jb=jb,
+            is_nhem=is_nhem,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,
             h=self.scale_height,
-            r=self.dry_gas_constant,
+            rr=self.dry_gas_constant,
             cp=self.cp,
-            prefactor=self.prefactor)
+            prefac=self.prefactor)
+        jd = uref.shape[0]
+        astar1_baro = self._vertical_average(astar1, lowest_layer_index=1)
+        astar2_baro = self._vertical_average(astar2, lowest_layer_index=1)
+        astar_baro = astar1_baro + astar2_baro
+        ua1baro = self._vertical_average(ua1, lowest_layer_index=1)
+        if is_nhem:
+            u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
+        else:
+            u_baro = self._vertical_average(uu[:,:self.equator_idx,:], lowest_layer_index=1)
+        ua2baro = self._vertical_average(ua2, lowest_layer_index=1)
+        ep1baro = self._vertical_average(ep1, lowest_layer_index=1)
+        ep2baro = self._vertical_average(ep2, lowest_layer_index=1)
+        ep3baro = self._vertical_average(ep3, lowest_layer_index=1)
+        ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1)
+
+        if is_nhem:
+            uref_baro = np.sum(
+                uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
+        else:
+            uref_baro = np.sum(
+                uref[:jd, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor, axis=-1)
+
+        return astar_baro, u_baro, uref_baro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, \
+            astar1, astar2, ncforce_baro
 
     def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
 
@@ -503,13 +538,14 @@ class QGFieldBase(ABC):
 
     @abstractmethod
     def _compute_qgpv(
-        self, interpolated_fields_to_return: NamedTuple, return_named_tuple: bool,
+            self, interpolated_fields_to_return: NamedTuple, return_named_tuple: bool,
             t0_n: np.ndarray, t0_s: np.ndarray, stat_n: np.ndarray, stat_s: np.ndarray) -> Optional[NamedTuple]:
         """
         The specific interpolation procedures w.r.t the particular procedures in the paper will be implemented here.
         """
 
-    def compute_reference_states(self, return_named_tuple: bool = True, northern_hemisphere_results_only=None) -> Optional[NamedTuple]:
+    def compute_reference_states(self, return_named_tuple: bool = True, northern_hemisphere_results_only=None) -> \
+    Optional[NamedTuple]:
 
         """
         Compute the local wave activity and reference states of QGPV, zonal wind and potential temperature using a more
@@ -623,7 +659,7 @@ class QGFieldBase(ABC):
                 rr=self.dry_gas_constant,
                 cp=self.cp,
                 prefac=self.prefactor)
-        self._lwa_storage.lwa_nhem = np.abs(astar1 + astar2)
+        self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
         # TODO: check signs!
@@ -645,7 +681,106 @@ class QGFieldBase(ABC):
                     rr=self.dry_gas_constant,
                     cp=self.cp,
                     prefac=self.prefactor)
-            self._lwa_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
+            self._layerwise_flux_terms_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
+
+
+    @staticmethod
+    def _prepare_coordinates_and_ref_states(
+        _ylat, _interpolated_field_storage, _reference_states_storage, omega, equator_idx, northern_hemisphere_results_only):
+        """
+        Specific for the class QGFieldNHN22. Procedures before calling layerwise flux calculations
+
+        Parameters
+        ----------
+        _ylat
+        _interpolated_field_storage
+        _reference_states_storage
+        omega
+        equator_idx
+        northern_hemisphere_results_only
+
+        Returns
+        -------
+
+        """
+        ylat_input = _ylat[-equator_idx:] if northern_hemisphere_results_only else _ylat
+        qref_correct_unit = _reference_states_storage.qref_correct_unit(
+            ylat=ylat_input, omega=omega, python_indexing=False)
+        return ylat_input, qref_correct_unit
+
+    def _compute_intermediate_barotropic_flux_terms(self, ncforce):
+        """
+        Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
+        so please used with caution.
+
+        Args:
+            ncforce(numpy.ndarray, optional): non-conservative forcing already interpolated on regular grid
+                of dimension (kmax, nlat, nlon)
+
+        .. versionadded:: 0.7.0
+        """
+
+        # Turn qref back to correct unit
+        ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
+            self._ylat, self._interpolated_field_storage, self._reference_states_storage,
+            self.omega, self.equator_idx, self.northern_hemisphere_results_only)
+
+        # === Compute barotropic flux terms (NHem) ===
+        self._barotropic_flux_terms_storage.lwa_baro_nhem, \
+            self._barotropic_flux_terms_storage.u_baro_nhem, \
+            urefbaro, \
+            self._barotropic_flux_terms_storage.ua1baro_nhem, \
+            self._barotropic_flux_terms_storage.ua2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep1baro_nhem, \
+            self._barotropic_flux_terms_storage.ep2baro_nhem, \
+            self._barotropic_flux_terms_storage.ep3baro_nhem, \
+            self._barotropic_flux_terms_storage.ep4_nhem, \
+            astar1, \
+            astar2, \
+            self._barotropic_flux_terms_storage.ncforce_nhem = \
+            self._compute_lwa_and_barotropic_fluxes_wrapper(
+                pv=self._interpolated_field_storage.qgpv,
+                uu=self._interpolated_field_storage.interpolated_u,
+                vv=self._interpolated_field_storage.interpolated_v,
+                pt=self._interpolated_field_storage.interpolated_theta,
+                ncforce=ncforce,
+                tn0=self._domain_average_storage.tn0,
+                qref=qref_correct_unit[-self.equator_idx:],
+                uref=self._reference_states_storage.uref_nhem,
+                tref=self._reference_states_storage.ptref_nhem,
+                jb=self.eq_boundary_index,
+                is_nhem=True)
+        self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
+
+        # === Compute barotropic flux terms (SHem) ===
+        # TODO: check signs!
+        if not self.northern_hemisphere_results_only:
+            self._barotropic_flux_terms_storage.lwa_baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.u_baro[:, :self.equator_idx], \
+                urefbaro, \
+                self._barotropic_flux_terms_storage.ua1baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ua2baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep1baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep2baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
+                astar1, \
+                astar2, \
+                self._barotropic_flux_terms_storage.ncforce_baro[:, :self.equator_idx] = \
+                self._compute_lwa_and_barotropic_fluxes_wrapper(
+                    pv=self._interpolated_field_storage.qgpv,
+                    uu=self._interpolated_field_storage.interpolated_u,
+                    vv=self._interpolated_field_storage.interpolated_v,
+                    pt=self._interpolated_field_storage.interpolated_theta,
+                    ncforce=ncforce,
+                    tn0=self._domain_average_storage.ts0,
+                    qref=qref_correct_unit[:self.equator_idx],
+                    uref=self._reference_states_storage.uref_shem,
+                    tref=self._reference_states_storage.ptref_shem,
+                    jb=self.eq_boundary_index,
+                    is_nhem=False)
+            self._layerwise_flux_terms_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
+
 
     def compute_lwa_and_barotropic_fluxes(
             self, return_named_tuple: bool = True, northern_hemisphere_results_only=None, ncforce=None):
@@ -749,7 +884,16 @@ class QGFieldBase(ABC):
         if not self._reference_states_computed:
             raise ValueError("Reference states have not been computed yet.")
 
-        self._compute_intermediate_flux_terms(ncforce=ncforce)
+        # TODO: need a check for reference states computed. If not, throw an error.
+        if ncforce is None:
+            print("line 748: ncforce is None")
+            ncforce = np.zeros((self.nlon, self._nlat_analysis, self.kmax))  # fortran indexing
+        else:  # There is input
+            print("line 751: ncforce has values")
+            ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+
+        self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
@@ -763,7 +907,7 @@ class QGFieldBase(ABC):
             + self._barotropic_flux_terms_storage.ua2baro
             + self._barotropic_flux_terms_storage.ep1baro), 0, 1)
         self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux = \
-            utilities.zonal_convergence(
+            zonal_convergence(
                 field=zonal_adv_flux_sum,
                 clat=clat,
                 dlambda=self.dlambda,
@@ -794,14 +938,159 @@ class QGFieldBase(ABC):
                 self._output_barotropic_flux_terms_storage.meridional_heat_flux,
                 self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.lwa_baro),
                 self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
-                self._lwa_storage.fortran_to_python(self._lwa_storage.lwa))
+                self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa))
             return lwa_and_fluxes
 
-    @abstractmethod
-    def _compute_intermediate_flux_terms(self, ncforce=None):
+    def compute_ncforce_from_heating_rate(self, heating_rate):
         """
-        Compute ua1, ua2, ep1, ep2, ep3, ep4 depending on which BC protocol to use.
+        Parameters
+        ----------
+        heating_rate : np.array
+            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+        stat_n : np.array
+            1-d numpy array of northern-hemispheric averaged static stability
+        stat_s : np.array
+            1-d numpy array of southern-hemispheric averaged static stability
+
+        Returns
+        -------
+        np.ndarray
+            Array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \\theta_dot / d\\theta/dz)
         """
+
+        # Interpolate DTDTLWR onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
+        interpolated_heating_rate = self._vertical_interpolation(heating_rate, kind="linear", axis=0)
+
+        # Calculate q_dot on regular z-grid (kmax, nlat, nlon)
+        ncforce_input = z_derivative_of_prod(
+            stat_n=self._domain_average_storage.static_stability_n,
+            stat_s=self._domain_average_storage.static_stability_s,
+            kmax=self.kmax,
+            equator_idx=self.equator_idx,
+            dz=self.dz,
+            density_decay=np.exp(-self.height / self.scale_height),
+            gfunc=interpolated_heating_rate,
+            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
+                self.height[:, np.newaxis] / self.scale_height))
+        return ncforce_input
+
+    def _compute_stretch_term(self, stat_n, stat_s):
+        """
+        Return inner_ep4
+        ----------
+        stat_n
+        stat_s
+
+        Returns
+        -------
+        None. Internally initialized self._layerwise_flux_terms_storage.stretch_term.
+        """
+        # TODO: verify cosine weighting
+        v_e_theta_e_clat = self._interpolated_field_storage.interpolated_v[:, :, :] * (
+                self._interpolated_field_storage.interpolated_theta[:, :, :]
+                - self._reference_states_storage.ptref[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
+        inner_ep4 = z_derivative_of_prod(
+            stat_n=stat_n,
+            stat_s=stat_s,
+            kmax=self.kmax,
+            equator_idx=self.equator_idx,
+            dz=self.dz,
+            density_decay=np.exp(-self.height / self.scale_height),
+            gfunc=self._interpolated_field_storage.fortran_to_python(v_e_theta_e_clat),
+            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
+                self.height[:, np.newaxis] / self.scale_height))
+        # Note that there is a minus sign below in order to have consistent sign with ep4 that is
+        # the (positive) low-level meridional heat flux
+        self._layerwise_flux_terms_storage.stretch_term = -np.swapaxes(inner_ep4, 0, 2)
+
+    def _compute_layerwise_lwa_fluxes_wrapper(self, jb, tn0, ts0, stat_n, stat_s, ncforce=None):
+        """
+        Compute layerwise lwa fluxes, ua1, ua2, ep1, ep2, ep3, ep4, and ncforce
+
+        Parameters
+        ----------
+        ncforce : np.ndarray of dimension (kmax, nlat, nlon) which is output from self.compute_ncforce_from_heating_rate
+        """
+        # Turn qref back to correct unit
+        ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
+            self._ylat, self._interpolated_field_storage, self._reference_states_storage,
+            self.omega, self.equator_idx, self.northern_hemisphere_results_only)
+
+        # *** The chunk below has duplication. TODO: think of ways to refactor ***
+        if ncforce is None:
+            ncforce = np.zeros((self.nlon, self.nlat, self.kmax))  # fortran indexing
+        else:  # There is input
+            ncforce = np.swapaxes(ncforce, 0, 2)
+            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
+        # *** The chunk above has duplication. ***
+
+        # Northern hemisphere
+        self._layerwise_flux_terms_storage.astar1_nhem, \
+            self._layerwise_flux_terms_storage.astar2_nhem, \
+            self._layerwise_flux_terms_storage.ncforce_nhem, \
+            self._layerwise_flux_terms_storage.ua1_nhem, \
+            self._layerwise_flux_terms_storage.ua2_nhem, \
+            self._layerwise_flux_terms_storage.ep1_nhem, \
+            self._layerwise_flux_terms_storage.ep2_nhem, \
+            self._layerwise_flux_terms_storage.ep3_nhem, \
+            self._barotropic_flux_terms_storage.ep4_nhem \
+            = compute_flux_dirinv_nshem(
+            pv=self._interpolated_field_storage.qgpv,
+            uu=self._interpolated_field_storage.interpolated_u,
+            vv=self._interpolated_field_storage.interpolated_v,
+            pt=self._interpolated_field_storage.interpolated_theta,
+            ncforce=ncforce,
+            tn0=tn0,
+            qref=qref_correct_unit[-self.equator_idx:],
+            uref=self._reference_states_storage.uref_nhem,
+            tref=self._reference_states_storage.ptref_nhem,
+            jb=jb,
+            is_nhem=True,
+            a=self.planet_radius,
+            om=self.omega,
+            dz=self.dz,
+            h=self.scale_height,
+            rr=self.dry_gas_constant,
+            cp=self.cp,
+            prefac=self.prefactor)
+
+        # Southern hemisphere
+        if not self.northern_hemisphere_results_only:
+            self._layerwise_flux_terms_storage.astar1[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.astar2[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ncforce[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ua1[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ua2[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ep1[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ep2[:, :self.equator_idx, :], \
+                self._layerwise_flux_terms_storage.ep3[:, :self.equator_idx, :], \
+                self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx]   \
+                = compute_flux_dirinv_nshem(
+                pv=self._interpolated_field_storage.qgpv,
+                uu=self._interpolated_field_storage.interpolated_u,
+                vv=self._interpolated_field_storage.interpolated_v,
+                pt=self._interpolated_field_storage.interpolated_theta,
+                ncforce=ncforce,
+                tn0=ts0,
+                qref=qref_correct_unit[:self.equator_idx],
+                uref=self._reference_states_storage.uref_shem,
+                tref=self._reference_states_storage.ptref_shem,
+                jb=jb,
+                is_nhem=False,
+                a=self.planet_radius,
+                om=self.omega,
+                dz=self.dz,
+                h=self.scale_height,
+                rr=self.dry_gas_constant,
+                cp=self.cp,
+                prefac=self.prefactor)
+
+        # Total LWA
+        self._layerwise_flux_terms_storage.lwa = \
+            self._layerwise_flux_terms_storage.astar1 + self._layerwise_flux_terms_storage.astar2
+
+        # *** Compute the layerwise version of ep4 ***
+        self._compute_stretch_term(stat_n=stat_n, stat_s=stat_s)
 
     @staticmethod
     def _check_nan(name, var):
@@ -838,7 +1127,7 @@ class QGFieldBase(ABC):
         This is input to ReferenceStatesStorage.qref_correct_unit.
         """
         if self.northern_hemisphere_results_only:
-            return self._ylat[-(self._nlat_analysis//2+1):]
+            return self._ylat[-(self._nlat_analysis // 2 + 1):]
         return self._ylat
 
     @property
@@ -939,7 +1228,8 @@ class QGFieldBase(ABC):
         if self._reference_states_storage.ptref is None:
             raise ValueError('ptref is not computed yet.')
         return self._return_interp_variables(
-            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.ptref), interp_axis=1)
+            variable=self._reference_states_storage.fortran_to_python(self._reference_states_storage.ptref),
+            interp_axis=1)
 
     @property
     def adv_flux_f1(self):
@@ -1038,10 +1328,10 @@ class QGFieldBase(ABC):
         """
         Three-dimensional array of local wave activity
         """
-        if self._lwa_storage.lwa is None:
+        if self._layerwise_flux_terms_storage.lwa is None:
             raise ValueError('lwa is not computed yet.')
         return self._return_interp_variables(
-            variable=self._lwa_storage.fortran_to_python(self._lwa_storage.lwa),
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa),
             interp_axis=1)
 
     def get_latitude_dim(self):
@@ -1049,6 +1339,28 @@ class QGFieldBase(ABC):
         Return the latitude dimension of the input data.
         """
         return self._input_ylat.size
+
+    @property
+    def layerwise_flux_terms_storage(self) -> LayerwiseFluxTermsStorage:
+        """
+        Return the LayerwiseFluxTermsStorage object that stored the following 3D LWA and flux terms on pseudo-height levels.
+        The layerwise flux terms are only computed after calling the method `QGField.compute_layerwise_lwa_fluxes`.
+
+        Returns
+        -------
+        A LayerwiseFluxTermsStorage object that contains the following 3D fields of LWA and flux terms (without density weighting):
+            - lwa: Total local wave activity
+            - astar1: cyclonic (for N. Hem.) local wave activity
+            - astar2: anti-cyclonic (for N. Hem.) local wave activity
+            - ua1: first/linear term of zonal advective flux
+            - ua2: second/nonlinear term of zonal advective flux
+            - ep1: third term (F3 in NH18) of zonal advective flux
+            - ep2: northward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
+            - ep3: southward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
+            - stretch_term: layerwise stretch term corresponding to III in NH18 eq (2)
+            - ncforce: layerwise contribution of input heating term
+        """
+        return self._layerwise_flux_terms_storage
 
 
 class QGFieldNH18(QGFieldBase):
@@ -1072,7 +1384,12 @@ class QGFieldNH18(QGFieldBase):
         """
         .. versionadded:: 1.3.0
         """
+        self._domain_average_storage.tn0 = 0.5 * (t0_s + t0_n)
+        self._domain_average_storage.ts0 = 0.5 * (t0_s + t0_n)
+        self._domain_average_storage.t0 = 0.5 * (t0_s + t0_n)
         self._domain_average_storage.static_stability = 0.5 * (stat_s + stat_n)
+        self._domain_average_storage.static_stability_n = 0.5 * (stat_s + stat_n)
+        self._domain_average_storage.static_stability_s = 0.5 * (stat_s + stat_n)
         self._interpolated_field_storage.qgpv, \
             self._interpolated_field_storage.interpolated_avort = compute_qgpv(  # f2py module
                 self._interpolated_field_storage.interpolated_u,
@@ -1176,61 +1493,11 @@ class QGFieldNH18(QGFieldBase):
             rjac=self.rjac,
         )
 
-    def _compute_intermediate_flux_terms(self, ncforce=None):
-        """
-        The flux term computation from NH18 is currently shared by both interface.
-        .. versionadded:: 0.7.0
-        """
-        if ncforce is None:
-            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
-        else:  # There is input
-            ncforce = np.swapaxes(ncforce, 0, 2)
-            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
-
-        # === Compute barotropic flux terms (NHem) ===
-        self._lwa_storage.lwa_nhem, \
-            self._barotropic_flux_terms_storage.lwa_baro_nhem, \
-            self._barotropic_flux_terms_storage.ua1baro_nhem, \
-            self._barotropic_flux_terms_storage.u_baro_nhem, \
-            self._barotropic_flux_terms_storage.ua2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep1baro_nhem, \
-            self._barotropic_flux_terms_storage.ep2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem, \
-            self._barotropic_flux_terms_storage.ncforce_nhem = \
-            self._compute_lwa_and_barotropic_fluxes_wrapper(
-                self._interpolated_field_storage.qgpv,
-                self._interpolated_field_storage.interpolated_u,
-                self._interpolated_field_storage.interpolated_v,
-                self._interpolated_field_storage.interpolated_theta,
-                ncforce,
-                self._reference_states_storage.qref_nhem,
-                self._reference_states_storage.uref_nhem,
-                self._reference_states_storage.ptref_nhem)
-
-        # === Compute barotropic flux terms (SHem) ===
-        # TODO: check signs!
-        if not self.northern_hemisphere_results_only:
-            self._lwa_storage.lwa_shem, \
-                self._barotropic_flux_terms_storage.lwa_baro_shem, \
-                self._barotropic_flux_terms_storage.ua1baro_shem, \
-                self._barotropic_flux_terms_storage.u_baro_shem, \
-                self._barotropic_flux_terms_storage.ua2baro_shem, \
-                self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
-                ep4_shem, \
-                self._barotropic_flux_terms_storage.ncforce_shem = \
-                self._compute_lwa_and_barotropic_fluxes_wrapper(
-                    -self._interpolated_field_storage.qgpv[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_v[:, ::-1, :],
-                    self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    -ncforce[:, ::-1, :],
-                    self._reference_states_storage.qref_shem[::-1, :],
-                    self._reference_states_storage.uref_shem[::-1, :],
-                    self._reference_states_storage.ptref_shem[::-1, :])
-            self._barotropic_flux_terms_storage.ep4_shem = -ep4_shem
+    def compute_layerwise_lwa_fluxes(self, ncforce=None):
+        self._compute_layerwise_lwa_fluxes_wrapper(
+            jb=self.eq_boundary_index, tn0=self._domain_average_storage.t0, ts0=self._domain_average_storage.t0,
+            stat_n=self._domain_average_storage.static_stability_n, stat_s=self._domain_average_storage.static_stability_s,
+            ncforce=ncforce)
 
     @property
     def static_stability(self) -> np.array:
@@ -1274,6 +1541,7 @@ class QGFieldNHN22(QGFieldBase):
     --------
     Notebook: :doc:`notebooks/nhn22_reference_states`
     """
+
     def __init__(self, xlon, ylat, plev, u_field, v_field, t_field, kmax=49, maxit=100000, dz=1000., npart=None,
                  tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP, dry_gas_constant=DRY_GAS_CONSTANT,
                  omega=EARTH_OMEGA, planet_radius=EARTH_RADIUS,
@@ -1287,7 +1555,8 @@ class QGFieldNHN22(QGFieldBase):
         self._eq_boundary_index = eq_boundary_index
         self._jd = self._nlat_analysis // 2 + self._nlat_analysis % 2 - self.eq_boundary_index
 
-    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_s, t0_n, stat_s, stat_n) -> Optional[NamedTuple]:
+    def _compute_qgpv(self, interpolated_fields_to_return, return_named_tuple, t0_s, t0_n, stat_s, stat_n) -> Optional[
+        NamedTuple]:
         """
         .. versionadded:: 1.3.0
         """
@@ -1297,21 +1566,21 @@ class QGFieldNHN22(QGFieldBase):
         self._domain_average_storage.static_stability_n = stat_n
         self._interpolated_field_storage.qgpv, \
             self._interpolated_field_storage.interpolated_avort = compute_qgpv_direct_inv(  # f2py module
-                self.equator_idx,
-                self._interpolated_field_storage.interpolated_u,
-                self._interpolated_field_storage.interpolated_v,
-                self._interpolated_field_storage.interpolated_theta,
-                self.height,
-                t0_s,
-                t0_n,
-                stat_s,
-                stat_n,
-                self.planet_radius,
-                self.omega,
-                self.dz,
-                self.scale_height,
-                self.dry_gas_constant,
-                self.cp)
+            self.equator_idx,
+            self._interpolated_field_storage.interpolated_u,
+            self._interpolated_field_storage.interpolated_v,
+            self._interpolated_field_storage.interpolated_theta,
+            self.height,
+            t0_s,
+            t0_n,
+            stat_s,
+            stat_n,
+            self.planet_radius,
+            self.omega,
+            self.dz,
+            self.scale_height,
+            self.dry_gas_constant,
+            self.cp)
 
         if return_named_tuple:
             interpolated_fields = interpolated_fields_to_return(
@@ -1333,7 +1602,7 @@ class QGFieldNHN22(QGFieldBase):
         self._reference_states_storage.qref_nhem, \
             self._reference_states_storage.uref_nhem, \
             self._reference_states_storage.ptref_nhem, \
-                fawa, ubar, tbar = \
+            fawa, ubar, tbar = \
             self._compute_reference_states_nhn22_hemispheric_wrapper(
                 qgpv=self._interpolated_field_storage.qgpv,
                 u=self._interpolated_field_storage.interpolated_u,
@@ -1364,9 +1633,9 @@ class QGFieldNHN22(QGFieldBase):
             vort=avort,
             pt=theta,
             tn0=t0,
-            nd=self._nlat_analysis//2 + self._nlat_analysis % 2,  # 91
-            nnd=self._nlat_analysis,                    # 181
-            jb=self.eq_boundary_index,        # 5
+            nd=self._nlat_analysis // 2 + self._nlat_analysis % 2,  # 91
+            nnd=self._nlat_analysis,  # 181
+            jb=self.eq_boundary_index,  # 5
             jd=self.jd,
             a=self.planet_radius,
             omega=self.omega,
@@ -1385,13 +1654,13 @@ class QGFieldNHN22(QGFieldBase):
         self._check_nan("tjk", tjk)
         self._check_nan("sjk", sjk)
 
-        for k in range(self.kmax-1, 1, -1):  # Fortran indices
+        for k in range(self.kmax - 1, 1, -1):  # Fortran indices
             ans = matrix_b4_inversion(
                 k=k,
                 jmax=self._nlat_analysis,
                 jb=self.eq_boundary_index,  # 5
                 jd=self.jd,
-                z=np.arange(0, self.kmax*self.dz, self.dz),
+                z=np.arange(0, self.kmax * self.dz, self.dz),
                 statn=self._domain_average_storage.static_stability_n,
                 qref=qref_over_sin,
                 ckref=ckref,
@@ -1450,128 +1719,11 @@ class QGFieldNHN22(QGFieldBase):
     def jd(self):
         return self._jd
 
-    def compute_ncforce_from_heating_rate(self, heating_rate):
-        """
-        Parameters
-        ----------
-        heating_rate : np.array
-            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
-
-        Returns
-        -------
-        np.ndarray
-            Array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \\theta_dot / d\\theta/dz)
-        """
-
-        # Interpolate DTDTLWR onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
-        interpolated_heating_rate = self._vertical_interpolation(heating_rate, kind="linear", axis=0)
-
-        # Calculate q_dot on regular z-grid (kmax, nlat, nlon)
-        ncforce_input = utilities.z_derivative_of_prod(
-            stat_n=self._domain_average_storage.static_stability_n,
-            stat_s=self._domain_average_storage.static_stability_s,
-            kmax=self.kmax,
-            equator_idx=self.equator_idx,
-            dz=self.dz,
-            density_decay=np.exp(-self.height / self.scale_height),
-            gfunc=interpolated_heating_rate,
-            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
-                self.height[:, np.newaxis] / self.scale_height))
-        return ncforce_input
-
-    def _compute_intermediate_flux_terms(self, ncforce=None):
-        """
-        Intermediate flux term computation for NHN 2022 GRL. Note that numerical instability is observed occasionally,
-        so please used with caution.
-
-        Args:
-            ncforce(numpy.ndarray, optional): non-conservative forcing already interpolated on regular grid
-                of dimension (kmax, nlat, nlon)
-
-        .. versionadded:: 0.7.0
-        """
-
-        # Turn qref back to correct unit
-
-        ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
-        qref_correct_unit = self._reference_states_storage.qref_correct_unit(
-            ylat=ylat_input, omega=self.omega, python_indexing=False)
-
-        if ncforce is None:
-            ncforce = np.zeros_like(self._interpolated_field_storage.interpolated_theta)  # fortran indexing
-        else:  # There is input
-            ncforce = np.swapaxes(ncforce, 0, 2)
-            assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
-
-        # === Compute barotropic flux terms (NHem) ===
-        self._barotropic_flux_terms_storage.lwa_baro_nhem, \
-            self._barotropic_flux_terms_storage.u_baro_nhem, \
-            urefbaro, \
-            self._barotropic_flux_terms_storage.ua1baro_nhem, \
-            self._barotropic_flux_terms_storage.ua2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep1baro_nhem, \
-            self._barotropic_flux_terms_storage.ep2baro_nhem, \
-            self._barotropic_flux_terms_storage.ep3baro_nhem, \
-            self._barotropic_flux_terms_storage.ep4_nhem, \
-            astar1, \
-            astar2, \
-            self._barotropic_flux_terms_storage.ncforce_nhem = \
-            compute_flux_dirinv_nshem(
-                pv=self._interpolated_field_storage.qgpv,
-                uu=self._interpolated_field_storage.interpolated_u,
-                vv=self._interpolated_field_storage.interpolated_v,
-                pt=self._interpolated_field_storage.interpolated_theta,
-                ncforce=ncforce,
-                tn0=self._domain_average_storage.tn0,
-                qref=qref_correct_unit[-self.equator_idx:],
-                uref=self._reference_states_storage.uref_nhem,
-                tref=self._reference_states_storage.ptref_nhem,
-                jb=self.eq_boundary_index,
-                is_nhem=True,
-                a=self.planet_radius,
-                om=self.omega,
-                dz=self.dz,
-                h=self.scale_height,
-                rr=self.dry_gas_constant,
-                cp=self.cp,
-                prefac=self.prefactor)
-        self._lwa_storage.lwa_nhem = np.abs(astar1 + astar2)
-
-        # === Compute barotropic flux terms (SHem) ===
-        # TODO: check signs!
-        if not self.northern_hemisphere_results_only:
-            self._barotropic_flux_terms_storage.lwa_baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.u_baro[:, :self.equator_idx], \
-                urefbaro, \
-                self._barotropic_flux_terms_storage.ua1baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ua2baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep1baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep2baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
-                astar1, \
-                astar2, \
-                self._barotropic_flux_terms_storage.ncforce_baro[:, :self.equator_idx] = \
-                compute_flux_dirinv_nshem(
-                    pv=self._interpolated_field_storage.qgpv,
-                    uu=self._interpolated_field_storage.interpolated_u,
-                    vv=self._interpolated_field_storage.interpolated_v,
-                    pt=self._interpolated_field_storage.interpolated_theta,
-                    ncforce=ncforce,
-                    tn0=self._domain_average_storage.ts0,
-                    qref=qref_correct_unit[:self.equator_idx],
-                    uref=self._reference_states_storage.uref_shem,
-                    tref=self._reference_states_storage.ptref_shem,
-                    jb=self.eq_boundary_index,
-                    is_nhem=False,
-                    a=self.planet_radius,
-                    om=self.omega,
-                    dz=self.dz,
-                    h=self.scale_height,
-                    rr=self.dry_gas_constant,
-                    cp=self.cp,
-                    prefac=self.prefactor)
-            self._lwa_storage.lwa[:, :self.equator_idx, :] = np.abs(astar1 + astar2)
+    def compute_layerwise_lwa_fluxes(self, ncforce=None):
+        self._compute_layerwise_lwa_fluxes_wrapper(
+            jb=self.eq_boundary_index, tn0=self._domain_average_storage.tn0, ts0=self._domain_average_storage.ts0,
+            stat_n=self._domain_average_storage.static_stability_n, stat_s=self._domain_average_storage.static_stability_s,
+            ncforce=ncforce)
 
     def _compute_lwa_flux_dirinv(self, qref, uref, tref):
         """

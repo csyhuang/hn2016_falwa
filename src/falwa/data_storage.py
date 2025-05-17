@@ -185,7 +185,7 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     ptref_shem = SHemProperty("ptref", (0, 1))
 
 
-class LWAStorage(DerivedQuantityStorage):
+class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores 3D LWA field on interpolated grids.
 
@@ -195,11 +195,50 @@ class LWAStorage(DerivedQuantityStorage):
                  swapaxis_1: int, swapaxis_2: int,
                  northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
-        self.lwa = np.zeros(self.fdim)
         self.nlat = self.fdim[1]
+        self.lwa = np.zeros(self.fdim)    # TODO: lwa = astar1+astar2 - redundant
+        self.astar1 = np.zeros(self.fdim)
+        self.astar2 = np.zeros(self.fdim)
+        self.ua1 = np.zeros(self.fdim)
+        self.ua2 = np.zeros(self.fdim)
+        self.ep1 = np.zeros(self.fdim)
+        self.ep2 = np.zeros(self.fdim)
+        self.ep3 = np.zeros(self.fdim)
+        self.stretch_term = np.zeros(self.fdim)
+        self.ncforce = np.zeros(self.fdim)
 
     lwa_nhem = NHemProperty("lwa", (1, 1))
     lwa_shem = SHemProperty("lwa", (1, 1))
+
+    astar1_nhem = NHemProperty("astar1", (1, 1))
+    astar1_shem = SHemProperty("astar1", (1, 1))
+
+    astar2_nhem = NHemProperty("astar2", (1, 1))
+    astar2_shem = SHemProperty("astar2", (1, 1))
+
+    ua1_nhem = NHemProperty("ua1", (1, 1))
+    ua1_shem = SHemProperty("ua1", (1, 1))
+
+    ua2_nhem = NHemProperty("ua2", (1, 1))
+    ua2_shem = SHemProperty("ua2", (1, 1))
+
+    ep1_nhem = NHemProperty("ep1", (1, 1))
+    ep1_shem = SHemProperty("ep1", (1, 1))
+
+    ep2_nhem = NHemProperty("ep2", (1, 1))
+    ep2_shem = SHemProperty("ep2", (1, 1))
+
+    ep3_nhem = NHemProperty("ep3", (1, 1))
+    ep3_shem = SHemProperty("ep3", (1, 1))
+
+    ep4_nhem = NHemProperty("ep4", (1, 1))
+    ep4_shem = SHemProperty("ep4", (1, 1))
+
+    stretch_term_nhem = NHemProperty("stretch_term", (1, 1))
+    stretch_term_shem = SHemProperty("stretch_term", (1, 1))
+
+    ncforce_nhem = NHemProperty("ncforce", (1, 1))
+    ncforce_shem = SHemProperty("ncforce", (1, 1))
 
 
 class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
