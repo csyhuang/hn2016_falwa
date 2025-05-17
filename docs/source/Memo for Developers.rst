@@ -32,3 +32,12 @@ To run coverage test
    coverage run -m pytest
    coverage report -m
 
+To deploy to pip channel after using pyproject.toml
+
+.. code-block:: bash
+
+   pip install build
+   python -m build . --sdist
+   python3 -m pip install --upgrade twine
+   python3 -m twine upload --repository pypi dist/*
+
