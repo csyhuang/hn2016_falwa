@@ -1348,7 +1348,7 @@ class QGFieldBase(ABC):
 
         Returns
         -------
-        A LayerwiseFluxTermsStorage object that contains the following 3D fields of LWA and flux terms:
+        A LayerwiseFluxTermsStorage object that contains the following 3D fields of LWA and flux terms (without density weighting):
             - lwa: Total local wave activity
             - astar1: cyclonic (for N. Hem.) local wave activity
             - astar2: anti-cyclonic (for N. Hem.) local wave activity

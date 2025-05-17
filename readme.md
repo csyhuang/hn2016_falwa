@@ -16,15 +16,19 @@ Compute from gridded climate data the Finite-amplitude Local Wave Activity (FALW
 
 ## Citing this package
 
-We would be grateful if you mention `falwa` and cite our [software package paper](https://doi.org/10.22541/essoar.173179959.91611195/v2) published in the Geoscience Data Journal upon usage:
+We would be grateful if you mention `falwa` and cite our [software package paper](https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.70006) published in the Geoscience Data Journal upon usage:
+
+Huang, C. S. Y., Polster, C., & Nakamura, N. (2025). **Falwa: Python Package to Implement Finite‐Amplitude Local Wave Activity Diagnostics on Climate Data**. *Geoscience Data Journal, 12*(2), e70006.
 
 ```
-@article{falwa_csyhuang_cpolster,
-  author={Clare S. Y. Huang and Christopher Polster and Noboru Nakamura},
-  title={falwa: Python package to implement Finite-amplitude Local Wave Activity diagnostics on climate data},
+@article{huang_polster_nakamura_2025,
+  title={Falwa: Python Package to Implement Finite-Amplitude Local Wave Activity Diagnostics on Climate Data},
+  author={Huang, Clare S Y and Polster, Christopher and Nakamura, Noboru},
   journal={Geoscience Data Journal},
-  note = {(in press)},
-  year = {2025},
+  volume={12},
+  number={2},
+  pages={e70006},
+  year={2025},
   doi = {10.1002/GDJ3.70006},
   publisher={Wiley Online Library}}
 ```
