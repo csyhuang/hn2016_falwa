@@ -17,7 +17,7 @@ def extract_data_from_notebook_dir(dir: str, test_data_dir: str):
         field.to_netcdf(output_fname)
         print(f"Successfully output {output_fname}")
 
-original_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/../../notebooks/lubis_et_al_2024/MERRA2/"
+original_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/../../notebooks/lubis_et_al_2025/MERRA2/"
 test_data_dir = os.path.dirname(os.path.abspath(__file__)) + "/../data/"
 
 if __name__ == "__main__":

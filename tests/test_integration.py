@@ -30,7 +30,7 @@ def merra_dtdtlwr_data(test_data_dir):
 
 def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
-    Mirroring the implementation in notebooks/lubis_et_al_2024/ncforce_qgfield_2.1.0.ipynb
+    Mirroring the implementation in notebooks/lubis_et_al_2025/ncforce_qgfield_2.1.0.ipynb
     """
 
     # Prepare coordinates
@@ -70,7 +70,7 @@ def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
 
 def test_qgdataset_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
-    Mirroring the implementation in notebooks/lubis_et_al_2024/ncforce_qgdataset_2.1.0.ipynb
+    Mirroring the implementation in notebooks/lubis_et_al_2025/ncforce_qgdataset_2.1.0.ipynb
     """
 
     qgds = QGDataset(merra_uvt_data, qgfield=QGFieldNHN22)

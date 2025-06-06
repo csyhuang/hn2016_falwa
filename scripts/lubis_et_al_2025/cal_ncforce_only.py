@@ -3,7 +3,7 @@
 File name: cal_ncforce_only.py
 Author: Clare Huang, Sandro Lubis
 Description: This is the script responsible for the direct computation of diabatic contribution to LWA budget in
-    Lubis et al. (2024) "Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the
+    Lubis et al. (2025) "Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the
     Euro-Atlantic Sector" Eq.12 in Session 5 (Method). The diabatic heating rate \dot{Q} directly output from
     the model is first interpolated onto regular pseudo-height grid (i.e. the analysis grid for LWA). The integrand
     in Eq.12 (excluding the cosine factor cos(phi+phi')) is then precomputed and saved into the file
