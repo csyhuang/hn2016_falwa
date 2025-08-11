@@ -77,6 +77,15 @@ Issues Reporting
 - If you encounter *coding issues/bugs* when using the package, please create an `Issue ticket <https://github.com/csyhuang/hn2016_falwa/issues>`_.
 - If you have scientific questions, please create a thread in the `Discussion Board <https://github.com/csyhuang/hn2016_falwa/discussions>`_ with the category "General" or "Q&A" according to the circumstance.
 
+Examples
+========
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   Example Notebooks
+
 Modules
 ========
 
@@ -94,15 +103,6 @@ Modules
    Statistics Utilities
    Basis Functions
    Wrapper Functions
-
-Examples
-========
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Modules
-
-   Example Notebooks
 
 Notes
 ========
