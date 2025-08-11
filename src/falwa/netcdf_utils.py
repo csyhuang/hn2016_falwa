@@ -10,7 +10,7 @@ import xarray as xr
 def extract_one_timeslice(nc_file: str, output_fname: str, timeslice: List[int] = [0]) -> None:
     """Extract specific snapshots (in time) from large netCDF files.
 
-    The extracted snapshots are saved to another netCDF file.
+    The extracted snapshots are saved to another netCDF file specified by `output_fname`.
 
     Parameters
     ----------
