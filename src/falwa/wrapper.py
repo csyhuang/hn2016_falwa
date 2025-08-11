@@ -6,42 +6,53 @@ Author: Clare Huang
 import numpy as np
 from falwa.constant import EARTH_RADIUS
 from falwa import basis
+from typing import Optional, Tuple, Dict, Any
 
 
-def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RADIUS, return_partitioned_lwa=False):
-    """
-    Compute equivalent latitude and wave activity on a barotropic sphere.
+def barotropic_eqlat_lwa(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray, dmu: np.ndarray,
+        n_points: int, planet_radius: float = EARTH_RADIUS,
+        return_partitioned_lwa: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute equivalent latitude and wave activity on a barotropic sphere.
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
-    return_partitioned_lwa : bool
-        If True, return local wave activity as a stacked field of cyclonic and anticyclonic components.
-        If False, return a single field of local wave activity of dimension (nlat, nlon). Default is False.
-
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of vorticity values; dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    n_points : int
+        Analysis resolution to calculate equivalent latitude. If None, it will
+        be initialized as nlat.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
+    return_partitioned_lwa : bool, optional
+        If True, return local wave activity as a stacked field of cyclonic and
+        anticyclonic components. If False, return a single field of local wave
+        activity of dimension (nlat, nlon). Default is False.
 
     Returns
     -------
-    qref : numpy.array
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    lwa_result : numpy.ndarray
-        if return_partitioned_lwa = True, 3-d numpy array of dimension [2, nlat_s, nlon], first dimension being anticyclonic and cyclonic components
-        if return_partitioned_lwa = False, 2-d numpy array of local wave activity values; dimension = [nlat_s, nlon]
+    qref : np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    lwa_result : np.ndarray
+        If return_partitioned_lwa is True, 3D numpy array of dimension
+        (2, nlat_s, nlon), first dimension being anticyclonic and cyclonic
+        components. If False, 2D numpy array of local wave activity values;
+        dimension = (nlat_s, nlon).
 
     Examples
     --------
-    :doc:`Example Notebook <notebooks/Example_barotropic>`
+    See the :doc:`barotropic example notebook <notebooks/Example_barotropic>`.
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -55,62 +66,74 @@ def barotropic_eqlat_lwa(ylat, vort, area, dmu, n_points, planet_radius=EARTH_RA
     return qref, lwa_result
 
 
-def barotropic_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, planet_radius=EARTH_RADIUS):
-
-    """
-    This function computes LWA based on a *prescribed* Qref instead of Qref obtained from the vorticity field on a barotropic sphere.
+def barotropic_input_qref_to_compute_lwa(
+        ylat: np.ndarray, qref: np.ndarray, vort: np.ndarray, area: np.ndarray,
+        dmu: np.ndarray, planet_radius: float = EARTH_RADIUS) -> np.ndarray:
+    """Compute LWA based on a prescribed Qref on a barotropic sphere.
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    qref : numpy.array
-        1-d numpy array of prescribed reference value of vorticity at each latitude; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    qref : np.ndarray
+        1D numpy array of prescribed reference value of vorticity at each
+        latitude; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of vorticity values; dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values; dimension = [nlat_s x nlon]
+    np.ndarray
+        2D numpy array of local wave activity values;
+        dimension = (nlat_s, nlon).
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
-    lwa_result = basis.lwa(nlon, nlat, vort, qref, dmu)
+    lwa_result, _ = basis.lwa(nlon, nlat, vort, qref, dmu)
     return lwa_result
 
 
-def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
-
-    """
-    Compute equivalent latitude in a hemispheric domain.
+def eqvlat_hemispheric(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray,
+        nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS) -> np.ndarray:
+    """Compute equivalent latitude in a hemispheric domain.
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of vorticity values; dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    q_part : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-
+    np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
     """
     nlat = vort.shape[0]
     qref = np.zeros(nlat)
@@ -135,36 +158,46 @@ def eqvlat_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radi
     return qref
 
 
-def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS, vgrad=None):
+def eqvlat_bracket_hemispheric(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray,
+        nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS,
+        vgrad: Optional[np.ndarray] = None) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute equivalent latitude and <...>_Q in a hemispheric domain.
 
-    """
-    Compute equivalent latitude and <...>_Q in Nakamura and Zhu (2010) in a hemispheric domain.
+    The second quantity is from Nakamura and Zhu (2010).
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
-    vgrad: numpy.ndarray, optional
-        2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of vorticity values; dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
+    vgrad : np.ndarray, optional
+        2D numpy array of laplacian (or higher-order laplacian) values;
+        dimension = (nlat, nlon).
 
     Returns
     -------
-    q_part : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    brac : numpy.ndarray or None
-        1-d numpy array of averaged vgrad in the square bracket.
-        If *vgrad* = None, *brac* = None.
-
+    q_part : np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    brac : np.ndarray
+        1D numpy array of averaged vgrad in the square bracket.
+        If vgrad is None, this is an array of zeros.
     """
     nlat = vort.shape[0]
     qref = np.zeros(nlat)
@@ -198,41 +231,50 @@ def eqvlat_bracket_hemispheric(ylat, vort, area, nlat_s=None, n_points=None, pla
     return qref, brac
 
 
-def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
+def qgpv_eqlat_lwa(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray, dmu: np.ndarray,
+        nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute equivalent latitude and LWA from QGPV.
 
-    """
-    Compute equivalent latitutde *qref* and local wave activity *lwa_result* based
-    on Quasi-geostrophic potential vorticity field *vort* at a pressure level as
-    outlined in Huang and Nakamura (2017).
+    This is based on the method outlined in Huang and Nakamura (2017).
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of Quasi-geostrophic potential vorticity field;
+        dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    qref : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values;
-                    dimension = [nlat_s x nlon]
+    qref : np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    lwa_result : np.ndarray
+        2D numpy array of local wave activity values;
+        dimension = (nlat_s, nlon).
 
     Examples
     --------
-    :doc:`Example Notebook <notebooks/Example_qgpv>`
+    See the :doc:`QGPV example notebook <notebooks/Example_qgpv>`.
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -267,43 +309,51 @@ def qgpv_eqlat_lwa(ylat, vort, area, dmu, nlat_s=None, n_points=None, planet_rad
     return qref, lwa_result
 
 
-def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
+def qgpv_eqlat_lwa_ncforce(
+        ylat: np.ndarray, vort: np.ndarray, ncforce: np.ndarray, area: np.ndarray,
+        dmu: np.ndarray, nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute equivalent latitude, LWA, and non-conservative force from QGPV.
 
-    """
-    Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
-    non-conservative force on wave activity *capsigma* based on Quasi-
-    geostrophic potential vorticity field *vort* at a pressure level as
-    outlined in Huang and Nakamura (2017).
+    This is based on the method outlined in Huang and Nakamura (2017).
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).
-    ncforce: numpy.ndarray
-        2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of Quasi-geostrophic potential vorticity field;
         dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ncforce : np.ndarray
+        2D numpy array of non-conservative force field (i.e. theta in NZ10(a)
+        in equation (23a) and (23b)); dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    qref : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values; dimension = (nlat, nlon).
-    capsigma: numpy.ndarray
-        2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
-
+    qref : np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    lwa_result : np.ndarray
+        2D numpy array of local wave activity values; dimension = (nlat, nlon).
+    capsigma : np.ndarray
+        2D numpy array of non-conservative force contribution value;
+        dimension = (nlat, nlon).
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -341,48 +391,50 @@ def qgpv_eqlat_lwa_ncforce(ylat, vort, ncforce, area, dmu, nlat_s=None, n_points
     return qref, lwa_result, capsigma
 
 
-def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vgrad=None, ncforce=None,
-                           planet_radius=EARTH_RADIUS):
+def qgpv_eqlat_lwa_options(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray, dmu: np.ndarray,
+        nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        vgrad: Optional[np.ndarray] = None, ncforce: Optional[np.ndarray] = None,
+        planet_radius: float = EARTH_RADIUS) -> Dict[str, np.ndarray]:
+    """Compute equivalent latitude, LWA, and other optional terms from QGPV.
 
-    """
-    Compute equivalent latitutde *qref*, local wave activity *lwa_result* and
-    non-conservative force on wave activity *capsigma* based on Quasi-
-    geostrophic potential vorticity field *vort* at a pressure level as
-    outlined in Huang and Nakamura (2017).
+    This is based on the method outlined in Huang and Nakamura (2017).
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : numpy.ndarray
-        2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).
-    ncforce: numpy.ndarray
-        2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b));
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of Quasi-geostrophic potential vorticity field;
         dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    n_points : int, default None
-        Analysis resolution to calculate equivalent latitude. If input as None, it will be initialized as *nlat_s*.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    vgrad : np.ndarray, optional
+        2D numpy array of vgrad field.
+    ncforce : np.ndarray, optional
+        2D numpy array of non-conservative force field (i.e. theta in NZ10(a)
+        in equation (23a) and (23b)); dimension = (nlat, nlon).
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    return_dict : dictionary
-        A dictionary that consist of the 4 computed outputs listed below.
-    (1) qref : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    (2) brac_result: numpy.ndarray
-        1-d numpy array of <...>_Q(y) in NZ10 where latitude y is given by ylat; dimension = (nlat).
-    (3) lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values; dimension = (nlat, nlon).
-    (4) capsigma: numpy.ndarray
-        2-d numpy array of non-conservative force contribution value; dimension = (nlat, nlon).
-
+    dict
+        A dictionary that consists of the computed outputs. It always contains
+        'qref' and 'lwa_result'. It contains 'brac_result' if `vgrad` is
+        provided, and 'capsigma' if `ncforce` is provided.
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -467,34 +519,43 @@ def qgpv_eqlat_lwa_options(ylat, vort, area, dmu, nlat_s=None, n_points=None, vg
     return return_dict
 
 
-def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None, planet_radius=EARTH_RADIUS):
-    """
-    Compute equivalent latitutde *qref* and local wave activity *lwa_result* based
-    on Quasi-geostrophic potential vorticity field *vort* at a pressure level as
-    outlined in Huang and Nakamura (2017). This function computes lwa based on a
-    prescribed *qref* instead of *qref* obtained from the QGPV field.
+def qgpv_input_qref_to_compute_lwa(
+        ylat: np.ndarray, qref: np.ndarray, vort: np.ndarray, area: np.ndarray,
+        dmu: np.ndarray, nlat_s: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS) -> np.ndarray:
+    """Compute LWA from QGPV with a prescribed Qref.
+
+    This function computes LWA based on a prescribed `qref` instead of `qref`
+    obtained from the QGPV field, as outlined in Huang and Nakamura (2017).
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    qref : numpy.ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    vort : numpy.ndarray
-        2-d numpy array of Quasi-geostrophic potential vorticity field; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    qref : np.ndarray
+        1D numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    vort : np.ndarray
+        2D numpy array of Quasi-geostrophic potential vorticity field;
+        dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    lwa_result : numpy.ndarray
-        2-d numpy array of local wave activity values; dimension = (nlat, nlon).
+    np.ndarray
+        2D numpy array of local wave activity values; dimension = (nlat, nlon).
     """
     nlat = vort.shape[0]
     nlon = vort.shape[1]
@@ -514,33 +575,47 @@ def qgpv_input_qref_to_compute_lwa(ylat, qref, vort, area, dmu, nlat_s=None, pla
     return lwa_result
 
 
-def theta_lwa(ylat, theta, area, dmu, nlat_s=None, n_points=None, planet_radius=EARTH_RADIUS):
-    """
-    Compute the surface wave activity *B* based on surface potential temperature.
+def theta_lwa(
+        ylat: np.ndarray, theta: np.ndarray, area: np.ndarray, dmu: np.ndarray,
+        nlat_s: Optional[int] = None, n_points: Optional[int] = None,
+        planet_radius: float = EARTH_RADIUS) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute the surface wave activity B based on surface potential temperature.
+
     See Nakamura and Solomon (2010a) for details.
 
     Parameters
     ----------
-    ylat : numpy.array
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    theta : numpy.ndarray
-        2-d numpy array of surface potential temperature field; dimension = (nlat, nlon).
-    area : numpy.ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    dmu: numpy.array
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    nlat_s : int, default None
-        The index of grid point that defines the extent of hemispheric domain from the pole. If input as None, it will be initialize as nlat // 2.
-    planet_radius : float, default 6.378e+6
-        radius of spherical planet of interest consistent with input 'area'.
+    ylat : np.ndarray
+        1D numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    theta : np.ndarray
+        2D numpy array of surface potential temperature field;
+        dimension = (nlat, nlon).
+    area : np.ndarray
+        2D numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    dmu : np.ndarray
+        1D numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    nlat_s : int, optional
+        The index of grid point that defines the extent of hemispheric domain
+        from the pole. Defaults to nlat // 2.
+    n_points : int, optional
+        Analysis resolution to calculate equivalent latitude.
+        Defaults to nlat_s.
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input 'area'.
+        Default is EARTH_RADIUS.
 
     Returns
     -------
-    qref : numpy.array
-        1-d numpy array of value reference potential temperature *Theta(y)* approximated by box counting method, where latitude y is given by ylat; dimension = (nlat).
-    lwa_result : numpy.ndarray
-        2-d numpy array of local surface wave activity values; dimension = (nlat, nlon).
-
+    qref : np.ndarray
+        1D numpy array of value reference potential temperature Theta(y)
+        approximated by box counting method, where latitude y is given by ylat;
+        dimension = (nlat,).
+    lwa_result : np.ndarray
+        2D numpy array of local surface wave activity values;
+        dimension = (nlat, nlon).
     """
     nlat = theta.shape[0]
     nlon = theta.shape[1]

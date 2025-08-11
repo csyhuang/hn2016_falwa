@@ -6,56 +6,59 @@ Author: Clare Huang
 import numpy as np
 import xarray as xr
 from matplotlib import gridspec, pyplot as plt  # Optional dependency
+from matplotlib.axes import Axes
+from matplotlib.contour import ContourSet
 from cartopy import crs as ccrs
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
+from typing import Tuple, Optional, Sequence
 
 
 def compare_two_fields_on_map(
-    field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_fname='default.png',
-        diff_factor=0.01, figsize=(15, 4), cmap='rainbow') -> None:
+    field_a: np.ndarray, field_b: np.ndarray, a_title: str, b_title: str, x_coord: np.ndarray, y_coord: np.ndarray,
+    title: str, savefig_fname: Optional[str] = 'default.png', diff_factor: Optional[float] = 0.01,
+    figsize: Tuple[int, int] = (15, 4), cmap: str = 'rainbow') -> None:
+    """Compare two 2D-fields on a map and plot their difference.
 
-    """
-    A handy utility to compare the difference between two 2D-fields and plot their difference. The output plot
-    has 3 columns:
-
+    The output plot has 3 columns:
     1. value of field_a,
-
     2. value of field_b,
-
     3. absolute difference between field_a and field_b.
 
-    The color scale of this plot can be controlled by the parameter *diff_factor*: the color range of the plot will be
-    the maximum value among field_a and field_b multiplied by diff_factor. If you want to use the auto-colorscale,
+    The color scale of this plot can be controlled by the parameter `diff_factor`:
+    the color range of the plot will be the maximum value among field_a and
+    field_b multiplied by diff_factor. If you want to use the auto-colorscale,
     set diff_factor to None.
 
     .. versionadded:: 0.7.0
 
     Parameters
     ----------
-        field_a : np.ndarray
-            First 2D-field to compare
-        field_b : np.ndarray
-            Second 2D-field to compare
-        a_title :str
-            Title of the first field
-        b_title :str
-            Title of the second field
-        x_coord : np.array
-            array of x-coordinates
-        y_coord : np.array
-            array of y-coordinates
-        title : str
-            Main title of the whole plot
-        savefig_fname : str
-            Filename of figure saved. Default: "default.png". If you don't want a file to be
-            saved, set this to None.
-        diff_factor : float
-            The color range of the plot will be the maximum value among field_a and field_b
-            multiplied by diff_factor. If you want to use the auto-colorscale, set diff_factor to None. Default: 0.01.
-        figsize : Tuple[int, int]
-            tuple specifying figure size
+    field_a : np.ndarray
+        First 2D-field to compare.
+    field_b : np.ndarray
+        Second 2D-field to compare.
+    a_title : str
+        Title of the first field.
+    b_title : str
+        Title of the second field.
+    x_coord : np.ndarray
+        Array of x-coordinates.
+    y_coord : np.ndarray
+        Array of y-coordinates.
+    title : str
+        Main title of the whole plot.
+    savefig_fname : str, optional
+        Filename of figure saved. Default: "default.png". If you don't want a
+        file to be saved, set this to None.
+    diff_factor : float, optional
+        The color range of the plot will be the maximum value among field_a and
+        field_b multiplied by diff_factor. If you want to use the
+        auto-colorscale, set diff_factor to None. Default: 0.01.
+    figsize : tuple[int, int], optional
+        Tuple specifying figure size.
+    cmap : str, optional
+        Colormap to use for the plots.
     """
-
     cmin = np.min([np.amin(field_a), np.amin(field_b)])
     cmax = np.max([np.amax(field_a), np.amax(field_b)])
     print(f"cmin = {cmin}, cmax = {cmax}")
@@ -67,9 +70,13 @@ def compare_two_fields_on_map(
     cs2 = map_on_axis(ax2, x_coord, y_coord, field_b, levels=np.linspace(cmin, cmax, 31), title=b_title,
                       colorbar_label='')
     ax3 = fig.add_subplot(1, 3, 3, projection=ccrs.PlateCarree(180))
+    if diff_factor:
+        levels = np.linspace(0, diff_factor * max([np.abs(cmin), np.abs(cmax)]), 31)
+    else:
+        levels = None  # type: ignore
     cs3 = map_on_axis(ax3, x_coord, y_coord, np.abs(field_a - field_b),
-                      levels=np.linspace(0, diff_factor * max([np.abs(cmin), np.abs(cmax)]), 31),
-                      title=f'Abs difference',
+                      levels=levels,
+                      title='Abs difference',
                       colorbar_label='')
     plt.suptitle(title)
     plt.tight_layout()
@@ -78,7 +85,32 @@ def compare_two_fields_on_map(
     plt.show()
 
 
-def map_on_axis(ax_obj, xlon, ylat, field, levels, title, colorbar_label='ua2 (m/s**2)'):
+def map_on_axis(ax_obj: Axes, xlon: np.ndarray, ylat: np.ndarray, field: np.ndarray,
+                levels: Optional[Sequence[float]], title: str, colorbar_label: str = 'ua2 (m/s**2)') -> ContourSet:
+    """Plot a 2D field on a map axis.
+
+    Parameters
+    ----------
+    ax_obj : matplotlib.axes.Axes
+        The axis object to plot on.
+    xlon : np.ndarray
+        Longitude coordinates.
+    ylat : np.ndarray
+        Latitude coordinates.
+    field : np.ndarray
+        The 2D data field to plot.
+    levels : Sequence[float] or None
+        Contour levels. If None, levels are chosen automatically.
+    title : str
+        Title for the subplot.
+    colorbar_label : str, optional
+        Label for the colorbar.
+
+    Returns
+    -------
+    matplotlib.contour.ContourSet
+        The contour set object.
+    """
     # ax_obj.set_extent([0, 360, ylat.min(), ylat.max()], ccrs.PlateCarree())
     ax_obj.coastlines(color='black', alpha=1)
     ax_obj.set_aspect('auto')
@@ -95,51 +127,51 @@ def map_on_axis(ax_obj, xlon, ylat, field, levels, title, colorbar_label='ua2 (m
 
 
 def compare_two_fields(
-        field_a, field_b, a_title, b_title, x_coord, y_coord, title, savefig_fname='default.png',
-        diff_factor=0.01, figsize=(15, 4), cmap='rainbow') -> None:
+        field_a: np.ndarray, field_b: np.ndarray, a_title: str, b_title: str, x_coord: np.ndarray, y_coord: np.ndarray,
+        title: str, savefig_fname: Optional[str] = 'default.png', diff_factor: Optional[float] = 0.01,
+        figsize: Tuple[int, int] = (15, 4), cmap: str = 'rainbow') -> None:
+    """Compare two 2D-fields and plot their difference.
 
-    """
-    A handy utility to compare the difference between two 2D-fields and plot their difference. The output plot
-    has 3 columns:
-
+    The output plot has 3 columns:
     1. value of field_a,
-
     2. value of field_b,
-
     3. absolute difference between field_a and field_b.
 
-    The color scale of this plot can be controlled by the parameter *diff_factor*: the color range of the plot will be
-    the maximum value among field_a and field_b multiplied by diff_factor. If you want to use the auto-colorscale,
+    The color scale of this plot can be controlled by the parameter `diff_factor`:
+    the color range of the plot will be the maximum value among field_a and
+    field_b multiplied by diff_factor. If you want to use the auto-colorscale,
     set diff_factor to None.
 
     .. versionadded:: 0.7.0
 
     Parameters
     ----------
-        field_a : np.ndarray
-            First 2D-field to compare
-        field_b : np.ndarray
-            Second 2D-field to compare
-        a_title :str
-            Title of the first field
-        b_title :str
-            Title of the second field
-        x_coord : np.array
-            array of x-coordinates
-        y_coord : np.array
-            array of y-coordinates
-        title : str
-            Main title of the whole plot
-        savefig_fname : str
-            Filename of figure saved. Default: "default.png". If you don't want a file to be
-            saved, set this to None.
-        diff_factor : float
-            The color range of the plot will be the maximum value among field_a and field_b
-            multiplied by diff_factor. If you want to use the auto-colorscale, set diff_factor to None. Default: 0.01.
-        figsize : Tuple[int, int]
-            tuple specifying figure size
+    field_a : np.ndarray
+        First 2D-field to compare.
+    field_b : np.ndarray
+        Second 2D-field to compare.
+    a_title : str
+        Title of the first field.
+    b_title : str
+        Title of the second field.
+    x_coord : np.ndarray
+        Array of x-coordinates.
+    y_coord : np.ndarray
+        Array of y-coordinates.
+    title : str
+        Main title of the whole plot.
+    savefig_fname : str, optional
+        Filename of figure saved. Default: "default.png". If you don't want a
+        file to be saved, set this to None.
+    diff_factor : float, optional
+        The color range of the plot will be the maximum value among field_a and
+        field_b multiplied by diff_factor. If you want to use the
+        auto-colorscale, set diff_factor to None. Default: 0.01.
+    figsize : tuple[int, int], optional
+        Tuple specifying figure size.
+    cmap : str, optional
+        Colormap to use for the plots.
     """
-
     cmin = np.min([np.amin(field_a), np.amin(field_b)])
     cmax = np.max([np.amax(field_a), np.amax(field_b)])
     print(f"cmin = {cmin}, cmax = {cmax}")
@@ -164,25 +196,24 @@ def compare_two_fields(
     plt.show()
 
 
-def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longitude_name='longitude',
-                       tstep=10, zonal_axis=0) -> None:
-    """
-    Plot a snapshot of longitude-latitude map from a netCDF file.
+def plot_lon_lat_field(filepath: str, variable_name: str, latitude_name: str = 'latitude',
+                       longitude_name: str = 'longitude', tstep: int = 10, zonal_axis: int = 0) -> None:
+    """Plot a snapshot of longitude-latitude map from a netCDF file.
 
     Parameters
     ----------
     filepath : str
-        path to the netCDF file
+        Path to the netCDF file.
     variable_name : str
-        name of the variable to be plotted
-    latitude_name : str
-        name of latitudinal coordinates
-    longitude_name : str
-        name of latitudinal coordinates
-    tstep : int
-        index of timestep to be plotted
-    zonal_axis : int
-            axis of zonal dimension
+        Name of the variable to be plotted.
+    latitude_name : str, optional
+        Name of latitudinal coordinates.
+    longitude_name : str, optional
+        Name of longitudinal coordinates.
+    tstep : int, optional
+        Index of timestep to be plotted.
+    zonal_axis : int, optional
+        Axis of zonal dimension.
     """
     file_handle = xr.open_dataset(filepath)
     field = file_handle.variables[variable_name].isel(time=tstep).values
@@ -197,48 +228,48 @@ def plot_lon_lat_field(filepath, variable_name, latitude_name='latitude', longit
 
 
 class LatLonMapPlotter(object):
-    """
-    Utility for plotting latitude-longitude maps with Cartopy.
-
+    """Utility for plotting latitude-longitude maps with Cartopy.
 
     Parameters
     ----------
-    figsize : Tuple[int, int]
-        figure size in inch
+    figsize : tuple[int, int]
+        Figure size in inches.
     title_str : str
-        Title of the plot
-    xgrid : np.array
-        Longitude grid points (in deg)
-    ygrid : np.array
-        Latiitude grid points (in deg)
+        Title of the plot.
+    xgrid : np.ndarray
+        Longitude grid points (in deg).
+    ygrid : np.ndarray
+        Latitude grid points (in deg).
     xland : np.ndarray
-        With dimension same as np.meshgrid(xgrid, ygrid). Longitude grid points to be masked out
+        With dimension same as np.meshgrid(xgrid, ygrid).
+        Longitude grid points to be masked out.
     yland : np.ndarray
-        With dimension same as np.meshgrid(xgrid, ygrid). Latitude grid points to be masked out
-    lon_range : np.array
-        Longitude ticks/marks displayed on the plot
-    lat_range : np.array
-        Latiitude ticks/marks displayed on the plot
-    wspace : float
-        width space size
-    hspace : float
-        height space size
-    coastlines_alpha : float
-        Degree of transparency of coastlines (in percent)
-    exclude_equator : bool
-        whether to exclude equator or not
-    white_space_width : float
-        The width of white space centered at equator if exclude_equator = True
-    x_axis_title : str
-        Label of the x-axis [Longitude]
-    y_axis_title : str
-        Label of the y-axis [Latiitude]
+        With dimension same as np.meshgrid(xgrid, ygrid).
+        Latitude grid points to be masked out.
+    lon_range : np.ndarray
+        Longitude ticks/marks displayed on the plot.
+    lat_range : np.ndarray
+        Latitude ticks/marks displayed on the plot.
+    wspace : float, optional
+        Width space size.
+    hspace : float, optional
+        Height space size.
+    coastlines_alpha : float, optional
+        Degree of transparency of coastlines (in percent).
+    exclude_equator : bool, optional
+        Whether to exclude equator or not.
+    white_space_width : float, optional
+        The width of white space centered at equator if exclude_equator is True.
+    x_axis_title : str, optional
+        Label of the x-axis.
+    y_axis_title : str, optional
+        Label of the y-axis.
     """
-    def __init__(self, figsize, title_str, xgrid, ygrid, xland, yland, lon_range, lat_range,
-                 wspace=0.3, hspace=0.3, coastlines_alpha=0.7, exclude_equator=True, white_space_width=20,
-                 x_axis_title="Longitude[deg]", y_axis_title="Latitude[deg]"):
-
-
+    def __init__(self, figsize: Tuple[int, int], title_str: str, xgrid: np.ndarray, ygrid: np.ndarray,
+                 xland: np.ndarray, yland: np.ndarray, lon_range: np.ndarray, lat_range: np.ndarray,
+                 wspace: float = 0.3, hspace: float = 0.3, coastlines_alpha: float = 0.7,
+                 exclude_equator: bool = True, white_space_width: float = 20,
+                 x_axis_title: str = "Longitude[deg]", y_axis_title: str = "Latitude[deg]"):
         self._figsize = figsize
         self._title_str = title_str
         self._xgrid = xgrid
@@ -255,8 +286,24 @@ class LatLonMapPlotter(object):
         self._x_axis_title = x_axis_title
         self._y_axis_title = y_axis_title
 
+    def plot_and_save_variable(self, variable: np.ndarray, cmap: str, var_title_str: str,
+                               save_path: Optional[str] = "figure.png", num_level: int = 30) -> None:
+        """Plot and save a variable on a lat-lon map.
 
-    def plot_and_save_variable(self, variable, cmap, var_title_str, save_path="figure.png", num_level=30):
+        Parameters
+        ----------
+        variable : np.ndarray
+            The 2D data to plot.
+        cmap : str
+            The colormap to use.
+        var_title_str : str
+            The title for the variable being plotted.
+        save_path : str or None, optional
+            Path to save the figure. If None, figure is not saved.
+            Defaults to "figure.png".
+        num_level : int, optional
+            Number of contour levels.
+        """
         from cartopy import crs as ccrs
         fig = plt.figure(figsize=self._figsize)
         spec = gridspec.GridSpec(
@@ -285,32 +332,32 @@ class LatLonMapPlotter(object):
 
 
 class HeightLatPlotter(object):
-    """
-     Utility for plotting Height-latitude plot with `matplotlib.pyplot.contourf`.
+    """Utility for plotting Height-latitude plot with `matplotlib.pyplot.contourf`.
 
-     Parameters
-     ----------
-     figsize : Tuple[int, int]
-         figure size in inch
-     title_str : str
-         Title of the plot
-     xgrid : np.array
-         Longitude grid points (in deg)
-     ygrid : np.array
-         Latiitude grid points (in deg)
-     xlim : Tuple[float, float]
-         Lower and Upper bound of x-axis
-     exclude_equator : bool
-         whether to exclude equator or not
-     white_space_width : float
-         The width of white space centered at equator if exclude_equator = True
-     x_axis_title : str
-         Label of the x-axis [Longitude]
-     y_axis_title : str
-         Label of the y-axis [Latiitude]
-     """
-    def __init__(self, figsize, title_str, xgrid, ygrid, xlim, exclude_equator=True, white_space_width=20,
-                 x_axis_title="Latitude[deg]", y_axis_title="Pseudoheight[m]"):
+    Parameters
+    ----------
+    figsize : tuple[int, int]
+        Figure size in inches.
+    title_str : str
+        Title of the plot.
+    xgrid : np.ndarray
+        Latitude grid points (in deg).
+    ygrid : np.ndarray
+        Height/pressure grid points.
+    xlim : tuple[float, float]
+        Lower and Upper bound of x-axis.
+    exclude_equator : bool, optional
+        Whether to exclude equator or not.
+    white_space_width : float, optional
+        The width of white space centered at equator if exclude_equator is True.
+    x_axis_title : str, optional
+        Label of the x-axis.
+    y_axis_title : str, optional
+        Label of the y-axis.
+    """
+    def __init__(self, figsize: Tuple[int, int], title_str: str, xgrid: np.ndarray, ygrid: np.ndarray,
+                 xlim: Tuple[float, float], exclude_equator: bool = True, white_space_width: float = 20,
+                 x_axis_title: str = "Latitude[deg]", y_axis_title: str = "Pseudoheight[m]"):
         self._figsize = figsize
         self._title_str = title_str
         self._xgrid = xgrid
@@ -321,7 +368,23 @@ class HeightLatPlotter(object):
         self._x_axis_title = x_axis_title
         self._y_axis_title = y_axis_title
 
-    def plot_and_save_variable(self, variable, cmap, var_title_str, save_path, num_level=30):
+    def plot_and_save_variable(self, variable: np.ndarray, cmap: str, var_title_str: str,
+                               save_path: str, num_level: int = 30) -> None:
+        """Plot and save a variable on a height-latitude plot.
+
+        Parameters
+        ----------
+        variable : np.ndarray
+            The 2D data to plot.
+        cmap : str
+            The colormap to use.
+        var_title_str : str
+            The title for the variable being plotted.
+        save_path : str
+            Path to save the figure.
+        num_level : int, optional
+            Number of contour levels.
+        """
         fig = plt.figure(figsize=self._figsize)
         spec = gridspec.GridSpec(ncols=1, nrows=1)
         ax = fig.add_subplot(spec[0])

@@ -9,14 +9,15 @@ import numpy as np
 
 class InvalidCallOfSHemVariables(Exception):
     """
-    northern_hemisphere_results_only = True. 
-    Southern hemispheric variables are not computed.
+    Exception raised when southern hemispheric variables are accessed
+    when `northern_hemisphere_results_only` is True.
     """
 
 
 class HemisphericProperty:
+    """Descriptor for hemispheric properties."""
 
-    def __init__(self, attr, ndims_fill=(0, 0), doc=None):
+    def __init__(self, attr: str, ndims_fill: Tuple[int, int] = (0, 0), doc: Optional[str] = None):
         self.attr = attr
         self.__doc__ = doc
         # Dimensions to fill in pre- and post-latitude
@@ -25,11 +26,12 @@ class HemisphericProperty:
         self.slc_post = tuple(slice(None) for _ in range(npost))
 
     @property
-    def ndim_j(self):
+    def ndim_j(self) -> int:
         return len(self.slc_pre)
 
 
 class NHemProperty(HemisphericProperty):
+    """Descriptor for Northern Hemisphere properties."""
 
     def __get__(self, obj, objtype=None):
         if obj.northern_hemisphere_results_only:
@@ -46,6 +48,7 @@ class NHemProperty(HemisphericProperty):
 
 
 class SHemProperty(HemisphericProperty):
+    """Descriptor for Southern Hemisphere properties."""
 
     def __get__(self, obj, objtype=None):
         if obj.northern_hemisphere_results_only:
@@ -64,12 +67,24 @@ class SHemProperty(HemisphericProperty):
 
 
 class DerivedQuantityStorage:
-    """
-    This class manages the storage of derived variables in :py:class:`oopinterface.QGField`.
+    """Manages the storage of derived variables in :py:class:`oopinterface.QGField`.
 
-    Variables are stored in fortran indexing order for easy communication with
-    f2py modules. To return variables in python indexing order, use the method
+    Variables are stored in Fortran indexing order for easy communication with
+    f2py modules. To return variables in Python indexing order, use the method
     :py:meth:`fortran_to_python` to swap the axes.
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(
         self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
@@ -81,37 +96,49 @@ class DerivedQuantityStorage:
         self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
     @property
-    def pydim(self):
+    def pydim(self) -> Union[int, Tuple]:
         return self._pydim
 
     @property
-    def fdim(self):
+    def fdim(self) -> Union[int, Tuple]:
         return self._fdim
 
     @property
-    def swapaxis_1(self):
+    def swapaxis_1(self) -> int:
         return self._swapaxis_1
 
     @property
-    def swapaxis_2(self):
+    def swapaxis_2(self) -> int:
         return self._swapaxis_2
 
     @property
-    def northern_hemisphere_results_only(self):
+    def northern_hemisphere_results_only(self) -> bool:
         return self._northern_hemisphere_results_only
 
-    def fortran_to_python(self, phy_field: np.ndarray):
+    def fortran_to_python(self, phy_field: np.ndarray) -> np.ndarray:
         return np.swapaxes(phy_field, self.swapaxis_1, self.swapaxis_2)
 
-    def python_to_fortran(self, phy_field: np.ndarray):  # This may not be necessary
+    def python_to_fortran(self, phy_field: np.ndarray) -> np.ndarray:  # This may not be necessary
         return np.swapaxes(phy_field, self.swapaxis_2, self.swapaxis_1)
 
 
 class DomainAverageStorage(DerivedQuantityStorage):
-    """
-    This stores global/hemispheric averaged potential temperature and static stability.
+    """Stores global/hemispheric averaged potential temperature and static stability.
 
     Fortran dimension: (kmax)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
@@ -125,15 +152,28 @@ class DomainAverageStorage(DerivedQuantityStorage):
 
 
 class InterpolatedFieldsStorage(DerivedQuantityStorage):
-    """
-    This class stores 3D fields on interpolated grids, including:
+    """Stores 3D fields on interpolated grids.
 
+    This class stores:
     - u
     - v
     - theta (potential temperature)
     - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
 
     Fortran dimension: (nlon, nlat, kmax)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
@@ -146,14 +186,27 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
 
 
 class ReferenceStatesStorage(DerivedQuantityStorage):
-    """
-    This class stores height-latitude 2D fields on interpolated grids, including:
+    """Stores height-latitude 2D fields on interpolated grids.
 
+    This class stores:
     - uref
-    - qref (it actually stores qref/f, where f is Coriolis paramter)
+    - qref (it actually stores qref/f, where f is Coriolis parameter)
     - tref (potential temperature reference state)
 
     Fortran dimension: (nlat, kmax)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -167,10 +220,24 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     qref_nhem = NHemProperty("qref", (0, 1))
     qref_shem = SHemProperty("qref", (0, 1))
 
-    def qref_correct_unit(self, ylat, omega, python_indexing=True):
-        """
-        This returns Qref of the correct unit to the user.
+    def qref_correct_unit(self, ylat: np.ndarray, omega: float, python_indexing: bool = True) -> np.ndarray:
+        """Return Qref with the correct unit.
+
         TODO: encapsulate this elsewhere to avoid potential error
+
+        Parameters
+        ----------
+        ylat : np.ndarray
+            Latitude array.
+        omega : float
+            Planetary rotation rate.
+        python_indexing : bool, optional
+            If True, return array in Python indexing order. Default is True.
+
+        Returns
+        -------
+        np.ndarray
+            Qref with correct units.
         """
         qref_right_unit = \
             self.qref * 2 * omega * np.sin(np.deg2rad(ylat[:, np.newaxis]))
@@ -186,10 +253,22 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
 
 
 class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
-    """
-    This class stores 3D LWA field on interpolated grids.
+    """Stores 3D LWA and flux terms on interpolated grids.
 
     Fortran dimension: (nlon, nlat, kmax)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -242,9 +321,9 @@ class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
 
 
 class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
-    """
-    This class stores vertically integrated derived quantities in latitude-longitude 2D grid, including:
+    """Stores vertically integrated derived quantities on a lat-lon 2D grid.
 
+    This class stores:
     - adv_flux_f1
     - adv_flux_f2
     - adv_flux_f3
@@ -253,7 +332,20 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
     - divergence_eddy_momentum_flux
     - meridional_heat_flux
 
-    Variables are stored in **python indexing order**: (nlat, nlon)
+    Variables are stored in **Python indexing order**: (nlat, nlon)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -271,10 +363,22 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
 
 
 class BarotropicFluxTermsStorage(DerivedQuantityStorage):
-    """
-    This class stores intermediate computed quantities in latitude-longitude 2D grid.
+    """Stores intermediate computed quantities on a lat-lon 2D grid.
 
-    Variables are stored in fortran indexing order: (nlon, nlat)
+    Variables are stored in Fortran indexing order: (nlon, nlat)
+
+    Parameters
+    ----------
+    pydim : int or tuple
+        Python dimension.
+    fdim : int or tuple
+        Fortran dimension.
+    swapaxis_1 : int
+        First axis to swap for Fortran to Python conversion.
+    swapaxis_2 : int
+        Second axis to swap for Fortran to Python conversion.
+    northern_hemisphere_results_only : bool
+        Flag indicating if only northern hemisphere results are computed.
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -317,4 +421,3 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
 
     lwa_baro_nhem = NHemProperty("lwa_baro", (1, 0))
     lwa_baro_shem = SHemProperty("lwa_baro", (1, 0))
-

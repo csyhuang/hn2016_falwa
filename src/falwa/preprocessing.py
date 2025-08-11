@@ -7,18 +7,24 @@ import numpy as np
 import gridfill
 
 
-def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
-    """
-    Fill missing values in lat-lon grids with values derived by solving Poisson's equation
-    using a relaxation scheme.
+def gridfill_each_level(lat_lon_field: np.ndarray, itermax: int = 1000, verbose: bool = False) -> np.ndarray:
+    """Fill missing values in a lat-lon grid.
 
-    Args:
-        lat_lon_field(np.ndarray): 2D array to apply gridfill on
-        itermax(int): maximum iteration for poisson solver
-        verbose(bool): verbose level of poisson solver
+    The filling is done by solving Poisson's equation using a relaxation scheme.
 
-    Returns:
-        A 2D array of the same dimension with all nan filled.
+    Parameters
+    ----------
+    lat_lon_field : np.ndarray
+        2D array to apply gridfill on.
+    itermax : int, optional
+        Maximum iteration for the Poisson solver, by default 1000.
+    verbose : bool, optional
+        Verbose level of the Poisson solver, by default False.
+
+    Returns
+    -------
+    np.ndarray
+        A 2D array of the same dimension with all NaNs filled.
     """
     if np.isnan(lat_lon_field).sum() == 0:
         return lat_lon_field
@@ -28,4 +34,3 @@ def gridfill_each_level(lat_lon_field, itermax=1000, verbose=False):
         cyclic=True, itermax=itermax, verbose=verbose)
 
     return lat_lon_filled
-

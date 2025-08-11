@@ -7,18 +7,19 @@ import itertools
 import functools
 import numpy as np
 import xarray as xr
+from typing import List, Dict, Any, Optional, Union, Tuple, Type
 
 from falwa import __version__
-from falwa.oopinterface import QGFieldNH18
+from falwa.oopinterface import QGFieldNH18, QGField, QGFieldNHN22
 
 
-def _is_ascending(arr):
+def _is_ascending(arr: np.ndarray) -> bool:
     return np.all(np.diff(arr) > 0)
 
-def _is_descending(arr):
+def _is_descending(arr: np.ndarray) -> bool:
     return np.all(np.diff(arr) < 0)
 
-def _is_equator(x):
+def _is_equator(x: float) -> bool:
     return abs(x) < 1.0e-4
 
 # Coordinate name lookup
@@ -37,12 +38,14 @@ _NAMES_DEMF = ["divergence_eddy_momentum_flux"]
 _NAMES_MHF  = ["meridional_heat_flux"]
 
 
-def _get_dataarray(data, names, user_names=None):
+def _get_dataarray(data: Union[xr.Dataset, xr.DataArray], names: List[str],
+                   user_names: Optional[Dict[str, str]] = None) -> xr.DataArray:
     name = _get_name(data, names, user_names=user_names)
     return data[name]
 
 
-def _get_name(ds, names, user_names=None):
+def _get_name(ds: Union[xr.Dataset, xr.DataArray], names: List[str],
+              user_names: Optional[Dict[str, str]] = None) -> str:
     # If the first name from the list of defaults is in the user-provided
     # dictionary, use the name provided there
     if user_names is not None and names[0] in user_names:
@@ -58,7 +61,7 @@ def _get_name(ds, names, user_names=None):
 
 
 class _MetadataServiceProvider:
-    """Metadata services for the QGDataset
+    """Metadata services for the QGDataset.
 
     The class provides metadata from its own registry and can be instanciated
     to provide additional metadata based on a template QGField object and
@@ -68,12 +71,12 @@ class _MetadataServiceProvider:
     ----------
     field : QGField
         Template QGField object to extract metadata from.
-    other_coords : None | dict
+    other_coords : dict, optional
         Mapping of dimension name to dimension coordinates of non-core
         dimensions. Entries must reflect order of dimensions.
     """
 
-    def __init__(self, field, other_coords=None):
+    def __init__(self, field: QGField, other_coords: Optional[Dict[str, Any]] = None):
         self.field = field
         # Depend on dict to preserve ordering of dims (Python 3.7+)
         self.other_coords = dict(other_coords) if other_coords is not None else dict()
@@ -95,7 +98,7 @@ class _MetadataServiceProvider:
 
     # numpy convenience functions
 
-    def shape(self, var):
+    def shape(self, var: str) -> Tuple[int, ...]:
         """Shape of a variable (non-core and core dims)"""
         shape = list(self.other_shape)
         # Get sizes of field dimensions from template field
@@ -103,30 +106,30 @@ class _MetadataServiceProvider:
             shape.append(getattr(self.field, name).size)
         return tuple(shape)
 
-    def flatten_other(self, arr):
+    def flatten_other(self, arr: np.ndarray) -> np.ndarray:
         """Flatten the non-core dimensions of the array"""
         n = len(self.other_shape)
         assert arr.shape[:n] == self.other_shape, f"expected other shape of {self.other_shape}"
         return arr.reshape((self.other_size, *arr.shape[n:]))
 
-    def restore_other(self, arr):
+    def restore_other(self, arr: np.ndarray) -> np.ndarray:
         """Un-flatten the non-core dimensions of the array"""
         assert arr.shape[0] == self.other_size, f"expected other size of {self.other_size}"
         return arr.reshape(self.other_shape + arr.shape[1:])
 
     # xarray convenience functions
 
-    def iter_other(self):
+    def iter_other(self) -> "itertools.product":
         """Iterate over coordinates in flattened order"""
         coords = (self.other_coords[dim].values for dim in self.other_dims)
         for values in itertools.product(*coords):
             yield dict(zip(self.other_dims, values))
 
-    def dims(self, var):
+    def dims(self, var: str) -> Tuple[str, ...]:
         """Dimension names (non-core and core dims)"""
         return self.other_dims + self.info(var)["core_dims"]
 
-    def coords(self, var):
+    def coords(self, var: str) -> Dict[str, Any]:
         """Coordinate dictionary (non-core and core dims)"""
         coords = self.other_coords.copy()
         info = self.info(var)
@@ -134,7 +137,7 @@ class _MetadataServiceProvider:
             coords[dim] = getattr(self.field, name)
         return coords
 
-    def as_dataarray(self, arr, var):
+    def as_dataarray(self, arr: Union[np.ndarray, List], var: str) -> xr.DataArray:
         """Create a DataArray from the input array as the given variable"""
         arr = np.asarray(arr)
         if arr.shape != self.shape(var):
@@ -148,7 +151,7 @@ class _MetadataServiceProvider:
             attrs=self.attrs(var)
         )
 
-    def attrs(self, var=None):
+    def attrs(self, var: Optional[str] = None) -> Dict[str, Any]:
         """Attributes for a Dataset (var=None) or a DataArray (var!=None)"""
         if var is not None:
             return self.info(var)["attrs"]
@@ -172,21 +175,23 @@ class _MetadataServiceProvider:
     # General information from a variable registry
     # (must be kept up-to-date with oopinterface.QGField, see below)
 
-    _VARS = dict()
+    _VARS: Dict[str, Dict[str, Any]] = dict()
 
     @classmethod
-    def register_var(cls, var, core_dims, dim_names=None, attrs=None):
-        """Add a new variable configuration to the registry
+    def register_var(cls, var: str, core_dims: Tuple[str, ...],
+                     dim_names: Optional[Tuple[str, ...]] = None,
+                     attrs: Optional[Dict[str, Any]] = None) -> None:
+        """Add a new variable configuration to the registry.
 
         Parameters
         ----------
-        var : string
+        var : str
             Name of the variable in the registry.
-        core_dims : Tuple[string]
+        core_dims : tuple of str
             Core dimensions of the variable, i.e. the fundamental dimensions
             that a single field of this variable always has. Core dimensions
             must always be the last dimensions in the array.
-        dim_names : Tuple[string], optional
+        dim_names : tuple of str, optional
             Name overrides for data access on the QGField template object.
         attrs : dict, optional
             Attributes for the variable, attached to any produced DataArray.
@@ -194,11 +199,11 @@ class _MetadataServiceProvider:
         cls._VARS[var] = {
             "core_dims": core_dims,
             "dim_names": dim_names if dim_names is not None else core_dims,
-            "attrs": attrs
+            "attrs": attrs if attrs is not None else {}
         }
 
     @classmethod
-    def info(cls, var):
+    def info(cls, var: str) -> Dict[str, Any]:
         """Metadata information from the variable registry"""
         return cls._VARS[var]
 
@@ -235,14 +240,14 @@ class _DataArrayCollector(property):
     # Inherits from property, so instances are recognized as properties by
     # sphinx for the docs.
 
-    def __init__(self, var):
+    def __init__(self, var: str):
         self.var = var
         self.__doc__ = (
             f"See :py:attr:`oopinterface.QGFieldBase.{self.var}`."
             "\n\nReturns\n-------\nxarray.DataArray"
         )
 
-    def __get__(self, qgds, objtype=None):
+    def __get__(self, qgds: "QGDataset", objtype: Optional[Type["QGDataset"]] = None) -> xr.DataArray:
         arr = np.asarray([getattr(field, self.var) for field in qgds.fields])
         return qgds.metadata.as_dataarray(arr, self.var)
 
@@ -264,7 +269,7 @@ class QGDataset:
 
     Parameters
     ----------
-    da_u : xarray.DataArray | xarray.Dataset
+    da_u : xarray.DataArray or xarray.Dataset
         Input 3D fields of zonal wind. The 3D fields's dimensions must end with
         height, latitude and longitude. Other dimensions (e.g. time, ensemble
         member id) are preserved in the output datasets.
@@ -283,7 +288,7 @@ class QGDataset:
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
-    qgfield : QGField class, optional
+    qgfield : type, optional
         The QGField class to use in the computation. Default:
         :py:class:`oopinterface.QGFieldNH18`.
     qgfield_args : tuple, optional
@@ -292,13 +297,15 @@ class QGDataset:
         Keyword arguments given to the QGField constructor.
 
     Examples
-    -------
+    --------
+    >>> import xarray
+    >>> from falwa.xarrayinterface import QGDataset
     >>> data = xarray.open_dataset("path/to/some/uvt-data.nc")
     >>> qgds = QGDataset(data)
     >>> qgds.interpolate_fields()
     <xarray.Dataset> ...
 
-    :doc:`notebooks/demo_script_for_nh2018_with_xarray`
+    See the :doc:`xarray demo notebook <notebooks/demo_script_for_nh2018_with_xarray>`.
 
     >>> data_u = xarray.load_dataset("path/to/some/u-data.nc")
     >>> data_v = xarray.load_dataset("path/to/some/v-data.nc")
@@ -306,8 +313,13 @@ class QGDataset:
     >>> qgds = QGDataset(data_u, data_v, data_t)
     """
 
-    def __init__(self, da_u, da_v=None, da_t=None, *, var_names=None,
-                 qgfield=QGFieldNH18, qgfield_args=None, qgfield_kwargs=None):
+    def __init__(self, da_u: Union[xr.DataArray, xr.Dataset],
+                 da_v: Optional[Union[xr.DataArray, xr.Dataset]] = None,
+                 da_t: Optional[Union[xr.DataArray, xr.Dataset]] = None, *,
+                 var_names: Optional[Dict[str, str]] = None,
+                 qgfield: Type[QGField] = QGFieldNH18,
+                 qgfield_args: Optional[Tuple] = None,
+                 qgfield_kwargs: Optional[Dict[str, Any]] = None):
         if var_names is None:
             var_names = dict()
 
@@ -390,7 +402,7 @@ class QGDataset:
         xlon = da_xlon.values
         # Create a QGField object for each combination of timestep, ensemble
         # member, etc.
-        self._fields = []
+        self._fields: List[QGField] = []
         for u_field, v_field, t_field in zip(u, v, t):
             # Apply reordering to fields
             if flip:
@@ -408,7 +420,7 @@ class QGDataset:
         })
 
     @property
-    def fields(self):
+    def fields(self) -> List[QGField]:
         """Access to the QGField objects created by the QGDataset.
 
         The :py:class:`.oopinterface.QGField` objects are stored in a flattened
@@ -417,11 +429,11 @@ class QGDataset:
         return self._fields
 
     @property
-    def attrs(self):
+    def attrs(self) -> Dict[str, Any]:
         """Metadata dictionary that is attached to output datasets."""
         return self.metadata.attrs()
 
-    def interpolate_fields(self, return_dataset=True):
+    def interpolate_fields(self, return_dataset: bool = True) -> Optional[xr.Dataset]:
         """Call `interpolate_fields` on all contained fields.
 
         See :py:meth:`.oopinterface.QGFieldBase.interpolate_fields`.
@@ -466,12 +478,12 @@ class QGDataset:
     interpolated_theta = _DataArrayCollector("interpolated_theta")
 
     @property
-    def static_stability(self):
+    def static_stability(self) -> Union[xr.DataArray, Tuple[xr.DataArray, xr.DataArray]]:
         """See :py:attr:`oopinterface.QGFieldBase.static_stability`.
 
         Returns
         -------
-        xr.Dataset | Tuple[xr.Dataset, xr.Dataset]
+        xr.DataArray or tuple of xr.DataArray
         """
         stability = np.asarray([getattr(field, "static_stability") for field in self._fields])
         if stability.ndim == 2:
@@ -487,7 +499,7 @@ class QGDataset:
             raise ValueError(f"cannot process shape of returned static stability field: {stability.shape}")
 
 
-    def compute_reference_states(self, return_dataset=True):
+    def compute_reference_states(self, return_dataset: bool = True) -> Optional[xr.Dataset]:
         """Call `compute_reference_states` on all contained fields.
 
         See :py:meth:`.oopinterface.QGFieldBase.compute_reference_states`.
@@ -516,7 +528,9 @@ class QGDataset:
     uref = _DataArrayCollector("uref")
     ptref = _DataArrayCollector("ptref")
 
-    def compute_lwa_and_barotropic_fluxes(self, ncforce=None, return_dataset=True):
+    def compute_lwa_and_barotropic_fluxes(
+            self, ncforce: Optional[xr.DataArray] = None,
+            return_dataset: bool = True) -> Optional[xr.Dataset]:
         """Call `compute_lwa_and_barotropic_fluxes` on all contained fields.
 
         See :py:meth:`.oopinterface.QGFieldBase.compute_lwa_and_barotropic_fluxes`.
@@ -552,6 +566,8 @@ class QGDataset:
                 "ncforce_baro": self.ncforce_baro,
                 "lwa": self.lwa,
             }
+            if ncforce is not None:
+                data_vars["ncforce_baro"] = self.ncforce_baro
             return xr.Dataset(data_vars, attrs=self.attrs)
 
     # Accessors for individual field properties computed in compute_lwa_and_barotropic_fluxes
@@ -566,9 +582,8 @@ class QGDataset:
     ncforce_baro = _DataArrayCollector("ncforce_baro")
     lwa = _DataArrayCollector("lwa")
 
-    def compute_lwa_only(self, return_dataset=True):
-        """
-        Call `compute_lwa_only` on all contained fields.
+    def compute_lwa_only(self, return_dataset: bool = True) -> Optional[xr.Dataset]:
+        """Call `compute_lwa_only` on all contained fields.
 
         See :py:meth:`.oopinterface.QGFieldBase.compute_lwa_only`.
 
@@ -586,30 +601,34 @@ class QGDataset:
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
 
-    def compute_ncforce_from_heating_rate(self, heating_rate):
-        """
-        Call `compute_ncforce_from_heating_rate` on all contained fields given heating rate input.
+    def compute_ncforce_from_heating_rate(self, heating_rate: xr.DataArray) -> xr.DataArray:
+        """Call `compute_ncforce_from_heating_rate` on all contained fields.
+
+        This is done given heating rate input.
 
         See :py:meth:`.oopinterface.QGFieldNHN22.compute_ncforce_from_heating_rate`.
 
         Parameters
         ----------
         heating_rate : xarray.DataArray
-            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+            The diabatic heating output from reanalysis data on pressure levels
+            that has unit K/s.
 
         Returns
         -------
-        xarray.DataArray or None
+        xarray.DataArray
         """
         ncforce_input_list = []
 
         for field, coord in zip(self._fields, self.metadata.iter_other()):
+            assert isinstance(field, QGFieldNHN22)
             output = field.compute_ncforce_from_heating_rate(heating_rate=heating_rate.sel(coord))
             ncforce_input_list.append(output)
         return self.metadata.as_dataarray(ncforce_input_list, var="ncforce")
 
 
-def integrate_budget(ds, var_names=None):
+def integrate_budget(ds: xr.Dataset,
+                     var_names: Optional[Dict[str, str]] = None) -> xr.Dataset:
     """Compute the integrated LWA budget terms for the given data.
 
     Integrates the LWA tendencies from equation (2) of `NH18
@@ -647,6 +666,7 @@ def integrate_budget(ds, var_names=None):
     >>> ...
     >>> terms = qgds.compute_lwa_and_barotropic_fluxes()
     >>> integrate_budget(terms.isel({ "time": slice(5, 10) }))
+    <xarray.Dataset> ...
     """
     name_time = _get_name(ds, _NAMES_TIME, var_names)
     name_lwa  = _get_name(ds, _NAMES_LWA,  var_names)
@@ -683,7 +703,8 @@ def integrate_budget(ds, var_names=None):
     return xr.Dataset(data_vars, ds.coords, attrs)
 
 
-def hemisphere_to_globe(ds, var_names=None):
+def hemisphere_to_globe(ds: xr.Dataset,
+                        var_names: Optional[Dict[str, str]] = None) -> xr.Dataset:
     """Create a global dataset from a hemispheric one.
 
     Takes data from the given hemisphere, mirrors it to the other hemisphere

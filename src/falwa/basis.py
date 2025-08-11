@@ -9,34 +9,36 @@ from math import pi
 
 
 def eqvlat_fawa(
-        ylat, vort, area, n_points, planet_radius=6.378e+6,
-        output_fawa=True) -> Tuple[np.ndarray, Optional[np.ndarray]]:
-
-    """
-    Compute equivalent latitude and finite amplitude wave activity with the full
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray, n_points: int,
+        planet_radius: float = 6.378e+6, output_fawa: bool = True) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """Compute equivalent latitude and finite amplitude wave activity.
 
     Parameters
     ----------
-    ylat : sequence or array_like
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : ndarray
+    ylat : np.ndarray
+        1-d numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
         2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    n_points: int
+    area : np.ndarray
+        2-d numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    n_points : int
         Analysis resolution to calculate equivalent latitude.
-    planet_radius: float
-        Radius of spherical planet of interest consistent with input *area*. Default: earth's radius 6.378e+6
-    output_fawa: bool
-        Whether to output FAWA. If True, return tuple would consist of (qref, fawa). Else, this function will
-        return (qref, None).
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input `area`.
+        Default is earth's radius 6.378e+6.
+    output_fawa : bool, optional
+        Whether to output FAWA. If True, return tuple would consist of
+        (qref, fawa). Else, this function will return (qref, None).
 
     Returns
     -------
-    qref : ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    fawa : ndarray or None
-        1-d finite-amplitude local wave activity
+    qref : np.ndarray
+        1-d numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    fawa : np.ndarray or None
+        1-d finite-amplitude local wave activity.
     """
     vort_min, vort_max = np.amin(vort), np.amax(vort)
     qbar = vort.mean(axis=-1)  # zonal mean vorticity
@@ -64,36 +66,39 @@ def eqvlat_fawa(
     return qref, None
 
 
-def eqvlat_vgrad(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None):
-
-    """
-    Compute equivalent latitude, and optionally <...>_Q in Nakamura and Zhu (2010).
+def eqvlat_vgrad(
+        ylat: np.ndarray, vort: np.ndarray, area: np.ndarray, n_points: int,
+        planet_radius: float = 6.378e+6, vgrad: Optional[np.ndarray] = None) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """Compute equivalent latitude, and optionally <...>_Q in Nakamura and Zhu (2010).
 
     Parameters
     ----------
-    ylat : sequence or array_like
-        1-d numpy array of latitude (in degree) with equal spacing in ascending order; dimension = nlat.
-    vort : ndarray
+    ylat : np.ndarray
+        1-d numpy array of latitude (in degree) with equal spacing in
+        ascending order; dimension = (nlat,).
+    vort : np.ndarray
         2-d numpy array of vorticity values; dimension = (nlat, nlon).
-    area : ndarray
-        2-d numpy array specifying differential areal element of each grid point; dimension = (nlat, nlon).
-    n_points: int
+    area : np.ndarray
+        2-d numpy array specifying differential areal element of each grid
+        point; dimension = (nlat, nlon).
+    n_points : int
         Analysis resolution to calculate equivalent latitude.
-    planet_radius: float
-        Radius of spherical planet of interest consistent with input *area*. Default: earth's radius 6.378e+6
-    vgrad: ndarray, optional
-        2-d numpy array of laplacian (or higher-order laplacian) values; dimension = (nlat, nlon)
+    planet_radius : float, optional
+        Radius of spherical planet of interest consistent with input `area`.
+        Default is earth's radius 6.378e+6.
+    vgrad : np.ndarray, optional
+        2-d numpy array of laplacian (or higher-order laplacian) values;
+        dimension = (nlat, nlon).
 
     Returns
     -------
-    q_part : ndarray
-        1-d numpy array of value Q(y) where latitude y is given by ylat; dimension = (nlat).
-    brac : ndarray or None
+    q_part : np.ndarray
+        1-d numpy array of value Q(y) where latitude y is given by ylat;
+        dimension = (nlat,).
+    brac : np.ndarray or None
         1-d numpy array of averaged vgrad in the square bracket.
-        If *vgrad* = None, *brac* = None.
-
+        If `vgrad` is None, `brac` is None.
     """
-
     vort_min = np.min([vort.min(), vort.min()])
     vort_max = np.max([vort.max(), vort.max()])
     q_part_u = np.linspace(vort_min, vort_max, n_points, endpoint=True)
@@ -134,15 +139,19 @@ def eqvlat_vgrad(ylat, vort, area, n_points, planet_radius=6.378e+6, vgrad=None)
     return q_part, brac_return
 
 
-def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=None):
+def lwa(
+        nlon: int, nlat: int, vort: np.ndarray, q_part: np.ndarray, dmu: np.ndarray,
+        return_partitioned_lwa: bool = False,
+        ncforce: Optional[np.ndarray] = None) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+    """Calculate local wave activity.
 
-    """
     At each grid point of vorticity q(x,y) and reference state vorticity Q(y),
-    this function calculate the difference between the line integral of [q(x,y+y')-Q(y)]
-    (and ncforce, if given) over the domain {y+y'>y,q(x,y+y')<Q(y)} and {y+y'<y,q(x,y+y')>Q(y)}.
+    this function calculate the difference between the line integral of
+    [q(x,y+y')-Q(y)] (and ncforce, if given) over the domain
+    {y+y'>y,q(x,y+y')<Q(y)} and {y+y'<y,q(x,y+y')>Q(y)}.
     See fig. (1) and equation (13) of Huang and Nakamura (2016).
-    dmu is a vector of length nlat: dmu = cos(phi) d(phi) such that phi is the latitude.
-
+    dmu is a vector of length nlat: dmu = cos(phi) d(phi) such that phi is the
+    latitude.
 
     Parameters
     ----------
@@ -150,29 +159,34 @@ def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=Non
         Longitudinal dimension of vort (i.e. vort.shape[1]).
     nlat : int
         Latitudinal dimension of vort (i.e. vort.shape[0]).
-    vort : ndarray
+    vort : np.ndarray
         2-d numpy array of vorticity values; dimension = (nlat,nlon).
-    Q_part: sequence or array_like
-        1-d numpy array of Q (vorticity reference state) as a function of latitude. Size = nlat.
-    dmu: sequence or array_like
-        1-d numpy array of latitudinal differential length element (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
-    return_partitioned_lwa: bool
-        If True, return local wave activity as a stacked field of cyclonic and anticyclonic components.
-        If False, return a single field of local wave activity of dimension (nlat, nlon). Default is False.
-
-    ncforce: ndarray or None, optional
-        2-d numpy array of non-conservative force field (i.e. theta in NZ10(a) in equation (23a) and (23b))
+    q_part : np.ndarray
+        1-d numpy array of Q (vorticity reference state) as a function of
+        latitude. Size = nlat.
+    dmu : np.ndarray
+        1-d numpy array of latitudinal differential length element
+        (e.g. dmu = planet_radius * cos(lat) d(lat)). Size = nlat.
+    return_partitioned_lwa : bool, optional
+        If True, return local wave activity as a stacked field of cyclonic and
+        anticyclonic components. If False, return a single field of local wave
+        activity of dimension (nlat, nlon). Default is False.
+    ncforce : np.ndarray or None, optional
+        2-d numpy array of non-conservative force field (i.e. theta in NZ10(a)
+        in equation (23a) and (23b)).
 
     Returns
     -------
-    lwact : ndarray
-        If return_partitioned_lwa = True, return the cyclonic and anticyclonic components of local wave activity in a
-        numpy array of dimension (2, nlat, nlon).
-        If return_partitioned_lwa = True, return a single field of local wave activity in a numpy array of dimension (nlat, nlon).
-    bigsigma : ndarray or None
-        2-d numpy array of the nonconservative forces acting on local wave activity computed from *ncforce*.
-        If *ncforce* = None, *bigsigma* = None.
-
+    lwact : np.ndarray
+        If return_partitioned_lwa = True, return the cyclonic and anticyclonic
+        components of local wave activity in a numpy array of dimension
+        (2, nlat, nlon).
+        If return_partitioned_lwa = False, return a single field of local wave
+        activity in a numpy array of dimension (nlat, nlon).
+    bigsigma : np.ndarray or None
+        2-d numpy array of the nonconservative forces acting on local wave
+        activity computed from `ncforce`. If `ncforce` is None, `bigsigma` is
+        None.
     """
 
     return_array = np.zeros((2, nlat, nlon))  # First dim being anticyclonic and second being cyclonic

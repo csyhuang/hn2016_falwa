@@ -5,54 +5,53 @@ Author: Clare Huang
 """
 import numpy as np
 from math import pi, exp
+from typing import Optional, Tuple
 
 
-def static_stability(height, area, theta, s_et=None, n_et=None):
-    """
-    The function "static_stability" computes the vertical gradient (z-derivative)
-    of hemispheric-averaged potential temperature, i.e. d\tilde{theta}/dz in the def-
-    inition of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
-    At the boundary, the static stability is estimated by forward/backward differen-
-    cing involving two adjacent z-grid points:
+def static_stability(height: np.ndarray, area: np.ndarray, theta: np.ndarray,
+                     s_et: Optional[int] = None, n_et: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the vertical gradient of hemispheric-averaged potential temperature.
+
+    This computes d(theta)/dz, i.e. the static stability term in the definition
+    of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
+    At the boundary, the static stability is estimated by forward/backward
+    differencing involving two adjacent z-grid points:
 
         i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])
             stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])
 
-    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
-
+    Please make inquiries and report issues via Github:
+    https://github.com/csyhuang/hn2016_falwa/issues
 
     Parameters
     ----------
-    height : numpy.array
-        Array of z-coordinate [in meters] with dimension = (kmax), equally spaced
-    area : numpy.ndarray
-        Two-dimension numpy array specifying differential areal element of each grid point;
-        dimension = (nlat, nlon).
-    theta : numpy.ndarray
-        Matrix of potential temperature [K] with dimension (kmax,nlat,nlon) or (kmax,nlat)
+    height : np.ndarray
+        Array of z-coordinate [in meters] with dimension (kmax,), equally spaced.
+    area : np.ndarray
+        Two-dimension numpy array specifying differential areal element of each
+        grid point; dimension = (nlat, nlon).
+    theta : np.ndarray
+        Matrix of potential temperature [K] with dimension (kmax, nlat, nlon)
+        or (kmax, nlat).
     s_et : int, optional
-        Index of the latitude that defines the boundary of the Southern hemispheric domain;
-        initialized as nlat/2 if not input
+        Index of the latitude that defines the boundary of the Southern
+        hemispheric domain. Defaults to nlat/2.
     n_et : int, optional
-        Index of the latitude that defines the boundary of the Southern hemispheric domain;
-        initialized as nlat/2 if not input
-
+        Index of the latitude that defines the boundary of the Northern
+        hemispheric domain. Defaults to nlat/2.
 
     Returns
     -------
-    t0_n : numpy.array
-        Area-weighted average of potential temperature (\tilde{\theta} in HN16)
-        in the Northern hemispheric domain with dimension = (kmax)
-    t0_s : numpy.array
-        Area-weighted average of potential temperature (\tilde{\theta} in HN16)
-        in the Southern hemispheric domain with dimension = (kmax)
-    stat_n : numpy.array
-        Static stability (d\tilde{\theta}/dz in HN16) in the Northern hemispheric
-        domain with dimension = (kmax)
-    stat_s : numpy.array
-        Static stability (d\tilde{\theta}/dz in HN16) in the Southern hemispheric
-        domain with dimension = (kmax)
-
+    t0_n : np.ndarray
+        Area-weighted average of potential temperature in the Northern
+        hemispheric domain with dimension (kmax,).
+    t0_s : np.ndarray
+        Area-weighted average of potential temperature in the Southern
+        hemispheric domain with dimension (kmax,).
+    stat_n : np.ndarray
+        Static stability in the Northern hemispheric domain with dimension (kmax,).
+    stat_s : np.ndarray
+        Static stability in the Southern hemispheric domain with dimension (kmax,).
     """
 
     nlat = theta.shape[1]
@@ -92,18 +91,21 @@ def static_stability(height, area, theta, s_et=None, n_et=None):
     return t0_n, t0_s, stat_n, stat_s
 
 
-def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
-                           potential_temp, t0_cn, t0_cs, stat_cn,
-                           stat_cs, nlat_s=None, scale_height=7000.):
-    """
-    The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential vorticity based on the absolute vorticity, potential temperature and static stability given in a *hemispheric domain*.
+def compute_qgpv_givenvort(
+        omega: float, nlat: int, nlon: int, kmax: int, unih: np.ndarray, ylat: np.ndarray,
+        avort: np.ndarray, potential_temp: np.ndarray, t0_cn: np.ndarray, t0_cs: np.ndarray,
+        stat_cn: np.ndarray, stat_cs: np.ndarray, nlat_s: Optional[int] = None,
+        scale_height: float = 7000.) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute QGPV from absolute vorticity, potential temperature and static stability.
 
-    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
+    The computation is done for a hemispheric domain.
 
+    Please make inquiries and report issues via Github:
+    https://github.com/csyhuang/hn2016_falwa/issues
 
     Parameters
     ----------
-    omega : float, optional
+    omega : float
         Rotation rate of the planet.
     nlat : int
         Latitudinal dimension of the latitude grid.
@@ -111,41 +113,40 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
         Longitudinal dimension of the longitude grid.
     kmax : int
         Vertical dimension of the height grid.
-    unih : numpy.array
-        Numpy array of height in [meters]; dimension = (kmax)
-    ylat : numpy.array
-        Numpy array of latitudes in [degrees]; dimension = (nlat)
-    avort : numpy.ndarray
-        Three-dimension numpy array of absolute vorticity (i.e. relative vorticity
-        + 2*Omega*sin(lat)) in [1/s]; dimension = (kmax x nlat x nlon)
-    potential_temp : numpy.ndarray
-        Three-dimension numpy array of potential temperature in [K];
-        dimension = (kmax x nlat x nlon)
-    t0_cn : numpy.array
-        Area-weighted average of potential temperature (\tilde{\theta} in HN16)
-        in the Northern hemispheric domain with dimension = (kmax)
-    t0_cs : numpy.array
-        Area-weighted average of potential temperature (\tilde{\theta} in HN16)
-        in the Southern hemispheric domain with dimension = (kmax)
-    stat_cn : numpy.array
-        Static stability (d\tilde{\theta}/dz in HN16) in the Northern hemispheric
-        domain with dimension = (kmax)
-    stat_cs : numpy.array
-        Static stability (d\tilde{\theta}/dz in HN16) in the Southern hemispheric
-        domain with dimension = (kmax)
-    scale_height : float
-        Scale height of the atmosphere in [m] with default value 7000.
-
+    unih : np.ndarray
+        Numpy array of height in [meters]; dimension = (kmax,).
+    ylat : np.ndarray
+        Numpy array of latitudes in [degrees]; dimension = (nlat,).
+    avort : np.ndarray
+        3D numpy array of absolute vorticity (relative vorticity + planetary
+        vorticity) in [1/s]; dimension = (kmax, nlat, nlon).
+    potential_temp : np.ndarray
+        3D numpy array of potential temperature in [K];
+        dimension = (kmax, nlat, nlon).
+    t0_cn : np.ndarray
+        Area-weighted average of potential temperature in the Northern
+        hemispheric domain with dimension (kmax,).
+    t0_cs : np.ndarray
+        Area-weighted average of potential temperature in the Southern
+        hemispheric domain with dimension (kmax,).
+    stat_cn : np.ndarray
+        Static stability in the Northern hemispheric domain with dimension (kmax,).
+    stat_cs : np.ndarray
+        Static stability in the Southern hemispheric domain with dimension (kmax,).
+    nlat_s : int, optional
+        Latitudinal index for the poleward boundary of the hemisphere.
+        Defaults to nlat // 2.
+    scale_height : float, optional
+        Scale height of the atmosphere in [m]. Default is 7000.
 
     Returns
     -------
-    QGPV : numpy.ndarray
-        Three-dimension numpy array of quasi-geostrophic potential vorticity;
-        dimension = (kmax x nlat x nlon)
-    dzdiv : numpy.ndarray
-        Three-dimension numpy array of the stretching term in QGPV;
-        dimension = (kmax x nlat x nlon)
-
+    QGPV : np.ndarray
+        3D numpy array of quasi-geostrophic potential vorticity;
+        dimension = (kmax, nlat, nlon).
+    dzdiv : np.ndarray
+        3D numpy array of the stretching term in QGPV;
+        dimension = (kmax, nlat, nlon).
     """
 
     if nlat_s is None:
@@ -186,37 +187,37 @@ def compute_qgpv_givenvort(omega, nlat, nlon, kmax, unih, ylat, avort,
     return qgpv, dzdiv
 
 
-def zonal_convergence(field, clat, dlambda, planet_radius=6.378e+6, tol=1.e-5):
+def zonal_convergence(field: np.ndarray, clat: np.ndarray, dlambda: float,
+                      planet_radius: float = 6.378e+6, tol: float = 1.e-5) -> np.ndarray:
+    """Compute the zonal component of the convergence operator of a field.
 
-    """
-    The function "zonal_convergence" computes the zonal component of the convergence operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
+    This computes on the spherical surface:
     -1/(planet_radius * cos(lat)) * partial d(f(lat, lon))/partial d(lon)
 
-    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
+    Please make inquiries and report issues via Github:
+    https://github.com/csyhuang/hn2016_falwa/issues
 
     Parameters
     ----------
-    field : numpy.ndarray
-        An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]
-
-    clat : numpy.array
-        Numpy array of cosine latitude; dimension [nlat]
-
+    field : np.ndarray
+        An arbitrary field to compute zonal divergence on, with
+        dimension (nlat, nlon).
+    clat : np.ndarray
+        Numpy array of cosine latitude; dimension (nlat,).
     dlambda : float
-        Differential element of longitude
-
+        Differential element of longitude.
     planet_radius : float, optional
-        Radius of the planet in meters.
-        Default = 6.378e+6 (Earth's radius)
-
+        Radius of the planet in meters. Default is 6.378e+6 (Earth's radius).
     tol : float, optional
-        Tolerance below which clat is considered infinitely small that the corresponding grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5
+        Tolerance below which clat is considered zero. Grid points with
+        clat below tolerance will have a returned result of 0 to avoid
+        division by zero. Default is 1.e-5.
 
     Returns
     -------
-    ans : numpy.ndarray
-        Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]
-
+    np.ndarray
+        Zonal convergence of field with the same dimension as field,
+        i.e., (nlat, nlon).
     """
 
     zonal_diff = np.zeros_like(field)
@@ -233,10 +234,31 @@ def zonal_convergence(field, clat, dlambda, planet_radius=6.378e+6, tol=1.e-5):
     return zonal_diff
 
 
-def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
-    """
-    Assuming regular latitude and longitude [in degree] grid, compute the curl
-    of velocity on a pressure level in spherical coordinates.
+def curl_2d(ufield: np.ndarray, vfield: np.ndarray, clat: np.ndarray, dlambda: float,
+            dphi: float, planet_radius: float = 6.378e+6) -> np.ndarray:
+    """Compute the curl of velocity on a pressure level in spherical coordinates.
+
+    Assumes regular latitude and longitude [in degree] grid.
+
+    Parameters
+    ----------
+    ufield : np.ndarray
+        2D array of zonal wind.
+    vfield : np.ndarray
+        2D array of meridional wind.
+    clat : np.ndarray
+        1D array of cosine of latitude.
+    dlambda : float
+        Grid spacing in longitude in radians.
+    dphi : float
+        Grid spacing in latitude in radians.
+    planet_radius : float, optional
+        Radius of the planet. Default is Earth's radius (6.378e+6 m).
+
+    Returns
+    -------
+    np.ndarray
+        2D array of the vertical component of the curl.
     """
 
     ans = np.zeros_like(ufield)
@@ -256,28 +278,37 @@ def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
 
 
 def z_derivative_of_prod(
-    stat_n: np.array, stat_s: np.array, kmax: int, equator_idx: int, dz: float, density_decay: np.array,
-    gfunc: np.ndarray, multiplier: np.ndarray):
-    """
-    Compute the expression:
+    stat_n: np.ndarray, stat_s: np.ndarray, kmax: int, equator_idx: int, dz: float,
+    density_decay: np.ndarray, gfunc: np.ndarray, multiplier: np.ndarray) -> np.ndarray:
+    """Compute the z-derivative of a product involving static stability.
 
-        f exp^{z/H} d/dz [ exp^{-z/H}/static_stability * g(z, \\phi, \\lambda) ]
+    This computes the expression:
+
+        f * exp(z/H) * d/dz [ exp(-z/H) / static_stability * g(z, phi, lambda) ]
 
     Parameters
     ----------
-    stat_n : numpy.ndarray of dim (kmax). Static stability per pressure level.
-    stat_s : numpy.ndarray of dim (kmax). Static stability per pressure level.
-    kmax : integer. Number of pseudoheight levels.
-    equator_idx: integer. Latitudinal index of the equator (\\phi = 0).
-    dz : float. Differential element of pseudoheight.
-    density_decay : numpy.ndarray of dim (kmax). Explicitly, exp^{-z/H}.
-    gfunc : numpy.ndarray of dim (kmax, nlat, nlon). Explicitly, g(z, \\phi, \\lambda)
-    multiplier: numpy.ndarray of dim (kmax, nlat). Explicitly, f * exp^{-z/H} where f is Coriolis parameter.
+    stat_n : np.ndarray
+        Static stability per pressure level in Northern Hemisphere. Dim (kmax,).
+    stat_s : np.ndarray
+        Static stability per pressure level in Southern Hemisphere. Dim (kmax,).
+    kmax : int
+        Number of pseudoheight levels.
+    equator_idx : int
+        Latitudinal index of the equator (phi = 0).
+    dz : float
+        Differential element of pseudoheight.
+    density_decay : np.ndarray
+        exp(-z/H). Dim (kmax,).
+    gfunc : np.ndarray
+        g(z, phi, lambda). Dim (kmax, nlat, nlon).
+    multiplier : np.ndarray
+        f * exp(z/H), where f is Coriolis parameter. Dim (kmax, nlat).
 
     Returns
     -------
-    numpy.ndarray
-        Array of dim (kmax, nlat, nlon) that is the result
+    np.ndarray
+        Array of dim (kmax, nlat, nlon) that is the result.
     """
     # Make static_stability_temp (kmax, nlat) ndarray
     static_stability_temp = np.concatenate([

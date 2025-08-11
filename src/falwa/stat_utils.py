@@ -7,14 +7,20 @@ import itertools
 import numpy as np
 
 
-def calculate_covariance(var_a, var_b):
-    """
-    Calculate covariance of two variables in time.
-    Args:
-        var_a: a numpy array or handle that can access elements via [time, lat, lon]
-        var_b: a numpy array or handle that can access elements via [time, lat, lon]
-    Returns:
-        cov_map in dimension of (lat, lon)
+def calculate_covariance(var_a: np.ndarray, var_b: np.ndarray) -> np.ndarray:
+    """Calculate covariance of two variables in time.
+
+    Parameters
+    ----------
+    var_a : np.ndarray
+        A numpy array with dimensions (time, lat, lon).
+    var_b : np.ndarray
+        A numpy array with dimensions (time, lat, lon).
+
+    Returns
+    -------
+    np.ndarray
+        Covariance map with dimensions (lat, lon).
     """
     lat_dim = var_a.shape[1]
     lon_dim = var_a.shape[2]
