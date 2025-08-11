@@ -84,7 +84,6 @@ Modules
    :maxdepth: 2
    :caption: Modules
 
-   Example Notebooks
    Object Oriented Interface
    Data Storage
    Xarray Interface
@@ -95,6 +94,12 @@ Modules
    Statistics Utilities
    Basis Functions
    Wrapper Functions
+
+Examples
+========
+   :caption: Examples
+
+   Example Notebooks
 
 Notes
 ========
