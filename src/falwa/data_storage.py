@@ -155,10 +155,10 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
     """Stores 3D fields on interpolated grids.
 
     This class stores:
-    - u
-    - v
-    - theta (potential temperature)
-    - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
+        - u
+        - v
+        - theta (potential temperature)
+        - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
 
     Fortran dimension: (nlon, nlat, kmax)
 
@@ -189,9 +189,9 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     """Stores height-latitude 2D fields on interpolated grids.
 
     This class stores:
-    - uref
-    - qref (it actually stores qref/f, where f is Coriolis parameter)
-    - tref (potential temperature reference state)
+        - uref
+        - qref (it actually stores qref/f, where f is Coriolis parameter)
+        - tref (potential temperature reference state)
 
     Fortran dimension: (nlat, kmax)
 
@@ -324,13 +324,13 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
     """Stores vertically integrated derived quantities on a lat-lon 2D grid.
 
     This class stores:
-    - adv_flux_f1
-    - adv_flux_f2
-    - adv_flux_f3
-    - zonal_adv_flux
-    - convergence_zonal_advective_flux
-    - divergence_eddy_momentum_flux
-    - meridional_heat_flux
+        - adv_flux_f1
+        - adv_flux_f2
+        - adv_flux_f3
+        - zonal_adv_flux
+        - convergence_zonal_advective_flux
+        - divergence_eddy_momentum_flux
+        - meridional_heat_flux
 
     Variables are stored in **Python indexing order**: (nlat, nlon)
 
@@ -366,6 +366,17 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     """Stores intermediate computed quantities on a lat-lon 2D grid.
 
     Variables are stored in Fortran indexing order: (nlon, nlat)
+
+    This class stores:
+        - ua1baro
+        - ua2baro
+        - ep1baro
+        - ep2baro
+        - ep3baro
+        - ep4
+        - ncforce_baro
+        - u_baro
+        - lwa_baro
 
     Parameters
     ----------
