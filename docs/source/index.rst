@@ -97,7 +97,10 @@ Modules
 
 Examples
 ========
-   :caption: Examples
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Modules
 
    Example Notebooks
 
