@@ -82,6 +82,7 @@ Modules
 
 .. toctree::
    :maxdepth: 2
+   :caption: Modules
 
    Example Notebooks
    Object Oriented Interface
@@ -100,6 +101,7 @@ Notes
 
 .. toctree::
    :maxdepth: 2
+   :caption: Notes
 
    Preprocessing
    Memo for Developers
