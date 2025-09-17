@@ -12,10 +12,10 @@ def static_stability(height: np.ndarray, area: np.ndarray, theta: np.ndarray,
                      s_et: Optional[int] = None, n_et: Optional[int] = None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Compute the vertical gradient of hemispheric-averaged potential temperature.
 
-    This computes d(theta)/dz, i.e. the static stability term in the definition
-    of QGPV in eq.(3) of Huang and Nakamura (2016), by central differencing.
-    At the boundary, the static stability is estimated by forward/backward
-    differencing involving two adjacent z-grid points:
+    This computes d(theta)/dz, i.e. the static stability term d\tilde{theta}/dz
+    in the definition of QGPV in eq.(3) of Huang and Nakamura (2016), by central
+    differencing. At the boundary, the static stability is estimated by
+    forward/backward differencing involving two adjacent z-grid points:
 
         i.e. stat_n[0] = (t0_n[1] - t0_n[0]) / (height[1] - height[0])
             stat_n[-1] = (t0_n[-2] - t0_n[-1]) / (height[-2] - height[-1])
@@ -43,10 +43,10 @@ def static_stability(height: np.ndarray, area: np.ndarray, theta: np.ndarray,
     Returns
     -------
     t0_n : np.ndarray
-        Area-weighted average of potential temperature in the Northern
+        Area-weighted average of potential temperature (\tilde{\theta}} in HN16) in the Northern
         hemispheric domain with dimension (kmax,).
     t0_s : np.ndarray
-        Area-weighted average of potential temperature in the Southern
+        Area-weighted average of potential temperature (\tilde{\theta}} in HN16) in the Southern
         hemispheric domain with dimension (kmax,).
     stat_n : np.ndarray
         Static stability in the Northern hemispheric domain with dimension (kmax,).
@@ -96,7 +96,9 @@ def compute_qgpv_givenvort(
         avort: np.ndarray, potential_temp: np.ndarray, t0_cn: np.ndarray, t0_cs: np.ndarray,
         stat_cn: np.ndarray, stat_cs: np.ndarray, nlat_s: Optional[int] = None,
         scale_height: float = 7000.) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute QGPV from absolute vorticity, potential temperature and static stability.
+    """
+    The function "compute_qgpv_givenvort" computes the quasi-geostrophic potential vorticity based on the
+    absolute vorticity, potential temperature and static stability given in a *hemispheric domain*.
 
     The computation is done for a hemispheric domain.
 
@@ -119,7 +121,7 @@ def compute_qgpv_givenvort(
         Numpy array of latitudes in [degrees]; dimension = (nlat,).
     avort : np.ndarray
         3D numpy array of absolute vorticity (relative vorticity + planetary
-        vorticity) in [1/s]; dimension = (kmax, nlat, nlon).
+        vorticity 2*Omega*sin(lat)) in [1/s]; dimension = (kmax, nlat, nlon).
     potential_temp : np.ndarray
         3D numpy array of potential temperature in [K];
         dimension = (kmax, nlat, nlon).

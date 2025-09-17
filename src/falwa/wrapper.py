@@ -107,7 +107,8 @@ def eqvlat_hemispheric(
         ylat: np.ndarray, vort: np.ndarray, area: np.ndarray,
         nlat_s: Optional[int] = None, n_points: Optional[int] = None,
         planet_radius: float = EARTH_RADIUS) -> np.ndarray:
-    """Compute equivalent latitude in a hemispheric domain.
+    """
+    Compute equivalent latitude in a hemispheric domain.
 
     Parameters
     ----------

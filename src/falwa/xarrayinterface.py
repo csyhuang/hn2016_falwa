@@ -119,7 +119,7 @@ class _MetadataServiceProvider:
 
     # xarray convenience functions
 
-    def iter_other(self) -> "itertools.product":
+    def iter_other(self):
         """Iterate over coordinates in flattened order"""
         coords = (self.other_coords[dim].values for dim in self.other_dims)
         for values in itertools.product(*coords):
@@ -288,7 +288,7 @@ class QGDataset:
         If the auto-detection of variable or coordinate names fails, provide
         a lookup table that maps `plev`, `ylat`, `xlon`, `u`, `v` and/or `t` to
         the names used in the dataset.
-    qgfield : type, optional
+    qgfield : QGField class, optional
         The QGField class to use in the computation. Default:
         :py:class:`oopinterface.QGFieldNH18`.
     qgfield_args : tuple, optional
