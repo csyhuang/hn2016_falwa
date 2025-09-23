@@ -5,15 +5,15 @@ SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, kmax, jd, uq, vq, tq, height, &
 
 
   INTEGER, INTENT(IN) :: nlon, nlat, kmax, jd
-  REAL, INTENT(IN) :: uq(nlon,nlat,kmax), vq(nlon,nlat,kmax), tq(nlon,nlat,kmax), height(kmax)
+  REAL, INTENT(IN) :: uq(kmax,nlat,nlon), vq(kmax,nlat,nlon), tq(kmax,nlat,nlon), height(kmax)
   REAL, INTENT(in) :: stats(kmax), statn(kmax), ts0(kmax), tn0(kmax)
   REAL, INTENT(in) :: aa, omega, dz,  hh, rr, cp
-  REAL, INTENT(out) :: pv(nlon,nlat,kmax), avort(nlon,nlat,kmax)
+  REAL, INTENT(out) :: pv(kmax,nlat,nlon), avort(kmax,nlat,nlon)
 
-   real ::  tzd(nlat,kmax)
+   real ::  tzd(kmax,nlat)
    !real ::  st(nlon,nlat),zmst(nlat)
-   real ::  zmav(nlat,kmax)
-   real ::  zmpv(nlat,kmax)
+   real ::  zmav(kmax,nlat)
+   real ::  zmpv(kmax,nlat)
    integer :: k0(kmax),kp(kmax)
 
    rkappa = rr/cp
@@ -33,39 +33,39 @@ SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, kmax, jd, uq, vq, tq, height, &
 
       do i = 2,nlon-1
         av1 = 2.*omega*sin(phi0)
-        av2 = (vq(i+1,j,kk)-vq(i-1,j,kk))/(2.*aa*cos(phi0)*dphi)
-        av3 = -(uq(i,j+1,kk)*cos(phip)-uq(i,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-        avort(i,j,kk) = av1+av2+av3
+        av2 = (vq(kk,j,i+1)-vq(kk,j,i-1))/(2.*aa*cos(phi0)*dphi)
+        av3 = -(uq(kk,j+1,i)*cos(phip)-uq(kk,j-1,i)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+        avort(kk,j,i) = av1+av2+av3
       enddo
 
       av1 = 2.*omega*sin(phi0)
-      av2 = (vq(2,j,kk)-vq(nlon,j,kk))/(2.*aa*cos(phi0)*dphi)
-      av3 = -(uq(1,j+1,kk)*cos(phip)-uq(1,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-      avort(1,j,kk) = av1+av2+av3
+      av2 = (vq(kk,j,2)-vq(kk,j,nlon))/(2.*aa*cos(phi0)*dphi)
+      av3 = -(uq(kk,j+1,1)*cos(phip)-uq(kk,j-1,1)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+      avort(kk,j,1) = av1+av2+av3
       av4 = 2.*omega*sin(phi0)
-      av5 = (vq(1,j,kk)-vq(nlon-1,j,kk))/(2.*aa*cos(phi0)*dphi)
+      av5 = (vq(kk,j,1)-vq(kk,j,nlon-1))/(2.*aa*cos(phi0)*dphi)
       av6 =   &
-      -(uq(nlon,j+1,kk)*cos(phip)-uq(nlon,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-      avort(nlon,j,kk) = av4+av5+av6
+      -(uq(kk,j+1,nlon)*cos(phip)-uq(kk,j-1,nlon)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+      avort(kk,j,nlon) = av4+av5+av6
     enddo
 
     avs = 0.
     avn = 0.
     do i = 1,nlon
-      avs = avs + avort(i,2,kk)/float(nlon)
-      avn = avn + avort(i,nlat-1,kk)/float(nlon)
+      avs = avs + avort(kk,2,i)/float(nlon)
+      avn = avn + avort(kk,nlat-1,i)/float(nlon)
     enddo
-    avort(:,1,kk) = avs
-    avort(:,nlat,kk) = avn
+    avort(kk,1,:) = avs
+    avort(kk,nlat,:) = avn
   enddo
 
   ! zonal mean vort
 
   do kk = 1,kmax
     do j = 1,nlat
-      zmav(j,kk) = 0.
+      zmav(kk,j) = 0.
       do i = 1,nlon
-        zmav(j,kk) = zmav(j,kk)+avort(i,j,kk)/float(nlon)
+        zmav(kk,j) = zmav(kk,j)+avort(kk,j,i)/float(nlon)
       enddo
     enddo
   enddo
@@ -89,12 +89,12 @@ SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, kmax, jd, uq, vq, tq, height, &
       endif
 
       do i = 1,nlon
-        thetap = tq(i,j,kk+1)
-        thetam = tq(i,j,kk-1)
+        thetap = tq(kk+1,j,i)
+        thetam = tq(kk-1,j,i)
         altp = exp(-height(kk+1)/hh)*(thetap-t00p)/statp
         altm = exp(-height(kk-1)/hh)*(thetam-t00m)/statm
         strc = (altp-altm)*f/(height(kk+1)-height(kk-1))
-        pv(i,j,kk) = avort(i,j,kk) + exp(height(kk)/hh)*strc
+        pv(kk,j,i) = avort(kk,j,i) + exp(height(kk)/hh)*strc
       enddo
     enddo
   enddo
@@ -103,9 +103,9 @@ SUBROUTINE compute_qgpv_direct_inv(nlon, nlat, kmax, jd, uq, vq, tq, height, &
 
   do kk = 1,kmax
     do j = 1,nlat
-      zmpv(j,kk) = 0.
+      zmpv(kk,j) = 0.
       do i = 1,nlon
-        zmpv(j,kk) = zmpv(j,kk)+pv(i,j,kk)/float(nlon)
+        zmpv(kk,j) = zmpv(kk,j)+pv(kk,j,i)/float(nlon)
       enddo
     enddo
   enddo

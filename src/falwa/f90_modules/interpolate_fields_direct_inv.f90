@@ -4,18 +4,18 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
 
 
   INTEGER, INTENT(IN) :: nlon, nlat, nlev, kmax, jd
-  REAL, INTENT(IN) :: uu(nlon,nlat,nlev), vv(nlon,nlat,nlev), tt(nlon,nlat,nlev), &
+  REAL, INTENT(IN) :: uu(nlev,nlat,nlon), vv(nlev,nlat,nlon), tt(nlev,nlat,nlon), &
             plev(nlev)
   REAL, INTENT(in) :: aa, omega, dz,hh, rr, cp
-  REAL, INTENT(out) :: pv(nlon,nlat,kmax), uq(nlon,nlat,kmax), vq(nlon,nlat,kmax), avort(nlon,nlat,kmax)
-  REAL, INTENT(out) :: tq(nlon,nlat,kmax), statn(kmax), stats(kmax), tn0(kmax), ts0(kmax)
+  REAL, INTENT(out) :: pv(kmax,nlat,nlon), uq(kmax,nlat,nlon), vq(kmax,nlat,nlon), avort(kmax,nlat,nlon)
+  REAL, INTENT(out) :: tq(kmax,nlat,nlon), statn(kmax), stats(kmax), tn0(kmax), ts0(kmax)
 
-   real ::  tzd(nlat,kmax)
+   real ::  tzd(kmax,nlat)
    real ::  height(kmax)
    real ::  zlev(nlev)
-   real ::  st(nlon,nlat),zmst(nlat)
-   real ::  zmav(nlat,kmax)
-   real ::  zmpv(nlat,kmax)
+   real ::  st(nlat,nlon),zmst(nlat)
+   real ::  zmav(kmax,nlat)
+   real ::  zmpv(kmax,nlat)
    integer :: k0(kmax),kp(kmax)
    real :: dd2(kmax),dd1(kmax),pks(kmax)
 
@@ -57,20 +57,20 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
   do i = 1,nlon
     do j = 1,nlat
 
-      st(i,j) = tt(i,j,1)      ! surface pot. temp
+      st(j,i) = tt(1,j,i)      ! surface pot. temp
 
       do kk = 2,kmax   ! vertical interpolation
-        uq(i,j,kk) = uu(i,j,k0(kk))*dd2(kk) + uu(i,j,kp(kk))*dd1(kk)
-        vq(i,j,kk) = vv(i,j,k0(kk))*dd2(kk) + vv(i,j,kp(kk))*dd1(kk)
+        uq(kk,j,i) = uu(k0(kk),j,i)*dd2(kk) + uu(kp(kk),j,i)*dd1(kk)
+        vq(kk,j,i) = vv(k0(kk),j,i)*dd2(kk) + vv(kp(kk),j,i)*dd1(kk)
         !     wq(i,j,kk) = ww(i,j,k0(kk))*dd2(kk) + ww(i,j,kp(kk))*dd1(kk)
-        tq(i,j,kk) = tt(i,j,k0(kk))*dd2(kk) + tt(i,j,kp(kk))*dd1(kk)
-        tq(i,j,kk) = tq(i,j,kk)*pks(kk)  ! potential temperature
+        tq(kk,j,i) = tt(k0(kk),j,i)*dd2(kk) + tt(kp(kk),j,i)*dd1(kk)
+        tq(kk,j,i) = tq(kk,j,i)*pks(kk)  ! potential temperature
         !     zq(i,j,kk) = zz(i,j,k0(kk))*dd2(kk) + zz(i,j,kp(kk))*dd1(kk)
       enddo
 
-      tq(i,j,1) = tt(i,j,1)
-      uq(i,j,1) = uu(i,j,1)
-      vq(i,j,1) = vv(i,j,1)
+      tq(1,j,i) = tt(1,j,i)
+      uq(1,j,i) = uu(1,j,i)
+      vq(1,j,i) = vv(1,j,i)
       !     wq(i,j,1) = ww(i,j,1)
       !     zq(i,j,1) = zz(i,j,1)
     enddo
@@ -83,7 +83,7 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
   do j = 1,nlat
     do k = 1,kmax
       do i = 1,nlon
-        tzd(j,k) = tzd(j,k) + tq(i,j,k)/float(nlon)
+        tzd(k,j) = tzd(k,j) + tq(k,j,i)/float(nlon)
       enddo
     enddo
   enddo
@@ -97,13 +97,13 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
     cnm = 0.
     do j = 1,jd
       phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
-      ts0(kk) = ts0(kk) + tzd(j,kk)*cos(phi0)
+      ts0(kk) = ts0(kk) + tzd(kk,j)*cos(phi0)
       csm = csm + cos(phi0)
     enddo
     ts0(kk) = ts0(kk)/csm
     do j = jd,nlat
       phi0 = -0.5*pi + pi*float(j-1)/float(nlat-1)
-      tn0(kk) = tn0(kk) + tzd(j,kk)*cos(phi0)
+      tn0(kk) = tn0(kk) + tzd(kk,j)*cos(phi0)
       cnm = cnm + cos(phi0)
     enddo
     tn0(kk) = tn0(kk)/cnm
@@ -124,7 +124,7 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
   do j = 1,nlat
     zmst(j) = 0.
     do i = 1,nlon
-      zmst(j) = zmst(j) + st(i,j)/float(nlon)
+      zmst(j) = zmst(j) + st(j,i)/float(nlon)
     enddo
   enddo
 
@@ -138,39 +138,39 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
 
       do i = 2,nlon-1
         av1 = 2.*omega*sin(phi0)
-        av2 = (vq(i+1,j,kk)-vq(i-1,j,kk))/(2.*aa*cos(phi0)*dphi)
-        av3 = -(uq(i,j+1,kk)*cos(phip)-uq(i,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-        avort(i,j,kk) = av1+av2+av3
+        av2 = (vq(kk,j,i+1)-vq(kk,j,i-1))/(2.*aa*cos(phi0)*dphi)
+        av3 = -(uq(kk,j+1,i)*cos(phip)-uq(kk,j-1,i)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+        avort(kk,j,i) = av1+av2+av3
       enddo
 
       av1 = 2.*omega*sin(phi0)
-      av2 = (vq(2,j,kk)-vq(nlon,j,kk))/(2.*aa*cos(phi0)*dphi)
-      av3 = -(uq(1,j+1,kk)*cos(phip)-uq(1,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-      avort(1,j,kk) = av1+av2+av3
+      av2 = (vq(kk,j,2)-vq(kk,j,nlon))/(2.*aa*cos(phi0)*dphi)
+      av3 = -(uq(kk,j+1,1)*cos(phip)-uq(kk,j-1,1)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+      avort(kk,j,1) = av1+av2+av3
       av4 = 2.*omega*sin(phi0)
-      av5 = (vq(1,j,kk)-vq(nlon-1,j,kk))/(2.*aa*cos(phi0)*dphi)
+      av5 = (vq(kk,j,1)-vq(kk,j,nlon-1))/(2.*aa*cos(phi0)*dphi)
       av6 =   &
-      -(uq(nlon,j+1,kk)*cos(phip)-uq(nlon,j-1,kk)*cos(phim))/(2.*aa*cos(phi0)*dphi)
-      avort(nlon,j,kk) = av4+av5+av6
+      -(uq(kk,j+1,nlon)*cos(phip)-uq(kk,j-1,nlon)*cos(phim))/(2.*aa*cos(phi0)*dphi)
+      avort(kk,j,nlon) = av4+av5+av6
     enddo
 
     avs = 0.
     avn = 0.
     do i = 1,nlon
-      avs = avs + avort(i,2,kk)/float(nlon)
-      avn = avn + avort(i,nlat-1,kk)/float(nlon)
+      avs = avs + avort(kk,2,i)/float(nlon)
+      avn = avn + avort(kk,nlat-1,i)/float(nlon)
     enddo
-    avort(:,1,kk) = avs
-    avort(:,nlat,kk) = avn
+    avort(kk,1,:) = avs
+    avort(kk,nlat,:) = avn
   enddo
 
   ! zonal mean vort
 
   do kk = 1,kmax
     do j = 1,nlat
-      zmav(j,kk) = 0.
+      zmav(kk,j) = 0.
       do i = 1,nlon
-        zmav(j,kk) = zmav(j,kk)+avort(i,j,kk)/float(nlon)
+        zmav(kk,j) = zmav(kk,j)+avort(kk,j,i)/float(nlon)
       enddo
     enddo
   enddo
@@ -194,12 +194,12 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
       endif
 
       do i = 1,nlon
-        thetap = tq(i,j,kk+1)
-        thetam = tq(i,j,kk-1)
+        thetap = tq(kk+1,j,i)
+        thetam = tq(kk-1,j,i)
         altp = exp(-height(kk+1)/hh)*(thetap-t00p)/statp
         altm = exp(-height(kk-1)/hh)*(thetam-t00m)/statm
         strc = (altp-altm)*f/(height(kk+1)-height(kk-1))
-        pv(i,j,kk) = avort(i,j,kk) + exp(height(kk)/hh)*strc
+        pv(kk,j,i) = avort(kk,j,i) + exp(height(kk)/hh)*strc
       enddo
     enddo
   enddo
@@ -208,9 +208,9 @@ SUBROUTINE interpolate_fields_direct_inv(nlon, nlat, nlev, kmax, jd, uu, vv, tt,
 
   do kk = 1,kmax
     do j = 1,nlat
-      zmpv(j,kk) = 0.
+      zmpv(kk,j) = 0.
       do i = 1,nlon
-        zmpv(j,kk) = zmpv(j,kk)+pv(i,j,kk)/float(nlon)
+        zmpv(kk,j) = zmpv(kk,j)+pv(kk,j,i)/float(nlon)
       enddo
     enddo
   enddo

@@ -5,25 +5,20 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
 
   !USE mkl95_LAPACK, ONLY: GETRF,GETRI
 
-  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),vort(imax,jmax,kmax),pt(imax,jmax,kmax),tn0(kmax)
+  REAL, INTENT(IN) :: pv(kmax,jmax,imax),uu(kmax,jmax,imax),vort(kmax,jmax,imax),pt(kmax,jmax,imax),tn0(kmax)
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, nnd, jb, jd
   REAL, INTENT(in) :: a, omega, dz, h, dphi, dlambda, rr, cp
-  REAL, INTENT(OUT) :: qref(nd,kmax),ubar(nd,kmax),tbar(nd,kmax),fawa(nd,kmax),ckref(nd,kmax),&
-          tjk(jd-2,kmax-1),sjk(jd-2,jd-2,kmax-1)
+  REAL, INTENT(OUT) :: qref(kmax,nd),ubar(kmax,nd),tbar(kmax,nd),fawa(kmax,nd),ckref(kmax,nd),&
+          tjk(kmax-1,jd-2),sjk(kmax-1,jd-2,jd-2)
 
   !   **** take QG analysis and compute Q_ref and invert for U_ref & Theta_ref for NH (Direct solver) ***
 
-  !integer,parameter :: imax = 360, JMAX = 181, KMAX = 97
-  !integer,parameter :: nd = 91,nnd=181
-  !integer,parameter :: jb = 5   ! lower bounding latitude
-  !integer,parameter :: jd = 86  ! nd - lower bounding latitude
-
-  REAL :: pv2(imax,jmax)
-  REAL :: vort2(imax,jmax)
+  REAL :: pv2(jmax,imax)
+  REAL :: vort2(jmax,imax)
   REAL :: qn(nnd),an(nnd),aan(nnd),tb(kmax)
-  REAL :: cn(nnd),ccn(nnd),cref(nd,kmax)
-  REAL :: alat(nd),phi(nd),z(kmax),cbar(nd,kmax)
-  REAL :: qbar(nd,kmax)
+  REAL :: cn(nnd),ccn(nnd),cref(kmax,nd)
+  REAL :: alat(nd),phi(nd),z(kmax),cbar(kmax,nd)
+  REAL :: qbar(kmax,nd)
 
   pi = acos(-1.)
   !dphi = pi/float(jmax-1)  !!!  This is dlat
@@ -42,13 +37,15 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
 
   ! **** Zonal-mean field ****
   do j = nd,jmax
-    qbar(j-(nd-1),:) = 0.
-    tbar(j-(nd-1),:) = 0.
-    ubar(j-(nd-1),:) = 0.
-    do i = 1,imax
-      qbar(j-(nd-1),:) = qbar(j-(nd-1),:)+pv(i,j,:)/float(imax)
-      tbar(j-(nd-1),:) = tbar(j-(nd-1),:)+pt(i,j,:)/float(imax)
-      ubar(j-(nd-1),:) = ubar(j-(nd-1),:)+uu(i,j,:)/float(imax)
+    do k = 1,kmax
+      qbar(k,j-(nd-1)) = 0.
+      tbar(k,j-(nd-1)) = 0.
+      ubar(k,j-(nd-1)) = 0.
+      do i = 1,imax
+        qbar(k,j-(nd-1)) = qbar(k,j-(nd-1))+pv(k,j,i)/float(imax)
+        tbar(k,j-(nd-1)) = tbar(k,j-(nd-1))+pt(k,j,i)/float(imax)
+        ubar(k,j-(nd-1)) = ubar(k,j-(nd-1))+uu(k,j,i)/float(imax)
+      enddo
     enddo
   enddo
 
@@ -56,8 +53,8 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   tb(:) = tn0(:)
 
   do k = 2,kmax-1
-    pv2(:,:) = pv(:,:,k)
-    vort2(:,:) = vort(:,:,k)
+    pv2(:,:) = pv(k,:,:)
+    vort2(:,:) = vort(k,:,:)
 
     !  **** compute qref via area analysis ****
     qmax = maxval(pv2)
@@ -72,10 +69,10 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
     do j = 1,jmax
       phi0 = -0.5*pi+dphi*float(j-1)
       do i = 1,imax
-        ind = 1+int((qmax-pv2(i,j))/dq)
+        ind = 1+int((qmax-pv2(j,i))/dq)
         da = a*a*dphi*dlambda*cos(phi0)
         an(ind) = an(ind) + da
-        cn(ind) = cn(ind) + da*pv2(i,j)
+        cn(ind) = cn(ind) + da*pv2(j,i)
       enddo
     enddo
     aan(1) = 0.
@@ -88,18 +85,18 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       do nn = 1,nnd-1
         if(aan(nn).le.alat(j).and.aan(nn+1).gt.alat(j)) then
           dd = (alat(j)-aan(nn))/(aan(nn+1)-aan(nn))
-          qref(j,k) = qn(nn)*(1.-dd)+qn(nn+1)*dd
-          cref(j,k) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
+          qref(k,j) = qn(nn)*(1.-dd)+qn(nn+1)*dd
+          cref(k,j) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
         endif
       enddo
     enddo
 
-    qref(nd,k) = qmax
+    qref(k,nd) = qmax
 
-    cbar(nd,k) = 0.
+    cbar(k,nd) = 0.
     do j=nd-1,1,-1
       phi0 = dphi*(float(j)-0.5)
-      cbar(j,k) = cbar(j+1,k)+0.5*(qbar(j+1,k)+qbar(j,k)) &
+      cbar(k,j) = cbar(k,j+1)+0.5*(qbar(k,j+1)+qbar(k,j)) &
       *a*dphi*2.*pi*a*cos(phi0)
     enddo
 
@@ -118,10 +115,10 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
     do j = 1,jmax
       phi0 = -0.5*pi+dphi*float(j-1)
       do i = 1,imax
-      ind = 1+int((qmax-vort2(i,j))/dq)
+      ind = 1+int((qmax-vort2(j,i))/dq)
       da = a*a*dphi*dlambda*cos(phi0)
       an(ind) = an(ind) + da
-      cn(ind) = cn(ind) + da*vort2(i,j)
+      cn(ind) = cn(ind) + da*vort2(j,i)
       enddo
     enddo
     aan(1) = 0.
@@ -134,7 +131,7 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
       do nn = 1,nnd-1
         if(aan(nn).le.alat(j).and.aan(nn+1).gt.alat(j)) then
           dd = (alat(j)-aan(nn))/(aan(nn+1)-aan(nn))
-          ckref(j,k) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
+          ckref(k,j) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
         endif
       enddo
     enddo
@@ -146,11 +143,11 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
   do j = 2,nd
     phi0 = dphi*float(j-1)
     cor = sin(phi0)
-    qref(j,:) = qref(j,:)/cor
+    qref(:,j) = qref(:,j)/cor
   enddo
 
   do k = 2,kmax-1
-    qref(1,k) = 2.*qref(2,k)-qref(3,k)
+    qref(k,1) = 2.*qref(k,2)-qref(k,3)
   enddo
 
   ! ***** FAWA *****
@@ -168,9 +165,9 @@ SUBROUTINE compute_qref_and_fawa_first(pv, uu, vort, pt, tn0, imax, JMAX, kmax, 
     phi0 = float(jj-1)*dphi
     cos0 = cos(phi0)
     sin0 = sin(phi0)
-    tjk(j-1,kmax-1) = -dz*rr*cos0*exp(-z(kmax-1)*rkappa/h)
-    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)*(tbar(j+1,kmax)-tbar(j-1,kmax))
-    tjk(j-1,kmax-1) = tjk(j-1,kmax-1)/(4.*omega*sin0*dphi*h*a)
-    sjk(j-1,j-1,kmax-1) = 1.
+    tjk(kmax-1,j-1) = -dz*rr*cos0*exp(-z(kmax-1)*rkappa/h)
+    tjk(kmax-1,j-1) = tjk(kmax-1,j-1)*(tbar(kmax,j+1)-tbar(kmax,j-1))
+    tjk(kmax-1,j-1) = tjk(kmax-1,j-1)/(4.*omega*sin0*dphi*h*a)
+    sjk(kmax-1,j-1,j-1) = 1.
   enddo
 END

@@ -4,13 +4,13 @@ SUBROUTINE compute_lwa_only_nhn22(pv,uu,qref, &
         astarbaro, ubaro, astar1, astar2)
   ! This was from compute_flux_dirinv.f90
 
-  REAL, INTENT(IN) :: pv(imax,jmax,kmax),uu(imax,jmax,kmax),qref(nd,kmax)
+  REAL, INTENT(IN) :: pv(kmax,jmax,imax),uu(kmax,jmax,imax),qref(kmax,nd)
   INTEGER, INTENT(IN) :: imax, JMAX, kmax, nd, jb
   LOGICAL, INTENT(IN) :: is_nhem
   REAL, INTENT(IN) :: a, om, dz, h, rr, cp, prefac
-  REAL, INTENT(OUT) :: astarbaro(imax, nd), ubaro(imax, nd), astar1(imax,nd,kmax), astar2(imax,nd,kmax)
+  REAL, INTENT(OUT) :: astarbaro(nd,imax), ubaro(nd,imax), astar1(kmax,nd,imax), astar2(kmax,nd,imax)
 
-  REAL :: qe(imax,nd)
+  REAL :: qe(nd,imax)
   REAL :: z(kmax)
   REAL :: aa, ab
   INTEGER :: jstart, jend
@@ -47,8 +47,8 @@ SUBROUTINE compute_lwa_only_nhn22(pv,uu,qref, &
     zk = dz*float(k-1)
     do i = 1,imax
       do j = jstart, jend
-        astar1(i,j,k) = 0.       ! LWA*cos(phi)
-        astar2(i,j,k) = 0.       ! LWA*cos(phi)
+        astar1(k,j,i) = 0.       ! LWA*cos(phi)
+        astar2(k,j,i) = 0.       ! LWA*cos(phi)
         if (is_nhem) then        !latitude
           phi0 = dp*float(j-1)
         else
@@ -59,24 +59,24 @@ SUBROUTINE compute_lwa_only_nhn22(pv,uu,qref, &
         do jj = 1,nd
           if (is_nhem) then  ! Northern Hemisphere
             phi1 = dp*float(jj-1)
-            qe(i,jj) = pv(i,jj+nd-1,k)-qref(j,k)    !qe; Q = qref
+            qe(jj,i) = pv(k,jj+nd-1,i)-qref(k,j)    !qe; Q = qref
           else  ! Southern Hemisphere
             phi1 = dp*float(jj-1)-0.5*pi
-            qe(i,jj) = pv(i,jj,k)-qref(j,k)     !qe; Q = qref
+            qe(jj,i) = pv(k,jj,i)-qref(k,j)     !qe; Q = qref
           endif
           aa = a*dp*cos(phi1)   !cosine factor in the meridional integral
-          if((qe(i,jj).le.0.).and.(jj.ge.j)) then  !LWA*cos and F2
+          if((qe(jj,i).le.0.).and.(jj.ge.j)) then  !LWA*cos and F2
             if (is_nhem) then  ! Northern Hemisphere
-              astar2(i,j,k)=astar2(i,j,k)-qe(i,jj)*aa  !anticyclonic
+              astar2(k,j,i)=astar2(k,j,i)-qe(jj,i)*aa  !anticyclonic
             else  ! Southern Hemisphere
-              astar1(i,j,k)=astar1(i,j,k)-qe(i,jj)*aa  !cyclonic
+              astar1(k,j,i)=astar1(k,j,i)-qe(jj,i)*aa  !cyclonic
             endif
           endif
-          if((qe(i,jj).gt.0.).and.(jj.lt.j)) then
+          if((qe(jj,i).gt.0.).and.(jj.lt.j)) then
             if (is_nhem) then  ! Northern Hemisphere
-              astar1(i,j,k)=astar1(i,j,k)+qe(i,jj)*aa  !cyclonic
+              astar1(k,j,i)=astar1(k,j,i)+qe(jj,i)*aa  !cyclonic
             else  ! Southern Hemisphere
-              astar2(i,j,k)=astar2(i,j,k)+qe(i,jj)*aa  !anticyclonic
+              astar2(k,j,i)=astar2(k,j,i)+qe(jj,i)*aa  !anticyclonic
             endif
           endif
         enddo
@@ -90,16 +90,16 @@ SUBROUTINE compute_lwa_only_nhn22(pv,uu,qref, &
 
     ! ******** Column average: (25) of SI-HN17 ********
 
-    astarbaro(:,:) = astarbaro(:,:)+(astar1(:,:,k)    &
-    + astar2(:,:,k))*exp(-zk/h)*dc
+    astarbaro(:,:) = astarbaro(:,:)+(astar1(k,:,:)    &
+    + astar2(k,:,:))*exp(-zk/h)*dc
 
     if (is_nhem) then
       do j = jstart,jend
-        ubaro(:,j) = ubaro(:,j)+uu(:,nd-1+j,k)*exp(-zk/h)*dc
+        ubaro(j,:) = ubaro(j,:)+uu(k,nd-1+j,:)*exp(-zk/h)*dc
       enddo
     else
       do j = jstart,jend
-        ubaro(:,j) = ubaro(:,j)+uu(:,j,k)*exp(-zk/h)*dc
+        ubaro(j,:) = ubaro(j,:)+uu(k,j,:)*exp(-zk/h)*dc
       enddo
     endif
   enddo

@@ -3,11 +3,11 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,sjk,&
         qjj,djj,cjj,rj)
 
   integer, INTENT(in) :: k, jmax, kmax, nd, jb, jd
-  REAL, INTENT(in) :: z(kmax),statn(kmax),qref(nd,kmax),ckref(nd,kmax)
-  REAL, INTENT(IN) :: sjk(jd-2,jd-2,kmax-1)
+  REAL, INTENT(in) :: z(kmax),statn(kmax),qref(kmax,nd),ckref(kmax,nd)
+  REAL, INTENT(IN) :: sjk(kmax-1,jd-2,jd-2)
   REAL, INTENT(in) :: a, om, dz, h, rr, cp
   REAL, INTENT(OUT) :: qjj(jd-2,jd-2),djj(jd-2,jd-2),cjj(jd-2,jd-2),rj(jd-2)
-  REAL :: xjj(jd-2,jd-2), u(jd,kmax)
+  REAL :: xjj(jd-2,jd-2), u(kmax,jd)
   REAL :: sjj(jd-2,jd-2)
 
   rkappa = rr/cp
@@ -21,7 +21,7 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,sjk,&
   cjj(:,:) = 0.
   djj(:,:) = 0.
   qjj(:,:) = 0.
-  sjj(:,:) = sjk(:,:,k)
+  sjj(:,:) = sjk(k,:,:)
   do jj = jb+2,(nd-1)
     j = jj - jb
     phi0 = float(jj-1)*dp
@@ -46,19 +46,19 @@ SUBROUTINE matrix_b4_inversion(k,jmax,kmax,nd,jb,jd,z,statn,qref,ckref,sjk,&
     cjk = amp
     djk = amm
     ejk = ajk+bjk+cjk+djk
-    fjk = -0.5*a*dp*(qref(jj+1,k)-qref(jj-1,k))
+    fjk = -0.5*a*dp*(qref(k,jj+1)-qref(k,jj-1))
 
     ! ***** Specify rk (Eq. 15) ****
 
     ! **** North-south boundary conditions ****
-    u(jd,k) = 0.
+    u(k,jd) = 0.
     phi0 = dp*float(jb)
     !        u(1,k) = ubar(jb+1,k)*cos(phi0)
-    u(1,k) = ckref(jb+1,k)/(2.*pi*a)-om*a*cos(phi0)
+    u(k,1) = ckref(k,jb+1)/(2.*pi*a)-om*a*cos(phi0)
 
     rj(j-1) = fjk
-    if(j.eq.2) rj(j-1) = fjk - bjk*u(1,k)
-    if(j.eq.jd-1) rj(j-1) = fjk - ajk*u(jd,k)
+    if(j.eq.2) rj(j-1) = fjk - bjk*u(k,1)
+    if(j.eq.jd-1) rj(j-1) = fjk - ajk*u(k,jd)
 
     ! ***** Specify Ck & Dk (Eqs. 18-19) *****
     cjj(j-1,j-1) = cjk

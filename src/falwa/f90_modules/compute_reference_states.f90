@@ -3,23 +3,23 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
 
     integer, intent(in) :: nlon,nlat,kmax,jd,npart,maxits
-    real, intent(in) :: pv(nlon,nlat,kmax),uu(nlon,nlat,kmax),pt(nlon,nlat,kmax),stat(kmax)
+    real, intent(in) :: pv(kmax,nlat,nlon),uu(kmax,nlat,nlon),pt(kmax,nlat,nlon),stat(kmax)
     real, intent(in) :: a, om, dz,eps, h, dphi, dlambda, r, cp, rjac
-    real, intent(out) :: qref(jd,kmax),u(jd,kmax),tref(jd,kmax)
+    real, intent(out) :: qref(kmax,jd),u(kmax,jd),tref(kmax,jd)
     integer, intent(out) :: num_of_iter
 
 
-    real :: pv2(nlon,nlat)
-    real :: u2(nlon,nlat)
-    real :: pt2(nlon,nlat)
+    real :: pv2(nlat,nlon)
+    real :: u2(nlat,nlon)
+    real :: pt2(nlat,nlon)
     real :: qn(npart),an(npart),aan(npart),tb(kmax),tg(kmax)
     real :: cn(npart),ccn(npart)
-    real :: alat(jd),phi(jd),z(kmax),cbar(jd,kmax)
-    real :: ajk(jd,kmax),bjk(jd,kmax),cjk(jd,kmax)
-    real :: djk(jd,kmax),ejk(jd,kmax),fjk(jd,kmax)
+    real :: alat(jd),phi(jd),z(kmax),cbar(kmax,jd)
+    real :: ajk(kmax,jd),bjk(kmax,jd),cjk(kmax,jd)
+    real :: djk(kmax,jd),ejk(kmax,jd),fjk(kmax,jd)
 
-    real :: cref(jd,kmax)
-    real :: qbar(jd,kmax),ubar(jd,kmax),tbar(jd,kmax)
+    real :: cref(kmax,jd)
+    real :: qbar(kmax,jd),ubar(kmax,jd),tbar(kmax,jd)
     real :: pi, zero, half, qtr, one, rkappa
 
     pi = acos(-1.)
@@ -44,13 +44,15 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     ! **** Zonal-mean field ****
     do j = jd,nlat 
-        qbar(j-(jd-1),:) = 0.
-        tbar(j-(jd-1),:) = 0.
-        ubar(j-(jd-1),:) = 0.
-        do i = 1,nlon
-            qbar(j-(jd-1),:) = qbar(j-(jd-1),:)+pv(i,j,:)/float(nlon)
-            tbar(j-(jd-1),:) = tbar(j-(jd-1),:)+pt(i,j,:)/float(nlon)
-            ubar(j-(jd-1),:) = ubar(j-(jd-1),:)+uu(i,j,:)/float(nlon)
+        do k = 1,kmax
+            qbar(k,j-(jd-1)) = 0.
+            tbar(k,j-(jd-1)) = 0.
+            ubar(k,j-(jd-1)) = 0.
+            do i = 1,nlon
+                qbar(k,j-(jd-1)) = qbar(k,j-(jd-1))+pv(k,j,i)/float(nlon)
+                tbar(k,j-(jd-1)) = tbar(k,j-(jd-1))+pt(k,j,i)/float(nlon)
+                ubar(k,j-(jd-1)) = ubar(k,j-(jd-1))+uu(k,j,i)/float(nlon)
+            enddo
         enddo
     enddo
 
@@ -60,15 +62,15 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     do j = jd,nlat
         phi0 = dphi*float(j-1)-0.5*pi
         !tb(:) = tb(:)+cos(phi0)*tbar(j,:)
-        tb(:) = tb(:)+cos(phi0)*tbar(j-(jd-1),:)
+        tb(:) = tb(:)+cos(phi0)*tbar(:,j-(jd-1))
         wt = wt + cos(phi0)
     enddo
     tb(:) = tb(:)/wt
 
     do k = 2,KMAX-1
-        pv2(:,:) = pv(:,:,k)    
-        u2(:,:) = uu(:,:,k)    
-        pt2(:,:) = pt(:,:,k)    
+        pv2(:,:) = pv(k,:,:)
+        u2(:,:) = uu(k,:,:)
+        pt2(:,:) = pt(k,:,:)
 
         !  **** area analysis ****
         qmax = maxval(pv2)
@@ -83,10 +85,10 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
         do j = 1,nlat
             phi0 = -0.5*pi+dphi*float(j-1)
             do i = 1,nlon
-                ind = 1+int((qmax-pv2(i,j))/dq)
+                ind = 1+int((qmax-pv2(j,i))/dq)
                 da = a*a*dphi*dlambda*cos(phi0)
                 an(ind) = an(ind) + da
-                cn(ind) = cn(ind) + da*pv2(i,j)
+                cn(ind) = cn(ind) + da*pv2(j,i)
             enddo
         enddo
         aan(1) = 0.
@@ -99,18 +101,18 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             do nn = 1,npart-1
                 if(aan(nn).le.alat(j).and.aan(nn+1).gt.alat(j)) then
                     dd = (alat(j)-aan(nn))/(aan(nn+1)-aan(nn))
-                    qref(j,k) = qn(nn)*(1.-dd)+qn(nn+1)*dd
-                    cref(j,k) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
+                    qref(k,j) = qn(nn)*(1.-dd)+qn(nn+1)*dd
+                    cref(k,j) = ccn(nn)*(1.-dd)+ccn(nn+1)*dd
                 endif
             enddo 
         enddo
 
-        qref(jd,k) = qmax
+        qref(k,jd) = qmax
 
-        cbar(jd,k) = 0.
+        cbar(k,jd) = 0.
         do j=(jd-1),1,-1
             phi0 = dphi*(float(j)-0.5)
-            cbar(j,k) = cbar(j+1,k)+0.5*(qbar(j+1,k)+qbar(j,k)) &
+            cbar(k,j) = cbar(k,j+1)+0.5*(qbar(k,j+1)+qbar(k,j)) &
             *a*dphi*2.*pi*a*cos(phi0)
         enddo 
 
@@ -122,11 +124,11 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
     do j = 2,jd
         phi0 = dphi*float(j-1)
         cor = 2.*om*sin(phi0)
-        qref(j,:) = qref(j,:)/cor
+        qref(:,j) = qref(:,j)/cor
     enddo
 
     do k = 2,KMAX-1
-        qref(1,k) = 2.*qref(2,k)-qref(3,k)
+        qref(k,1) = 2.*qref(k,2)-qref(k,3)
     enddo
 
 
@@ -152,12 +154,12 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
             amp = amp*fact*exp(z(k)/h)
             amm = exp(-zm/h)*exp(rkappa*zm/h)/statm
             amm = amm*fact*exp(z(k)/h)
-            ajk(j,k) = 1./(sinp*cosp)
-            bjk(j,k) = 1./(sinm*cosm)
-            cjk(j,k) = amp
-            djk(j,k) = amm
-            ejk(j,k) = -ajk(j,k)-bjk(j,k)-cjk(j,k)-djk(j,k)
-            fjk(j,k) = -om*a*dphi*(qref(j+1,k)-qref(j-1,k))
+            ajk(k,j) = 1./(sinp*cosp)
+            bjk(k,j) = 1./(sinm*cosm)
+            cjk(k,j) = amp
+            djk(k,j) = amm
+            ejk(k,j) = -ajk(k,j)-bjk(k,j)-cjk(k,j)-djk(k,j)
+            fjk(k,j) = -om*a*dphi*(qref(k,j+1)-qref(k,j-1))
         enddo
     enddo
 
@@ -165,7 +167,7 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     do j = 2,(jd-1)
         do k = 2,KMAX-1
-            anormf = anormf + abs(fjk(j,k)) 
+            anormf = anormf + abs(fjk(k,j))
         enddo
     enddo
 
@@ -176,24 +178,24 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
         do j = 2,(jd-1)
             do k = 2,KMAX-1
                 if(mod(j+k,2).eq.mod(nnn,2)) then
-                    resid = ajk(j,k)*u(j+1,k)+bjk(j,k)*u(j-1,k)+    &
-                     cjk(j,k)*u(j,k+1)+djk(j,k)*u(j,k-1)+    &
-                     ejk(j,k)*u(j,k)-fjk(j,k)
+                    resid = ajk(k,j+1)*u(k,j+1)+bjk(k,j-1)*u(k,j-1)+    &
+                     cjk(k,j+1)*u(k+1,j)+djk(k,j-1)*u(k-1,j)+    &
+                     ejk(k,j)*u(k,j)-fjk(k,j)
                     anorm = anorm + abs(resid)
-                    if(ejk(j,k).ne.0.) u(j,k) = u(j,k) - omega*resid/ejk(j,k)
-                    if(ejk(j,k).eq.0.) u(j,k) = 0.
+                    if(ejk(k,j).ne.0.) u(k,j) = u(k,j) - omega*resid/ejk(k,j)
+                    if(ejk(k,j).eq.0.) u(k,j) = 0.
                 endif
             enddo
-            u(j,1) = 0.
+            u(1,j) = 0.
             phi0 = dphi*float(j-1)
             uz = dz*r*cos(phi0)*exp(-z(KMAX-1)*rkappa/h)
-            uz = uz*(tbar(j+1,KMAX-1)-tbar(j-1,KMAX-1))/(2.*om*sin(phi0)*dphi*h*a)
-            u(j,KMAX) = u(j,KMAX-2)-uz
+            uz = uz*(tbar(KMAX-1,j+1)-tbar(KMAX-1,j-1))/(2.*om*sin(phi0)*dphi*h*a)
+            u(KMAX,j) = u(KMAX-2,j)-uz
         enddo
 
-        u(jd,:) = 0.
-        u(1,:) = ubar(1,:)+(cref(1,:)-cbar(1,:))/(2.*pi*a)
-        !        u(1,:) = ubar(1,:)
+        u(:,jd) = 0.
+        u(:,1) = ubar(:,1)+(cref(:,1)-cbar(:,1))/(2.*pi*a)
+        !        u(:,1) = ubar(:,1)
 
         if(nnn.eq.1) then
             omega = one/(one-half*rjac**2)
@@ -223,39 +225,39 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     do j = 2,(jd-1)
         phi0 = dphi*float(j-1)
-        u(j,:) = u(j,:)/cos(phi0)
+        u(:,j) = u(:,j)/cos(phi0)
     enddo
-    u(1,:) = ubar(1,:)
-    u(jd,:) = 2.*u((jd-1),:)-u((jd-2),:)
+    u(:,1) = ubar(:,1)
+    u(:,jd) = 2.*u(:,(jd-1))-u(:,(jd-2))
 
     ! ******** compute tref *******
 
     do k = 2,KMAX-1
         t00 = 0.
         zz = dz*float(k-1)
-        tref(1,k) = t00
-        tref(2,k) = t00
+        tref(k,1) = t00
+        tref(k,2) = t00
         do j = 2,(jd-1)
             phi0 = dphi*float(j-1)
             cor = 2.*om*sin(phi0)  
-            uz = (u(j,k+1)-u(j,k-1))/(2.*dz)
+            uz = (u(k+1,j)-u(k-1,j))/(2.*dz)
             ty = -cor*uz*a*h*exp(rkappa*zz/h)
             ty = ty/r
-            tref(j+1,k) = tref(j-1,k)+2.*ty*dphi
+            tref(k,j+1) = tref(k,j-1)+2.*ty*dphi
         enddo
         tg(k) = 0.
         wt = 0.
         do j = 1,jd
             phi0 = dphi*float(j-1)
-            tg(k) = tg(k)+cos(phi0)*tref(j,k)
+            tg(k) = tg(k)+cos(phi0)*tref(k,j)
             wt = wt + cos(phi0)
         enddo
         tg(k) = tg(k)/wt
         tres = tb(k)-tg(k)
-        tref(:,k) = tref(:,k)+tres
+        tref(k,:) = tref(k,:)+tres
     enddo
-    tref(:,1) = tref(:,2)-tb(2)+tb(1)
-    tref(:,KMAX) = tref(:,KMAX-1)-tb(KMAX-1)+tb(KMAX)
+    tref(1,:) = tref(2,:)-tb(2)+tb(1)
+    tref(KMAX,:) = tref(KMAX-1,:)-tb(KMAX-1)+tb(KMAX)
 
 
 end subroutine
