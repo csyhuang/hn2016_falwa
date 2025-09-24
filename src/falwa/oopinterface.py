@@ -755,7 +755,6 @@ class QGFieldBase(ABC):
         # === Compute barotropic flux terms (SHem) ===
         # TODO: check signs!
         if not self.northern_hemisphere_results_only:
-            print("Southern Hemisphere part now!!!!! .v.")
             self._barotropic_flux_terms_storage.lwa_baro[ :self.equator_idx, :], \
                 self._barotropic_flux_terms_storage.u_baro[ :self.equator_idx, :], \
                 urefbaro, \
@@ -898,9 +897,9 @@ class QGFieldBase(ABC):
 
         # === Compute named fluxes in NH18 ===
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
-        self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
-            (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
-            (2 * self.planet_radius * self.dphi * clat)[:, np.newaxis]
+        self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux[1:-1,:] = \
+            (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro)[1:-1, :] / \
+            (2 * self.planet_radius * self.dphi * clat[1:-1, np.newaxis])
 
         zonal_adv_flux_sum = (
             self._barotropic_flux_terms_storage.ua1baro
