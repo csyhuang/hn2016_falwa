@@ -15,7 +15,7 @@ extreme weather events. It implements the finite-amplitude local wave activity a
 - `Huang and Nakamura (2017, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2017GL073760>`_
 - `Nakamura and Huang (2018, Science) <https://doi.org/10.1126/science.aat0721>`_
 - `Neal et al (2022, GRL) <https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021GL097699>`_
-- Lubis et al (in review). *Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the Euro-Atlantic Sector*.
+- Lubis et al (accepted, Nature Communication). *Cloud-Radiative Effects Significantly Increase Wintertime Atmospheric Blocking in the Euro-Atlantic Sector*.
 
 Citing this package
 ---------------------
