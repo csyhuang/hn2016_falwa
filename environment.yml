@@ -1,6 +1,7 @@
-name: falwa_env
+name: falwa_env2
 
 channels:
+- anaconda
 - conda-forge
 - defaults
 
@@ -16,7 +17,7 @@ dependencies:
 - cartopy=0.22.0
 - jupyter
 - pip
-# - twine
-# - gridfill
+- twine
+#- gridfill
 # Other useful packages to visualize plots in notebooks
 # - cartopy

@@ -44,15 +44,13 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
 
     ! **** Zonal-mean field ****
     do j = jd,nlat 
-        do k = 1,kmax
-            qbar(k,j-(jd-1)) = 0.
-            tbar(k,j-(jd-1)) = 0.
-            ubar(k,j-(jd-1)) = 0.
-            do i = 1,nlon
-                qbar(k,j-(jd-1)) = qbar(k,j-(jd-1))+pv(k,j,i)/float(nlon)
-                tbar(k,j-(jd-1)) = tbar(k,j-(jd-1))+pt(k,j,i)/float(nlon)
-                ubar(k,j-(jd-1)) = ubar(k,j-(jd-1))+uu(k,j,i)/float(nlon)
-            enddo
+        qbar(:,j-(jd-1)) = 0.
+        tbar(:,j-(jd-1)) = 0.
+        ubar(:,j-(jd-1)) = 0.
+        do i = 1,nlon
+            qbar(:,j-(jd-1)) = qbar(:,j-(jd-1))+pv(:,j,i)/float(nlon)
+            tbar(:,j-(jd-1)) = tbar(:,j-(jd-1))+pt(:,j,i)/float(nlon)
+            ubar(:,j-(jd-1)) = ubar(:,j-(jd-1))+uu(:,j,i)/float(nlon)
         enddo
     enddo
 
@@ -178,8 +176,8 @@ SUBROUTINE compute_reference_states(pv,uu,pt,stat,nlon,nlat,kmax,jd,npart,maxits
         do j = 2,(jd-1)
             do k = 2,KMAX-1
                 if(mod(j+k,2).eq.mod(nnn,2)) then
-                    resid = ajk(k,j+1)*u(k,j+1)+bjk(k,j-1)*u(k,j-1)+    &
-                     cjk(k,j+1)*u(k+1,j)+djk(k,j-1)*u(k-1,j)+    &
+                    resid = ajk(k,j)*u(k,j+1)+bjk(k,j)*u(k,j-1)+    &
+                     cjk(k,j)*u(k+1,j)+djk(k,j)*u(k-1,j)+    &
                      ejk(k,j)*u(k,j)-fjk(k,j)
                     anorm = anorm + abs(resid)
                     if(ejk(k,j).ne.0.) u(k,j) = u(k,j) - omega*resid/ejk(k,j)

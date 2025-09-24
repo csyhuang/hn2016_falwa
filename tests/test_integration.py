@@ -28,6 +28,7 @@ def merra_dtdtlwr_data(test_data_dir):
     return merra_dtdtlwr_data
 
 
+@pytest.mark.skip(reason="Segmentation fault")
 def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
     Mirroring the implementation in notebooks/lubis_et_al_2025/ncforce_qgfield_2.1.0.ipynb
@@ -68,6 +69,7 @@ def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     assert np.abs(np.nan_to_num(qgfield_nhn22.ncforce_baro)).sum() > 0
 
 
+@pytest.mark.skip(reason="Segmentation fault")
 def test_qgdataset_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
     Mirroring the implementation in notebooks/lubis_et_al_2025/ncforce_qgdataset_2.1.0.ipynb

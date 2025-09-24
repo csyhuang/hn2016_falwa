@@ -101,10 +101,10 @@ class DerivedQuantityStorage:
         return self._northern_hemisphere_results_only
 
     def fortran_to_python(self, phy_field: np.ndarray):
-        return np.swapaxes(phy_field, self.swapaxis_1, self.swapaxis_2)
+        return phy_field
 
     def python_to_fortran(self, phy_field: np.ndarray):  # This may not be necessary
-        return np.swapaxes(phy_field, self.swapaxis_2, self.swapaxis_1)
+        return phy_field
 
 
 class DomainAverageStorage(DerivedQuantityStorage):
@@ -173,7 +173,7 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
         TODO: encapsulate this elsewhere to avoid potential error
         """
         qref_right_unit = \
-            self.qref * 2 * omega * np.sin(np.deg2rad(ylat[:, np.newaxis]))
+            self.qref * 2 * omega * np.sin(np.deg2rad(ylat[np.newaxis, :]))
         if python_indexing:
             return self.fortran_to_python(qref_right_unit) # (kmax, nlat)
         return qref_right_unit
@@ -274,22 +274,22 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores intermediate computed quantities in latitude-longitude 2D grid.
 
-    Variables are stored in fortran indexing order: (nlon, nlat)
+    Variables are stored in python indexing order: (nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
                  northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
-        self.nlat = fdim[1]
-        self.ua1baro = np.zeros(self.fdim)
-        self.ua2baro = np.zeros(self.fdim)
-        self.ep1baro = np.zeros(self.fdim)
-        self.ep2baro = np.zeros(self.fdim)
-        self.ep3baro = np.zeros(self.fdim)
-        self.ep4 = np.zeros(self.fdim)
-        self.ncforce_baro = np.zeros(self.fdim)
-        self.u_baro = np.zeros(self.fdim)
-        self.lwa_baro = np.zeros(self.fdim)  # This is barotropic LWA (astarbaro)
+        self.nlat = pydim[0]
+        self.ua1baro = np.zeros(self.pydim)
+        self.ua2baro = np.zeros(self.pydim)
+        self.ep1baro = np.zeros(self.pydim)
+        self.ep2baro = np.zeros(self.pydim)
+        self.ep3baro = np.zeros(self.pydim)
+        self.ep4 = np.zeros(self.pydim)
+        self.ncforce_baro = np.zeros(self.pydim)
+        self.u_baro = np.zeros(self.pydim)
+        self.lwa_baro = np.zeros(self.pydim)  # This is barotropic LWA (astarbaro)
 
     ua1baro_nhem = NHemProperty("ua1baro", (1, 0))
     ua1baro_shem = SHemProperty("ua1baro", (1, 0))
