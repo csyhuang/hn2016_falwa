@@ -15,6 +15,39 @@ class InvalidCallOfSHemVariables(Exception):
 
 
 class HemisphericProperty:
+    """
+    Base descriptor class for handling hemispheric data access patterns in atmospheric data.
+
+    This class provides a foundation for creating descriptors that can slice multi-dimensional
+    atmospheric data arrays to extract hemispheric portions along the latitude dimension.
+    The latitude dimension can be at any position in the array, with other dimensions
+    (longitude, vertical levels, time, etc.) before and/or after it.
+
+    Parameters
+    ----------
+    attr : str
+        The name of the attribute this descriptor will manage (e.g., "qref", "lwa").
+    ndims_fill : tuple of (int, int), default (0, 0)
+        A tuple (npre, npost) specifying the number of dimensions:
+        - npre: Number of dimensions before the latitude dimension
+        - npost: Number of dimensions after the latitude dimension
+        The latitude dimension is assumed to be at position `npre` (0-indexed).
+    doc : str, optional
+        Documentation string for the descriptor.
+
+    Examples
+    --------
+    For different array structures:
+
+    2D array (nlat, kmax) - latitude first, vertical levels second:
+        ndims_fill = (0, 1)  # 0 dims before lat, 1 dim after lat
+
+    3D array (nlon, nlat, kmax) - longitude, latitude, vertical levels:
+        ndims_fill = (1, 1)  # 1 dim before lat, 1 dim after lat
+
+    2D array (nlon, nlat) - longitude, latitude:
+        ndims_fill = (1, 0)  # 1 dim before lat, 0 dims after lat
+    """
 
     def __init__(self, attr, ndims_fill=(0, 0), doc=None):
         self.attr = attr
@@ -30,6 +63,37 @@ class HemisphericProperty:
 
 
 class NHemProperty(HemisphericProperty):
+    """
+    Descriptor for accessing Northern Hemisphere data from atmospheric arrays.
+
+    This descriptor automatically slices the latitude dimension to return only
+    the Northern Hemisphere portion of the data. When `northern_hemisphere_results_only`
+    is True, it returns the full array (assuming it contains only NH data).
+
+    The Northern Hemisphere slice is taken from the middle to the end of the latitude
+    dimension: `slice(-(obj.nlat//2+1), None)`. This assumes the latitude array
+    is ordered from South to North (typical in atmospheric data).
+
+    Usage
+    -----
+    Define as a class attribute in storage classes:
+
+    ```python
+    class SomeStorage:
+        data = np.zeros((nlon, nlat, kmax))  # Full global data
+        data_nhem = NHemProperty("data", (1, 1))  # Access NH portion
+
+    # Usage:
+    storage = SomeStorage()
+    nh_data = storage.data_nhem  # Gets data[:, nlat//2:, :] approximately
+    ```
+
+    Notes
+    -----
+    - Inherits parameters from HemisphericProperty
+    - Automatically handles slicing for any array dimensionality
+    - Supports both getting and setting NH data portions
+    """
 
     def __get__(self, obj, objtype=None):
         if obj.northern_hemisphere_results_only:
@@ -46,6 +110,39 @@ class NHemProperty(HemisphericProperty):
 
 
 class SHemProperty(HemisphericProperty):
+    """
+    Descriptor for accessing Southern Hemisphere data from atmospheric arrays.
+
+    This descriptor automatically slices the latitude dimension to return only
+    the Southern Hemisphere portion of the data. It raises an exception if
+    `northern_hemisphere_results_only` is True.
+
+    The Southern Hemisphere slice is taken from the beginning to the middle of
+    the latitude dimension: `slice(None, obj.nlat//2+1)`. When setting values,
+    the data is reversed along the latitude dimension to maintain proper
+    orientation.
+
+    Usage
+    -----
+    Define as a class attribute in storage classes:
+
+    ```python
+    class SomeStorage:
+        data = np.zeros((nlon, nlat, kmax))  # Full global data
+        data_shem = SHemProperty("data", (1, 1))  # Access SH portion
+
+    # Usage:
+    storage = SomeStorage()
+    sh_data = storage.data_shem  # Gets data[:, :nlat//2+1, :]
+    ```
+
+    Notes
+    -----
+    - Inherits parameters from HemisphericProperty
+    - Raises InvalidCallOfSHemVariables if northern_hemisphere_results_only=True
+    - When setting data, applies latitude reversal: `value[..., ::-1, ...]`
+    - Automatically handles slicing for any array dimensionality
+    """
 
     def __get__(self, obj, objtype=None):
         if obj.northern_hemisphere_results_only:
@@ -317,4 +414,3 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
 
     lwa_baro_nhem = NHemProperty("lwa_baro", (1, 0))
     lwa_baro_shem = SHemProperty("lwa_baro", (1, 0))
-
