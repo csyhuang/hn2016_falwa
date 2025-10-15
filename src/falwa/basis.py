@@ -166,8 +166,8 @@ def lwa(nlon, nlat, vort, q_part, dmu, return_partitioned_lwa=False, ncforce=Non
     Returns
     -------
     lwact : ndarray
-        If return_partitioned_lwa = True, return the cyclonic and anticyclonic components of local wave activity in a
-        numpy array of dimension (2, nlat, nlon).
+        If return_partitioned_lwa = True, return the cyclonic(anticyclonic) and anticyclonic(cyclonic) components of
+        local wave activity over the Northern(Southern) Hemisphere in a numpy array of dimension (2, nlat, nlon).
         If return_partitioned_lwa = True, return a single field of local wave activity in a numpy array of dimension (nlat, nlon).
     bigsigma : ndarray or None
         2-d numpy array of the nonconservative forces acting on local wave activity computed from *ncforce*.
