@@ -946,7 +946,9 @@ class QGFieldBase(ABC):
         Parameters
         ----------
         heating_rate : np.array
-            The diabatic heating output from reanalysis data on pressure levels that has unit K/s.
+            The diabatic heating rate, i.e. tendency of potential temperature,
+            :math:`\\dot{ \\theta } \\equiv \\frac{ d \\theta }{dt}`
+            at pressure levels that has unit K/s.
         stat_n : np.array
             1-d numpy array of northern-hemispheric averaged static stability
         stat_s : np.array
@@ -955,10 +957,11 @@ class QGFieldBase(ABC):
         Returns
         -------
         np.ndarray
-            Array that contains the ncforce term q_dot = f e^z/H d/dz(e{-z/H} \\theta_dot / d\\theta/dz)
+            Array that contains the ncforce term
+            :math:`\\dot{ q } = f e^{z/H} \\frac{d}{dz} ( \\frac{e^{-z/H} \\dot{\\theta}}{d\\theta/dz})`
         """
 
-        # Interpolate DTDTLWR onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
+        # Interpolate potential temperature tendency onto regular z-grid first. Result has dimension (kmax, nlat, nlon)
         interpolated_heating_rate = self._vertical_interpolation(heating_rate, kind="linear", axis=0)
 
         # Calculate q_dot on regular z-grid (kmax, nlat, nlon)
@@ -1355,8 +1358,11 @@ class QGFieldBase(ABC):
             - ua1: first/linear term of zonal advective flux
             - ua2: second/nonlinear term of zonal advective flux
             - ep1: third term (F3 in NH18) of zonal advective flux
-            - ep2: northward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
-            - ep3: southward :math:`u_e v_e cos^2(\phi+\phi^\prime)`
+            - ep2 and ep3: the discretized meridional eddy momentum flux divergence at grid point `j` is computed by
+
+            :math:`\\frac{[\\text{ep2} - \\text{ep3}]}{a (2 \\Delta\\phi) \\cos{\\phi}}`
+            where :math:`\\text{ep2} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j+1}` and :math:`\\text{ep3} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j-1}`
+
             - stretch_term: layerwise stretch term corresponding to III in NH18 eq (2)
             - ncforce: layerwise contribution of input heating term
         """
