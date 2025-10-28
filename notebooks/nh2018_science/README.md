@@ -2,7 +2,7 @@
 
 ### Update on 2024/10/13: ERA-Interim dataset is replaced by the ERA5 version
 
-Given the download API for ERA-Interim has been deprecated, the version of notebooks after commit 0081017 consumes ERA5 data which can be downloaded from [Clare's dropbox folder](https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/h?dl=0&rlkey=f8c1gm2xaxvx3c7cf06vop6or):
+Given the download API for ERA-Interim has been deprecated, the version of notebooks after commit 0081017 consumes ERA5 data which can be downloaded from [Clare's dropbox folder](https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/AKMmwRiYhK4mRmdOgmFg5SM?rlkey=k15p1acgksnl2xwcxve3alm0u&st=2mg4svks&dl=0):
 
 `notebooks/nh2018_science/2005-01-23_to_2005-01-30_[uvt].nc`
 

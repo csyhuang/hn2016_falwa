@@ -62,7 +62,7 @@ Quick start
 -----------------------------------------
 
 There are some readily run python scripts (in `scripts/`) and jupyter notebooks (in `notebooks/`) which you can start with.
-The netCDF files needed can be found in `Clare's Dropbox folder <https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/h?dl=0&rlkey=f8c1gm2xaxvx3c7cf06vop6or>`_.
+The netCDF files needed can be found in `Clare's Dropbox folder <https://www.dropbox.com/scl/fo/b84pwlr7zzsndq8mpthd8/AKMmwRiYhK4mRmdOgmFg5SM?rlkey=k15p1acgksnl2xwcxve3alm0u&st=2mg4svks&dl=0>`_.
 
 Depending on what you want to do, the methods to be use may be different.
 
