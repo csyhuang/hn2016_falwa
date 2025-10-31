@@ -755,20 +755,19 @@ class QGFieldBase(ABC):
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
-        # TODO: check signs!
         if not self.northern_hemisphere_results_only:
-            self._barotropic_flux_terms_storage.lwa_baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.u_baro[:, :self.equator_idx], \
+            self._barotropic_flux_terms_storage.lwa_baro_shem, \
+                self._barotropic_flux_terms_storage.u_baro_shem, \
                 urefbaro, \
-                self._barotropic_flux_terms_storage.ua1baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ua2baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep1baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep2baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep3baro[:, :self.equator_idx], \
-                self._barotropic_flux_terms_storage.ep4[:, :self.equator_idx], \
+                self._barotropic_flux_terms_storage.ua1baro_shem, \
+                self._barotropic_flux_terms_storage.ua2baro_shem, \
+                self._barotropic_flux_terms_storage.ep1baro_shem, \
+                self._barotropic_flux_terms_storage.ep2baro_shem, \
+                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                self._barotropic_flux_terms_storage.ep4_shem, \
                 astar1, \
                 astar2, \
-                self._barotropic_flux_terms_storage.ncforce_baro[:, :self.equator_idx] = \
+                self._barotropic_flux_terms_storage.ncforce_baro_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
