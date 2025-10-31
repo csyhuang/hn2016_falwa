@@ -11,7 +11,7 @@ authors = [
 description = "Python package to compute finite-amplitude local wave activity diagnostics (Huang and Nakamura 2016, JAS)"
 readme = "readme.md"
 license = { file="LICENSE.txt" }
-version = "2.2.1"
+version = "2.2.2"
 requires-python = ">=3.10"
 classifiers = [
     "License :: OSI Approved :: MIT License",
