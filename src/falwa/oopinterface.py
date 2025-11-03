@@ -416,7 +416,7 @@ class QGFieldBase(ABC):
         Shall be in parallel with compute_lwa_and_barotropic_fluxes.
         """
 
-    def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb, is_nhem):
+    def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb):
         astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(
             pv=pv,
             uu=uu,
@@ -428,7 +428,7 @@ class QGFieldBase(ABC):
             uref=uref,
             tref=tref,
             jb=jb,
-            is_nhem=is_nhem,
+            is_nhem=True,
             a=self.planet_radius,
             om=self.omega,
             dz=self.dz,
@@ -441,22 +441,15 @@ class QGFieldBase(ABC):
         astar2_baro = self._vertical_average(astar2, lowest_layer_index=1)
         astar_baro = astar1_baro + astar2_baro
         ua1baro = self._vertical_average(ua1, lowest_layer_index=1)
-        if is_nhem:
-            u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
-        else:
-            u_baro = self._vertical_average(uu[:,:self.equator_idx,:], lowest_layer_index=1)
+        u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
         ua2baro = self._vertical_average(ua2, lowest_layer_index=1)
         ep1baro = self._vertical_average(ep1, lowest_layer_index=1)
         ep2baro = self._vertical_average(ep2, lowest_layer_index=1)
         ep3baro = self._vertical_average(ep3, lowest_layer_index=1)
         ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1)
 
-        if is_nhem:
-            uref_baro = np.sum(
-                uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
-        else:
-            uref_baro = np.sum(
-                uref[:jd, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor, axis=-1)
+        uref_baro = np.sum(
+            uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
 
         return astar_baro, u_baro, uref_baro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, \
             astar1, astar2, ncforce_baro
@@ -641,6 +634,8 @@ class QGFieldBase(ABC):
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 
+        print(f"NH: qref_correct_unit[-self.equator_idx:].shape = {qref_correct_unit[-self.equator_idx:].shape}")
+
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
             self._barotropic_flux_terms_storage.u_baro_nhem, \
@@ -672,7 +667,7 @@ class QGFieldBase(ABC):
                 compute_lwa_only_nhn22(
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    qref=-qref_correct_unit[self.equator_idx::-1],
+                    qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
                     jb=self.eq_boundary_index,
                     is_nhem=True,  # TODO: remove this logic branch
                     a=self.planet_radius,
@@ -747,11 +742,10 @@ class QGFieldBase(ABC):
                 pt=self._interpolated_field_storage.interpolated_theta,
                 ncforce=ncforce,
                 tn0=self._domain_average_storage.tn0,
-                qref=qref_correct_unit[-self.equator_idx:],
-                uref=self._reference_states_storage.uref_nhem,
-                tref=self._reference_states_storage.ptref_nhem,
-                jb=self.eq_boundary_index,
-                is_nhem=True)
+                qref=qref_correct_unit[-self.equator_idx:, :],
+                uref=self._reference_states_storage.uref[-self.jd:, :],
+                tref=self._reference_states_storage.ptref[-self.jd:, :],
+                jb=self.eq_boundary_index)
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
@@ -775,11 +769,10 @@ class QGFieldBase(ABC):
                     pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
                     ncforce=ncforce[:, ::-1, :],
                     tn0=self._domain_average_storage.ts0,
-                    qref=-qref_correct_unit[self.equator_idx::-1],
-                    uref=self._reference_states_storage.uref_shem,
-                    tref=self._reference_states_storage.ptref_shem,
-                    jb=self.eq_boundary_index,
-                    is_nhem=True)   # TODO: remove this logic branch
+                    qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
+                    uref=self._reference_states_storage.uref_shem[-self.jd:, :],
+                    tref=self._reference_states_storage.ptref_shem[-self.jd:, :],
+                    jb=self.eq_boundary_index)
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
             self._layerwise_flux_terms_storage.astar1_shem = np.abs(astar1)
             self._layerwise_flux_terms_storage.astar2_shem = np.abs(astar2)
@@ -1047,9 +1040,9 @@ class QGFieldBase(ABC):
             pt=self._interpolated_field_storage.interpolated_theta,
             ncforce=ncforce,
             tn0=tn0,
-            qref=qref_correct_unit[-self.equator_idx:],
-            uref=self._reference_states_storage.uref_nhem,
-            tref=self._reference_states_storage.ptref_nhem,
+            qref=qref_correct_unit[-self.equator_idx:, :],
+            uref=self._reference_states_storage.uref[-self.jd:, :],
+            tref=self._reference_states_storage.ptref[-self.jd:, :],
             jb=jb,
             is_nhem=True,
             a=self.planet_radius,
@@ -1078,9 +1071,9 @@ class QGFieldBase(ABC):
                 pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
                 ncforce=ncforce[:, ::-1, :],
                 tn0=ts0,
-                qref=qref_correct_unit[self.equator_idx::-1],
-                uref=self._reference_states_storage.uref_shem,
-                tref=self._reference_states_storage.ptref_shem,
+                qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
+                uref=self._reference_states_storage.uref_shem[-self.jd, :],
+                tref=self._reference_states_storage.ptref_shem[-self.jd, :],
                 jb=jb,
                 is_nhem=True,  # TODO: remove this logic branch
                 a=self.planet_radius,
@@ -1113,6 +1106,10 @@ class QGFieldBase(ABC):
     @property
     def eq_boundary_index(self):
         return self._eq_boundary_index
+
+    @property
+    def jd(self):
+        return self._jd
 
     @property
     def ylat_ref_states(self) -> np.array:
@@ -1723,10 +1720,6 @@ class QGFieldNHN22(QGFieldBase):
             return self._domain_average_storage.static_stability_n
         else:
             return self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n
-
-    @property
-    def jd(self):
-        return self._jd
 
     def compute_layerwise_lwa_fluxes(self, ncforce=None):
         self._compute_layerwise_lwa_fluxes_wrapper(
