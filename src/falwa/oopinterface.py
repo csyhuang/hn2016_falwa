@@ -1055,6 +1055,27 @@ class QGFieldBase(ABC):
 
         # Southern hemisphere
         if not self.northern_hemisphere_results_only:
+
+            pv = -self._interpolated_field_storage.qgpv[:, ::-1, :]
+            uu = self._interpolated_field_storage.interpolated_u[:, ::-1, :]
+            vv = -self._interpolated_field_storage.interpolated_v[:, ::-1, :]
+            pt = self._interpolated_field_storage.interpolated_theta[:, ::-1, :]
+            ncforce_check = ncforce[:, ::-1, :]
+            tn0_check = ts0
+            qref = -qref_correct_unit[(self.equator_idx - 1)::-1, :]
+            uref = self._reference_states_storage.uref_shem[-self.jd:, :]
+            tref = self._reference_states_storage.ptref_shem[-self.jd:, :]
+            print(pv.shape)
+            print(uu.shape)
+            print(vv.shape)
+            print(pt.shape)
+            print(ncforce_check.shape)
+            print(tn0_check.shape) #49
+            print(qref.shape)  # (61, 49)
+            print(uref.shape)  # (49,)
+            print(tref.shape)  # (49,)
+
+
             self._layerwise_flux_terms_storage.astar1_shem, \
                 self._layerwise_flux_terms_storage.astar2_shem, \
                 self._layerwise_flux_terms_storage.ncforce_shem, \
@@ -1072,8 +1093,8 @@ class QGFieldBase(ABC):
                 ncforce=ncforce[:, ::-1, :],
                 tn0=ts0,
                 qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
-                uref=self._reference_states_storage.uref_shem[-self.jd, :],
-                tref=self._reference_states_storage.ptref_shem[-self.jd, :],
+                uref=self._reference_states_storage.uref_shem[-self.jd:, :],
+                tref=self._reference_states_storage.ptref_shem[-self.jd:, :],
                 jb=jb,
                 is_nhem=True,  # TODO: remove this logic branch
                 a=self.planet_radius,
