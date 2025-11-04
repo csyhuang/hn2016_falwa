@@ -1617,7 +1617,8 @@ class QGFieldNHN22(QGFieldBase):
                 u=self._interpolated_field_storage.interpolated_u,
                 avort=self._interpolated_field_storage.interpolated_avort,
                 theta=self._interpolated_field_storage.interpolated_theta,
-                t0=self._domain_average_storage.tn0)
+                t0=self._domain_average_storage.tn0,
+                static_stability=self._domain_average_storage.static_stability_n)
 
         if not self.northern_hemisphere_results_only:
             # === Compute reference states in Southern Hemisphere ===
@@ -1630,9 +1631,10 @@ class QGFieldNHN22(QGFieldBase):
                     u=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     avort=self._interpolated_field_storage.interpolated_avort[:, ::-1, :],
                     theta=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
-                    t0=self._domain_average_storage.ts0)
+                    t0=self._domain_average_storage.ts0,
+                    static_stability=self._domain_average_storage.static_stability_s)
 
-    def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0):
+    def _compute_reference_states_nhn22_hemispheric_wrapper(self, qgpv, u, avort, theta, t0, static_stability):
         """
         Wrapper to a series of operation using direct inversion algorithm to solve reference state.
         """
@@ -1670,7 +1672,7 @@ class QGFieldNHN22(QGFieldBase):
                 jb=self.eq_boundary_index,  # 5
                 jd=self.jd,
                 z=np.arange(0, self.kmax * self.dz, self.dz),
-                statn=self._domain_average_storage.static_stability_n,
+                statn=static_stability,
                 qref=qref_over_sin,
                 ckref=ckref,
                 sjk=sjk,
