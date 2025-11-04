@@ -655,8 +655,8 @@ class QGFieldBase(ABC):
                 cp=self.cp,
                 prefac=self.prefactor)
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
-        self._layerwise_flux_terms_storage.astar1_nhem = np.abs(astar1)
-        self._layerwise_flux_terms_storage.astar2_nhem = np.abs(astar2)
+        self._barotropic_flux_terms_storage.astar1_nhem = np.abs(astar1)
+        self._barotropic_flux_terms_storage.astar2_nhem = np.abs(astar2)
 
         # === Compute barotropic flux terms (SHem) ===
         if not self.northern_hemisphere_results_only:  # TODO: check signs!
@@ -678,8 +678,8 @@ class QGFieldBase(ABC):
                     cp=self.cp,
                     prefac=self.prefactor)
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
-            self._layerwise_flux_terms_storage.astar1_shem = np.abs(astar1)
-            self._layerwise_flux_terms_storage.astar2_shem = np.abs(astar2)
+            self._barotropic_flux_terms_storage.astar1_shem = np.abs(astar1)
+            self._barotropic_flux_terms_storage.astar2_shem = np.abs(astar2)
 
     @staticmethod
     def _prepare_coordinates_and_ref_states(
