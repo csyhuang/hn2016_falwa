@@ -452,7 +452,7 @@ class QGFieldBase(ABC):
             uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
 
         return astar_baro, u_baro, uref_baro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, \
-            astar1, astar2, ncforce_baro
+            astar1, astar2, astar1_baro, astar2_baro, ncforce_baro
 
     def interpolate_fields(self, return_named_tuple: bool = True) -> Optional[NamedTuple]:
 
@@ -678,8 +678,8 @@ class QGFieldBase(ABC):
                     cp=self.cp,
                     prefac=self.prefactor)
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
-            self._barotropic_flux_terms_storage.astar1_shem = np.abs(astar1)
-            self._barotropic_flux_terms_storage.astar2_shem = np.abs(astar2)
+            self._barotropic_flux_terms_storage.astar1_baro_shem = np.abs(astar1)
+            self._barotropic_flux_terms_storage.astar2_baro_shem = np.abs(astar2)
 
     @staticmethod
     def _prepare_coordinates_and_ref_states(
@@ -734,6 +734,8 @@ class QGFieldBase(ABC):
             self._barotropic_flux_terms_storage.ep4_nhem, \
             astar1, \
             astar2, \
+            self._barotropic_flux_terms_storage.astar1_baro_nhem, \
+            self._barotropic_flux_terms_storage.astar2_baro_nhem, \
             self._barotropic_flux_terms_storage.ncforce_nhem = \
             self._compute_lwa_and_barotropic_fluxes_wrapper(
                 pv=self._interpolated_field_storage.qgpv,
@@ -761,6 +763,8 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.ep4_shem, \
                 astar1, \
                 astar2, \
+                self._barotropic_flux_terms_storage.astar1_baro_shem, \
+                self._barotropic_flux_terms_storage.astar2_baro_shem, \
                 self._barotropic_flux_terms_storage.ncforce_baro_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
@@ -774,8 +778,6 @@ class QGFieldBase(ABC):
                     tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
                     jb=self.eq_boundary_index)
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
-            self._layerwise_flux_terms_storage.astar1_shem = np.abs(astar1)
-            self._layerwise_flux_terms_storage.astar2_shem = np.abs(astar2)
 
 
     def compute_lwa_and_barotropic_fluxes(
