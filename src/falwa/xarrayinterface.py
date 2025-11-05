@@ -525,8 +525,7 @@ class QGDataset:
         ----------
         ncforce : xarray.DataArray, optional
            This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
-           the integrand of equation (12) in Lubis et al. "Cloud-Radiative Effects Significantly Increase Wintertime
-           Atmospheric Blocking in the Euro-Atlantic Sector". The integrated barotropic component
+           the integrand of equation (12) in Lubis et al (2025, Nature Comm). The integrated barotropic component
            of ncforce is accessible the attribute `ncforce_baro`.
 
         return_dataset : bool
