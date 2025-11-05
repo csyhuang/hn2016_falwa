@@ -804,8 +804,7 @@ class QGFieldBase(ABC):
 
         ncforce : optional, np.ndarray
            This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
-           the integrand of equation (12) in Lubis et al. "Cloud-Radiative Effects Significantly Increase Wintertime
-           Atmospheric Blocking in the Euro-Atlantic Sector". The integrated barotropic component
+           the integrand of equation (12) in Lubis et al (2025, Nature Comm). The integrated barotropic component
            of ncforce is accessible via `QGField.ncforce_baro`.
 
         Returns
@@ -1305,7 +1304,7 @@ class QGFieldBase(ABC):
         """
         If input `ncforce` of method compute_lwa_and_barotropic_fluxes is not None, this would return the
         corresponding barotropic component of non-conservative force contribution with respect to the wave
-        activity budget equation in Lubis et al. Eq.(11).
+        activity budget equation in Lubis et al (2025, Nature Comm) Eq.(11).
         """
         if self._barotropic_flux_terms_storage.ncforce_baro is None:
             raise ValueError('ncforce_baro is not computed yet.')
