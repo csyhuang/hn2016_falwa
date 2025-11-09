@@ -290,6 +290,8 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.ncforce_baro = np.zeros(self.fdim)
         self.u_baro = np.zeros(self.fdim)
         self.lwa_baro = np.zeros(self.fdim)  # This is barotropic LWA (astarbaro)
+        self.astar1_baro = np.zeros(self.fdim)
+        self.astar2_baro = np.zeros(self.fdim)
 
     ua1baro_nhem = NHemProperty("ua1baro", (1, 0))
     ua1baro_shem = SHemProperty("ua1baro", (1, 0))
@@ -317,4 +319,10 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
 
     lwa_baro_nhem = NHemProperty("lwa_baro", (1, 0))
     lwa_baro_shem = SHemProperty("lwa_baro", (1, 0))
+
+    astar1_baro_nhem = NHemProperty("astar1_baro", (1, 0))
+    astar1_baro_shem = SHemProperty("astar1_baro", (1, 0))
+
+    astar2_baro_nhem = NHemProperty("astar2_baro", (1, 0))
+    astar2_baro_shem = SHemProperty("astar2_baro", (1, 0))
 

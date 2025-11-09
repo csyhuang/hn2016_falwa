@@ -5,3 +5,6 @@ jupyter nbconvert --execute --to notebook --inplace ../notebooks/sandy/sandy_lwa
 jupyter nbconvert --execute --to notebook --inplace ../notebooks/simple/BarotropicField_example.ipynb
 jupyter nbconvert --execute --to notebook --inplace ../notebooks/simple/Example_barotropic.ipynb
 jupyter nbconvert --execute --to notebook --inplace ../notebooks/simple/Example_qgpv.ipynb
+jupyter nbconvert --execute --to notebook --inplace ../notebooks/lubis_et_al_2025/develop_ncforce_interface.ipynb
+jupyter nbconvert --execute --to notebook --inplace ../notebooks/lubis_et_al_2025/ncforce_qgdataset_2.1.0.ipynb
+jupyter nbconvert --execute --to notebook --inplace ../notebooks/lubis_et_al_2025/ncforce_qgfield_2.1.0.ipynb

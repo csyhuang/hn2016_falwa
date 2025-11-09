@@ -29,7 +29,7 @@ SUBROUTINE compute_flux_dirinv_nshem( &
   !r = 287.
   rkappa = rr/cp
   !prefac = 6745.348
-
+  write(6,*) 'nd: ', nd, ', jb: ', jb
   ! *** Default values for boundary ***
   !jb = 5
   !jd = 86 ! nd - lower bounding latitude
