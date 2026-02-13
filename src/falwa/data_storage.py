@@ -311,8 +311,8 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     ep4_nhem = NHemProperty("ep4", (1, 0))
     ep4_shem = SHemProperty("ep4", (1, 0))
 
-    ncforce_nhem = NHemProperty("ncforce_baro", (1, 0))
-    ncforce_shem = SHemProperty("ncforce_baro", (1, 0))
+    ncforce_baro_nhem = NHemProperty("ncforce_baro", (1, 0))
+    ncforce_baro_shem = SHemProperty("ncforce_baro", (1, 0))
 
     u_baro_nhem = NHemProperty("u_baro", (1, 0))
     u_baro_shem = SHemProperty("u_baro", (1, 0))

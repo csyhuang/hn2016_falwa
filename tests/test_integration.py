@@ -32,6 +32,8 @@ def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     """
     Mirroring the implementation in notebooks/lubis_et_al_2025/ncforce_qgfield_2.1.0.ipynb
     """
+    import falwa
+    print(f"falwa.__version__: {falwa.__version__}")
 
     # Prepare coordinates
     xlon = merra_uvt_data['lon'].values
@@ -58,6 +60,7 @@ def test_qgfield_nhn22_ncforce_integration(merra_uvt_data, merra_dtdtlwr_data):
     ncforce = qgfield_nhn22.compute_ncforce_from_heating_rate(heating_rate=dtdtlwr)
 
     # Existing func: Pass in the resultant ncforce term into "compute_lwa_and_barotropic_fluxes" would compute the barotropic component
+    qgfield_nhn22.compute_layerwise_lwa_fluxes(ncforce=ncforce)
     qgfield_nhn22.compute_lwa_and_barotropic_fluxes(return_named_tuple=False, ncforce=ncforce)
 
     # Assert all flux fields are computed

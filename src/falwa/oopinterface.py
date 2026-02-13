@@ -734,7 +734,7 @@ class QGFieldBase(ABC):
             astar2, \
             self._barotropic_flux_terms_storage.astar1_baro_nhem, \
             self._barotropic_flux_terms_storage.astar2_baro_nhem, \
-            self._barotropic_flux_terms_storage.ncforce_nhem = \
+            self._barotropic_flux_terms_storage.ncforce_baro_nhem = \
             self._compute_lwa_and_barotropic_fluxes_wrapper(
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
@@ -763,7 +763,7 @@ class QGFieldBase(ABC):
                 astar2, \
                 self._barotropic_flux_terms_storage.astar1_baro_shem, \
                 self._barotropic_flux_terms_storage.astar2_baro_shem, \
-                self._barotropic_flux_terms_storage.ncforce_baro_shem = \
+                ncforce_baro_shem = \
                 self._compute_lwa_and_barotropic_fluxes_wrapper(
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
@@ -775,6 +775,7 @@ class QGFieldBase(ABC):
                     uref=self._reference_states_storage.uref[(self.jd-1)::-1, :],
                     tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
                     jb=self.eq_boundary_index)
+            self._barotropic_flux_terms_storage.ncforce_baro_shem = -ncforce_baro_shem
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
 
 
@@ -1054,10 +1055,9 @@ class QGFieldBase(ABC):
 
         # Southern hemisphere
         if not self.northern_hemisphere_results_only:
-
             self._layerwise_flux_terms_storage.astar1_shem, \
                 self._layerwise_flux_terms_storage.astar2_shem, \
-                self._layerwise_flux_terms_storage.ncforce_shem, \
+                ncforce_shem, \
                 self._layerwise_flux_terms_storage.ua1_shem, \
                 self._layerwise_flux_terms_storage.ua2_shem, \
                 self._layerwise_flux_terms_storage.ep1_shem, \
@@ -1083,6 +1083,7 @@ class QGFieldBase(ABC):
                 rr=self.dry_gas_constant,
                 cp=self.cp,
                 prefac=self.prefactor)
+            self._layerwise_flux_terms_storage.ncforce_shem = -ncforce_shem
 
         # Total LWA
         self._layerwise_flux_terms_storage.lwa = \
