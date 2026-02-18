@@ -1,0 +1,22 @@
+# Exclude non-essential directories from sdist (git archive).
+# meson-python uses git archive internally; export-ignore is the only
+# supported sdist exclusion mechanism.
+# See: https://github.com/mesonbuild/meson-python/discussions/567
+notebooks/   export-ignore
+docs/        export-ignore
+scripts/     export-ignore
+tests/       export-ignore
+recipe/      export-ignore
+.github/     export-ignore
+developers/  export-ignore
+notes/       export-ignore
+
+# Exclude dev-tooling files from sdist
+.gitattributes      export-ignore
+.gitignore          export-ignore
+.readthedocs.yaml   export-ignore
+.coveragerc         export-ignore
+codecov.yml         export-ignore
+environment.yml     export-ignore
+requirements.txt    export-ignore
+CONTRIBUTING.md     export-ignore
