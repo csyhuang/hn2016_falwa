@@ -212,3 +212,19 @@ def test_get_name():
     with pytest.raises(KeyError):
         _get_name(ds, ["bar", "baz"], { "bar": "xyz", "baz": "foo" })
 
+
+def test_qgdataset_compute_layerwise_lwa_fluxes():
+    """Test QGDataset.compute_layerwise_lwa_fluxes returns correct Dataset."""
+    data = _generate_test_dataset()
+    qgds = QGDataset(data)
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
+    result = qgds.compute_layerwise_lwa_fluxes()
+
+    assert isinstance(result, xr.Dataset)
+    expected_vars = ['lwa', 'ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']
+    for var_name in expected_vars:
+        assert var_name in result, f"{var_name} not found in result Dataset"
+        assert result[var_name].dims == ("height", "ylat", "xlon"), \
+            f"{var_name} dims mismatch: {result[var_name].dims}"
+

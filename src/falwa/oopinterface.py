@@ -184,6 +184,7 @@ class QGFieldBase(ABC):
 
         # === Stage completion indicator ===
         self._reference_states_computed: bool = False
+        self._layerwise_fluxes_computed: bool = False
 
     def _initialize_storage(self):
         """
@@ -1091,6 +1092,7 @@ class QGFieldBase(ABC):
 
         # *** Compute the layerwise version of ep4 ***
         self._compute_stretch_term(stat_n=stat_n, stat_s=stat_s)
+        self._layerwise_fluxes_computed = True
 
     @staticmethod
     def _check_nan(name, var):
@@ -1336,6 +1338,66 @@ class QGFieldBase(ABC):
             raise ValueError('lwa is not computed yet.')
         return self._return_interp_variables(
             variable=self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa),
+            interp_axis=1)
+
+    @property
+    def ua1(self):
+        """Layerwise first/linear term of zonal advective flux (F1 in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ua1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ua1),
+            interp_axis=1)
+
+    @property
+    def ua2(self):
+        """Layerwise second/nonlinear term of zonal advective flux (F2 in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ua2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ua2),
+            interp_axis=1)
+
+    @property
+    def ep1(self):
+        """Layerwise meridional eddy momentum flux convergence (F3a in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep1),
+            interp_axis=1)
+
+    @property
+    def ep2(self):
+        """Layerwise meridional heat flux convergence (F3b in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep2),
+            interp_axis=1)
+
+    @property
+    def ep3(self):
+        """Layerwise zonal heat flux convergence (F3c in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep3 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep3),
+            interp_axis=1)
+
+    @property
+    def stretch_term(self):
+        """Layerwise stretching term (F3d in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('stretch_term is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.stretch_term),
             interp_axis=1)
 
     def get_latitude_dim(self):

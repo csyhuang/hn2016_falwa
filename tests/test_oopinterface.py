@@ -332,3 +332,42 @@ def test_skip_vertical_interpolation():
     assert np.allclose(qgfield_skip_interp.interpolated_v, qgfield.interpolated_v, rtol=1e-03, atol=1e-05)
     # TODO: Below is something to be fixed - to let user input theta instead of t
     assert not np.allclose(qgfield_skip_interp.interpolated_theta, qgfield.interpolated_theta, rtol=1e-03, atol=1e-05)
+
+
+def test_layerwise_flux_guard():
+    """Test that layerwise flux properties raise ValueError before computation."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+
+    # Guard test: properties should raise before computation
+    for prop_name in ['ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']:
+        with pytest.raises(ValueError):
+            getattr(qgfield, prop_name)
+
+
+def test_layerwise_flux_properties_full_globe():
+    """Test layerwise flux properties with northern_hemisphere_results_only=False."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_layerwise_lwa_fluxes()
+
+    expected_shape = (kmax, nlat, nlon)
+    for prop_name in ['ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']:
+        prop = getattr(qgfield, prop_name)
+        assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
+        assert np.isnan(prop).sum() == 0, f"{prop_name} contains NaN"
+        assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"

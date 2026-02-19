@@ -228,6 +228,12 @@ _MetadataServiceProvider.register_var("meridional_heat_flux", ("ylat", "xlon"), 
 # 3-dimensional LWA (full x-y-z fields)
 _MetadataServiceProvider.register_var("lwa", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("ncforce", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ua1", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ua2", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ep1", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ep2", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("ep3", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("stretch_term", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
 
 
 class _DataArrayCollector(property):
@@ -584,6 +590,47 @@ class QGDataset:
                 "lwa": self.lwa,
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
+
+    def compute_layerwise_lwa_fluxes(self, ncforce=None, return_dataset=True):
+        """Call `compute_layerwise_lwa_fluxes` on all contained fields.
+
+        See :py:meth:`.oopinterface.QGFieldBase.compute_layerwise_lwa_fluxes`.
+
+        Parameters
+        ----------
+        ncforce : xarray.DataArray, optional
+           This is the diabatic term output from climate model interpolated on even-pseudoheight grid, i.e.,
+           the integrand of equation (12) in Lubis et al (2025, Nature Comm). The integrated barotropic component
+           of ncforce is accessible the attribute `ncforce_baro`.
+
+        return_dataset : bool
+            Whether to return the computed fields as a dataset.
+
+        Returns
+        -------
+        xarray.Dataset or None
+        """
+        for field, coord in zip(self._fields, self.metadata.iter_other()):
+            ncforce_sliced = ncforce.sel(coord) if ncforce is not None else None
+            field.compute_layerwise_lwa_fluxes(ncforce=ncforce_sliced)
+        if return_dataset:
+            data_vars = {
+                "lwa": self.lwa,
+                "ua1": self.ua1,
+                "ua2": self.ua2,
+                "ep1": self.ep1,
+                "ep2": self.ep2,
+                "ep3": self.ep3,
+                "stretch_term": self.stretch_term,
+            }
+            return xr.Dataset(data_vars, attrs=self.attrs)
+
+    ua1 = _DataArrayCollector("ua1")
+    ua2 = _DataArrayCollector("ua2")
+    ep1 = _DataArrayCollector("ep1")
+    ep2 = _DataArrayCollector("ep2")
+    ep3 = _DataArrayCollector("ep3")
+    stretch_term = _DataArrayCollector("stretch_term")
 
     def compute_ncforce_from_heating_rate(self, heating_rate):
         """
