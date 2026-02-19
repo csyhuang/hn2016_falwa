@@ -986,9 +986,18 @@ class QGFieldBase(ABC):
         None. Internally initialized self._layerwise_flux_terms_storage.stretch_term.
         """
         # TODO: verify cosine weighting
+        if self.northern_hemisphere_results_only:
+            # ptref is NH-only (equator_idx, kmax) but interpolated fields are
+            # full-globe (nlon, nlat_analysis, kmax). Pad ptref to full-globe so
+            # shapes broadcast; SH values are irrelevant (discarded below).
+            ptref_full = np.zeros((self._nlat_analysis, self.kmax))
+            ptref_full[-self.equator_idx:, :] = self._reference_states_storage.ptref
+        else:
+            ptref_full = self._reference_states_storage.ptref
+
         v_e_theta_e_clat = self._interpolated_field_storage.interpolated_v[:, :, :] * (
                 self._interpolated_field_storage.interpolated_theta[:, :, :]
-                - self._reference_states_storage.ptref[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
+                - ptref_full[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
         inner_ep4 = z_derivative_of_prod(
             stat_n=stat_n,
             stat_s=stat_s,
@@ -997,11 +1006,15 @@ class QGFieldBase(ABC):
             dz=self.dz,
             density_decay=np.exp(-self.height / self.scale_height),
             gfunc=self._interpolated_field_storage.fortran_to_python(v_e_theta_e_clat),
-            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
+            multiplier=2 * self.omega * np.sin(np.deg2rad(self._ylat[np.newaxis, :])) * np.exp(
                 self.height[:, np.newaxis] / self.scale_height))
         # Note that there is a minus sign below in order to have consistent sign with ep4 that is
         # the (positive) low-level meridional heat flux
-        self._layerwise_flux_terms_storage.stretch_term = -np.swapaxes(inner_ep4, 0, 2)
+        full_result = -np.swapaxes(inner_ep4, 0, 2)
+        if self.northern_hemisphere_results_only:
+            self._layerwise_flux_terms_storage.stretch_term_nhem = full_result[:, -self.equator_idx:, :]
+        else:
+            self._layerwise_flux_terms_storage.stretch_term = full_result
 
     def _compute_layerwise_lwa_fluxes_wrapper(self, jb, tn0, ts0, stat_n, stat_s, ncforce=None):
         """

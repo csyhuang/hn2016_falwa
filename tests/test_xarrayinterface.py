@@ -228,3 +228,16 @@ def test_qgdataset_compute_layerwise_lwa_fluxes():
         assert result[var_name].dims == ("height", "ylat", "xlon"), \
             f"{var_name} dims mismatch: {result[var_name].dims}"
 
+
+def test_qgdataset_compute_layerwise_lwa_fluxes_nh_only():
+    """Regression test: compute_layerwise_lwa_fluxes must not crash with northern_hemisphere_results_only=True."""
+    data = _generate_test_dataset()
+    qgds = QGDataset(data, qgfield_kwargs={"northern_hemisphere_results_only": True})
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
+    result = qgds.compute_layerwise_lwa_fluxes()
+
+    assert isinstance(result, xr.Dataset)
+    expected_vars = ['lwa', 'ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']
+    for var_name in expected_vars:
+        assert var_name in result, f"{var_name} not found in result Dataset"

@@ -371,3 +371,24 @@ def test_layerwise_flux_properties_full_globe():
         assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
         assert np.isnan(prop).sum() == 0, f"{prop_name} contains NaN"
         assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"
+
+
+def test_layerwise_flux_properties_nh_only():
+    """Regression test: compute_layerwise_lwa_fluxes must not crash with northern_hemisphere_results_only=True."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_layerwise_lwa_fluxes()
+
+    expected_shape = (kmax, nlat // 2 + 1, nlon)
+    for prop_name in ['ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']:
+        prop = getattr(qgfield, prop_name)
+        assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
+        assert np.isnan(prop).sum() == 0, f"{prop_name} contains NaN"
+        assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"
