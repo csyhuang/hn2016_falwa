@@ -29,7 +29,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13, macos-latest]
+        # Using macos-14 for ARM64 to get gfortran libs with lower deployment target
+        os: [ubuntu-latest, macos-13, macos-14]
 
     steps:
     - uses: actions/checkout@v4
@@ -69,8 +70,9 @@ jobs:
         CIBW_BEFORE_BUILD_MACOS: |
           echo "PATH is: $PATH"
           which gfortran && gfortran --version || echo "gfortran not found"
-        # Set environment for macOS builds - PATH must use {project} syntax for expansion
-        CIBW_ENVIRONMENT_MACOS: 'PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" FC=gfortran CC=clang'
+        # Set environment for macOS builds
+        # MACOSX_DEPLOYMENT_TARGET set to 14.0 (required by Homebrew gfortran libs on macos-14 runner)
+        CIBW_ENVIRONMENT_MACOS: 'PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" FC=gfortran CC=clang MACOSX_DEPLOYMENT_TARGET=14.0'
     - name: Store the distribution packages
       uses: actions/upload-artifact@v4
       with:
