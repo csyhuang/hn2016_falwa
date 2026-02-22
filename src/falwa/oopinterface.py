@@ -184,6 +184,7 @@ class QGFieldBase(ABC):
 
         # === Stage completion indicator ===
         self._reference_states_computed: bool = False
+        self._layerwise_fluxes_computed: bool = False
 
     def _initialize_storage(self):
         """
@@ -919,6 +920,19 @@ class QGFieldBase(ABC):
         self._output_barotropic_flux_terms_storage.ncforce_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
+        # Barotropic wave activity flux vectors (Lee & Nakamura 2024, eqs. 6-7)
+        self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro = \
+            self._barotropic_flux_terms_storage.fortran_to_python(
+                self._barotropic_flux_terms_storage.ua1baro
+                + self._barotropic_flux_terms_storage.ua2baro
+                + self._barotropic_flux_terms_storage.ep1baro)
+
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = \
+            np.swapaxes(
+                -0.5 * (self._barotropic_flux_terms_storage.ep2baro
+                         + self._barotropic_flux_terms_storage.ep3baro) / clat,
+                0, 1)
+
         # === Return the named tuple ===
         if return_named_tuple:
             LWA_and_fluxes = namedtuple(
@@ -985,9 +999,18 @@ class QGFieldBase(ABC):
         None. Internally initialized self._layerwise_flux_terms_storage.stretch_term.
         """
         # TODO: verify cosine weighting
+        if self.northern_hemisphere_results_only:
+            # ptref is NH-only (equator_idx, kmax) but interpolated fields are
+            # full-globe (nlon, nlat_analysis, kmax). Pad ptref to full-globe so
+            # shapes broadcast; SH values are irrelevant (discarded below).
+            ptref_full = np.zeros((self._nlat_analysis, self.kmax))
+            ptref_full[-self.equator_idx:, :] = self._reference_states_storage.ptref
+        else:
+            ptref_full = self._reference_states_storage.ptref
+
         v_e_theta_e_clat = self._interpolated_field_storage.interpolated_v[:, :, :] * (
                 self._interpolated_field_storage.interpolated_theta[:, :, :]
-                - self._reference_states_storage.ptref[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
+                - ptref_full[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
         inner_ep4 = z_derivative_of_prod(
             stat_n=stat_n,
             stat_s=stat_s,
@@ -996,11 +1019,15 @@ class QGFieldBase(ABC):
             dz=self.dz,
             density_decay=np.exp(-self.height / self.scale_height),
             gfunc=self._interpolated_field_storage.fortran_to_python(v_e_theta_e_clat),
-            multiplier=2 * self.omega * np.sin(np.deg2rad(self.ylat[np.newaxis, :])) * np.exp(
+            multiplier=2 * self.omega * np.sin(np.deg2rad(self._ylat[np.newaxis, :])) * np.exp(
                 self.height[:, np.newaxis] / self.scale_height))
         # Note that there is a minus sign below in order to have consistent sign with ep4 that is
         # the (positive) low-level meridional heat flux
-        self._layerwise_flux_terms_storage.stretch_term = -np.swapaxes(inner_ep4, 0, 2)
+        full_result = -np.swapaxes(inner_ep4, 0, 2)
+        if self.northern_hemisphere_results_only:
+            self._layerwise_flux_terms_storage.stretch_term_nhem = full_result[:, -self.equator_idx:, :]
+        else:
+            self._layerwise_flux_terms_storage.stretch_term = full_result
 
     def _compute_layerwise_lwa_fluxes_wrapper(self, jb, tn0, ts0, stat_n, stat_s, ncforce=None):
         """
@@ -1091,6 +1118,7 @@ class QGFieldBase(ABC):
 
         # *** Compute the layerwise version of ep4 ***
         self._compute_stretch_term(stat_n=stat_n, stat_s=stat_s)
+        self._layerwise_fluxes_computed = True
 
     @staticmethod
     def _check_nan(name, var):
@@ -1290,6 +1318,27 @@ class QGFieldBase(ABC):
             interp_axis=0)
 
     @property
+    def flux_vector_lambda_baro(self):
+        """
+        Barotropic zonal wave activity flux vector, i.e. eq. (6) of
+        Lee and Nakamura (2024): <F_lambda> = ua1baro + ua2baro + ep1baro.
+        """
+        return self._return_interp_variables(
+            variable=self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro,
+            interp_axis=0)
+
+    @property
+    def flux_vector_phi_baro(self):
+        """
+        Barotropic meridional wave activity flux vector, i.e. eq. (7) of
+        Lee and Nakamura (2024): <F_phi> = -<u_e * v_e> * cos(phi).
+        Computed as -0.5 * (ep2baro + ep3baro) / cos(phi).
+        """
+        return self._return_interp_variables(
+            variable=self._output_barotropic_flux_terms_storage.flux_vector_phi_baro,
+            interp_axis=0)
+
+    @property
     def lwa_baro(self):
         """
         Two-dimensional array of barotropic local wave activity (with cosine weighting).
@@ -1336,6 +1385,66 @@ class QGFieldBase(ABC):
             raise ValueError('lwa is not computed yet.')
         return self._return_interp_variables(
             variable=self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa),
+            interp_axis=1)
+
+    @property
+    def ua1(self):
+        """Layerwise first/linear term of zonal advective flux (F1 in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ua1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ua1),
+            interp_axis=1)
+
+    @property
+    def ua2(self):
+        """Layerwise second/nonlinear term of zonal advective flux (F2 in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ua2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ua2),
+            interp_axis=1)
+
+    @property
+    def ep1(self):
+        """Layerwise meridional eddy momentum flux convergence (F3a in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep1),
+            interp_axis=1)
+
+    @property
+    def ep2(self):
+        """Layerwise meridional heat flux convergence (F3b in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep2),
+            interp_axis=1)
+
+    @property
+    def ep3(self):
+        """Layerwise zonal heat flux convergence (F3c in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('ep3 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.ep3),
+            interp_axis=1)
+
+    @property
+    def stretch_term(self):
+        """Layerwise stretching term (F3d in NH18)."""
+        if not self._layerwise_fluxes_computed:
+            raise ValueError('stretch_term is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
+        return self._return_interp_variables(
+            variable=self._layerwise_flux_terms_storage.fortran_to_python(
+                self._layerwise_flux_terms_storage.stretch_term),
             interp_axis=1)
 
     def get_latitude_dim(self):
