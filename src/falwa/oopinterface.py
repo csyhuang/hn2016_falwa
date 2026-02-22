@@ -920,6 +920,19 @@ class QGFieldBase(ABC):
         self._output_barotropic_flux_terms_storage.ncforce_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
+        # Barotropic wave activity flux vectors (Lee & Nakamura 2024, eqs. 6-7)
+        self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro = \
+            self._barotropic_flux_terms_storage.fortran_to_python(
+                self._barotropic_flux_terms_storage.ua1baro
+                + self._barotropic_flux_terms_storage.ua2baro
+                + self._barotropic_flux_terms_storage.ep1baro)
+
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = \
+            np.swapaxes(
+                -0.5 * (self._barotropic_flux_terms_storage.ep2baro
+                         + self._barotropic_flux_terms_storage.ep3baro) / clat,
+                0, 1)
+
         # === Return the named tuple ===
         if return_named_tuple:
             LWA_and_fluxes = namedtuple(
@@ -1302,6 +1315,27 @@ class QGFieldBase(ABC):
         """
         return self._return_interp_variables(
             variable=self._output_barotropic_flux_terms_storage.meridional_heat_flux,
+            interp_axis=0)
+
+    @property
+    def flux_vector_lambda_baro(self):
+        """
+        Barotropic zonal wave activity flux vector, i.e. eq. (6) of
+        Lee and Nakamura (2024): <F_lambda> = ua1baro + ua2baro + ep1baro.
+        """
+        return self._return_interp_variables(
+            variable=self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro,
+            interp_axis=0)
+
+    @property
+    def flux_vector_phi_baro(self):
+        """
+        Barotropic meridional wave activity flux vector, i.e. eq. (7) of
+        Lee and Nakamura (2024): <F_phi> = -<u_e * v_e> * cos(phi).
+        Computed as -0.5 * (ep2baro + ep3baro) / cos(phi).
+        """
+        return self._return_interp_variables(
+            variable=self._output_barotropic_flux_terms_storage.flux_vector_phi_baro,
             interp_axis=0)
 
     @property

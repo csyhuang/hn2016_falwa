@@ -225,6 +225,8 @@ _MetadataServiceProvider.register_var("adv_flux_f3", ("ylat", "xlon"), dim_names
 _MetadataServiceProvider.register_var("convergence_zonal_advective_flux", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("divergence_eddy_momentum_flux", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("meridional_heat_flux", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("flux_vector_lambda_baro", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
+_MetadataServiceProvider.register_var("flux_vector_phi_baro", ("ylat", "xlon"), dim_names=("ylat_ref_states", "xlon"))
 # 3-dimensional LWA (full x-y-z fields)
 _MetadataServiceProvider.register_var("lwa", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
 _MetadataServiceProvider.register_var("ncforce", ("height", "ylat", "xlon"), dim_names=("height", "ylat_ref_states", "xlon"))
@@ -555,6 +557,8 @@ class QGDataset:
                 "lwa_baro": self.lwa_baro,
                 "u_baro": self.u_baro,
                 "ncforce_baro": self.ncforce_baro,
+                "flux_vector_lambda_baro": self.flux_vector_lambda_baro,
+                "flux_vector_phi_baro": self.flux_vector_phi_baro,
                 "lwa": self.lwa,
             }
             return xr.Dataset(data_vars, attrs=self.attrs)
@@ -566,6 +570,8 @@ class QGDataset:
     convergence_zonal_advective_flux = _DataArrayCollector("convergence_zonal_advective_flux")
     divergence_eddy_momentum_flux = _DataArrayCollector("divergence_eddy_momentum_flux")
     meridional_heat_flux = _DataArrayCollector("meridional_heat_flux")
+    flux_vector_lambda_baro = _DataArrayCollector("flux_vector_lambda_baro")
+    flux_vector_phi_baro = _DataArrayCollector("flux_vector_phi_baro")
     lwa_baro = _DataArrayCollector("lwa_baro")
     u_baro = _DataArrayCollector("u_baro")
     ncforce_baro = _DataArrayCollector("ncforce_baro")

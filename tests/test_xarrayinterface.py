@@ -241,3 +241,34 @@ def test_qgdataset_compute_layerwise_lwa_fluxes_nh_only():
     expected_vars = ['lwa', 'ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']
     for var_name in expected_vars:
         assert var_name in result, f"{var_name} not found in result Dataset"
+
+
+def test_qgdataset_flux_vector_baro_in_dataset():
+    """Test that flux vector baro variables are in the returned Dataset."""
+    data = _generate_test_dataset()
+    qgds = QGDataset(data)
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
+    result = qgds.compute_lwa_and_barotropic_fluxes()
+
+    assert isinstance(result, xr.Dataset)
+    assert "flux_vector_lambda_baro" in result
+    assert "flux_vector_phi_baro" in result
+    assert result["flux_vector_lambda_baro"].dims == ("ylat", "xlon")
+    assert result["flux_vector_phi_baro"].dims == ("ylat", "xlon")
+
+
+def test_qgdataset_flux_vector_baro_accessor_consistency():
+    """Test that Dataset values match accessor values for flux vector baro."""
+    data = _generate_test_dataset()
+    qgds = QGDataset(data)
+    qgds.interpolate_fields()
+    qgds.compute_reference_states()
+    result = qgds.compute_lwa_and_barotropic_fluxes()
+
+    np.testing.assert_allclose(
+        result["flux_vector_lambda_baro"],
+        qgds.flux_vector_lambda_baro)
+    np.testing.assert_allclose(
+        result["flux_vector_phi_baro"],
+        qgds.flux_vector_phi_baro)

@@ -8,6 +8,7 @@ from scipy.interpolate import interp1d
 
 from falwa.constant import *
 from falwa.oopinterface import QGFieldNH18
+from falwa.utilities import zonal_convergence
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 121
@@ -392,3 +393,109 @@ def test_layerwise_flux_properties_nh_only():
         assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
         assert np.isnan(prop).sum() == 0, f"{prop_name} contains NaN"
         assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"
+
+
+def test_flux_vector_baro_full_globe():
+    """Test barotropic flux vector properties with full globe."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+
+    assert qgfield.flux_vector_lambda_baro.shape == (nlat, nlon)
+    assert qgfield.flux_vector_phi_baro.shape == (nlat, nlon)
+    assert np.isnan(qgfield.flux_vector_lambda_baro).sum() == 0
+    assert np.isnan(qgfield.flux_vector_phi_baro).sum() == 0
+    assert np.abs(qgfield.flux_vector_lambda_baro).sum() > 0
+    assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
+
+
+def test_flux_vector_baro_nh_only():
+    """Test barotropic flux vector properties with northern hemisphere only."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+
+    assert qgfield.flux_vector_lambda_baro.shape == (nlat // 2 + 1, nlon)
+    assert qgfield.flux_vector_phi_baro.shape == (nlat // 2 + 1, nlon)
+    assert np.isnan(qgfield.flux_vector_lambda_baro).sum() == 0
+    assert np.isnan(qgfield.flux_vector_phi_baro).sum() == 0
+    assert np.abs(qgfield.flux_vector_lambda_baro).sum() > 0
+    assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
+
+
+def test_flux_vector_lambda_identity():
+    """flux_vector_lambda_baro must equal adv_flux_f1 + adv_flux_f2 + adv_flux_f3 exactly."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+
+    np.testing.assert_array_equal(
+        qgfield.flux_vector_lambda_baro,
+        qgfield.adv_flux_f1 + qgfield.adv_flux_f2 + qgfield.adv_flux_f3)
+
+
+def test_flux_vector_lambda_divergence_consistency():
+    """Convergence of flux_vector_lambda_baro must match convergence_zonal_advective_flux."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+
+    clat = np.cos(np.deg2rad(ylat))
+    recomputed_convergence = zonal_convergence(
+        field=qgfield.flux_vector_lambda_baro,
+        clat=clat,
+        dlambda=xlon[1] - xlon[0],
+        planet_radius=EARTH_RADIUS)
+
+    np.testing.assert_allclose(
+        recomputed_convergence,
+        qgfield.convergence_zonal_advective_flux,
+        rtol=1e-10)
+
+
+def test_flux_vector_phi_differs_from_divergence():
+    """flux_vector_phi_baro and divergence_eddy_momentum_flux must both be non-zero and distinct."""
+    qgfield = QGFieldNH18(
+        xlon=xlon, ylat=ylat, plev=plev,
+        u_field=u_field, v_field=v_field, t_field=t_field,
+        kmax=kmax, maxit=100000, dz=1000., npart=None,
+        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
+        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+    qgfield.interpolate_fields()
+    qgfield.compute_reference_states()
+    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
+
+    assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
+    assert np.abs(qgfield.divergence_eddy_momentum_flux).sum() > 0
+    assert not np.array_equal(
+        qgfield.flux_vector_phi_baro,
+        qgfield.divergence_eddy_momentum_flux)

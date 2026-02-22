@@ -268,6 +268,8 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.divergence_eddy_momentum_flux = np.zeros(self.pydim)
         self.meridional_heat_flux = np.zeros(self.pydim)
         self.ncforce_baro = np.zeros(self.pydim)
+        self.flux_vector_lambda_baro = np.zeros(self.pydim)
+        self.flux_vector_phi_baro = np.zeros(self.pydim)
 
 
 class BarotropicFluxTermsStorage(DerivedQuantityStorage):
