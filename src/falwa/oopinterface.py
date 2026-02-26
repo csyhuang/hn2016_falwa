@@ -927,10 +927,10 @@ class QGFieldBase(ABC):
                 + self._barotropic_flux_terms_storage.ua2baro
                 + self._barotropic_flux_terms_storage.ep1baro)
 
-        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = \
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[1:-1, :] = \
             np.swapaxes(
-                -0.5 * (self._barotropic_flux_terms_storage.ep2baro
-                         + self._barotropic_flux_terms_storage.ep3baro) / clat,
+                -0.5 * (self._barotropic_flux_terms_storage.ep2baro[:, :-2]
+                         + self._barotropic_flux_terms_storage.ep3baro[:, 2:]) / clat[np.newaxis, 1:-1],
                 0, 1)
 
         # === Return the named tuple ===
@@ -1320,8 +1320,13 @@ class QGFieldBase(ABC):
     @property
     def flux_vector_lambda_baro(self):
         """
-        Barotropic zonal wave activity flux vector, i.e. eq. (6) of
-        Lee and Nakamura (2024): <F_lambda> = ua1baro + ua2baro + ep1baro.
+        np.ndarray of dimension(nlat, nlon):
+            Barotropic zonal wave activity flux vector, i.e. eq. (6) of Lee and Nakamura (2024):
+
+        where :math:`\\langle F_\\lambda \\rangle = \\langle \\text{adv\_f1} \\rangle + \\langle \\text{adv\_f2} \\rangle + \\langle \\text{adv\_f3} \\rangle` ,
+        :math:`\\langle \\text{adv\_f1} \\rangle \\equiv \\langle u_\\mathrm{REF} A \\cos(\\phi) \\rangle` ,
+        :math:`\\langle \\text{adv\_f2} \\rangle \\equiv - a \\langle \\int_0^{\\Delta\\phi} u_e q_e \\cos(\\phi + \\phi') \\mathrm{d}\\phi^\\prime \\rangle`,
+        :math:`\\langle \\text{adv\_f3} \\rangle \\equiv \\frac{\\cos(\\phi)}{2} \\left\\langle v_e^2 - u_e^2 - \\frac{R}{H} \\frac{e^{-\\kappa z / H} \\theta_e^2}{\\partial \\tilde\\theta / \\partial z} \\right\\rangle`
         """
         return self._return_interp_variables(
             variable=self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro,
@@ -1330,8 +1335,11 @@ class QGFieldBase(ABC):
     @property
     def flux_vector_phi_baro(self):
         """
-        Barotropic meridional wave activity flux vector, i.e. eq. (7) of
-        Lee and Nakamura (2024): <F_phi> = -<u_e * v_e> * cos(phi).
+        np.ndarray of dimension(nlat, nlon):
+            Barotropic meridional wave activity flux vector, i.e. eq. (7) of Lee and Nakamura (2024):
+
+        :math:`\\langle F_\\lambda \\rangle = - \\langle u_e * v_e \\rangle * cos(\\phi)`
+
         Computed as -0.5 * (ep2baro + ep3baro) / cos(phi).
         """
         return self._return_interp_variables(
@@ -1389,7 +1397,7 @@ class QGFieldBase(ABC):
 
     @property
     def ua1(self):
-        """Layerwise first/linear term of zonal advective flux (F1 in NH18)."""
+        """Layerwise first/linear term of zonal advective flux (adv_flux_f1/layerwize F1 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ua1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1399,7 +1407,7 @@ class QGFieldBase(ABC):
 
     @property
     def ua2(self):
-        """Layerwise second/nonlinear term of zonal advective flux (F2 in NH18)."""
+        """Layerwise second/nonlinear term of zonal advective flux (adv_flux_f2/layerwize F2 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ua2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1409,7 +1417,7 @@ class QGFieldBase(ABC):
 
     @property
     def ep1(self):
-        """Layerwise meridional eddy momentum flux convergence (F3a in NH18)."""
+        """Layerwise meridional eddy momentum flux convergence (adv_flux_f3/layerwize F3 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1419,7 +1427,13 @@ class QGFieldBase(ABC):
 
     @property
     def ep2(self):
-        """Layerwise meridional heat flux convergence (F3b in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            the discretized meridional eddy momentum flux divergence at grid point `j` is computed by
+
+        :math:`\\frac{[\\text{ep2} - \\text{ep3}]}{a (2 \\Delta\\phi) \\cos{\\phi}}`
+        where :math:`\\text{ep2} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j+1}` and :math:`\\text{ep3} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j-1}`
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1429,7 +1443,13 @@ class QGFieldBase(ABC):
 
     @property
     def ep3(self):
-        """Layerwise zonal heat flux convergence (F3c in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            the discretized meridional eddy momentum flux divergence at grid point `j` is computed by
+
+        :math:`\\frac{[\\text{ep2} - \\text{ep3}]}{a (2 \\Delta\\phi) \\cos{\\phi}}`
+        where :math:`\\text{ep2} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j+1}` and :math:`\\text{ep3} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j-1}`
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep3 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
