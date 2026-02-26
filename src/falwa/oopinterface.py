@@ -1459,7 +1459,16 @@ class QGFieldBase(ABC):
 
     @property
     def stretch_term(self):
-        """Layerwise stretching term (F3d in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            This is the stretch term that is present only in the layerwise LWA budget equation in Lubis et al (2025),
+            but not the barotropic LWA budget equation in NH18/NHN22. The vertical average of this term is the
+            low-level meridional heat flux. The expression of the stretch term is:
+
+            :math:`- f\\cos\\phi_e e^{z/H}\\frac{\\partial}{\\partial z}\\left( \\frac{ e^{-z/H} v_e \\theta_e}{\\partial\\tilde\\theta/\\partial z} \\right)`
+
+            It is only computed after calling `QGField.compute_layerwise_lwa_fluxes`.
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('stretch_term is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
