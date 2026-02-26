@@ -927,10 +927,10 @@ class QGFieldBase(ABC):
                 + self._barotropic_flux_terms_storage.ua2baro
                 + self._barotropic_flux_terms_storage.ep1baro)
 
-        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[1:-1, :] = \
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[:, 1:-1] = \
             np.swapaxes(
-                -0.5 * (self._barotropic_flux_terms_storage.ep2baro[:, :-2]
-                         + self._barotropic_flux_terms_storage.ep3baro[:, 2:]) / clat[np.newaxis, 1:-1],
+                -0.5 * (self._barotropic_flux_terms_storage.ep2baro[:-2, :]
+                         + self._barotropic_flux_terms_storage.ep3baro[2:, :]) / clat,
                 0, 1)
 
         # === Return the named tuple ===

@@ -8,7 +8,7 @@ from scipy.interpolate import interp1d
 
 from falwa.constant import *
 from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
-from falwa.utilities import zonal_convergence
+from falwa.utilities import zonal_convergence, meridional_divergence
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 121
@@ -453,9 +453,9 @@ def test_flux_vector_lambda_divergence_consistency(QGField):
 
 
 @pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
-def test_flux_vector_phi_differs_from_divergence(QGField):
+def test_flux_vector_phi_divergence_consistency(QGField):
     """flux_vector_phi_baro and divergence_eddy_momentum_flux must both be non-zero and distinct."""
-    qgfield = QGFieldNH18(
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
@@ -468,6 +468,18 @@ def test_flux_vector_phi_differs_from_divergence(QGField):
 
     assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
     assert np.abs(qgfield.divergence_eddy_momentum_flux).sum() > 0
-    assert not np.array_equal(
-        qgfield.flux_vector_phi_baro,
-        qgfield.divergence_eddy_momentum_flux)
+
+    # Compute meridional divergence and assert them equal
+    clat = np.cos(np.deg2rad(ylat))
+    recomputed_divergence = meridional_divergence(
+        field=-qgfield.flux_vector_phi_baro,
+        clat=clat,
+        dphi=np.deg2rad(ylat[1] - ylat[0]),
+        planet_radius=EARTH_RADIUS)
+
+    print("Stop here")
+    np.testing.assert_allclose(
+        recomputed_divergence[3:-3, 3:-3],  # exclude poles where meridional divergence is not well-defined
+        qgfield.divergence_eddy_momentum_flux[3:-3, 3:-3],
+        rtol=1e-10)
+
