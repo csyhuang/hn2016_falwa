@@ -1,0 +1,20 @@
+name: falwa_jiacheng_check
+
+channels:
+- conda-forge
+- defaults
+
+dependencies:
+- python=3.12
+- numpy=1.26.4
+- scipy=1.14.0
+- netCDF4=1.6.5
+- cftime=1.6.2
+- xarray=2024.1.1
+- matplotlib=3.8.2
+- numba
+- jupyter
+- pip
+- pip:
+  - falwa
+
