@@ -454,7 +454,7 @@ def test_flux_vector_lambda_divergence_consistency(QGField):
 
 @pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
 def test_flux_vector_phi_divergence_consistency(QGField):
-    """flux_vector_phi_baro and divergence_eddy_momentum_flux must both be non-zero and distinct."""
+    """meridional divergence of flux_vector_phi_baro and divergence_eddy_momentum_flux must match."""
     qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
@@ -478,6 +478,9 @@ def test_flux_vector_phi_divergence_consistency(QGField):
         planet_radius=EARTH_RADIUS)
     eq_boundary_index = 6 #  for NHN22 eq_boundary_index = 5
     poleward_boundary_index = 3
+
+    # After swap of axis, there are slight changes in numerical values. A fixed relative tolerance sometimes failed.
+    # So I am using absolute tolerance here.
     np.testing.assert_allclose(
         recomputed_divergence[60+eq_boundary_index:-poleward_boundary_index,:], qgfield.divergence_eddy_momentum_flux[60+eq_boundary_index:-poleward_boundary_index,:],
         atol=1e-5) # Assert value all close for N.Hem
