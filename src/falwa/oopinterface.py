@@ -933,25 +933,15 @@ class QGFieldBase(ABC):
         self._output_barotropic_flux_terms_storage.ncforce_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
-        # Barotropic wave activity flux vectors (Lee & Nakamura 2024, eqs. 6-7)
+        # Barotropic wave activity flux vectors (Zonal, Lee & Nakamura 2024, eqs. 6)
         self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(
                 self._barotropic_flux_terms_storage.ua1baro
                 + self._barotropic_flux_terms_storage.ua2baro
                 + self._barotropic_flux_terms_storage.ep1baro)
 
-        # Compute meridional flux vector with existing fields
-        from array import array
-        if self._northern_hemisphere_results_only:
-            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
-            slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
-        else:
-            slicer = [slice(None)] * 3
-
-        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
-             * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
-        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[:, :] = \
-            self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=-1).T
+        # Barotropic wave activity flux vectors (Zonal, Lee & Nakamura 2024, eqs. 7)
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = self._compute_flux_vector_phi_baro()
 
         # === Return the named tuple ===
         if return_named_tuple:
@@ -970,6 +960,27 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
                 self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa))
             return lwa_and_fluxes
+
+    def _compute_flux_vector_phi_baro(self):
+        """
+        Compute the meridional flux vector based on the field stored in fortran indexing.
+
+        Returns
+        -------
+        flux_vector_phi_baro : np.ndarray of dimension (nlat//2+1, nlon) if northern_hemisphere_results_only=True,
+            or dimension (nlat, nlon) if northern_hemisphere_results_only=False
+        The barotropic component of the meridional flux vector in Lee & Nakamura (2024, eq. 7).
+        """
+        if self._northern_hemisphere_results_only:
+            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
+            slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
+        else:
+            slicer = [slice(None)] * 3
+
+        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
+             * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
+        return self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=-1).T
+
 
     def compute_ncforce_from_heating_rate(self, heating_rate):
         """
