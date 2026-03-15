@@ -404,9 +404,18 @@ class QGFieldBase(ABC):
 
     def _vertical_average(self, var_3d, lowest_layer_index=1, height_axis=-1):
         dc = self.dz / self.prefactor
+
+        # Build dynamic slicer for var_3d
+        slicer = [slice(None)] * var_3d.ndim
+        slicer[height_axis] = slice(lowest_layer_index, None)
+
+        # Build dynamic shape for height broadcasting
+        height_shape = [1] * var_3d.ndim
+        height_shape[height_axis] = -1
+
         var_baro = np.sum(
-            var_3d[:, :, lowest_layer_index:]
-            * np.exp(-self.height[np.newaxis, np.newaxis, lowest_layer_index:] / self.scale_height) * dc,
+            var_3d[tuple(slicer)]
+            * np.exp(-self.height[lowest_layer_index:].reshape(height_shape) / self.scale_height) * dc,
             axis=height_axis)
         return var_baro
 
@@ -750,6 +759,8 @@ class QGFieldBase(ABC):
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
+        # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
+        # the output ep2 and ep3 terms shall be swapped.
         if not self.northern_hemisphere_results_only:
             self._barotropic_flux_terms_storage.lwa_baro_shem, \
                 self._barotropic_flux_terms_storage.u_baro_shem, \
@@ -757,8 +768,8 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.ua1baro_shem, \
                 self._barotropic_flux_terms_storage.ua2baro_shem, \
                 self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                ep3baro_shem, \
+                ep2baro_shem, \
                 self._barotropic_flux_terms_storage.ep4_shem, \
                 astar1, \
                 astar2, \
@@ -776,6 +787,8 @@ class QGFieldBase(ABC):
                     uref=self._reference_states_storage.uref[(self.jd-1)::-1, :],
                     tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
                     jb=self.eq_boundary_index)
+            self._barotropic_flux_terms_storage.ep2baro_shem = -ep2baro_shem
+            self._barotropic_flux_terms_storage.ep3baro_shem = -ep3baro_shem
             self._barotropic_flux_terms_storage.ncforce_baro_shem = -ncforce_baro_shem
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
 
@@ -927,11 +940,18 @@ class QGFieldBase(ABC):
                 + self._barotropic_flux_terms_storage.ua2baro
                 + self._barotropic_flux_terms_storage.ep1baro)
 
-        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[:, 1:-1] = \
-            np.swapaxes(
-                -0.5 * (self._barotropic_flux_terms_storage.ep2baro[:-2, :]
-                         + self._barotropic_flux_terms_storage.ep3baro[2:, :]) / clat,
-                0, 1)
+        # Compute meridional flux vector with existing fields
+        from array import array
+        if self._northern_hemisphere_results_only:
+            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
+            slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
+        else:
+            slicer = [slice(None)] * 3
+
+        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
+             * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro[:, :] = \
+            self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=-1).T
 
         # === Return the named tuple ===
         if return_named_tuple:
@@ -1081,6 +1101,8 @@ class QGFieldBase(ABC):
             prefac=self.prefactor)
 
         # Southern hemisphere
+        # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
+        # the output ep2 and ep3 terms shall be swapped.
         if not self.northern_hemisphere_results_only:
             self._layerwise_flux_terms_storage.astar1_shem, \
                 self._layerwise_flux_terms_storage.astar2_shem, \
@@ -1088,8 +1110,8 @@ class QGFieldBase(ABC):
                 self._layerwise_flux_terms_storage.ua1_shem, \
                 self._layerwise_flux_terms_storage.ua2_shem, \
                 self._layerwise_flux_terms_storage.ep1_shem, \
-                self._layerwise_flux_terms_storage.ep2_shem, \
-                self._layerwise_flux_terms_storage.ep3_shem, \
+                ep3_shem, \
+                ep2_shem, \
                 self._barotropic_flux_terms_storage.ep4_shem  \
                 = compute_flux_dirinv_nshem(
                 pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
@@ -1110,6 +1132,8 @@ class QGFieldBase(ABC):
                 rr=self.dry_gas_constant,
                 cp=self.cp,
                 prefac=self.prefactor)
+            self._layerwise_flux_terms_storage.ep2_shem = -ep2_shem
+            self._layerwise_flux_terms_storage.ep3_shem = -ep3_shem
             self._layerwise_flux_terms_storage.ncforce_shem = -ncforce_shem
 
         # Total LWA

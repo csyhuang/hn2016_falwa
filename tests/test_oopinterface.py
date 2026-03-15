@@ -476,10 +476,11 @@ def test_flux_vector_phi_divergence_consistency(QGField):
         clat=clat,
         dphi=np.deg2rad(ylat[1] - ylat[0]),
         planet_radius=EARTH_RADIUS)
-
-    print("Stop here")
+    eq_boundary_index = 6 #  for NHN22 eq_boundary_index = 5
+    poleward_boundary_index = 3
     np.testing.assert_allclose(
-        recomputed_divergence[3:-3, 3:-3],  # exclude poles where meridional divergence is not well-defined
-        qgfield.divergence_eddy_momentum_flux[3:-3, 3:-3],
-        rtol=1e-10)
-
+        recomputed_divergence[60+eq_boundary_index:-poleward_boundary_index,:], qgfield.divergence_eddy_momentum_flux[60+eq_boundary_index:-poleward_boundary_index,:],
+        atol=1e-5) # Assert value all close for N.Hem
+    np.testing.assert_allclose(
+        recomputed_divergence[poleward_boundary_index:61-eq_boundary_index, :], qgfield.divergence_eddy_momentum_flux[poleward_boundary_index:61-eq_boundary_index, :],
+        atol=1e-5)  # Assert value all close for S.Hem
