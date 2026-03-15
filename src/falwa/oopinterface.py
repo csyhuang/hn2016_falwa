@@ -404,9 +404,18 @@ class QGFieldBase(ABC):
 
     def _vertical_average(self, var_3d, lowest_layer_index=1, height_axis=-1):
         dc = self.dz / self.prefactor
+
+        # Build dynamic slicer for var_3d
+        slicer = [slice(None)] * var_3d.ndim
+        slicer[height_axis] = slice(lowest_layer_index, None)
+
+        # Build dynamic shape for height broadcasting
+        height_shape = [1] * var_3d.ndim
+        height_shape[height_axis] = -1
+
         var_baro = np.sum(
-            var_3d[:, :, lowest_layer_index:]
-            * np.exp(-self.height[np.newaxis, np.newaxis, lowest_layer_index:] / self.scale_height) * dc,
+            var_3d[tuple(slicer)]
+            * np.exp(-self.height[lowest_layer_index:].reshape(height_shape) / self.scale_height) * dc,
             axis=height_axis)
         return var_baro
 
@@ -750,6 +759,8 @@ class QGFieldBase(ABC):
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
         # === Compute barotropic flux terms (SHem) ===
+        # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
+        # the output ep2 and ep3 terms shall be swapped.
         if not self.northern_hemisphere_results_only:
             self._barotropic_flux_terms_storage.lwa_baro_shem, \
                 self._barotropic_flux_terms_storage.u_baro_shem, \
@@ -757,8 +768,8 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.ua1baro_shem, \
                 self._barotropic_flux_terms_storage.ua2baro_shem, \
                 self._barotropic_flux_terms_storage.ep1baro_shem, \
-                self._barotropic_flux_terms_storage.ep2baro_shem, \
-                self._barotropic_flux_terms_storage.ep3baro_shem, \
+                ep3baro_shem, \
+                ep2baro_shem, \
                 self._barotropic_flux_terms_storage.ep4_shem, \
                 astar1, \
                 astar2, \
@@ -776,6 +787,8 @@ class QGFieldBase(ABC):
                     uref=self._reference_states_storage.uref[(self.jd-1)::-1, :],
                     tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
                     jb=self.eq_boundary_index)
+            self._barotropic_flux_terms_storage.ep2baro_shem = -ep2baro_shem
+            self._barotropic_flux_terms_storage.ep3baro_shem = -ep3baro_shem
             self._barotropic_flux_terms_storage.ncforce_baro_shem = -ncforce_baro_shem
             self._layerwise_flux_terms_storage.lwa_shem = np.abs(astar1 + astar2)
 
@@ -920,18 +933,15 @@ class QGFieldBase(ABC):
         self._output_barotropic_flux_terms_storage.ncforce_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ncforce_baro)
 
-        # Barotropic wave activity flux vectors (Lee & Nakamura 2024, eqs. 6-7)
+        # Barotropic wave activity flux vectors (Zonal, Lee & Nakamura 2024, eqs. 6)
         self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro = \
             self._barotropic_flux_terms_storage.fortran_to_python(
                 self._barotropic_flux_terms_storage.ua1baro
                 + self._barotropic_flux_terms_storage.ua2baro
                 + self._barotropic_flux_terms_storage.ep1baro)
 
-        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = \
-            np.swapaxes(
-                -0.5 * (self._barotropic_flux_terms_storage.ep2baro
-                         + self._barotropic_flux_terms_storage.ep3baro) / clat,
-                0, 1)
+        # Barotropic wave activity flux vectors (Zonal, Lee & Nakamura 2024, eqs. 7)
+        self._output_barotropic_flux_terms_storage.flux_vector_phi_baro = self._compute_flux_vector_phi_baro()
 
         # === Return the named tuple ===
         if return_named_tuple:
@@ -950,6 +960,27 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.u_baro),
                 self._layerwise_flux_terms_storage.fortran_to_python(self._layerwise_flux_terms_storage.lwa))
             return lwa_and_fluxes
+
+    def _compute_flux_vector_phi_baro(self):
+        """
+        Compute the meridional flux vector based on the field stored in fortran indexing.
+
+        Returns
+        -------
+        flux_vector_phi_baro : np.ndarray of dimension (nlat//2+1, nlon) if northern_hemisphere_results_only=True,
+            or dimension (nlat, nlon) if northern_hemisphere_results_only=False
+        The barotropic component of the meridional flux vector in Lee & Nakamura (2024, eq. 7).
+        """
+        if self._northern_hemisphere_results_only:
+            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
+            slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
+        else:
+            slicer = [slice(None)] * 3
+
+        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
+             * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
+        return self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=-1).T
+
 
     def compute_ncforce_from_heating_rate(self, heating_rate):
         """
@@ -1081,6 +1112,8 @@ class QGFieldBase(ABC):
             prefac=self.prefactor)
 
         # Southern hemisphere
+        # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
+        # the output ep2 and ep3 terms shall be swapped.
         if not self.northern_hemisphere_results_only:
             self._layerwise_flux_terms_storage.astar1_shem, \
                 self._layerwise_flux_terms_storage.astar2_shem, \
@@ -1088,8 +1121,8 @@ class QGFieldBase(ABC):
                 self._layerwise_flux_terms_storage.ua1_shem, \
                 self._layerwise_flux_terms_storage.ua2_shem, \
                 self._layerwise_flux_terms_storage.ep1_shem, \
-                self._layerwise_flux_terms_storage.ep2_shem, \
-                self._layerwise_flux_terms_storage.ep3_shem, \
+                ep3_shem, \
+                ep2_shem, \
                 self._barotropic_flux_terms_storage.ep4_shem  \
                 = compute_flux_dirinv_nshem(
                 pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
@@ -1110,6 +1143,8 @@ class QGFieldBase(ABC):
                 rr=self.dry_gas_constant,
                 cp=self.cp,
                 prefac=self.prefactor)
+            self._layerwise_flux_terms_storage.ep2_shem = -ep2_shem
+            self._layerwise_flux_terms_storage.ep3_shem = -ep3_shem
             self._layerwise_flux_terms_storage.ncforce_shem = -ncforce_shem
 
         # Total LWA
@@ -1320,8 +1355,13 @@ class QGFieldBase(ABC):
     @property
     def flux_vector_lambda_baro(self):
         """
-        Barotropic zonal wave activity flux vector, i.e. eq. (6) of
-        Lee and Nakamura (2024): <F_lambda> = ua1baro + ua2baro + ep1baro.
+        np.ndarray of dimension(nlat, nlon):
+            Barotropic zonal wave activity flux vector, i.e. eq. (6) of Lee and Nakamura (2024):
+
+        where :math:`\\langle F_\\lambda \\rangle = \\langle \\text{adv\_f1} \\rangle + \\langle \\text{adv\_f2} \\rangle + \\langle \\text{adv\_f3} \\rangle` ,
+        :math:`\\langle \\text{adv\_f1} \\rangle \\equiv \\langle u_\\mathrm{REF} A \\cos(\\phi) \\rangle` ,
+        :math:`\\langle \\text{adv\_f2} \\rangle \\equiv - a \\langle \\int_0^{\\Delta\\phi} u_e q_e \\cos(\\phi + \\phi') \\mathrm{d}\\phi^\\prime \\rangle`,
+        :math:`\\langle \\text{adv\_f3} \\rangle \\equiv \\frac{\\cos(\\phi)}{2} \\left\\langle v_e^2 - u_e^2 - \\frac{R}{H} \\frac{e^{-\\kappa z / H} \\theta_e^2}{\\partial \\tilde\\theta / \\partial z} \\right\\rangle`
         """
         return self._return_interp_variables(
             variable=self._output_barotropic_flux_terms_storage.flux_vector_lambda_baro,
@@ -1330,8 +1370,11 @@ class QGFieldBase(ABC):
     @property
     def flux_vector_phi_baro(self):
         """
-        Barotropic meridional wave activity flux vector, i.e. eq. (7) of
-        Lee and Nakamura (2024): <F_phi> = -<u_e * v_e> * cos(phi).
+        np.ndarray of dimension(nlat, nlon):
+            Barotropic meridional wave activity flux vector, i.e. eq. (7) of Lee and Nakamura (2024):
+
+        :math:`\\langle F_\\lambda \\rangle = - \\langle u_e * v_e \\rangle * cos(\\phi)`
+
         Computed as -0.5 * (ep2baro + ep3baro) / cos(phi).
         """
         return self._return_interp_variables(
@@ -1389,7 +1432,7 @@ class QGFieldBase(ABC):
 
     @property
     def ua1(self):
-        """Layerwise first/linear term of zonal advective flux (F1 in NH18)."""
+        """Layerwise first/linear term of zonal advective flux (adv_flux_f1/layerwize F1 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ua1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1399,7 +1442,7 @@ class QGFieldBase(ABC):
 
     @property
     def ua2(self):
-        """Layerwise second/nonlinear term of zonal advective flux (F2 in NH18)."""
+        """Layerwise second/nonlinear term of zonal advective flux (adv_flux_f2/layerwize F2 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ua2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1409,7 +1452,7 @@ class QGFieldBase(ABC):
 
     @property
     def ep1(self):
-        """Layerwise meridional eddy momentum flux convergence (F3a in NH18)."""
+        """Layerwise meridional eddy momentum flux convergence (adv_flux_f3/layerwize F3 in NH18)."""
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep1 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1419,7 +1462,13 @@ class QGFieldBase(ABC):
 
     @property
     def ep2(self):
-        """Layerwise meridional heat flux convergence (F3b in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            the discretized meridional eddy momentum flux divergence at grid point `j` is computed by
+
+        :math:`\\frac{[\\text{ep2} - \\text{ep3}]}{a (2 \\Delta\\phi) \\cos{\\phi}}`
+        where :math:`\\text{ep2} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j+1}` and :math:`\\text{ep3} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j-1}`
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep2 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1429,7 +1478,13 @@ class QGFieldBase(ABC):
 
     @property
     def ep3(self):
-        """Layerwise zonal heat flux convergence (F3c in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            the discretized meridional eddy momentum flux divergence at grid point `j` is computed by
+
+        :math:`\\frac{[\\text{ep2} - \\text{ep3}]}{a (2 \\Delta\\phi) \\cos{\\phi}}`
+        where :math:`\\text{ep2} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j+1}` and :math:`\\text{ep3} \equiv (u_e v_e cos^2(\phi+\phi^\prime))_{j-1}`
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('ep3 is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(
@@ -1439,7 +1494,16 @@ class QGFieldBase(ABC):
 
     @property
     def stretch_term(self):
-        """Layerwise stretching term (F3d in NH18)."""
+        """
+        np.ndarray of dimension(kmax, nlat, nlon):
+            This is the stretch term that is present only in the layerwise LWA budget equation in Lubis et al (2025),
+            but not the barotropic LWA budget equation in NH18/NHN22. The vertical average of this term is the
+            low-level meridional heat flux. The expression of the stretch term is:
+
+            :math:`- f\\cos\\phi_e e^{z/H}\\frac{\\partial}{\\partial z}\\left( \\frac{ e^{-z/H} v_e \\theta_e}{\\partial\\tilde\\theta/\\partial z} \\right)`
+
+            It is only computed after calling `QGField.compute_layerwise_lwa_fluxes`.
+        """
         if not self._layerwise_fluxes_computed:
             raise ValueError('stretch_term is not computed yet. Call compute_layerwise_lwa_fluxes() first.')
         return self._return_interp_variables(

@@ -233,6 +233,53 @@ def zonal_convergence(field, clat, dlambda, planet_radius=6.378e+6, tol=1.e-5):
     return zonal_diff
 
 
+def meridional_divergence(field, clat, dphi, planet_radius=6.378e+6, tol=1.e-5):
+
+    """
+    The function "zonal_convergence" computes the zonal component of the convergence operator of an arbitrary field f(lat, lon), i.e. it computes on the spherical surface:
+    1/(planet_radius * cos(lat)) * partial d(f(lat, lon)cos(lat))/partial d(lat)
+
+    Please make inquiries and report issues via Github: https://github.com/csyhuang/hn2016_falwa/issues
+
+    Parameters
+    ----------
+    field : numpy.ndarray
+        An arbitrary field that one needs to compute zonal divergence with dimension [nlat, nlon]
+
+    clat : numpy.array
+        Numpy array of cosine latitude; dimension [nlat]
+
+    dphi : float
+        Differential element of latitude (in radian)
+
+    planet_radius : float, optional
+        Radius of the planet in meters.
+        Default = 6.378e+6 (Earth's radius)
+
+    tol : float, optional
+        Tolerance below which clat is considered infinitely small that the corresponding grid points will have returned result = 0 (to avoid division by zero). Default = 1.e-5
+
+    Returns
+    -------
+    ans : numpy.ndarray
+        Zonal convergence of field with the dimension same as field, i.e. [nlat, nlon]
+
+    """
+
+    meridional_diff = np.zeros_like(field)
+    meridional_diff[1:-1, :] = field[2:, :] * clat[2:, np.newaxis] - field[:-2, :] * clat[:-2, np.newaxis]
+    meridional_diff[0, :] = field[1, :] * clat[1] - field[0, :] * clat[0]
+    meridional_diff[-1, :] = field[-1, :] * clat[-1] - field[-2, :] * clat[-2]
+
+    # This is to avoid divided by zero
+    finite_clat = np.abs(clat) > tol
+
+    meridional_diff[finite_clat, :] = \
+        meridional_diff[finite_clat, :] / (planet_radius * clat[finite_clat, np.newaxis] * 2. * dphi)
+
+    return meridional_diff
+
+
 def curl_2d(ufield, vfield, clat, dlambda, dphi, planet_radius=6.378e+6):
     """
     Assuming regular latitude and longitude [in degree] grid, compute the curl

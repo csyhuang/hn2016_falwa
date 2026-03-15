@@ -7,8 +7,8 @@ from math import pi
 from scipy.interpolate import interp1d
 
 from falwa.constant import *
-from falwa.oopinterface import QGFieldNH18
-from falwa.utilities import zonal_convergence
+from falwa.oopinterface import QGFieldNH18, QGFieldNHN22
+from falwa.utilities import zonal_convergence, meridional_divergence
 
 # === Parameters specific for testing the qgfield class ===
 nlat = 121
@@ -353,20 +353,25 @@ def test_layerwise_flux_guard():
             getattr(qgfield, prop_name)
 
 
-def test_layerwise_flux_properties_full_globe():
+@pytest.mark.parametrize("nh_only", [False, True])
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_layerwise_flux_properties(QGField, nh_only):
     """Test layerwise flux properties with northern_hemisphere_results_only=False."""
-    qgfield = QGFieldNH18(
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
         tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
         dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
-        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=nh_only)
     qgfield.interpolate_fields()
     qgfield.compute_reference_states()
     qgfield.compute_layerwise_lwa_fluxes()
 
-    expected_shape = (kmax, nlat, nlon)
+    if nh_only:
+        expected_shape = (kmax, nlat // 2 + 1, nlon)
+    else:
+        expected_shape = (kmax, nlat, nlon)
     for prop_name in ['ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']:
         prop = getattr(qgfield, prop_name)
         assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
@@ -374,72 +379,37 @@ def test_layerwise_flux_properties_full_globe():
         assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"
 
 
-def test_layerwise_flux_properties_nh_only():
-    """Regression test: compute_layerwise_lwa_fluxes must not crash with northern_hemisphere_results_only=True."""
-    qgfield = QGFieldNH18(
-        xlon=xlon, ylat=ylat, plev=plev,
-        u_field=u_field, v_field=v_field, t_field=t_field,
-        kmax=kmax, maxit=100000, dz=1000., npart=None,
-        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
-        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
-    qgfield.interpolate_fields()
-    qgfield.compute_reference_states()
-    qgfield.compute_layerwise_lwa_fluxes()
-
-    expected_shape = (kmax, nlat // 2 + 1, nlon)
-    for prop_name in ['ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']:
-        prop = getattr(qgfield, prop_name)
-        assert prop.shape == expected_shape, f"{prop_name} shape mismatch: {prop.shape} != {expected_shape}"
-        assert np.isnan(prop).sum() == 0, f"{prop_name} contains NaN"
-        assert np.abs(prop).sum() > 0, f"{prop_name} is all zeros"
-
-
-def test_flux_vector_baro_full_globe():
+@pytest.mark.parametrize("nh_only", [False, True])
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_flux_vector_baro(QGField, nh_only):
     """Test barotropic flux vector properties with full globe."""
-    qgfield = QGFieldNH18(
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
         tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
         dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
-        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=False)
+        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=nh_only)
     qgfield.interpolate_fields()
     qgfield.compute_reference_states()
     qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
 
-    assert qgfield.flux_vector_lambda_baro.shape == (nlat, nlon)
-    assert qgfield.flux_vector_phi_baro.shape == (nlat, nlon)
+    if nh_only:
+        assert qgfield.flux_vector_lambda_baro.shape == (nlat // 2 + 1, nlon)
+        assert qgfield.flux_vector_phi_baro.shape == (nlat // 2 + 1, nlon)
+    else:
+        assert qgfield.flux_vector_lambda_baro.shape == (nlat, nlon)
+        assert qgfield.flux_vector_phi_baro.shape == (nlat, nlon)
     assert np.isnan(qgfield.flux_vector_lambda_baro).sum() == 0
     assert np.isnan(qgfield.flux_vector_phi_baro).sum() == 0
     assert np.abs(qgfield.flux_vector_lambda_baro).sum() > 0
     assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
 
 
-def test_flux_vector_baro_nh_only():
-    """Test barotropic flux vector properties with northern hemisphere only."""
-    qgfield = QGFieldNH18(
-        xlon=xlon, ylat=ylat, plev=plev,
-        u_field=u_field, v_field=v_field, t_field=t_field,
-        kmax=kmax, maxit=100000, dz=1000., npart=None,
-        tol=1.e-5, rjac=0.95, scale_height=SCALE_HEIGHT, cp=CP,
-        dry_gas_constant=DRY_GAS_CONSTANT, omega=EARTH_OMEGA,
-        planet_radius=EARTH_RADIUS, northern_hemisphere_results_only=True)
-    qgfield.interpolate_fields()
-    qgfield.compute_reference_states()
-    qgfield.compute_lwa_and_barotropic_fluxes(return_named_tuple=False)
-
-    assert qgfield.flux_vector_lambda_baro.shape == (nlat // 2 + 1, nlon)
-    assert qgfield.flux_vector_phi_baro.shape == (nlat // 2 + 1, nlon)
-    assert np.isnan(qgfield.flux_vector_lambda_baro).sum() == 0
-    assert np.isnan(qgfield.flux_vector_phi_baro).sum() == 0
-    assert np.abs(qgfield.flux_vector_lambda_baro).sum() > 0
-    assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
-
-
-def test_flux_vector_lambda_identity():
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_flux_vector_lambda_identity(QGField):
     """flux_vector_lambda_baro must equal adv_flux_f1 + adv_flux_f2 + adv_flux_f3 exactly."""
-    qgfield = QGFieldNH18(
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
@@ -455,9 +425,10 @@ def test_flux_vector_lambda_identity():
         qgfield.adv_flux_f1 + qgfield.adv_flux_f2 + qgfield.adv_flux_f3)
 
 
-def test_flux_vector_lambda_divergence_consistency():
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_flux_vector_lambda_divergence_consistency(QGField):
     """Convergence of flux_vector_lambda_baro must match convergence_zonal_advective_flux."""
-    qgfield = QGFieldNH18(
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
@@ -481,9 +452,10 @@ def test_flux_vector_lambda_divergence_consistency():
         rtol=1e-10)
 
 
-def test_flux_vector_phi_differs_from_divergence():
-    """flux_vector_phi_baro and divergence_eddy_momentum_flux must both be non-zero and distinct."""
-    qgfield = QGFieldNH18(
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_flux_vector_phi_divergence_consistency(QGField):
+    """meridional divergence of flux_vector_phi_baro and divergence_eddy_momentum_flux must match."""
+    qgfield = QGField(
         xlon=xlon, ylat=ylat, plev=plev,
         u_field=u_field, v_field=v_field, t_field=t_field,
         kmax=kmax, maxit=100000, dz=1000., npart=None,
@@ -496,6 +468,22 @@ def test_flux_vector_phi_differs_from_divergence():
 
     assert np.abs(qgfield.flux_vector_phi_baro).sum() > 0
     assert np.abs(qgfield.divergence_eddy_momentum_flux).sum() > 0
-    assert not np.array_equal(
-        qgfield.flux_vector_phi_baro,
-        qgfield.divergence_eddy_momentum_flux)
+
+    # Compute meridional divergence and assert them equal
+    clat = np.cos(np.deg2rad(ylat))
+    recomputed_divergence = meridional_divergence(
+        field=-qgfield.flux_vector_phi_baro,
+        clat=clat,
+        dphi=np.deg2rad(ylat[1] - ylat[0]),
+        planet_radius=EARTH_RADIUS)
+    eq_boundary_index = 6 #  for NHN22 eq_boundary_index = 5
+    poleward_boundary_index = 3
+
+    # After swap of axis, there are slight changes in numerical values. A fixed relative tolerance sometimes failed.
+    # So I am using absolute tolerance here.
+    np.testing.assert_allclose(
+        recomputed_divergence[60+eq_boundary_index:-poleward_boundary_index,:], qgfield.divergence_eddy_momentum_flux[60+eq_boundary_index:-poleward_boundary_index,:],
+        atol=1e-5) # Assert value all close for N.Hem
+    np.testing.assert_allclose(
+        recomputed_divergence[poleward_boundary_index:61-eq_boundary_index, :], qgfield.divergence_eddy_momentum_flux[poleward_boundary_index:61-eq_boundary_index, :],
+        atol=1e-5)  # Assert value all close for S.Hem

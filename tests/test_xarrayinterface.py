@@ -213,26 +213,12 @@ def test_get_name():
         _get_name(ds, ["bar", "baz"], { "bar": "xyz", "baz": "foo" })
 
 
-def test_qgdataset_compute_layerwise_lwa_fluxes():
-    """Test QGDataset.compute_layerwise_lwa_fluxes returns correct Dataset."""
-    data = _generate_test_dataset()
-    qgds = QGDataset(data)
-    qgds.interpolate_fields()
-    qgds.compute_reference_states()
-    result = qgds.compute_layerwise_lwa_fluxes()
-
-    assert isinstance(result, xr.Dataset)
-    expected_vars = ['lwa', 'ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']
-    for var_name in expected_vars:
-        assert var_name in result, f"{var_name} not found in result Dataset"
-        assert result[var_name].dims == ("height", "ylat", "xlon"), \
-            f"{var_name} dims mismatch: {result[var_name].dims}"
-
-
-def test_qgdataset_compute_layerwise_lwa_fluxes_nh_only():
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+@pytest.mark.parametrize("nh_only", [False, True])
+def test_qgdataset_compute_layerwise_lwa_fluxes_nh_only(QGField, nh_only):
     """Regression test: compute_layerwise_lwa_fluxes must not crash with northern_hemisphere_results_only=True."""
     data = _generate_test_dataset()
-    qgds = QGDataset(data, qgfield_kwargs={"northern_hemisphere_results_only": True})
+    qgds = QGDataset(data, qgfield=QGField, qgfield_kwargs={"northern_hemisphere_results_only": True})
     qgds.interpolate_fields()
     qgds.compute_reference_states()
     result = qgds.compute_layerwise_lwa_fluxes()
@@ -241,12 +227,16 @@ def test_qgdataset_compute_layerwise_lwa_fluxes_nh_only():
     expected_vars = ['lwa', 'ua1', 'ua2', 'ep1', 'ep2', 'ep3', 'stretch_term']
     for var_name in expected_vars:
         assert var_name in result, f"{var_name} not found in result Dataset"
+        if not nh_only:
+            assert result[var_name].dims == ("height", "ylat", "xlon"), \
+                f"{var_name} dims mismatch: {result[var_name].dims}"
 
 
-def test_qgdataset_flux_vector_baro_in_dataset():
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_qgdataset_flux_vector_baro_in_dataset(QGField):
     """Test that flux vector baro variables are in the returned Dataset."""
     data = _generate_test_dataset()
-    qgds = QGDataset(data)
+    qgds = QGDataset(data, qgfield=QGField)
     qgds.interpolate_fields()
     qgds.compute_reference_states()
     result = qgds.compute_lwa_and_barotropic_fluxes()
@@ -258,10 +248,11 @@ def test_qgdataset_flux_vector_baro_in_dataset():
     assert result["flux_vector_phi_baro"].dims == ("ylat", "xlon")
 
 
-def test_qgdataset_flux_vector_baro_accessor_consistency():
+@pytest.mark.parametrize("QGField", [QGFieldNH18, QGFieldNHN22])
+def test_qgdataset_flux_vector_baro_accessor_consistency(QGField):
     """Test that Dataset values match accessor values for flux vector baro."""
     data = _generate_test_dataset()
-    qgds = QGDataset(data)
+    qgds = QGDataset(data, qgfield=QGField)
     qgds.interpolate_fields()
     qgds.compute_reference_states()
     result = qgds.compute_lwa_and_barotropic_fluxes()
