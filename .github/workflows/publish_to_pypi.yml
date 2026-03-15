@@ -48,7 +48,7 @@ jobs:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
     # Disabled for testing - will fail since there's no tag
-    if: startsWith(github.ref, 'refs/tags/')
+    #if: startsWith(github.ref, 'refs/tags/')
     needs:
     - build_sdist
     runs-on: ubuntu-latest
