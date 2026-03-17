@@ -15,6 +15,7 @@ from falwa.utilities import zonal_convergence, z_derivative_of_prod
 from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_RADIUS, EARTH_OMEGA
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
+from falwa.hemisphere_strategy import create_hemisphere_strategy, HemisphereStrategy
 
 # *** Import f2py modules ***
 from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first, \
@@ -168,6 +169,11 @@ class QGFieldBase(ABC):
         # === Moved here in v0.7.0 ===
         self._northern_hemisphere_results_only = northern_hemisphere_results_only
 
+        # === Create hemisphere strategy (v2.4.0) ===
+        self._hemisphere_strategy: HemisphereStrategy = create_hemisphere_strategy(
+            northern_hemisphere_results_only
+        )
+
         # === Other parameters ===
         self.maxit = maxit
         self.tol = tol
@@ -206,7 +212,7 @@ class QGFieldBase(ABC):
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # Reference states
-        lat_dim = self.equator_idx if self.northern_hemisphere_results_only else self._nlat_analysis
+        lat_dim = self._hemisphere_strategy.get_lat_dim(self._nlat_analysis, self.equator_idx)
         self._reference_states_storage = ReferenceStatesStorage(
             pydim=(self.kmax, lat_dim),
             fdim=(lat_dim, self.kmax),
@@ -392,13 +398,9 @@ class QGFieldBase(ABC):
             The interpolated variable(numpy.ndarray)
         """
         if self.need_latitude_interpolation:
-            if self.northern_hemisphere_results_only:
-                return self._interp_back(
-                    variable, self._ylat[-(self._nlat_analysis // 2 + 1):],
-                    self._input_ylat[-(self.nlat // 2):],
-                    which_axis=interp_axis)
-            else:
-                return self._interp_back(variable, self._ylat, self._input_ylat, which_axis=interp_axis)
+            source_lat, target_lat = self._hemisphere_strategy.get_interp_slice(
+                self._ylat, self._input_ylat, self.nlat, self._nlat_analysis)
+            return self._interp_back(variable, source_lat, target_lat, which_axis=interp_axis)
         else:
             return variable
 
@@ -640,7 +642,7 @@ class QGFieldBase(ABC):
         >>> lwa = QGField.lwa       # 3-D LWA
         """
 
-        ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
+        ylat_input = self._hemisphere_strategy.get_ylat_for_analysis(self._ylat, self._nlat_analysis)
         qref_correct_unit = self._reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 
@@ -667,7 +669,7 @@ class QGFieldBase(ABC):
         self._layerwise_flux_terms_storage.astar2_nhem = np.abs(astar2)
 
         # === Compute barotropic flux terms (SHem) ===
-        if not self.northern_hemisphere_results_only:  # TODO: check signs!
+        if self._hemisphere_strategy.should_compute_shem():  # TODO: check signs!
             self._barotropic_flux_terms_storage.lwa_baro_shem, \
                 self._barotropic_flux_terms_storage.u_baro_shem, \
                 astar1, \
@@ -691,7 +693,8 @@ class QGFieldBase(ABC):
 
     @staticmethod
     def _prepare_coordinates_and_ref_states(
-        _ylat, _interpolated_field_storage, _reference_states_storage, omega, equator_idx, northern_hemisphere_results_only):
+        _ylat, _interpolated_field_storage, _reference_states_storage, omega, equator_idx,
+        hemisphere_strategy):
         """
         Specific for the class QGFieldNHN22. Procedures before calling layerwise flux calculations
 
@@ -702,13 +705,13 @@ class QGFieldBase(ABC):
         _reference_states_storage
         omega
         equator_idx
-        northern_hemisphere_results_only
+        hemisphere_strategy : HemisphereStrategy
 
         Returns
         -------
 
         """
-        ylat_input = _ylat[-equator_idx:] if northern_hemisphere_results_only else _ylat
+        ylat_input = hemisphere_strategy.get_ylat_for_analysis(_ylat, len(_ylat))
         qref_correct_unit = _reference_states_storage.qref_correct_unit(
             ylat=ylat_input, omega=omega, python_indexing=False)
         return ylat_input, qref_correct_unit
@@ -728,7 +731,7 @@ class QGFieldBase(ABC):
         # Turn qref back to correct unit
         ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
             self._ylat, self._interpolated_field_storage, self._reference_states_storage,
-            self.omega, self.equator_idx, self.northern_hemisphere_results_only)
+            self.omega, self.equator_idx, self._hemisphere_strategy)
 
         # === Compute barotropic flux terms (NHem) ===
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
@@ -761,7 +764,7 @@ class QGFieldBase(ABC):
         # === Compute barotropic flux terms (SHem) ===
         # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
         # the output ep2 and ep3 terms shall be swapped.
-        if not self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.should_compute_shem():
             self._barotropic_flux_terms_storage.lwa_baro_shem, \
                 self._barotropic_flux_terms_storage.u_baro_shem, \
                 urefbaro, \
@@ -906,7 +909,7 @@ class QGFieldBase(ABC):
         self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
-        clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
+        clat = self._hemisphere_strategy.get_clat_slice(self._clat, self.equator_idx)
         self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
             np.swapaxes(
                 (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
@@ -971,11 +974,8 @@ class QGFieldBase(ABC):
             or dimension (nlat, nlon) if northern_hemisphere_results_only=False
         The barotropic component of the meridional flux vector in Lee & Nakamura (2024, eq. 7).
         """
-        if self._northern_hemisphere_results_only:
-            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
-            slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
-        else:
-            slicer = [slice(None)] * 3
+        slicer = list(self._hemisphere_strategy.slice_3d_for_flux(
+            self.equator_idx, self._nlat_analysis))
 
         flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
              * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
@@ -1030,14 +1030,9 @@ class QGFieldBase(ABC):
         None. Internally initialized self._layerwise_flux_terms_storage.stretch_term.
         """
         # TODO: verify cosine weighting
-        if self.northern_hemisphere_results_only:
-            # ptref is NH-only (equator_idx, kmax) but interpolated fields are
-            # full-globe (nlon, nlat_analysis, kmax). Pad ptref to full-globe so
-            # shapes broadcast; SH values are irrelevant (discarded below).
-            ptref_full = np.zeros((self._nlat_analysis, self.kmax))
-            ptref_full[-self.equator_idx:, :] = self._reference_states_storage.ptref
-        else:
-            ptref_full = self._reference_states_storage.ptref
+        ptref_full = self._hemisphere_strategy.get_ptref_for_stretch(
+            self._reference_states_storage.ptref,
+            self._nlat_analysis, self.kmax, self.equator_idx)
 
         v_e_theta_e_clat = self._interpolated_field_storage.interpolated_v[:, :, :] * (
                 self._interpolated_field_storage.interpolated_theta[:, :, :]
@@ -1055,7 +1050,7 @@ class QGFieldBase(ABC):
         # Note that there is a minus sign below in order to have consistent sign with ep4 that is
         # the (positive) low-level meridional heat flux
         full_result = -np.swapaxes(inner_ep4, 0, 2)
-        if self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.is_northern_only:
             self._layerwise_flux_terms_storage.stretch_term_nhem = full_result[:, -self.equator_idx:, :]
         else:
             self._layerwise_flux_terms_storage.stretch_term = full_result
@@ -1071,7 +1066,7 @@ class QGFieldBase(ABC):
         # Turn qref back to correct unit
         ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
             self._ylat, self._interpolated_field_storage, self._reference_states_storage,
-            self.omega, self.equator_idx, self.northern_hemisphere_results_only)
+            self.omega, self.equator_idx, self._hemisphere_strategy)
 
         # *** The chunk below has duplication. TODO: think of ways to refactor ***
         if ncforce is None:
@@ -1114,7 +1109,7 @@ class QGFieldBase(ABC):
         # Southern hemisphere
         # Fix in v2.3.3: since the computation of SHem is done by flipping the SHem field over latitudes,
         # the output ep2 and ep3 terms shall be swapped.
-        if not self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.should_compute_shem():
             self._layerwise_flux_terms_storage.astar1_shem, \
                 self._layerwise_flux_terms_storage.astar2_shem, \
                 ncforce_shem, \
@@ -1180,12 +1175,9 @@ class QGFieldBase(ABC):
         """
         This is the reference state grid output to user
         """
-        if self.northern_hemisphere_results_only:
-            if self.need_latitude_interpolation:
-                return self._input_ylat[-(self.nlat // 2):]
-            else:
-                return self._input_ylat[-(self.nlat // 2 + 1):]
-        return self._input_ylat
+        return self._hemisphere_strategy.get_ylat_for_ref_states(
+            self._input_ylat, self._ylat, self.nlat,
+            self._nlat_analysis, self.need_latitude_interpolation)
 
     @property
     def ylat_ref_states_analysis(self) -> np.array:
@@ -1193,9 +1185,7 @@ class QGFieldBase(ABC):
         Latitude dimension of reference state.
         This is input to ReferenceStatesStorage.qref_correct_unit.
         """
-        if self.northern_hemisphere_results_only:
-            return self._ylat[-(self._nlat_analysis // 2 + 1):]
-        return self._ylat
+        return self._hemisphere_strategy.get_ylat_for_analysis(self._ylat, self._nlat_analysis)
 
     @property
     def northern_hemisphere_results_only(self) -> bool:
@@ -1203,7 +1193,7 @@ class QGFieldBase(ABC):
         Even though a global field is required for input, whether ref state and fluxes are computed for
         northern hemisphere only
         """
-        return self._northern_hemisphere_results_only
+        return self._hemisphere_strategy.is_northern_only
 
     # === Boolean related to the state of the input field ===
     @property
@@ -1618,7 +1608,7 @@ class QGFieldNH18(QGFieldBase):
             self._nonconvergence_notification(hemisphere="Northern")
 
         # === Compute reference states in Southern Hemisphere ===
-        if not self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.should_compute_shem():
             self._reference_states_storage.qref_shem, \
                 self._reference_states_storage.uref_shem, \
                 self._reference_states_storage.ptref_shem, num_of_iter = \
@@ -1791,7 +1781,7 @@ class QGFieldNHN22(QGFieldBase):
                 t0=self._domain_average_storage.tn0,
                 static_stability=self._domain_average_storage.static_stability_n)
 
-        if not self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.should_compute_shem():
             # === Compute reference states in Southern Hemisphere ===
             self._reference_states_storage.qref_shem, \
                 self._reference_states_storage.uref_shem, \
@@ -1892,7 +1882,7 @@ class QGFieldNHN22(QGFieldBase):
         """
         The interpolated static stability.
         """
-        if self.northern_hemisphere_results_only:
+        if self._hemisphere_strategy.is_northern_only:
             return self._domain_average_storage.static_stability_n
         else:
             return self._domain_average_storage.static_stability_s, self._domain_average_storage.static_stability_n

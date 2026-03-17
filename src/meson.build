@@ -4,6 +4,7 @@ py.install_sources(
     'falwa/basis.py',
     'falwa/constant.py',
     'falwa/data_storage.py',
+    'falwa/hemisphere_strategy.py',
     'falwa/oopinterface.py',
     'falwa/plot_utils.py',
     'falwa/utilities.py',
