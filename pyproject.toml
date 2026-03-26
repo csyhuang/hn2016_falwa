@@ -23,7 +23,8 @@ classifiers = [
 dependencies = [
     "numpy>=1.22",
     "scipy",
-    "xarray"
+    "xarray",
+    "numba",
 ]
 
 [project.optional-dependencies]
