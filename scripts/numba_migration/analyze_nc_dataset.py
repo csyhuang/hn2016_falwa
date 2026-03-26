@@ -15,9 +15,9 @@ Example:
         --u_file 2005-01-23_to_2005-01-30_u.nc \
         --v_file 2005-01-23_to_2005-01-30_v.nc \
         --t_file 2005-01-23_to_2005-01-30_t.nc \
-        --output_nc_filename lwa_reference_output.nc \
-        --output_dir ./output_plots_qgpv_translated \
-        --qgfield_type NHN22
+        --output_nc_filename lwa_reference_output_NH18.nc \
+        --output_dir ./output_plots_ce9e383_NH18 \
+        --qgfield_type NH18
 
     You can now easily read and compare outputs between different runs using xarray:
     ```python
