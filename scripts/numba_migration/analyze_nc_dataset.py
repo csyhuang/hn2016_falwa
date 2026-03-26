@@ -16,13 +16,13 @@ Example:
         --v_file 2005-01-23_to_2005-01-30_v.nc \
         --t_file 2005-01-23_to_2005-01-30_t.nc \
         --output_nc_filename lwa_reference_output.nc \
-        --output_dir ./output_plots \
+        --output_dir ./output_plots_qgpv_translated \
         --qgfield_type NHN22
 
     You can now easily read and compare outputs between different runs using xarray:
     ```python
     import xarray as xr
-    ds = xr.open_dataset('output_plots/lwa_output_20050123_0000.nc')
+    ds = xr.open_dataset('output_plots_qgpv_translated/lwa_output_20050123_0000.nc')
     ```
 
 """
@@ -60,8 +60,8 @@ def parse_arguments():
                         help='Path to the netCDF file containing temperature (t) data')
     parser.add_argument('--output_nc_filename', type=str, required=True,
                         help='Filename to save netCDF file with LWA and reference states')
-    parser.add_argument('--output_dir', type=str, default='./output_plots',
-                        help='Directory to save output plots (default: ./output_plots)')
+    parser.add_argument('--output_dir', type=str, default='./output_plots_qgpv_translated',
+                        help='Directory to save output plots (default: ./output_plots_qgpv_translated)')
     parser.add_argument('--qgfield_type', type=str, choices=['NHN22', 'NH18'], default='NHN22',
                         help='QGField class to use for computation (default: NHN22). '
                              'NHN22: Neal et al. (2022) boundary conditions. '

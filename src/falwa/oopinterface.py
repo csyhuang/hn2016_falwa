@@ -16,8 +16,11 @@ from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_R
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
-# *** Import f2py modules ***
-from falwa import compute_qgpv, compute_qgpv_direct_inv, compute_qref_and_fawa_first, \
+# *** Import Numba modules (replacing F2PY modules for compute_qgpv*) ***
+from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv
+
+# *** Import remaining f2py modules ***
+from falwa import compute_qref_and_fawa_first, \
     matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states, \
     compute_lwa_only_nhn22
 from collections import namedtuple
@@ -197,7 +200,7 @@ class QGFieldBase(ABC):
             swapaxis_1=0,
             swapaxis_2=2,
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
-        # Global averaged quantities (TODO: encalsulate them later)
+        # Global averaged quantities (TODO: encapsulate them later)
         self._domain_average_storage = DomainAverageStorage(
             pydim=self.kmax,
             fdim=self.kmax,
@@ -1571,7 +1574,7 @@ class QGFieldNH18(QGFieldBase):
         self._domain_average_storage.static_stability_n = 0.5 * (stat_s + stat_n)
         self._domain_average_storage.static_stability_s = 0.5 * (stat_s + stat_n)
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_avort = compute_qgpv(  # f2py module
+            self._interpolated_field_storage.interpolated_avort = compute_qgpv(  # Numba module
                 self._interpolated_field_storage.interpolated_u,
                 self._interpolated_field_storage.interpolated_v,
                 self._interpolated_field_storage.interpolated_theta,
@@ -1745,7 +1748,7 @@ class QGFieldNHN22(QGFieldBase):
         self._domain_average_storage.static_stability_s = stat_s
         self._domain_average_storage.static_stability_n = stat_n
         self._interpolated_field_storage.qgpv, \
-            self._interpolated_field_storage.interpolated_avort = compute_qgpv_direct_inv(  # f2py module
+            self._interpolated_field_storage.interpolated_avort = compute_qgpv_direct_inv(  # Numba module
             self.equator_idx,
             self._interpolated_field_storage.interpolated_u,
             self._interpolated_field_storage.interpolated_v,

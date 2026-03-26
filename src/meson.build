@@ -11,6 +11,9 @@ py.install_sources(
     'falwa/xarrayinterface.py',
     'falwa/legacy/__init__.py',
     'falwa/legacy/beta_version.py',
+    'falwa/numba_modules/__init__.py',
+    'falwa/numba_modules/compute_qgpv.py',
+    'falwa/numba_modules/compute_qgpv_direct_inv.py',
     preserve_path: true
 )
 
