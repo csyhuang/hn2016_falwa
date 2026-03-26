@@ -17,12 +17,11 @@ from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, 
     LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
 # *** Import Numba modules (replacing F2PY modules) ***
-from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv, compute_reference_states
+from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv, compute_reference_states, \
+    compute_qref_and_fawa_first, matrix_b4_inversion, matrix_after_inversion, upward_sweep
 
 # *** Import remaining f2py modules ***
-from falwa import compute_qref_and_fawa_first, \
-    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, \
-    compute_lwa_only_nhn22
+from falwa import compute_flux_dirinv_nshem, compute_lwa_only_nhn22
 from collections import namedtuple
 
 
@@ -1812,7 +1811,7 @@ class QGFieldNHN22(QGFieldBase):
         """
         Wrapper to a series of operation using direct inversion algorithm to solve reference state.
         """
-        qref_over_sin, ubar, tbar, fawa, ckref, tjk, sjk = compute_qref_and_fawa_first(
+        qref_over_sin, ubar, tbar, fawa, ckref, tjk, sjk = compute_qref_and_fawa_first(  # Numba module
             pv=qgpv,
             uu=u,
             vort=avort,
@@ -1840,7 +1839,7 @@ class QGFieldNHN22(QGFieldBase):
         self._check_nan("sjk", sjk)
 
         for k in range(self.kmax - 1, 1, -1):  # Fortran indices
-            ans = matrix_b4_inversion(
+            ans = matrix_b4_inversion(  # Numba module
                 k=k,
                 jmax=self._nlat_analysis,
                 jb=self.eq_boundary_index,  # 5
@@ -1863,7 +1862,7 @@ class QGFieldNHN22(QGFieldBase):
             lu, piv, info = dgetrf(qjj)
             qjj, info = dgetri(lu, piv)
 
-            _ = matrix_after_inversion(
+            _ = matrix_after_inversion(  # Numba module
                 k=k,
                 qjj=qjj,
                 djj=djj,
@@ -1872,7 +1871,7 @@ class QGFieldNHN22(QGFieldBase):
                 sjk=sjk,
                 tjk=tjk)
 
-        tref, qref, uref = upward_sweep(
+        tref, qref, uref = upward_sweep(  # Numba module
             jmax=self._nlat_analysis,
             jb=self.eq_boundary_index,
             sjk=sjk,

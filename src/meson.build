@@ -15,6 +15,10 @@ py.install_sources(
     'falwa/numba_modules/compute_qgpv.py',
     'falwa/numba_modules/compute_qgpv_direct_inv.py',
     'falwa/numba_modules/compute_reference_states.py',
+    'falwa/numba_modules/compute_qref_and_fawa_first.py',
+    'falwa/numba_modules/matrix_b4_inversion.py',
+    'falwa/numba_modules/matrix_after_inversion.py',
+    'falwa/numba_modules/upward_sweep.py',
     preserve_path: true
 )
 
