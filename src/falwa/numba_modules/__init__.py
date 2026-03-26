@@ -10,9 +10,11 @@ for near-Fortran performance without requiring a Fortran compiler.
 
 from .compute_qgpv import compute_qgpv
 from .compute_qgpv_direct_inv import compute_qgpv_direct_inv
+from .compute_reference_states import compute_reference_states
 
 __all__ = [
     "compute_qgpv",
     "compute_qgpv_direct_inv",
+    "compute_reference_states",
 ]
 

@@ -14,6 +14,7 @@ py.install_sources(
     'falwa/numba_modules/__init__.py',
     'falwa/numba_modules/compute_qgpv.py',
     'falwa/numba_modules/compute_qgpv_direct_inv.py',
+    'falwa/numba_modules/compute_reference_states.py',
     preserve_path: true
 )
 

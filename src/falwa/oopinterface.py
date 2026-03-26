@@ -16,12 +16,12 @@ from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_R
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
-# *** Import Numba modules (replacing F2PY modules for compute_qgpv*) ***
-from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv
+# *** Import Numba modules (replacing F2PY modules) ***
+from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv, compute_reference_states
 
 # *** Import remaining f2py modules ***
 from falwa import compute_qref_and_fawa_first, \
-    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, compute_reference_states, \
+    matrix_b4_inversion, matrix_after_inversion, upward_sweep, compute_flux_dirinv_nshem, \
     compute_lwa_only_nhn22
 from collections import namedtuple
 
@@ -1635,7 +1635,7 @@ class QGFieldNH18(QGFieldBase):
 
     def _compute_reference_state_wrapper(self, qgpv, u, theta):
         """
-        Private function to call the fortran subroutine compute_reference_states that returns variable of
+        Private function to call the Numba module compute_reference_states that returns variable of
         dimension [nlat, kmax]. Swapping of axes is needed for other computation.
 
         Parameters
@@ -1656,7 +1656,7 @@ class QGFieldNH18(QGFieldBase):
 
             PTref(numpy.ndarray): Reference state of potential temperature of dimension [nlat, kmax]
         """
-        return compute_reference_states(
+        return compute_reference_states(  # Numba module
             pv=qgpv,
             uu=u,
             pt=theta,
