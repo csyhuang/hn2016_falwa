@@ -143,8 +143,8 @@ def test_qgfield():
             3.90815204e-05, 4.22089427e-05, 4.57247919e-05, 5.15018898e-05,
             5.78318250e-05, 6.16741914e-05, 6.74087075e-05, 7.28844771e-05,
             6.93942122e-05, 6.03139378e-05, 5.65834689e-05, 5.22989994e-05,
-            4.72295911e-05, 4.17550597e-05, 3.73351161e-05, 3.16298564e-05]), rtol=0.03)
-    to_check_divergence_eddy_momentum_flux: bool = False
+            4.72295911e-05, 4.17550597e-05, 3.73351161e-05, 3.16298564e-05]), rtol=3.e-2)
+    to_check_divergence_eddy_momentum_flux: bool = True
     if to_check_divergence_eddy_momentum_flux:
         np.testing.assert_allclose(
                 lwa_and_fluxes.divergence_eddy_momentum_flux[20:40, :].mean(axis=-1), np.array([
@@ -152,7 +152,7 @@ def test_qgfield():
                 -2.99386824e-05, -2.21416886e-05, -1.01041360e-05, -4.78678997e-06,
                 -4.56198587e-06, -7.51141807e-06, -7.73846396e-06, -5.31851630e-06,
                 -1.79050173e-07, 8.74939467e-06, 2.35134712e-05, 3.70757625e-05,
-                3.25983249e-05, 1.37527849e-05, 6.34945922e-08, 4.44805497e-06]), rtol=1.e-4)
+                3.25983249e-05, 1.37527849e-05, 6.34945922e-08, 4.44805497e-06]), rtol=1.e-3)
 
 
 def test_qgfield_full_globe():

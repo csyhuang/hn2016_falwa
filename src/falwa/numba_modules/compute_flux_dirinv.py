@@ -74,12 +74,14 @@ def _compute_flux_dirinv_nshem_core(
     dc = dz / prefac
     
     # Bounds of y-indices in N/SHem
+    # Fortran uses 1-indexed, Python uses 0-indexed
+    # Fortran do loop is inclusive, Python range is exclusive on upper bound
     if is_nhem:
-        jstart = jb + 1  # 6 in Fortran 1-indexed -> jb in 0-indexed
-        jend = nd - 1    # nd-1 in Fortran -> nd-2 in 0-indexed (exclusive)
+        jstart = jb      # Fortran jb+1 (1-indexed) -> jb (0-indexed)
+        jend = nd - 1    # Fortran nd-1 (1-indexed, inclusive) -> nd-1 (0-indexed, exclusive)
     else:
-        jstart = 2       # 2 in Fortran -> 1 in 0-indexed
-        jend = nd - jb   # nd-jb in Fortran -> nd-jb-1 in 0-indexed (exclusive)
+        jstart = 1       # Fortran 2 (1-indexed) -> 1 (0-indexed)
+        jend = nd - jb   # Fortran nd-jb (1-indexed, inclusive) -> nd-jb (0-indexed, exclusive)
     
     # Main computation loop
     for k in range(1, kmax - 1):  # k = 2 to kmax-1 in Fortran

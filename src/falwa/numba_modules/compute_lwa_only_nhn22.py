@@ -56,13 +56,15 @@ def _compute_lwa_only_nhn22_core(
     dc = dz / prefac
     
     # Bounds of y-indices in N/SHem
+    # Fortran uses 1-indexed, Python uses 0-indexed
+    # Fortran do loop is inclusive, Python range is exclusive on upper bound
     if is_nhem:
-        jstart = jb + 1  # jb+1 in Fortran 1-indexed -> jb in 0-indexed
-        jend = nd - 1    # nd-1 in Fortran -> nd-2 in 0-indexed (exclusive range)
+        jstart = jb      # Fortran jb+1 (1-indexed) -> jb (0-indexed)
+        jend = nd - 1    # Fortran nd-1 (1-indexed, inclusive) -> nd-1 (0-indexed, exclusive)
     else:
-        jstart = 2       # 2 in Fortran -> 1 in 0-indexed
-        jend = nd - jb   # nd-jb in Fortran -> nd-jb-1 in 0-indexed (exclusive range)
-    
+        jstart = 1       # Fortran 2 (1-indexed) -> 1 (0-indexed)
+        jend = nd - jb   # Fortran nd-jb (1-indexed, inclusive) -> nd-jb (0-indexed, exclusive)
+
     # Main computation loop
     for k in range(1, kmax - 1):  # k = 2 to kmax-1 in Fortran
         zk = dz * float(k)
@@ -110,7 +112,9 @@ def _compute_lwa_only_nhn22_core(
         if is_nhem:
             for j in range(jstart, jend):
                 for i in range(imax):
-                    ubaro[i, j] = ubaro[i, j] + uu[i, nd - 1 + j, k] * np.exp(-zk / h) * dc
+                    # Fortran: uu(:, nd-1+j, k) with j 1-indexed
+                    # Python: j is 0-indexed, so use nd + j to get same array position
+                    ubaro[i, j] = ubaro[i, j] + uu[i, nd + j, k] * np.exp(-zk / h) * dc
         else:
             for j in range(jstart, jend):
                 for i in range(imax):
