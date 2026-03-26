@@ -5,7 +5,7 @@ name: Python package
 
 on:
   push:
-    branches: [ "master", "chuang-additional-check-for-flux-vectors" ]
+    branches: [ "master","chuang-numba-translation-issue159" ]
   pull_request:
     branches: [ "master" ]
 
