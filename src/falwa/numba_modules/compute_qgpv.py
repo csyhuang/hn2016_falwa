@@ -414,14 +414,6 @@ def compute_qgpv(
     --------
     compute_qgpv_direct_inv : Alternative QGPV computation with direct inversion
     """
-    # Ensure arrays are contiguous and float64
-    ut = np.ascontiguousarray(ut, dtype=np.float64)
-    vt = np.ascontiguousarray(vt, dtype=np.float64)
-    theta = np.ascontiguousarray(theta, dtype=np.float64)
-    height = np.ascontiguousarray(height, dtype=np.float64)
-    t0 = np.ascontiguousarray(t0, dtype=np.float64)
-    stat = np.ascontiguousarray(stat, dtype=np.float64)
-    
     return _compute_qgpv_core(ut, vt, theta, height, t0, stat, 
                               float(aa), float(omega), float(dz), 
                               float(hh), float(rr), float(cp))

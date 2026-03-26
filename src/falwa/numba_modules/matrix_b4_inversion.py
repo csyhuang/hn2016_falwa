@@ -191,12 +191,6 @@ def matrix_b4_inversion(
     rj : np.ndarray
         R vector, shape (jd-2,).
     """
-    z = np.ascontiguousarray(z, dtype=np.float64)
-    statn = np.ascontiguousarray(statn, dtype=np.float64)
-    qref = np.ascontiguousarray(qref, dtype=np.float64)
-    ckref = np.ascontiguousarray(ckref, dtype=np.float64)
-    sjk = np.ascontiguousarray(sjk, dtype=np.float64)
-    
     kmax, nd = qref.shape
     
     return _matrix_b4_inversion_core(

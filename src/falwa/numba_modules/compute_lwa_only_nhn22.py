@@ -185,10 +185,6 @@ def compute_lwa_only_nhn22(
     astar2 : np.ndarray
         Anticyclonic LWA*cos(phi), shape (kmax, nd, imax).
     """
-    pv = np.ascontiguousarray(pv, dtype=np.float64)
-    uu = np.ascontiguousarray(uu, dtype=np.float64)
-    qref = np.ascontiguousarray(qref, dtype=np.float64)
-    
     kmax, jmax, imax = pv.shape
     nd = qref.shape[1]
     

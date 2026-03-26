@@ -825,12 +825,6 @@ def compute_reference_states(
     If the SOR solver does not converge within maxits iterations,
     the reference wind is set to zero.
     """
-    # Ensure arrays are contiguous and float64
-    pv = np.ascontiguousarray(pv, dtype=np.float64)
-    uu = np.ascontiguousarray(uu, dtype=np.float64)
-    pt = np.ascontiguousarray(pt, dtype=np.float64)
-    stat = np.ascontiguousarray(stat, dtype=np.float64)
-    
     kmax, nlat, nlon = pv.shape
     
     return _compute_reference_states_core(

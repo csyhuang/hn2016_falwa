@@ -442,16 +442,6 @@ def compute_qgpv_direct_inv(
     --------
     compute_qgpv : QGPV computation with single reference state
     """
-    # Ensure arrays are contiguous and float64
-    uq = np.ascontiguousarray(uq, dtype=np.float64)
-    vq = np.ascontiguousarray(vq, dtype=np.float64)
-    tq = np.ascontiguousarray(tq, dtype=np.float64)
-    height = np.ascontiguousarray(height, dtype=np.float64)
-    ts0 = np.ascontiguousarray(ts0, dtype=np.float64)
-    tn0 = np.ascontiguousarray(tn0, dtype=np.float64)
-    stats = np.ascontiguousarray(stats, dtype=np.float64)
-    statn = np.ascontiguousarray(statn, dtype=np.float64)
-    
     return _compute_qgpv_direct_inv_core(
         uq, vq, tq, height, ts0, tn0, stats, statn,
         int(jd), float(aa), float(omega), float(dz),

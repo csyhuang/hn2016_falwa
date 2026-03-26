@@ -555,13 +555,6 @@ def compute_qref_and_fawa_first(
     sjk : np.ndarray
         Direct solver array, shape (kmax-1, jd-2, jd-2).
     """
-    # Ensure arrays are contiguous and float64
-    pv = np.ascontiguousarray(pv, dtype=np.float64)
-    uu = np.ascontiguousarray(uu, dtype=np.float64)
-    vort = np.ascontiguousarray(vort, dtype=np.float64)
-    pt = np.ascontiguousarray(pt, dtype=np.float64)
-    tn0 = np.ascontiguousarray(tn0, dtype=np.float64)
-    
     kmax, jmax, imax = pv.shape
     
     return _compute_qref_and_fawa_first_core(

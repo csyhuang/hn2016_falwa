@@ -201,12 +201,6 @@ def upward_sweep(
     u : np.ndarray
         Reference zonal wind, shape (kmax, jd).
     """
-    sjk = np.ascontiguousarray(sjk, dtype=np.float64)
-    tjk = np.ascontiguousarray(tjk, dtype=np.float64)
-    ckref = np.ascontiguousarray(ckref, dtype=np.float64)
-    tb = np.ascontiguousarray(tb, dtype=np.float64)
-    qref_over_cor = np.ascontiguousarray(qref_over_cor, dtype=np.float64)
-    
     kmax, nd = qref_over_cor.shape
     jd = sjk.shape[1] + 2
     

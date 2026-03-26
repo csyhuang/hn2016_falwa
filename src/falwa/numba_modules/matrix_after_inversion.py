@@ -108,11 +108,6 @@ def matrix_after_inversion(
     -----
     This function modifies sjk and tjk in place.
     """
-    qjj = np.ascontiguousarray(qjj, dtype=np.float64)
-    djj = np.ascontiguousarray(djj, dtype=np.float64)
-    cjj = np.ascontiguousarray(cjj, dtype=np.float64)
-    rj = np.ascontiguousarray(rj, dtype=np.float64)
-    
     jd_minus_2 = qjj.shape[0]
     jd = jd_minus_2 + 2
     kmax = tjk.shape[0] + 1

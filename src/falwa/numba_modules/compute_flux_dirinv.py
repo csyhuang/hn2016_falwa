@@ -286,16 +286,8 @@ def compute_flux_dirinv_nshem(
     ep4 : np.ndarray
         Low-level heat flux, shape (nd, imax).
     """
-    pv = np.ascontiguousarray(pv, dtype=np.float64)
-    uu = np.ascontiguousarray(uu, dtype=np.float64)
-    vv = np.ascontiguousarray(vv, dtype=np.float64)
-    pt = np.ascontiguousarray(pt, dtype=np.float64)
     ncforce = np.ascontiguousarray(ncforce, dtype=np.float64)
-    tn0 = np.ascontiguousarray(tn0, dtype=np.float64)
-    qref = np.ascontiguousarray(qref, dtype=np.float64)
-    uref = np.ascontiguousarray(uref, dtype=np.float64)
-    tref = np.ascontiguousarray(tref, dtype=np.float64)
-    
+
     kmax, jmax, imax = pv.shape
     nd = qref.shape[1]
     jd = uref.shape[1]
