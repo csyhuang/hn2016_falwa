@@ -6,6 +6,13 @@ subroutine `compute_flux_dirinv_nshem` for computing LWA and various flux terms
 using direct inversion for either hemisphere.
 
 .. versionadded:: 2.4.0
+
+Notes
+-----
+Arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
+- 2D lon-lat arrays: [j, i]
 """
 
 import numpy as np
@@ -55,21 +62,21 @@ def _compute_flux_dirinv_nshem_core(
     # Use tn0 as hemispheric-mean potential temperature
     tg = tn0.copy()
     
-    # Initialize output arrays
-    astar1 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    astar2 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ncforce3d = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ua1 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ua2 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ep1 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ep2 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ep3 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    ep4 = np.zeros((imax, nd), dtype=np.float64)
+    # Initialize output arrays (C-order: [k, j, i] for 3D, [j, i] for 2D)
+    astar1 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    astar2 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ncforce3d = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ua1 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ua2 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ep1 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ep2 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ep3 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    ep4 = np.zeros((nd, imax), dtype=np.float64)
     
-    # Working arrays
-    qe = np.zeros((imax, nd), dtype=np.float64)
-    ue = np.zeros((imax, nd), dtype=np.float64)
-    ncforce2d = np.zeros((imax, nd), dtype=np.float64)
+    # Working arrays (C-order: [j, i])
+    qe = np.zeros((nd, imax), dtype=np.float64)
+    ue = np.zeros((nd, imax), dtype=np.float64)
+    ncforce2d = np.zeros((nd, imax), dtype=np.float64)
     
     dc = dz / prefac
     
@@ -89,10 +96,10 @@ def _compute_flux_dirinv_nshem_core(
         
         for i in range(imax):
             for j in range(jstart, jend):  # Adjusted for 0-indexed
-                astar1[i, j, k] = 0.0
-                astar2[i, j, k] = 0.0
-                ncforce3d[i, j, k] = 0.0
-                ua2[i, j, k] = 0.0
+                astar1[k, j, i] = 0.0
+                astar2[k, j, i] = 0.0
+                ncforce3d[k, j, i] = 0.0
+                ua2[k, j, i] = 0.0
                 
                 if is_nhem:
                     phi0 = dp * float(j)  # j-1 in Fortran with 1-indexed -> j in 0-indexed
@@ -105,49 +112,49 @@ def _compute_flux_dirinv_nshem_core(
                 for jj in range(nd):  # jj = 1 to nd in Fortran
                     if is_nhem:
                         phi1 = dp * float(jj)
-                        qe[i, jj] = pv[i, jj + nd - 1, k] - qref[j, k]
-                        ncforce2d[i, jj] = ncforce[i, jj + nd - 1, k]
-                        ue[i, jj] = uu[i, jj + nd - 1, k] * np.cos(phi0) - uref[j - jb, k] * np.cos(phi1)
+                        qe[jj, i] = pv[k, jj + nd - 1, i] - qref[k, j]
+                        ncforce2d[jj, i] = ncforce[k, jj + nd - 1, i]
+                        ue[jj, i] = uu[k, jj + nd - 1, i] * np.cos(phi0) - uref[k, j - jb] * np.cos(phi1)
                     else:
                         phi1 = dp * float(jj) - 0.5 * pi
-                        qe[i, jj] = pv[i, jj, k] - qref[j, k]
-                        ncforce2d[i, jj] = ncforce[i, jj, k]
-                        ue[i, jj] = uu[i, jj, k] * np.cos(phi0) - uref[j, k] * np.cos(phi1)
+                        qe[jj, i] = pv[k, jj, i] - qref[k, j]
+                        ncforce2d[jj, i] = ncforce[k, jj, i]
+                        ue[jj, i] = uu[k, jj, i] * np.cos(phi0) - uref[k, j] * np.cos(phi1)
                     
                     aa = a * dp * np.cos(phi1)
                     
-                    if qe[i, jj] <= 0.0 and jj >= j:
+                    if qe[jj, i] <= 0.0 and jj >= j:
                         if is_nhem:
-                            astar2[i, j, k] = astar2[i, j, k] - qe[i, jj] * aa
+                            astar2[k, j, i] = astar2[k, j, i] - qe[jj, i] * aa
                         else:
-                            astar1[i, j, k] = astar1[i, j, k] - qe[i, jj] * aa
-                        ncforce3d[i, j, k] = ncforce3d[i, j, k] - ncforce2d[i, jj] * aa
-                        ua2[i, j, k] = ua2[i, j, k] - qe[i, jj] * ue[i, jj] * ab
+                            astar1[k, j, i] = astar1[k, j, i] - qe[jj, i] * aa
+                        ncforce3d[k, j, i] = ncforce3d[k, j, i] - ncforce2d[jj, i] * aa
+                        ua2[k, j, i] = ua2[k, j, i] - qe[jj, i] * ue[jj, i] * ab
                     
-                    if qe[i, jj] > 0.0 and jj < j:
+                    if qe[jj, i] > 0.0 and jj < j:
                         if is_nhem:
-                            astar1[i, j, k] = astar1[i, j, k] + qe[i, jj] * aa
+                            astar1[k, j, i] = astar1[k, j, i] + qe[jj, i] * aa
                         else:
-                            astar2[i, j, k] = astar2[i, j, k] + qe[i, jj] * aa
-                        ncforce3d[i, j, k] = ncforce3d[i, j, k] + ncforce2d[i, jj] * aa
-                        ua2[i, j, k] = ua2[i, j, k] + qe[i, jj] * ue[i, jj] * ab
+                            astar2[k, j, i] = astar2[k, j, i] + qe[jj, i] * aa
+                        ncforce3d[k, j, i] = ncforce3d[k, j, i] + ncforce2d[jj, i] * aa
+                        ua2[k, j, i] = ua2[k, j, i] + qe[jj, i] * ue[jj, i] * ab
                 
                 # Other fluxes
                 if is_nhem:
-                    ua1[i, j, k] = uref[j - jb, k] * (astar1[i, j, k] + astar2[i, j, k])
-                    ep1[i, j, k] = -0.5 * (uu[i, j + nd - 1, k] - uref[j - jb, k]) ** 2
-                    ep1[i, j, k] = ep1[i, j, k] + 0.5 * vv[i, j + nd - 1, k] ** 2
-                    ep11 = 0.5 * (pt[i, j + nd - 1, k] - tref[j - jb, k]) ** 2
+                    ua1[k, j, i] = uref[k, j - jb] * (astar1[k, j, i] + astar2[k, j, i])
+                    ep1[k, j, i] = -0.5 * (uu[k, j + nd - 1, i] - uref[k, j - jb]) ** 2
+                    ep1[k, j, i] = ep1[k, j, i] + 0.5 * vv[k, j + nd - 1, i] ** 2
+                    ep11 = 0.5 * (pt[k, j + nd - 1, i] - tref[k, j - jb]) ** 2
                 else:
-                    ua1[i, j, k] = uref[j, k] * (astar1[i, j, k] + astar2[i, j, k])
-                    ep1[i, j, k] = -0.5 * (uu[i, j, k] - uref[j, k]) ** 2
-                    ep1[i, j, k] = ep1[i, j, k] + 0.5 * vv[i, j, k] ** 2
-                    ep11 = 0.5 * (pt[i, j, k] - tref[j, k]) ** 2
+                    ua1[k, j, i] = uref[k, j] * (astar1[k, j, i] + astar2[k, j, i])
+                    ep1[k, j, i] = -0.5 * (uu[k, j, i] - uref[k, j]) ** 2
+                    ep1[k, j, i] = ep1[k, j, i] + 0.5 * vv[k, j, i] ** 2
+                    ep11 = 0.5 * (pt[k, j, i] - tref[k, j]) ** 2
                 
                 zz = dz * float(k)
                 ep11 = ep11 * (rr / h) * np.exp(-rkappa * zz / h)
                 ep11 = ep11 * 2.0 * dz / (tg[k + 1] - tg[k - 1])
-                ep1[i, j, k] = ep1[i, j, k] - ep11
+                ep1[k, j, i] = ep1[k, j, i] - ep11
                 
                 if is_nhem:
                     phip = dp * float(j + 1)
@@ -162,35 +169,35 @@ def _compute_flux_dirinv_nshem_core(
                 cos0 = np.cos(phi0_local)
                 cosm = np.cos(phim)
                 sin0 = np.sin(phi0_local)
-                ep1[i, j, k] = ep1[i, j, k] * cos0
+                ep1[k, j, i] = ep1[k, j, i] * cos0
                 
                 # Meridional eddy momentum flux
                 if is_nhem:
-                    ep2[i, j, k] = (uu[i, j + nd, k] - uref[j - jb + 1, k]) * cosp * cosp * vv[i, j + nd, k]
-                    ep3[i, j, k] = (uu[i, j + nd - 2, k] - uref[j - jb - 1, k]) * cosm * cosm * vv[i, j + nd - 2, k]
+                    ep2[k, j, i] = (uu[k, j + nd, i] - uref[k, j - jb + 1]) * cosp * cosp * vv[k, j + nd, i]
+                    ep3[k, j, i] = (uu[k, j + nd - 2, i] - uref[k, j - jb - 1]) * cosm * cosm * vv[k, j + nd - 2, i]
                 else:
-                    ep2[i, j, k] = (uu[i, j + 1, k] - uref[j + 1, k]) * cosp * cosp * vv[i, j + 1, k]
-                    ep3[i, j, k] = (uu[i, j - 1, k] - uref[j - 1, k]) * cosm * cosm * vv[i, j - 1, k]
+                    ep2[k, j, i] = (uu[k, j + 1, i] - uref[k, j + 1]) * cosp * cosp * vv[k, j + 1, i]
+                    ep3[k, j, i] = (uu[k, j - 1, i] - uref[k, j - 1]) * cosm * cosm * vv[k, j - 1, i]
                 
                 # Low-level meridional eddy heat flux
                 if k == 1:  # k=2 in Fortran
                     ep41 = 2.0 * om * sin0 * cos0 * dz / prefac
                     if is_nhem:
-                        ep42 = np.exp(-dz / h) * vv[i, j + nd - 1, 1] * (pt[i, j + nd - 1, 1] - tref[j - jb, 1]) / (tg[2] - tg[0])
-                        ep43 = vv[i, j + nd - 1, 0] * (pt[i, j + nd - 1, 0] - tref[j - jb, 0])
+                        ep42 = np.exp(-dz / h) * vv[1, j + nd - 1, i] * (pt[1, j + nd - 1, i] - tref[1, j - jb]) / (tg[2] - tg[0])
+                        ep43 = vv[0, j + nd - 1, i] * (pt[0, j + nd - 1, i] - tref[0, j - jb])
                     else:
-                        ep42 = np.exp(-dz / h) * vv[i, j, 1] * (pt[i, j, 1] - tref[j, 1]) / (tg[2] - tg[0])
-                        ep43 = vv[i, j, 0] * (pt[i, j, 0] - tref[j, 0])
+                        ep42 = np.exp(-dz / h) * vv[1, j, i] * (pt[1, j, i] - tref[1, j]) / (tg[2] - tg[0])
+                        ep43 = vv[0, j, i] * (pt[0, j, i] - tref[0, j])
                     ep43 = 0.5 * ep43 / (tg[1] - tg[0])
-                    ep4[i, j] = ep41 * (ep42 + ep43)
+                    ep4[j, i] = ep41 * (ep42 + ep43)
             
             # Boundary values at jb
             phip = dp * float(jb)
             phi0_bc = dp * float(jb - 1)
             cosp = np.cos(phip)
             cos0 = np.cos(phi0_bc)
-            ep2[i, jb, k] = (uu[i, nd + jb, k] - uref[1, k]) * cosp * cosp * vv[i, nd + jb, k]
-            ep3[i, jb, k] = (uu[i, nd + jb - 1, k] - uref[0, k]) * cos0 * cos0 * vv[i, nd + jb - 1, k]
+            ep2[k, jb, i] = (uu[k, nd + jb, i] - uref[k, 1]) * cosp * cosp * vv[k, nd + jb, i]
+            ep3[k, jb, i] = (uu[k, nd + jb - 1, i] - uref[k, 0]) * cos0 * cos0 * vv[k, nd + jb - 1, i]
     
     return astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4
 
@@ -222,23 +229,23 @@ def compute_flux_dirinv_nshem(
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity, shape (imax, jmax, kmax).
+        Potential vorticity, shape (kmax, jmax, imax).
     uu : np.ndarray
-        Zonal wind, shape (imax, jmax, kmax).
+        Zonal wind, shape (kmax, jmax, imax).
     vv : np.ndarray
-        Meridional wind, shape (imax, jmax, kmax).
+        Meridional wind, shape (kmax, jmax, imax).
     pt : np.ndarray
-        Potential temperature, shape (imax, jmax, kmax).
+        Potential temperature, shape (kmax, jmax, imax).
     ncforce : np.ndarray
-        Non-conservative forcing, shape (imax, jmax, kmax).
+        Non-conservative forcing, shape (kmax, jmax, imax).
     tn0 : np.ndarray
         Reference temperature profile, shape (kmax,).
     qref : np.ndarray
-        Reference QGPV, shape (nd, kmax).
+        Reference QGPV, shape (kmax, nd).
     uref : np.ndarray
-        Reference zonal wind, shape (jd, kmax).
+        Reference zonal wind, shape (kmax, jd).
     tref : np.ndarray
-        Reference temperature, shape (jd, kmax).
+        Reference temperature, shape (kmax, jd).
     jb : int
         Lower bounding latitude index.
     is_nhem : bool
@@ -261,23 +268,23 @@ def compute_flux_dirinv_nshem(
     Returns
     -------
     astar1 : np.ndarray
-        Cyclonic LWA*cos(phi), shape (imax, nd, kmax).
+        Cyclonic LWA*cos(phi), shape (kmax, nd, imax).
     astar2 : np.ndarray
-        Anticyclonic LWA*cos(phi), shape (imax, nd, kmax).
+        Anticyclonic LWA*cos(phi), shape (kmax, nd, imax).
     ncforce3d : np.ndarray
-        Non-conservative forcing 3D, shape (imax, nd, kmax).
+        Non-conservative forcing 3D, shape (kmax, nd, imax).
     ua1 : np.ndarray
-        Flux F1, shape (imax, nd, kmax).
+        Flux F1, shape (kmax, nd, imax).
     ua2 : np.ndarray
-        Flux F2, shape (imax, nd, kmax).
+        Flux F2, shape (kmax, nd, imax).
     ep1 : np.ndarray
-        Flux F3, shape (imax, nd, kmax).
+        Flux F3, shape (kmax, nd, imax).
     ep2 : np.ndarray
-        Meridional momentum flux (north), shape (imax, nd, kmax).
+        Meridional momentum flux (north), shape (kmax, nd, imax).
     ep3 : np.ndarray
-        Meridional momentum flux (south), shape (imax, nd, kmax).
+        Meridional momentum flux (south), shape (kmax, nd, imax).
     ep4 : np.ndarray
-        Low-level heat flux, shape (imax, nd).
+        Low-level heat flux, shape (nd, imax).
     """
     pv = np.ascontiguousarray(pv, dtype=np.float64)
     uu = np.ascontiguousarray(uu, dtype=np.float64)
@@ -289,13 +296,12 @@ def compute_flux_dirinv_nshem(
     uref = np.ascontiguousarray(uref, dtype=np.float64)
     tref = np.ascontiguousarray(tref, dtype=np.float64)
     
-    imax, jmax, kmax = pv.shape
-    nd = qref.shape[0]
-    jd = uref.shape[0]
+    kmax, jmax, imax = pv.shape
+    nd = qref.shape[1]
+    jd = uref.shape[1]
     
     return _compute_flux_dirinv_nshem_core(
         pv, uu, vv, pt, ncforce, tn0, qref, uref, tref,
         imax, jmax, kmax, nd, jb, jd, is_nhem,
         float(a), float(om), float(dz), float(h), float(rr), float(cp), float(prefac)
     )
-

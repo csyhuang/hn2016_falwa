@@ -11,6 +11,11 @@ Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
 `f90_modules/compute_qref_and_fawa_first.f90` and produces numerically identical results.
+
+Arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
+- 2D lon-lat arrays: [j, i]
 """
 
 import numpy as np
@@ -34,11 +39,11 @@ def _compute_zonal_means(
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity, shape (imax, jmax, kmax)
+        Potential vorticity, shape (kmax, jmax, imax)
     uu : np.ndarray
-        Zonal wind, shape (imax, jmax, kmax)
+        Zonal wind, shape (kmax, jmax, imax)
     pt : np.ndarray
-        Potential temperature, shape (imax, jmax, kmax)
+        Potential temperature, shape (kmax, jmax, imax)
     imax : int
         Number of longitude points
     jmax : int
@@ -51,24 +56,24 @@ def _compute_zonal_means(
     Returns
     -------
     qbar : np.ndarray
-        Zonal-mean PV, shape (nd, kmax)
+        Zonal-mean PV, shape (kmax, nd)
     tbar : np.ndarray
-        Zonal-mean potential temperature, shape (nd, kmax)
+        Zonal-mean potential temperature, shape (kmax, nd)
     ubar : np.ndarray
-        Zonal-mean zonal wind, shape (nd, kmax)
+        Zonal-mean zonal wind, shape (kmax, nd)
     """
-    qbar = np.zeros((nd, kmax), dtype=np.float64)
-    tbar = np.zeros((nd, kmax), dtype=np.float64)
-    ubar = np.zeros((nd, kmax), dtype=np.float64)
+    qbar = np.zeros((kmax, nd), dtype=np.float64)
+    tbar = np.zeros((kmax, nd), dtype=np.float64)
+    ubar = np.zeros((kmax, nd), dtype=np.float64)
     
     # Fortran: do j = nd, jmax
     for j in range(nd, jmax + 1):  # 1-indexed in Fortran
-        j_out = j - (nd - 1) - 1  # Convert to 0-indexed output (j-(nd-1) in Fortran, then -1 for 0-indexed)
+        j_out = j - (nd - 1) - 1  # Convert to 0-indexed output
         for k in range(kmax):
             for i in range(imax):
-                qbar[j_out, k] += pv[i, j - 1, k] / float(imax)
-                tbar[j_out, k] += pt[i, j - 1, k] / float(imax)
-                ubar[j_out, k] += uu[i, j - 1, k] / float(imax)
+                qbar[k, j_out] += pv[k, j - 1, i] / float(imax)
+                tbar[k, j_out] += pt[k, j - 1, i] / float(imax)
+                ubar[k, j_out] += uu[k, j - 1, i] / float(imax)
     
     return qbar, tbar, ubar
 
@@ -91,7 +96,7 @@ def _area_analysis_qref(
     Parameters
     ----------
     pv2 : np.ndarray
-        2D PV field for this level, shape (imax, jmax)
+        2D PV field for this level, shape (jmax, imax)
     imax : int
         Number of longitude points
     jmax : int
@@ -126,10 +131,10 @@ def _area_analysis_qref(
     qmin = pv2[0, 0]
     for j in range(jmax):
         for i in range(imax):
-            if pv2[i, j] > qmax:
-                qmax = pv2[i, j]
-            if pv2[i, j] < qmin:
-                qmin = pv2[i, j]
+            if pv2[j, i] > qmax:
+                qmax = pv2[j, i]
+            if pv2[j, i] < qmin:
+                qmin = pv2[j, i]
     
     dq = (qmax - qmin) / float(nnd - 1)
     
@@ -146,7 +151,7 @@ def _area_analysis_qref(
         phi0 = -0.5 * pi + dphi * float(j)
         for i in range(imax):
             if dq > 0:
-                ind = int((qmax - pv2[i, j]) / dq)
+                ind = int((qmax - pv2[j, i]) / dq)
             else:
                 ind = 0
             if ind < 0:
@@ -155,7 +160,7 @@ def _area_analysis_qref(
                 ind = nnd - 1
             da = a * a * dphi * dlambda * np.cos(phi0)
             an[ind] += da
-            cn[ind] += da * pv2[i, j]
+            cn[ind] += da * pv2[j, i]
     
     # Cumulative sums
     aan = np.zeros(nnd, dtype=np.float64)
@@ -167,14 +172,14 @@ def _area_analysis_qref(
         ccn[nn] = ccn[nn - 1] + cn[nn]
     
     # Interpolate to get qref
-    for j in range(nd - 1):  # Fortran: j = 1, nd-1
+    for j in range(nd - 1):
         for nn in range(nnd - 1):
             if aan[nn] <= alat[j] and aan[nn + 1] > alat[j]:
                 dd = (alat[j] - aan[nn]) / (aan[nn + 1] - aan[nn])
                 qref_k[j] = qn[nn] * (1.0 - dd) + qn[nn + 1] * dd
                 cref_k[j] = ccn[nn] * (1.0 - dd) + ccn[nn + 1] * dd
     
-    qref_k[nd - 1] = qmax  # Fortran: qref(nd, k) = qmax
+    qref_k[nd - 1] = qmax
     
     return qref_k, cref_k
 
@@ -197,7 +202,7 @@ def _area_analysis_ckref(
     Parameters
     ----------
     vort2 : np.ndarray
-        2D absolute vorticity field for this level, shape (imax, jmax)
+        2D absolute vorticity field for this level, shape (jmax, imax)
     imax : int
         Number of longitude points
     jmax : int
@@ -229,10 +234,10 @@ def _area_analysis_ckref(
     qmin = vort2[0, 0]
     for j in range(jmax):
         for i in range(imax):
-            if vort2[i, j] > qmax:
-                qmax = vort2[i, j]
-            if vort2[i, j] < qmin:
-                qmin = vort2[i, j]
+            if vort2[j, i] > qmax:
+                qmax = vort2[j, i]
+            if vort2[j, i] < qmin:
+                qmin = vort2[j, i]
     
     dq = (qmax - qmin) / float(nnd - 1)
     
@@ -249,7 +254,7 @@ def _area_analysis_ckref(
         phi0 = -0.5 * pi + dphi * float(j)
         for i in range(imax):
             if dq > 0:
-                ind = int((qmax - vort2[i, j]) / dq)
+                ind = int((qmax - vort2[j, i]) / dq)
             else:
                 ind = 0
             if ind < 0:
@@ -258,7 +263,7 @@ def _area_analysis_ckref(
                 ind = nnd - 1
             da = a * a * dphi * dlambda * np.cos(phi0)
             an[ind] += da
-            cn[ind] += da * vort2[i, j]
+            cn[ind] += da * vort2[j, i]
     
     # Cumulative sums
     aan = np.zeros(nnd, dtype=np.float64)
@@ -270,7 +275,7 @@ def _area_analysis_ckref(
         ccn[nn] = ccn[nn - 1] + cn[nn]
     
     # Interpolate to get ckref
-    for j in range(nd - 1):  # Fortran: j = 1, nd-1
+    for j in range(nd - 1):
         for nn in range(nnd - 1):
             if aan[nn] <= alat[j] and aan[nn + 1] > alat[j]:
                 dd = (alat[j] - aan[nn]) / (aan[nn + 1] - aan[nn])
@@ -293,29 +298,16 @@ def _compute_cbar(
     Parameters
     ----------
     qbar : np.ndarray
-        Zonal-mean PV, shape (nd, kmax)
-    nd : int
-        Number of latitude points in hemisphere
-    kmax : int
-        Number of vertical levels
-    a : float
-        Earth radius
-    dphi : float
-        Latitude grid spacing in radians
-        
-    Returns
-    -------
-    cbar : np.ndarray
-        shape (nd, kmax)
+        Zonal-mean PV, shape (kmax, nd)
     """
     pi = np.arccos(-1.0)
-    cbar = np.zeros((nd, kmax), dtype=np.float64)
+    cbar = np.zeros((kmax, nd), dtype=np.float64)
     
-    for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
-        cbar[nd - 1, k] = 0.0
-        for j in range(nd - 2, -1, -1):  # Fortran: j = nd-1, 1, -1
-            phi0 = dphi * (float(j + 1) - 0.5)  # j+1 because converting from Fortran 1-indexed
-            cbar[j, k] = cbar[j + 1, k] + 0.5 * (qbar[j + 1, k] + qbar[j, k]) * \
+    for k in range(1, kmax - 1):
+        cbar[k, nd - 1] = 0.0
+        for j in range(nd - 2, -1, -1):
+            phi0 = dphi * (float(j + 1) - 0.5)
+            cbar[k, j] = cbar[k, j + 1] + 0.5 * (qbar[k, j + 1] + qbar[k, j]) * \
                          a * dphi * 2.0 * pi * a * np.cos(phi0)
     
     return cbar
@@ -334,29 +326,18 @@ def _normalize_qref_by_sine(
     Parameters
     ----------
     qref : np.ndarray
-        Reference PV, shape (nd, kmax)
-    nd : int
-        Number of latitude points in hemisphere
-    kmax : int
-        Number of vertical levels
-    dphi : float
-        Latitude grid spacing in radians
-        
-    Returns
-    -------
-    qref : np.ndarray
-        Normalized reference PV, shape (nd, kmax)
+        Reference PV, shape (kmax, nd)
     """
     # Normalize by sin(latitude)
-    for j in range(1, nd):  # Fortran: j = 2, nd
+    for j in range(1, nd):
         phi0 = dphi * float(j)
         cor = np.sin(phi0)
         for k in range(kmax):
-            qref[j, k] = qref[j, k] / cor
+            qref[k, j] = qref[k, j] / cor
     
     # Extrapolate to j=0
-    for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
-        qref[0, k] = 2.0 * qref[1, k] - qref[2, k]
+    for k in range(1, kmax - 1):
+        qref[k, 0] = 2.0 * qref[k, 1] - qref[k, 2]
     
     return qref
 
@@ -375,27 +356,16 @@ def _compute_fawa(
     Parameters
     ----------
     cref : np.ndarray
-        Reference cumulative PV, shape (nd, kmax)
+        Reference cumulative PV, shape (kmax, nd)
     cbar : np.ndarray
-        Zonal-mean cumulative PV, shape (nd, kmax)
-    nd : int
-        Number of latitude points in hemisphere
-    kmax : int
-        Number of vertical levels
-    a : float
-        Earth radius
-        
-    Returns
-    -------
-    fawa : np.ndarray
-        Finite-amplitude wave activity, shape (nd, kmax)
+        Zonal-mean cumulative PV, shape (kmax, nd)
     """
     pi = np.arccos(-1.0)
-    fawa = np.zeros((nd, kmax), dtype=np.float64)
+    fawa = np.zeros((kmax, nd), dtype=np.float64)
     
     for k in range(kmax):
         for j in range(nd):
-            fawa[j, k] = (cref[j, k] - cbar[j, k]) / (2.0 * pi * a)
+            fawa[k, j] = (cref[k, j] - cbar[k, j]) / (2.0 * pi * a)
     
     return fawa
 
@@ -422,59 +392,26 @@ def _compute_tjk_sjk(
     Parameters
     ----------
     tbar : np.ndarray
-        Zonal-mean temperature, shape (nd, kmax)
-    jb : int
-        Lower bounding latitude index (1-indexed)
-    jd : int
-        nd - lower bounding latitude
-    nd : int
-        Number of latitude points in hemisphere
-    kmax : int
-        Number of vertical levels
-    z : np.ndarray
-        Height levels, shape (kmax,)
-    omega : float
-        Earth rotation rate
-    dz : float
-        Vertical grid spacing
-    h : float
-        Scale height
-    dphi : float
-        Latitude grid spacing in radians
-    a : float
-        Earth radius
-    rr : float
-        Gas constant
-    cp : float
-        Specific heat
-        
-    Returns
-    -------
-    tjk : np.ndarray
-        shape (jd-2, kmax-1)
-    sjk : np.ndarray
-        shape (jd-2, jd-2, kmax-1)
+        Zonal-mean temperature, shape (kmax, nd)
     """
     rkappa = rr / cp
     
-    tjk = np.zeros((jd - 2, kmax - 1), dtype=np.float64)
-    sjk = np.zeros((jd - 2, jd - 2, kmax - 1), dtype=np.float64)
+    tjk = np.zeros((kmax - 1, jd - 2), dtype=np.float64)
+    sjk = np.zeros((kmax - 1, jd - 2, jd - 2), dtype=np.float64)
     
     # Top boundary condition (Eqs. 24-25)
-    # Fortran: do jj = jb+2, (nd-1)
-    for jj in range(jb + 2, nd):  # jb+2 to nd-1 (inclusive) in Fortran 1-indexed
-        j = jj - jb  # Fortran: j = jj - jb
+    for jj in range(jb + 2, nd):
+        j = jj - jb
         phi0 = float(jj - 1) * dphi
         cos0 = np.cos(phi0)
         sin0 = np.sin(phi0)
         
-        # tjk(j-1, kmax-1) in Fortran -> tjk[j-2, kmax-2] in Python
         tjk_val = -dz * rr * cos0 * np.exp(-z[kmax - 2] * rkappa / h)
-        tjk_val = tjk_val * (tbar[j, kmax - 1] - tbar[j - 2, kmax - 1])  # tbar(j+1,kmax) - tbar(j-1,kmax) in Fortran
+        tjk_val = tjk_val * (tbar[kmax - 1, j] - tbar[kmax - 1, j - 2])
         tjk_val = tjk_val / (4.0 * omega * sin0 * dphi * h * a)
         
-        tjk[j - 2, kmax - 2] = tjk_val
-        sjk[j - 2, j - 2, kmax - 2] = 1.0
+        tjk[kmax - 2, j - 2] = tjk_val
+        sjk[kmax - 2, j - 2, j - 2] = 1.0
     
     return tjk, sjk
 
@@ -507,10 +444,10 @@ def _compute_qref_and_fawa_first_core(
     """
     pi = np.arccos(-1.0)
     
-    # Initialize output arrays
-    qref = np.zeros((nd, kmax), dtype=np.float64)
-    cref = np.zeros((nd, kmax), dtype=np.float64)
-    ckref = np.zeros((nd, kmax), dtype=np.float64)
+    # Initialize output arrays (C-order: [k, j])
+    qref = np.zeros((kmax, nd), dtype=np.float64)
+    cref = np.zeros((kmax, nd), dtype=np.float64)
+    ckref = np.zeros((kmax, nd), dtype=np.float64)
     
     # Setup latitude area thresholds
     phi = np.zeros(nd, dtype=np.float64)
@@ -531,25 +468,25 @@ def _compute_qref_and_fawa_first_core(
     tb = tn0.copy()
     
     # Process each level
-    for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
-        # Extract 2D fields for this level
-        pv2 = np.zeros((imax, jmax), dtype=np.float64)
-        vort2 = np.zeros((imax, jmax), dtype=np.float64)
+    for k in range(1, kmax - 1):
+        # Extract 2D fields for this level (C-order: [j, i])
+        pv2 = np.zeros((jmax, imax), dtype=np.float64)
+        vort2 = np.zeros((jmax, imax), dtype=np.float64)
         for j in range(jmax):
             for i in range(imax):
-                pv2[i, j] = pv[i, j, k]
-                vort2[i, j] = vort[i, j, k]
+                pv2[j, i] = pv[k, j, i]
+                vort2[j, i] = vort[k, j, i]
         
         # Area analysis for qref
         qref_k, cref_k = _area_analysis_qref(pv2, imax, jmax, nd, nnd, a, dphi, dlambda, alat)
         for j in range(nd):
-            qref[j, k] = qref_k[j]
-            cref[j, k] = cref_k[j]
+            qref[k, j] = qref_k[j]
+            cref[k, j] = cref_k[j]
         
         # Area analysis for ckref (Kelvin's circulation)
         ckref_k = _area_analysis_ckref(vort2, imax, jmax, nd, nnd, a, dphi, dlambda, alat)
         for j in range(nd):
-            ckref[j, k] = ckref_k[j]
+            ckref[k, j] = ckref_k[j]
     
     # Compute cbar
     cbar = _compute_cbar(qbar, nd, kmax, a, dphi)
@@ -588,74 +525,35 @@ def compute_qref_and_fawa_first(
     """
     Compute reference QGPV, zonal-mean fields, FAWA, and direct solver arrays.
     
-    This is a Numba-accelerated Python implementation of the Fortran subroutine
-    `compute_qref_and_fawa_first`.
-    
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity with shape (imax, jmax, kmax).
+        Potential vorticity with shape (kmax, jmax, imax).
     uu : np.ndarray
-        Zonal wind with shape (imax, jmax, kmax).
+        Zonal wind with shape (kmax, jmax, imax).
     vort : np.ndarray
-        Absolute vorticity with shape (imax, jmax, kmax).
+        Absolute vorticity with shape (kmax, jmax, imax).
     pt : np.ndarray
-        Potential temperature with shape (imax, jmax, kmax).
+        Potential temperature with shape (kmax, jmax, imax).
     tn0 : np.ndarray
         Reference temperature profile with shape (kmax,).
-    nd : int
-        Number of latitude points in the hemisphere.
-    nnd : int
-        Number of partitions for area analysis (typically = jmax).
-    jb : int
-        Lower bounding latitude index (1-indexed).
-    jd : int
-        nd - lower bounding latitude.
-    a : float
-        Earth radius in meters.
-    omega : float
-        Earth rotation rate in rad/s.
-    dz : float
-        Vertical grid spacing in meters.
-    h : float
-        Scale height in meters.
-    dphi : float
-        Latitude grid spacing in radians.
-    dlambda : float
-        Longitude grid spacing in radians.
-    rr : float
-        Gas constant in J/(kg·K).
-    cp : float
-        Specific heat at constant pressure in J/(kg·K).
         
     Returns
     -------
     qref : np.ndarray
-        Reference QGPV normalized by sin(latitude), shape (nd, kmax).
+        Reference QGPV normalized by sin(latitude), shape (kmax, nd).
     ubar : np.ndarray
-        Zonal-mean zonal wind, shape (nd, kmax).
+        Zonal-mean zonal wind, shape (kmax, nd).
     tbar : np.ndarray
-        Zonal-mean potential temperature, shape (nd, kmax).
+        Zonal-mean potential temperature, shape (kmax, nd).
     fawa : np.ndarray
-        Finite-amplitude wave activity, shape (nd, kmax).
+        Finite-amplitude wave activity, shape (kmax, nd).
     ckref : np.ndarray
-        Reference Kelvin circulation, shape (nd, kmax).
+        Reference Kelvin circulation, shape (kmax, nd).
     tjk : np.ndarray
-        Direct solver array, shape (jd-2, kmax-1).
+        Direct solver array, shape (kmax-1, jd-2).
     sjk : np.ndarray
-        Direct solver array, shape (jd-2, jd-2, kmax-1).
-        
-    Notes
-    -----
-    This function computes:
-    
-    1. Zonal-mean fields (qbar, ubar, tbar)
-    2. Reference QGPV (qref) via area analysis
-    3. Reference Kelvin circulation (ckref) via area analysis on absolute vorticity
-    4. FAWA (Finite-Amplitude Wave Activity)
-    5. Arrays (tjk, sjk) for the direct inversion solver
-    
-    The qref is normalized by sin(latitude) before output.
+        Direct solver array, shape (kmax-1, jd-2, jd-2).
     """
     # Ensure arrays are contiguous and float64
     pv = np.ascontiguousarray(pv, dtype=np.float64)
@@ -664,7 +562,7 @@ def compute_qref_and_fawa_first(
     pt = np.ascontiguousarray(pt, dtype=np.float64)
     tn0 = np.ascontiguousarray(tn0, dtype=np.float64)
     
-    imax, jmax, kmax = pv.shape
+    kmax, jmax, imax = pv.shape
     
     return _compute_qref_and_fawa_first_core(
         pv, uu, vort, pt, tn0,

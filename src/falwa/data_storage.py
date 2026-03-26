@@ -2,6 +2,13 @@
 ------------------------------------------
 File name: data_storage.py
 Author: Clare Huang, Christopher Polster
+
+Notes
+-----
+All arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
+- 2D lon-lat arrays: [j, i]
 """
 from typing import Tuple, Optional, Union, List, NamedTuple
 import numpy as np
@@ -20,6 +27,7 @@ class HemisphericProperty:
         self.attr = attr
         self.__doc__ = doc
         # Dimensions to fill in pre- and post-latitude
+        # For C-order: latitude is axis 1 for 3D [k,j,i], axis 1 for 2D lat-height [k,j], axis 0 for 2D lon-lat [j,i]
         npre, npost = ndims_fill
         self.slc_pre  = tuple(slice(None) for _ in range(npre))
         self.slc_post = tuple(slice(None) for _ in range(npost))
@@ -67,15 +75,15 @@ class DerivedQuantityStorage:
     """
     This class manages the storage of derived variables in :py:class:`oopinterface.QGField`.
 
-    Variables are stored in fortran indexing order for easy communication with
-    f2py modules. To return variables in python indexing order, use the method
-    :py:meth:`fortran_to_python` to swap the axes.
+    All arrays are stored in C-order (row-major) indexing. The fortran_to_python
+    and python_to_fortran methods are provided for backward compatibility but
+    are effectively identity operations since arrays are now natively in C-order.
     """
     def __init__(
         self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
         swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
-        self._pydim = pydim  # python dimension
-        self._fdim = fdim    # fortran dimension
+        self._pydim = pydim  # python dimension (C-order)
+        self._fdim = fdim    # fortran dimension (now same as pydim for C-order)
         self._swapaxis_1 = swapaxis_1
         self._swapaxis_2 = swapaxis_2
         self._northern_hemisphere_results_only = northern_hemisphere_results_only
@@ -101,17 +109,25 @@ class DerivedQuantityStorage:
         return self._northern_hemisphere_results_only
 
     def fortran_to_python(self, phy_field: np.ndarray):
-        return np.swapaxes(phy_field, self.swapaxis_1, self.swapaxis_2)
+        """Convert from internal storage to Python convention.
+        
+        With C-order arrays, this is now an identity operation.
+        """
+        return phy_field  # No swap needed - arrays are already in C-order
 
-    def python_to_fortran(self, phy_field: np.ndarray):  # This may not be necessary
-        return np.swapaxes(phy_field, self.swapaxis_2, self.swapaxis_1)
+    def python_to_fortran(self, phy_field: np.ndarray):
+        """Convert from Python convention to internal storage.
+        
+        With C-order arrays, this is now an identity operation.
+        """
+        return phy_field  # No swap needed - arrays are already in C-order
 
 
 class DomainAverageStorage(DerivedQuantityStorage):
     """
     This stores global/hemispheric averaged potential temperature and static stability.
 
-    Fortran dimension: (kmax)
+    Dimension: (kmax,) - 1D arrays, no axis swapping needed
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
@@ -133,7 +149,7 @@ class InterpolatedFieldsStorage(DerivedQuantityStorage):
     - theta (potential temperature)
     - avort (absolute vorticity, used as boundary condition to solve for reference state in NHN22)
 
-    Fortran dimension: (nlon, nlat, kmax)
+    Dimension (C-order): (kmax, nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int, northern_hemisphere_results_only: bool):
@@ -153,7 +169,7 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
     - qref (it actually stores qref/f, where f is Coriolis paramter)
     - tref (potential temperature reference state)
 
-    Fortran dimension: (nlat, kmax)
+    Dimension (C-order): (kmax, nlat)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -164,38 +180,40 @@ class ReferenceStatesStorage(DerivedQuantityStorage):
         self.ptref = np.zeros(self.fdim)
         kmax, self.nlat = self.pydim
 
-    qref_nhem = NHemProperty("qref", (0, 1))
-    qref_shem = SHemProperty("qref", (0, 1))
+    # C-order [k, j]: latitude is axis 1, so ndims_fill = (1, 0) means 1 dim before lat (k), 0 after
+    qref_nhem = NHemProperty("qref", (1, 0))
+    qref_shem = SHemProperty("qref", (1, 0))
 
     def qref_correct_unit(self, ylat, omega, python_indexing=True):
         """
         This returns Qref of the correct unit to the user.
-        TODO: encapsulate this elsewhere to avoid potential error
+        The array is in C-order (kmax, nlat).
         """
+        # qref is (kmax, nlat), ylat is (nlat,)
         qref_right_unit = \
-            self.qref * 2 * omega * np.sin(np.deg2rad(ylat[:, np.newaxis]))
+            self.qref * 2 * omega * np.sin(np.deg2rad(ylat[np.newaxis, :]))
         if python_indexing:
-            return self.fortran_to_python(qref_right_unit) # (kmax, nlat)
+            return self.fortran_to_python(qref_right_unit)  # Identity for C-order
         return qref_right_unit
 
-    uref_nhem = NHemProperty("uref", (0, 1))
-    uref_shem = SHemProperty("uref", (0, 1))
+    uref_nhem = NHemProperty("uref", (1, 0))
+    uref_shem = SHemProperty("uref", (1, 0))
 
-    ptref_nhem = NHemProperty("ptref", (0, 1))
-    ptref_shem = SHemProperty("ptref", (0, 1))
+    ptref_nhem = NHemProperty("ptref", (1, 0))
+    ptref_shem = SHemProperty("ptref", (1, 0))
 
 
 class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores 3D LWA field on interpolated grids.
 
-    Fortran dimension: (nlon, nlat, kmax)
+    Dimension (C-order): (kmax, nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
                  northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
-        self.nlat = self.fdim[1]
+        self.nlat = self.fdim[1]  # C-order: fdim = (kmax, nlat, nlon)
         self.lwa = np.zeros(self.fdim)    # TODO: lwa = astar1+astar2 - redundant
         self.astar1 = np.zeros(self.fdim)
         self.astar2 = np.zeros(self.fdim)
@@ -207,6 +225,7 @@ class LayerwiseFluxTermsStorage(DerivedQuantityStorage):
         self.stretch_term = np.zeros(self.fdim)
         self.ncforce = np.zeros(self.fdim)
 
+    # C-order [k, j, i]: latitude is axis 1, so ndims_fill = (1, 1) means 1 dim before lat (k), 1 after (i)
     lwa_nhem = NHemProperty("lwa", (1, 1))
     lwa_shem = SHemProperty("lwa", (1, 1))
 
@@ -253,7 +272,7 @@ class OutputBarotropicFluxTermsStorage(DerivedQuantityStorage):
     - divergence_eddy_momentum_flux
     - meridional_heat_flux
 
-    Variables are stored in **python indexing order**: (nlat, nlon)
+    Variables are stored in C-order: (nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
@@ -276,13 +295,13 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
     """
     This class stores intermediate computed quantities in latitude-longitude 2D grid.
 
-    Variables are stored in fortran indexing order: (nlon, nlat)
+    Variables are stored in C-order: (nlat, nlon)
     """
     def __init__(self, pydim: Union[int, Tuple], fdim: Union[int, Tuple],
                  swapaxis_1: int, swapaxis_2: int,
                  northern_hemisphere_results_only: bool):
         super().__init__(pydim, fdim, swapaxis_1, swapaxis_2, northern_hemisphere_results_only)
-        self.nlat = fdim[1]
+        self.nlat = fdim[0]  # C-order: fdim = (nlat, nlon)
         self.ua1baro = np.zeros(self.fdim)
         self.ua2baro = np.zeros(self.fdim)
         self.ep1baro = np.zeros(self.fdim)
@@ -295,36 +314,36 @@ class BarotropicFluxTermsStorage(DerivedQuantityStorage):
         self.astar1_baro = np.zeros(self.fdim)
         self.astar2_baro = np.zeros(self.fdim)
 
-    ua1baro_nhem = NHemProperty("ua1baro", (1, 0))
-    ua1baro_shem = SHemProperty("ua1baro", (1, 0))
+    # C-order [j, i]: latitude is axis 0, so ndims_fill = (0, 1) means 0 dims before lat (j is first), 1 after (i)
+    ua1baro_nhem = NHemProperty("ua1baro", (0, 1))
+    ua1baro_shem = SHemProperty("ua1baro", (0, 1))
 
-    ua2baro_nhem = NHemProperty("ua2baro", (1, 0))
-    ua2baro_shem = SHemProperty("ua2baro", (1, 0))
+    ua2baro_nhem = NHemProperty("ua2baro", (0, 1))
+    ua2baro_shem = SHemProperty("ua2baro", (0, 1))
 
-    ep1baro_nhem = NHemProperty("ep1baro", (1, 0))
-    ep1baro_shem = SHemProperty("ep1baro", (1, 0))
+    ep1baro_nhem = NHemProperty("ep1baro", (0, 1))
+    ep1baro_shem = SHemProperty("ep1baro", (0, 1))
 
-    ep2baro_nhem = NHemProperty("ep2baro", (1, 0))
-    ep2baro_shem = SHemProperty("ep2baro", (1, 0))
+    ep2baro_nhem = NHemProperty("ep2baro", (0, 1))
+    ep2baro_shem = SHemProperty("ep2baro", (0, 1))
 
-    ep3baro_nhem = NHemProperty("ep3baro", (1, 0))
-    ep3baro_shem = SHemProperty("ep3baro", (1, 0))
+    ep3baro_nhem = NHemProperty("ep3baro", (0, 1))
+    ep3baro_shem = SHemProperty("ep3baro", (0, 1))
 
-    ep4_nhem = NHemProperty("ep4", (1, 0))
-    ep4_shem = SHemProperty("ep4", (1, 0))
+    ep4_nhem = NHemProperty("ep4", (0, 1))
+    ep4_shem = SHemProperty("ep4", (0, 1))
 
-    ncforce_baro_nhem = NHemProperty("ncforce_baro", (1, 0))
-    ncforce_baro_shem = SHemProperty("ncforce_baro", (1, 0))
+    ncforce_baro_nhem = NHemProperty("ncforce_baro", (0, 1))
+    ncforce_baro_shem = SHemProperty("ncforce_baro", (0, 1))
 
-    u_baro_nhem = NHemProperty("u_baro", (1, 0))
-    u_baro_shem = SHemProperty("u_baro", (1, 0))
+    u_baro_nhem = NHemProperty("u_baro", (0, 1))
+    u_baro_shem = SHemProperty("u_baro", (0, 1))
 
-    lwa_baro_nhem = NHemProperty("lwa_baro", (1, 0))
-    lwa_baro_shem = SHemProperty("lwa_baro", (1, 0))
+    lwa_baro_nhem = NHemProperty("lwa_baro", (0, 1))
+    lwa_baro_shem = SHemProperty("lwa_baro", (0, 1))
 
-    astar1_baro_nhem = NHemProperty("astar1_baro", (1, 0))
-    astar1_baro_shem = SHemProperty("astar1_baro", (1, 0))
+    astar1_baro_nhem = NHemProperty("astar1_baro", (0, 1))
+    astar1_baro_shem = SHemProperty("astar1_baro", (0, 1))
 
-    astar2_baro_nhem = NHemProperty("astar2_baro", (1, 0))
-    astar2_baro_shem = SHemProperty("astar2_baro", (1, 0))
-
+    astar2_baro_nhem = NHemProperty("astar2_baro", (0, 1))
+    astar2_baro_shem = SHemProperty("astar2_baro", (0, 1))

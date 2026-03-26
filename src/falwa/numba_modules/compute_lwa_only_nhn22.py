@@ -6,6 +6,13 @@ subroutine `compute_lwa_only_nhn22` for computing LWA and barotropic averages
 for the NHN22 algorithm.
 
 .. versionadded:: 2.4.0
+
+Notes
+-----
+Arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
+- 2D lon-lat arrays: [j, i]
 """
 
 import numpy as np
@@ -44,14 +51,14 @@ def _compute_lwa_only_nhn22_core(
     for k in range(kmax):
         z[k] = dz * float(k)
     
-    # Initialize output arrays
-    astarbaro = np.zeros((imax, nd), dtype=np.float64)
-    ubaro = np.zeros((imax, nd), dtype=np.float64)
-    astar1 = np.zeros((imax, nd, kmax), dtype=np.float64)
-    astar2 = np.zeros((imax, nd, kmax), dtype=np.float64)
+    # Initialize output arrays (C-order: [j, i] for 2D, [k, j, i] for 3D)
+    astarbaro = np.zeros((nd, imax), dtype=np.float64)
+    ubaro = np.zeros((nd, imax), dtype=np.float64)
+    astar1 = np.zeros((kmax, nd, imax), dtype=np.float64)
+    astar2 = np.zeros((kmax, nd, imax), dtype=np.float64)
     
-    # Working array
-    qe = np.zeros((imax, nd), dtype=np.float64)
+    # Working array (C-order: [j, i])
+    qe = np.zeros((nd, imax), dtype=np.float64)
     
     dc = dz / prefac
     
@@ -71,8 +78,8 @@ def _compute_lwa_only_nhn22_core(
         
         for i in range(imax):
             for j in range(jstart, jend):  # Adjusted for 0-indexed
-                astar1[i, j, k] = 0.0
-                astar2[i, j, k] = 0.0
+                astar1[k, j, i] = 0.0
+                astar2[k, j, i] = 0.0
                 
                 if is_nhem:
                     phi0 = dp * float(j)  # j-1 in Fortran 1-indexed -> j in 0-indexed
@@ -85,40 +92,40 @@ def _compute_lwa_only_nhn22_core(
                 for jj in range(nd):  # jj = 1 to nd in Fortran
                     if is_nhem:
                         phi1 = dp * float(jj)
-                        qe[i, jj] = pv[i, jj + nd - 1, k] - qref[j, k]
+                        qe[jj, i] = pv[k, jj + nd - 1, i] - qref[k, j]
                     else:
                         phi1 = dp * float(jj) - 0.5 * pi
-                        qe[i, jj] = pv[i, jj, k] - qref[j, k]
+                        qe[jj, i] = pv[k, jj, i] - qref[k, j]
                     
                     aa = a * dp * np.cos(phi1)
                     
-                    if qe[i, jj] <= 0.0 and jj >= j:
+                    if qe[jj, i] <= 0.0 and jj >= j:
                         if is_nhem:
-                            astar2[i, j, k] = astar2[i, j, k] - qe[i, jj] * aa
+                            astar2[k, j, i] = astar2[k, j, i] - qe[jj, i] * aa
                         else:
-                            astar1[i, j, k] = astar1[i, j, k] - qe[i, jj] * aa
+                            astar1[k, j, i] = astar1[k, j, i] - qe[jj, i] * aa
                     
-                    if qe[i, jj] > 0.0 and jj < j:
+                    if qe[jj, i] > 0.0 and jj < j:
                         if is_nhem:
-                            astar1[i, j, k] = astar1[i, j, k] + qe[i, jj] * aa
+                            astar1[k, j, i] = astar1[k, j, i] + qe[jj, i] * aa
                         else:
-                            astar2[i, j, k] = astar2[i, j, k] + qe[i, jj] * aa
+                            astar2[k, j, i] = astar2[k, j, i] + qe[jj, i] * aa
         
         # Column average: (25) of SI-HN17
         for j in range(nd):
             for i in range(imax):
-                astarbaro[i, j] = astarbaro[i, j] + (astar1[i, j, k] + astar2[i, j, k]) * np.exp(-zk / h) * dc
+                astarbaro[j, i] = astarbaro[j, i] + (astar1[k, j, i] + astar2[k, j, i]) * np.exp(-zk / h) * dc
         
         if is_nhem:
             for j in range(jstart, jend):
                 for i in range(imax):
                     # Fortran: uu(:, nd-1+j, k) with j 1-indexed
                     # Python: j is 0-indexed, so use nd + j to get same array position
-                    ubaro[i, j] = ubaro[i, j] + uu[i, nd + j, k] * np.exp(-zk / h) * dc
+                    ubaro[j, i] = ubaro[j, i] + uu[k, nd + j, i] * np.exp(-zk / h) * dc
         else:
             for j in range(jstart, jend):
                 for i in range(imax):
-                    ubaro[i, j] = ubaro[i, j] + uu[i, j, k] * np.exp(-zk / h) * dc
+                    ubaro[j, i] = ubaro[j, i] + uu[k, j, i] * np.exp(-zk / h) * dc
     
     return astarbaro, ubaro, astar1, astar2
 
@@ -143,11 +150,11 @@ def compute_lwa_only_nhn22(
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity, shape (imax, jmax, kmax).
+        Potential vorticity, shape (kmax, jmax, imax).
     uu : np.ndarray
-        Zonal wind, shape (imax, jmax, kmax).
+        Zonal wind, shape (kmax, jmax, imax).
     qref : np.ndarray
-        Reference QGPV, shape (nd, kmax).
+        Reference QGPV, shape (kmax, nd).
     jb : int
         Lower bounding latitude index.
     is_nhem : bool
@@ -170,24 +177,23 @@ def compute_lwa_only_nhn22(
     Returns
     -------
     astarbaro : np.ndarray
-        Barotropic LWA, shape (imax, nd).
+        Barotropic LWA, shape (nd, imax).
     ubaro : np.ndarray
-        Barotropic zonal wind, shape (imax, nd).
+        Barotropic zonal wind, shape (nd, imax).
     astar1 : np.ndarray
-        Cyclonic LWA*cos(phi), shape (imax, nd, kmax).
+        Cyclonic LWA*cos(phi), shape (kmax, nd, imax).
     astar2 : np.ndarray
-        Anticyclonic LWA*cos(phi), shape (imax, nd, kmax).
+        Anticyclonic LWA*cos(phi), shape (kmax, nd, imax).
     """
     pv = np.ascontiguousarray(pv, dtype=np.float64)
     uu = np.ascontiguousarray(uu, dtype=np.float64)
     qref = np.ascontiguousarray(qref, dtype=np.float64)
     
-    imax, jmax, kmax = pv.shape
-    nd = qref.shape[0]
+    kmax, jmax, imax = pv.shape
+    nd = qref.shape[1]
     
     return _compute_lwa_only_nhn22_core(
         pv, uu, qref,
         imax, jmax, kmax, nd, jb, is_nhem,
         float(a), float(om), float(dz), float(h), float(rr), float(cp), float(prefac)
     )
-

@@ -17,6 +17,10 @@ the original Fortran implementation.
 The key difference from `compute_qgpv` is that this version uses separate
 reference temperature and static stability profiles for the southern and
 northern hemispheres, with the equator boundary specified by `jd`.
+
+Arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
 """
 
 import numpy as np
@@ -42,9 +46,9 @@ def _compute_absolute_vorticity_direct_inv(
     Parameters
     ----------
     uq : np.ndarray
-        Zonal wind field, shape (nlon, nlat, kmax)
+        Zonal wind field, shape (kmax, nlat, nlon)
     vq : np.ndarray
-        Meridional wind field, shape (nlon, nlat, kmax)
+        Meridional wind field, shape (kmax, nlat, nlon)
     nlon : int
         Number of longitude points
     nlat : int
@@ -63,9 +67,9 @@ def _compute_absolute_vorticity_direct_inv(
     Returns
     -------
     avort : np.ndarray
-        Absolute vorticity, shape (nlon, nlat, kmax)
+        Absolute vorticity, shape (kmax, nlat, nlon)
     """
-    avort = np.zeros((nlon, nlat, kmax), dtype=np.float64)
+    avort = np.zeros((kmax, nlat, nlon), dtype=np.float64)
     
     for kk in range(kmax):
         # Interior latitudes (j=1 to nlat-2 in 0-indexed)
@@ -85,31 +89,31 @@ def _compute_absolute_vorticity_direct_inv(
             
             # Interior longitudes (i=1 to nlon-2 in 0-indexed)
             for i in range(1, nlon - 1):
-                av2 = (vq[i + 1, j, kk] - vq[i - 1, j, kk]) / (2.0 * aa * cos_phi0 * dphi)
-                av3 = -(uq[i, j + 1, kk] * cos_phip - uq[i, j - 1, kk] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
-                avort[i, j, kk] = av1 + av2 + av3
+                av2 = (vq[kk, j, i + 1] - vq[kk, j, i - 1]) / (2.0 * aa * cos_phi0 * dphi)
+                av3 = -(uq[kk, j + 1, i] * cos_phip - uq[kk, j - 1, i] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
+                avort[kk, j, i] = av1 + av2 + av3
             
             # Periodic boundary conditions for i=0 (Fortran i=1)
-            av2 = (vq[1, j, kk] - vq[nlon - 1, j, kk]) / (2.0 * aa * cos_phi0 * dphi)
-            av3 = -(uq[0, j + 1, kk] * cos_phip - uq[0, j - 1, kk] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
-            avort[0, j, kk] = av1 + av2 + av3
+            av2 = (vq[kk, j, 1] - vq[kk, j, nlon - 1]) / (2.0 * aa * cos_phi0 * dphi)
+            av3 = -(uq[kk, j + 1, 0] * cos_phip - uq[kk, j - 1, 0] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
+            avort[kk, j, 0] = av1 + av2 + av3
             
             # Periodic boundary conditions for i=nlon-1 (Fortran i=nlon)
-            av5 = (vq[0, j, kk] - vq[nlon - 2, j, kk]) / (2.0 * aa * cos_phi0 * dphi)
-            av6 = -(uq[nlon - 1, j + 1, kk] * cos_phip - uq[nlon - 1, j - 1, kk] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
-            avort[nlon - 1, j, kk] = av1 + av5 + av6
+            av5 = (vq[kk, j, 0] - vq[kk, j, nlon - 2]) / (2.0 * aa * cos_phi0 * dphi)
+            av6 = -(uq[kk, j + 1, nlon - 1] * cos_phip - uq[kk, j - 1, nlon - 1] * cos_phim) / (2.0 * aa * cos_phi0 * dphi)
+            avort[kk, j, nlon - 1] = av1 + av5 + av6
         
         # Pole values: average from neighboring latitude
         avs = 0.0
         avn = 0.0
         for i in range(nlon):
-            avs += avort[i, 1, kk] / float(nlon)
-            avn += avort[i, nlat - 2, kk] / float(nlon)
+            avs += avort[kk, 1, i] / float(nlon)
+            avn += avort[kk, nlat - 2, i] / float(nlon)
         
         # Set pole values (all longitudes get the same value)
         for i in range(nlon):
-            avort[i, 0, kk] = avs       # South pole
-            avort[i, nlat - 1, kk] = avn  # North pole
+            avort[kk, 0, i] = avs       # South pole
+            avort[kk, nlat - 1, i] = avn  # North pole
     
     return avort
 
@@ -127,7 +131,7 @@ def _compute_zonal_mean_vorticity(
     Parameters
     ----------
     avort : np.ndarray
-        Absolute vorticity, shape (nlon, nlat, kmax)
+        Absolute vorticity, shape (kmax, nlat, nlon)
     nlon : int
         Number of longitude points
     nlat : int
@@ -138,14 +142,14 @@ def _compute_zonal_mean_vorticity(
     Returns
     -------
     zmav : np.ndarray
-        Zonal mean absolute vorticity, shape (nlat, kmax)
+        Zonal mean absolute vorticity, shape (kmax, nlat)
     """
-    zmav = np.zeros((nlat, kmax), dtype=np.float64)
+    zmav = np.zeros((kmax, nlat), dtype=np.float64)
     
     for kk in range(kmax):
         for j in range(nlat):
             for i in range(nlon):
-                zmav[j, kk] += avort[i, j, kk] / float(nlon)
+                zmav[kk, j] += avort[kk, j, i] / float(nlon)
     
     return zmav
 
@@ -173,9 +177,9 @@ def _compute_interior_pv_direct_inv(
     Parameters
     ----------
     avort : np.ndarray
-        Absolute vorticity, shape (nlon, nlat, kmax)
+        Absolute vorticity, shape (kmax, nlat, nlon)
     tq : np.ndarray
-        Potential temperature, shape (nlon, nlat, kmax)
+        Potential temperature, shape (kmax, nlat, nlon)
     height : np.ndarray
         Height levels, shape (kmax,)
     ts0 : np.ndarray
@@ -204,9 +208,9 @@ def _compute_interior_pv_direct_inv(
     Returns
     -------
     pv : np.ndarray
-        Potential vorticity, shape (nlon, nlat, kmax)
+        Potential vorticity, shape (kmax, nlat, nlon)
     """
-    pv = np.zeros((nlon, nlat, kmax), dtype=np.float64)
+    pv = np.zeros((kmax, nlat, nlon), dtype=np.float64)
     
     # Interior levels only (kk=1 to kmax-2 in 0-indexed)
     for kk in range(1, kmax - 1):
@@ -229,12 +233,12 @@ def _compute_interior_pv_direct_inv(
                 t00m = tn0[kk - 1]
             
             for i in range(nlon):
-                thetap = tq[i, j, kk + 1]
-                thetam = tq[i, j, kk - 1]
+                thetap = tq[kk + 1, j, i]
+                thetam = tq[kk - 1, j, i]
                 altp = np.exp(-height[kk + 1] / hh) * (thetap - t00p) / statp
                 altm = np.exp(-height[kk - 1] / hh) * (thetam - t00m) / statm
                 strc = (altp - altm) * f / (height[kk + 1] - height[kk - 1])
-                pv[i, j, kk] = avort[i, j, kk] + np.exp(height[kk] / hh) * strc
+                pv[kk, j, i] = avort[kk, j, i] + np.exp(height[kk] / hh) * strc
     
     return pv
 
@@ -267,11 +271,11 @@ def _compute_qgpv_direct_inv_core(
     Parameters
     ----------
     uq : np.ndarray
-        Zonal wind field, shape (nlon, nlat, kmax)
+        Zonal wind field, shape (kmax, nlat, nlon)
     vq : np.ndarray
-        Meridional wind field, shape (nlon, nlat, kmax)
+        Meridional wind field, shape (kmax, nlat, nlon)
     tq : np.ndarray
-        Potential temperature field, shape (nlon, nlat, kmax)
+        Potential temperature field, shape (kmax, nlat, nlon)
     height : np.ndarray
         Height levels, shape (kmax,)
     ts0 : np.ndarray
@@ -300,11 +304,11 @@ def _compute_qgpv_direct_inv_core(
     Returns
     -------
     pv : np.ndarray
-        Quasi-geostrophic potential vorticity, shape (nlon, nlat, kmax)
+        Quasi-geostrophic potential vorticity, shape (kmax, nlat, nlon)
     avort : np.ndarray
-        Absolute vorticity, shape (nlon, nlat, kmax)
+        Absolute vorticity, shape (kmax, nlat, nlon)
     """
-    nlon, nlat, kmax = uq.shape
+    kmax, nlat, nlon = uq.shape
     
     # Constants
     pi = np.arccos(-1.0)
@@ -354,11 +358,11 @@ def compute_qgpv_direct_inv(
         Equatorial boundary index (1-indexed). Grid points with j <= jd use
         southern hemisphere reference states; j > jd use northern hemisphere.
     uq : np.ndarray
-        Zonal wind field with shape (nlon, nlat, kmax), in m/s.
+        Zonal wind field with shape (kmax, nlat, nlon), in m/s.
     vq : np.ndarray
-        Meridional wind field with shape (nlon, nlat, kmax), in m/s.
+        Meridional wind field with shape (kmax, nlat, nlon), in m/s.
     tq : np.ndarray
-        Potential temperature field with shape (nlon, nlat, kmax), in K.
+        Potential temperature field with shape (kmax, nlat, nlon), in K.
     height : np.ndarray
         Height levels with shape (kmax,), in meters.
     ts0 : np.ndarray
@@ -389,11 +393,11 @@ def compute_qgpv_direct_inv(
     Returns
     -------
     pv : np.ndarray
-        Quasi-geostrophic potential vorticity with shape (nlon, nlat, kmax),
+        Quasi-geostrophic potential vorticity with shape (kmax, nlat, nlon),
         in 1/s. Values are only computed for interior vertical levels
         (indices 1 to kmax-2); boundary levels (0 and kmax-1) are set to zero.
     avort : np.ndarray
-        Absolute vorticity with shape (nlon, nlat, kmax), in 1/s.
+        Absolute vorticity with shape (kmax, nlat, nlon), in 1/s.
         
     Notes
     -----
@@ -417,10 +421,10 @@ def compute_qgpv_direct_inv(
     >>> from falwa.numba_modules import compute_qgpv_direct_inv
     >>> 
     >>> # Create sample input data
-    >>> nlon, nlat, kmax = 144, 73, 17
-    >>> uq = np.random.randn(nlon, nlat, kmax)
-    >>> vq = np.random.randn(nlon, nlat, kmax)
-    >>> tq = 300 + np.random.randn(nlon, nlat, kmax)
+    >>> kmax, nlat, nlon = 17, 73, 144
+    >>> uq = np.random.randn(kmax, nlat, nlon)
+    >>> vq = np.random.randn(kmax, nlat, nlon)
+    >>> tq = 300 + np.random.randn(kmax, nlat, nlon)
     >>> height = np.linspace(0, 16000, kmax)
     >>> ts0 = np.linspace(300, 220, kmax)  # Southern hemisphere
     >>> tn0 = np.linspace(300, 220, kmax)  # Northern hemisphere
@@ -453,4 +457,3 @@ def compute_qgpv_direct_inv(
         int(jd), float(aa), float(omega), float(dz),
         float(hh), float(rr), float(cp)
     )
-

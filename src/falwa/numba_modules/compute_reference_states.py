@@ -11,6 +11,10 @@ Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
 `f90_modules/compute_reference_states.f90` and produces numerically identical results.
+
+Arrays use C-order indexing:
+- 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+- 2D lat-height arrays: [k, j]
 """
 
 import numpy as np
@@ -34,11 +38,11 @@ def _compute_zonal_means(
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity, shape (nlon, nlat, kmax)
+        Potential vorticity, shape (kmax, nlat, nlon)
     uu : np.ndarray
-        Zonal wind, shape (nlon, nlat, kmax)
+        Zonal wind, shape (kmax, nlat, nlon)
     pt : np.ndarray
-        Potential temperature, shape (nlon, nlat, kmax)
+        Potential temperature, shape (kmax, nlat, nlon)
     nlon : int
         Number of longitude points
     nlat : int
@@ -51,23 +55,23 @@ def _compute_zonal_means(
     Returns
     -------
     qbar : np.ndarray
-        Zonal-mean PV, shape (jd, kmax)
+        Zonal-mean PV, shape (kmax, jd)
     tbar : np.ndarray
-        Zonal-mean potential temperature, shape (jd, kmax)
+        Zonal-mean potential temperature, shape (kmax, jd)
     ubar : np.ndarray
-        Zonal-mean zonal wind, shape (jd, kmax)
+        Zonal-mean zonal wind, shape (kmax, jd)
     """
-    qbar = np.zeros((jd, kmax), dtype=np.float64)
-    tbar = np.zeros((jd, kmax), dtype=np.float64)
-    ubar = np.zeros((jd, kmax), dtype=np.float64)
+    qbar = np.zeros((kmax, jd), dtype=np.float64)
+    tbar = np.zeros((kmax, jd), dtype=np.float64)
+    ubar = np.zeros((kmax, jd), dtype=np.float64)
     
     for j in range(jd, nlat + 1):  # Fortran: j = jd, nlat
         j_out = j - (jd - 1) - 1  # Convert to 0-indexed output
         for k in range(kmax):
             for i in range(nlon):
-                qbar[j_out, k] += pv[i, j - 1, k] / float(nlon)
-                tbar[j_out, k] += pt[i, j - 1, k] / float(nlon)
-                ubar[j_out, k] += uu[i, j - 1, k] / float(nlon)
+                qbar[k, j_out] += pv[k, j - 1, i] / float(nlon)
+                tbar[k, j_out] += pt[k, j - 1, i] / float(nlon)
+                ubar[k, j_out] += uu[k, j - 1, i] / float(nlon)
     
     return qbar, tbar, ubar
 
@@ -86,7 +90,7 @@ def _compute_hemispheric_mean_temperature(
     Parameters
     ----------
     tbar : np.ndarray
-        Zonal-mean potential temperature, shape (jd, kmax)
+        Zonal-mean potential temperature, shape (kmax, jd)
     jd : int
         Latitude index for equatorward boundary
     nlat : int
@@ -109,7 +113,7 @@ def _compute_hemispheric_mean_temperature(
         phi0 = dphi * float(j - 1) - 0.5 * pi
         j_idx = j - (jd - 1) - 1  # 0-indexed
         for k in range(kmax):
-            tb[k] += np.cos(phi0) * tbar[j_idx, k]
+            tb[k] += np.cos(phi0) * tbar[k, j_idx]
         wt += np.cos(phi0)
     
     for k in range(kmax):
@@ -136,7 +140,7 @@ def _area_analysis(
     Parameters
     ----------
     pv2 : np.ndarray
-        2D PV field, shape (nlon, nlat)
+        2D PV field, shape (nlat, nlon)
     nlon : int
         Number of longitude points
     nlat : int
@@ -171,10 +175,10 @@ def _area_analysis(
     qmin = pv2[0, 0]
     for j in range(nlat):
         for i in range(nlon):
-            if pv2[i, j] > qmax:
-                qmax = pv2[i, j]
-            if pv2[i, j] < qmin:
-                qmin = pv2[i, j]
+            if pv2[j, i] > qmax:
+                qmax = pv2[j, i]
+            if pv2[j, i] < qmin:
+                qmin = pv2[j, i]
     
     dq = (qmax - qmin) / float(npart - 1)
     
@@ -190,14 +194,14 @@ def _area_analysis(
     for j in range(nlat):
         phi0 = -0.5 * pi + dphi * float(j)
         for i in range(nlon):
-            ind = int((qmax - pv2[i, j]) / dq)
+            ind = int((qmax - pv2[j, i]) / dq)
             if ind < 0:
                 ind = 0
             if ind >= npart:
                 ind = npart - 1
             da = a * a * dphi * dlambda * np.cos(phi0)
             an[ind] += da
-            cn[ind] += da * pv2[i, j]
+            cn[ind] += da * pv2[j, i]
     
     # Cumulative sums
     aan = np.zeros(npart, dtype=np.float64)
@@ -235,7 +239,7 @@ def _compute_cbar(
     Parameters
     ----------
     qbar : np.ndarray
-        Zonal-mean PV, shape (jd, kmax)
+        Zonal-mean PV, shape (kmax, jd)
     jd : int
         Latitude index for equatorward boundary
     kmax : int
@@ -248,16 +252,16 @@ def _compute_cbar(
     Returns
     -------
     cbar : np.ndarray
-        shape (jd, kmax)
+        shape (kmax, jd)
     """
     pi = np.arccos(-1.0)
-    cbar = np.zeros((jd, kmax), dtype=np.float64)
+    cbar = np.zeros((kmax, jd), dtype=np.float64)
     
     for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
-        cbar[jd - 1, k] = 0.0
+        cbar[k, jd - 1] = 0.0
         for j in range(jd - 2, -1, -1):  # Fortran: j = jd-1, 1, -1
             phi0 = dphi * (float(j + 1) - 0.5)  # j+1 because 0-indexed
-            cbar[j, k] = cbar[j + 1, k] + 0.5 * (qbar[j + 1, k] + qbar[j, k]) * \
+            cbar[k, j] = cbar[k, j + 1] + 0.5 * (qbar[k, j + 1] + qbar[k, j]) * \
                          a * dphi * 2.0 * pi * a * np.cos(phi0)
     
     return cbar
@@ -277,7 +281,7 @@ def _normalize_qref_by_coriolis(
     Parameters
     ----------
     qref : np.ndarray
-        Reference PV, shape (jd, kmax)
+        Reference PV, shape (kmax, jd)
     jd : int
         Latitude index for equatorward boundary
     kmax : int
@@ -290,17 +294,17 @@ def _normalize_qref_by_coriolis(
     Returns
     -------
     qref : np.ndarray
-        Normalized reference PV, shape (jd, kmax)
+        Normalized reference PV, shape (kmax, jd)
     """
     for j in range(1, jd):  # Fortran: j = 2, jd
         phi0 = dphi * float(j)
         cor = 2.0 * om * np.sin(phi0)
         for k in range(kmax):
-            qref[j, k] = qref[j, k] / cor
+            qref[k, j] = qref[k, j] / cor
     
     # Extrapolate to j=0
     for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
-        qref[0, k] = 2.0 * qref[1, k] - qref[2, k]
+        qref[k, 0] = 2.0 * qref[k, 1] - qref[k, 2]
     
     return qref
 
@@ -326,16 +330,16 @@ def _setup_sor_coefficients(
     Returns
     -------
     ajk, bjk, cjk, djk, ejk, fjk : np.ndarray
-        Coefficient arrays, each shape (jd, kmax)
+        Coefficient arrays, each shape (kmax, jd)
     """
     rkappa = r / cp
     
-    ajk = np.zeros((jd, kmax), dtype=np.float64)
-    bjk = np.zeros((jd, kmax), dtype=np.float64)
-    cjk = np.zeros((jd, kmax), dtype=np.float64)
-    djk = np.zeros((jd, kmax), dtype=np.float64)
-    ejk = np.zeros((jd, kmax), dtype=np.float64)
-    fjk = np.zeros((jd, kmax), dtype=np.float64)
+    ajk = np.zeros((kmax, jd), dtype=np.float64)
+    bjk = np.zeros((kmax, jd), dtype=np.float64)
+    cjk = np.zeros((kmax, jd), dtype=np.float64)
+    djk = np.zeros((kmax, jd), dtype=np.float64)
+    ejk = np.zeros((kmax, jd), dtype=np.float64)
+    fjk = np.zeros((kmax, jd), dtype=np.float64)
     
     for j in range(1, jd - 1):  # Fortran: j = 2, jd-1
         phi0 = float(j) * dphi
@@ -362,12 +366,12 @@ def _setup_sor_coefficients(
             amm = np.exp(-zm / h) * np.exp(rkappa * zm / h) / statm
             amm = amm * fact * np.exp(z[k] / h)
             
-            ajk[j, k] = 1.0 / (sinp * cosp)
-            bjk[j, k] = 1.0 / (sinm * cosm)
-            cjk[j, k] = amp
-            djk[j, k] = amm
-            ejk[j, k] = -ajk[j, k] - bjk[j, k] - cjk[j, k] - djk[j, k]
-            fjk[j, k] = -om * a * dphi * (qref[j + 1, k] - qref[j - 1, k])
+            ajk[k, j] = 1.0 / (sinp * cosp)
+            bjk[k, j] = 1.0 / (sinm * cosm)
+            cjk[k, j] = amp
+            djk[k, j] = amm
+            ejk[k, j] = -ajk[k, j] - bjk[k, j] - cjk[k, j] - djk[k, j]
+            fjk[k, j] = -om * a * dphi * (qref[k, j + 1] - qref[k, j - 1])
     
     return ajk, bjk, cjk, djk, ejk, fjk
 
@@ -405,17 +409,17 @@ def _sor_solver(
     Parameters
     ----------
     u : np.ndarray
-        Initial guess for solution, shape (jd, kmax)
+        Initial guess for solution, shape (kmax, jd)
     ajk, bjk, cjk, djk, ejk, fjk : np.ndarray
         Coefficient arrays from _setup_sor_coefficients
     ubar : np.ndarray
-        Zonal-mean zonal wind, shape (jd, kmax)
+        Zonal-mean zonal wind, shape (kmax, jd)
     tbar : np.ndarray
-        Zonal-mean potential temperature, shape (jd, kmax)
+        Zonal-mean potential temperature, shape (kmax, jd)
     cref : np.ndarray
-        Reference cumulative PV, shape (jd, kmax)
+        Reference cumulative PV, shape (kmax, jd)
     cbar : np.ndarray
-        Cumulative zonal-mean PV, shape (jd, kmax)
+        Cumulative zonal-mean PV, shape (kmax, jd)
     z : np.ndarray
         Height levels, shape (kmax,)
     jd : int
@@ -446,7 +450,7 @@ def _sor_solver(
     Returns
     -------
     u : np.ndarray
-        Solution, shape (jd, kmax)
+        Solution, shape (kmax, jd)
     num_of_iter : int
         Number of iterations performed
     """
@@ -457,7 +461,7 @@ def _sor_solver(
     anormf = 0.0
     for j in range(1, jd - 1):
         for k in range(1, kmax - 1):
-            anormf += np.abs(fjk[j, k])
+            anormf += np.abs(fjk[k, j])
     
     omega = 1.0
     converged = False
@@ -469,27 +473,27 @@ def _sor_solver(
         for j in range(1, jd - 1):  # Fortran: j = 2, jd-1
             for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
                 if (j + k) % 2 == nnn % 2:
-                    resid = ajk[j, k] * u[j + 1, k] + bjk[j, k] * u[j - 1, k] + \
-                            cjk[j, k] * u[j, k + 1] + djk[j, k] * u[j, k - 1] + \
-                            ejk[j, k] * u[j, k] - fjk[j, k]
+                    resid = ajk[k, j] * u[k, j + 1] + bjk[k, j] * u[k, j - 1] + \
+                            cjk[k, j] * u[k + 1, j] + djk[k, j] * u[k - 1, j] + \
+                            ejk[k, j] * u[k, j] - fjk[k, j]
                     anorm += np.abs(resid)
-                    if ejk[j, k] != 0.0:
-                        u[j, k] = u[j, k] - omega * resid / ejk[j, k]
+                    if ejk[k, j] != 0.0:
+                        u[k, j] = u[k, j] - omega * resid / ejk[k, j]
                     else:
-                        u[j, k] = 0.0
+                        u[k, j] = 0.0
             
             # Boundary conditions
-            u[j, 0] = 0.0
+            u[0, j] = 0.0
             phi0 = dphi * float(j)
             uz = dz * r * np.cos(phi0) * np.exp(-z[kmax - 2] * rkappa / h)
-            uz = uz * (tbar[j + 1, kmax - 2] - tbar[j - 1, kmax - 2]) / \
+            uz = uz * (tbar[kmax - 2, j + 1] - tbar[kmax - 2, j - 1]) / \
                  (2.0 * om * np.sin(phi0) * dphi * h * a)
-            u[j, kmax - 1] = u[j, kmax - 3] - uz
+            u[kmax - 1, j] = u[kmax - 3, j] - uz
         
         # Boundary conditions at j boundaries
         for k in range(kmax):
-            u[jd - 1, k] = 0.0
-            u[0, k] = ubar[0, k] + (cref[0, k] - cbar[0, k]) / (2.0 * pi * a)
+            u[k, jd - 1] = 0.0
+            u[k, 0] = ubar[k, 0] + (cref[k, 0] - cbar[k, 0]) / (2.0 * pi * a)
         
         # Update omega
         if nnn == 1:
@@ -508,7 +512,7 @@ def _sor_solver(
         # Set u to zero for non-converged case
         for j in range(jd):
             for k in range(kmax):
-                u[j, k] = 0.0
+                u[k, j] = 0.0
     
     return u, num_of_iter
 
@@ -527,9 +531,9 @@ def _finalize_u(
     Parameters
     ----------
     u : np.ndarray
-        Solution from SOR, shape (jd, kmax)
+        Solution from SOR, shape (kmax, jd)
     ubar : np.ndarray
-        Zonal-mean zonal wind, shape (jd, kmax)
+        Zonal-mean zonal wind, shape (kmax, jd)
     jd : int
         Latitude index
     kmax : int
@@ -540,17 +544,17 @@ def _finalize_u(
     Returns
     -------
     u : np.ndarray
-        Finalized solution, shape (jd, kmax)
+        Finalized solution, shape (kmax, jd)
     """
     for j in range(1, jd - 1):  # Fortran: j = 2, jd-1
         phi0 = dphi * float(j)
         for k in range(kmax):
-            u[j, k] = u[j, k] / np.cos(phi0)
+            u[k, j] = u[k, j] / np.cos(phi0)
     
     # Boundary conditions
     for k in range(kmax):
-        u[0, k] = ubar[0, k]
-        u[jd - 1, k] = 2.0 * u[jd - 2, k] - u[jd - 3, k]
+        u[k, 0] = ubar[k, 0]
+        u[k, jd - 1] = 2.0 * u[k, jd - 2] - u[k, jd - 3]
     
     return u
 
@@ -575,7 +579,7 @@ def _compute_tref(
     Parameters
     ----------
     u : np.ndarray
-        Reference wind, shape (jd, kmax)
+        Reference wind, shape (kmax, jd)
     tb : np.ndarray
         Hemispheric-mean temperature, shape (kmax,)
     jd : int
@@ -600,44 +604,44 @@ def _compute_tref(
     Returns
     -------
     tref : np.ndarray
-        Reference temperature, shape (jd, kmax)
+        Reference temperature, shape (kmax, jd)
     """
     rkappa = r / cp
-    tref = np.zeros((jd, kmax), dtype=np.float64)
+    tref = np.zeros((kmax, jd), dtype=np.float64)
     tg = np.zeros(kmax, dtype=np.float64)
     
     for k in range(1, kmax - 1):  # Fortran: k = 2, kmax-1
         t00 = 0.0
         zz = dz * float(k)
-        tref[0, k] = t00
-        tref[1, k] = t00
+        tref[k, 0] = t00
+        tref[k, 1] = t00
         
         for j in range(1, jd - 1):  # Fortran: j = 2, jd-1
             phi0 = dphi * float(j)
             cor = 2.0 * om * np.sin(phi0)
-            uz = (u[j, k + 1] - u[j, k - 1]) / (2.0 * dz)
+            uz = (u[k + 1, j] - u[k - 1, j]) / (2.0 * dz)
             ty = -cor * uz * a * h * np.exp(rkappa * zz / h)
             ty = ty / r
-            tref[j + 1, k] = tref[j - 1, k] + 2.0 * ty * dphi
+            tref[k, j + 1] = tref[k, j - 1] + 2.0 * ty * dphi
         
         # Compute tg for this level
         tg[k] = 0.0
         wt = 0.0
         for j in range(jd):
             phi0 = dphi * float(j)
-            tg[k] += np.cos(phi0) * tref[j, k]
+            tg[k] += np.cos(phi0) * tref[k, j]
             wt += np.cos(phi0)
         tg[k] = tg[k] / wt
         
         # Adjust tref
         tres = tb[k] - tg[k]
         for j in range(jd):
-            tref[j, k] = tref[j, k] + tres
+            tref[k, j] = tref[k, j] + tres
     
     # Boundary levels
     for j in range(jd):
-        tref[j, 0] = tref[j, 1] - tb[1] + tb[0]
-        tref[j, kmax - 1] = tref[j, kmax - 2] - tb[kmax - 2] + tb[kmax - 1]
+        tref[0, j] = tref[1, j] - tb[1] + tb[0]
+        tref[kmax - 1, j] = tref[kmax - 2, j] - tb[kmax - 2] + tb[kmax - 1]
     
     return tref
 
@@ -670,11 +674,11 @@ def _compute_reference_states_core(
     """
     pi = np.arccos(-1.0)
     
-    # Initialize arrays
-    qref = np.zeros((jd, kmax), dtype=np.float64)
-    u = np.zeros((jd, kmax), dtype=np.float64)
-    tref = np.zeros((jd, kmax), dtype=np.float64)
-    cref = np.zeros((jd, kmax), dtype=np.float64)
+    # Initialize arrays (C-order: [k, j])
+    qref = np.zeros((kmax, jd), dtype=np.float64)
+    u = np.zeros((kmax, jd), dtype=np.float64)
+    tref = np.zeros((kmax, jd), dtype=np.float64)
+    cref = np.zeros((kmax, jd), dtype=np.float64)
     
     # Setup latitude area thresholds
     phi = np.zeros(jd, dtype=np.float64)
@@ -696,15 +700,15 @@ def _compute_reference_states_core(
     
     # Area analysis for each level
     for k in range(1, kmax - 1):
-        pv2 = np.zeros((nlon, nlat), dtype=np.float64)
+        pv2 = np.zeros((nlat, nlon), dtype=np.float64)
         for j in range(nlat):
             for i in range(nlon):
-                pv2[i, j] = pv[i, j, k]
+                pv2[j, i] = pv[k, j, i]
         
         qref_k, cref_k = _area_analysis(pv2, nlon, nlat, jd, npart, a, dphi, dlambda, alat)
         for j in range(jd):
-            qref[j, k] = qref_k[j]
-            cref[j, k] = cref_k[j]
+            qref[k, j] = qref_k[j]
+            cref[k, j] = cref_k[j]
     
     # Compute cbar
     cbar = _compute_cbar(qbar, jd, kmax, a, dphi)
@@ -760,11 +764,11 @@ def compute_reference_states(
     Parameters
     ----------
     pv : np.ndarray
-        Potential vorticity with shape (nlon, nlat, kmax).
+        Potential vorticity with shape (kmax, nlat, nlon).
     uu : np.ndarray
-        Zonal wind with shape (nlon, nlat, kmax).
+        Zonal wind with shape (kmax, nlat, nlon).
     pt : np.ndarray
-        Potential temperature with shape (nlon, nlat, kmax).
+        Potential temperature with shape (kmax, nlat, nlon).
     stat : np.ndarray
         Static stability with shape (kmax,).
     jd : int
@@ -797,11 +801,11 @@ def compute_reference_states(
     Returns
     -------
     qref : np.ndarray
-        Reference potential vorticity with shape (jd, kmax).
+        Reference potential vorticity with shape (kmax, jd).
     u : np.ndarray
-        Reference zonal wind with shape (jd, kmax).
+        Reference zonal wind with shape (kmax, jd).
     tref : np.ndarray
-        Reference temperature with shape (jd, kmax).
+        Reference temperature with shape (kmax, jd).
     num_of_iter : int
         Number of iterations performed by the SOR solver.
         
@@ -827,11 +831,10 @@ def compute_reference_states(
     pt = np.ascontiguousarray(pt, dtype=np.float64)
     stat = np.ascontiguousarray(stat, dtype=np.float64)
     
-    nlon, nlat, kmax = pv.shape
+    kmax, nlat, nlon = pv.shape
     
     return _compute_reference_states_core(
         pv, uu, pt, stat, nlon, nlat, kmax, jd, npart, maxits,
         float(a), float(om), float(dz), float(eps), float(h),
         float(dphi), float(dlambda), float(r), float(cp), float(rjac)
     )
-

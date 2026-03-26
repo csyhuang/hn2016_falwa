@@ -6,6 +6,12 @@ subroutine `matrix_b4_inversion` for setting up matrices before inversion
 in the direct solver algorithm.
 
 .. versionadded:: 2.4.0
+
+Notes
+-----
+Arrays use C-order indexing:
+- 2D lat-height arrays: [k, j]
+- 3D arrays: [k, j1, j2]
 """
 
 import numpy as np
@@ -40,8 +46,8 @@ def _matrix_b4_inversion_core(
     pi = np.arccos(-1.0)
     dp = pi / float(jmax - 1)
     
-    zp = 0.5 * (z[k] + z[k - 1])  # z(k+1) and z(k) in Fortran 1-indexed -> z[k] and z[k-1] in 0-indexed
-    zm = 0.5 * (z[k - 2] + z[k - 1])  # z(k-1) and z(k) in Fortran -> z[k-2] and z[k-1]
+    zp = 0.5 * (z[k] + z[k - 1])
+    zm = 0.5 * (z[k - 2] + z[k - 1])
     statp = 0.5 * (statn[k] + statn[k - 1])
     statm = 0.5 * (statn[k - 2] + statn[k - 1])
     
@@ -51,18 +57,18 @@ def _matrix_b4_inversion_core(
     qjj = np.zeros((jd - 2, jd - 2), dtype=np.float64)
     rj = np.zeros(jd - 2, dtype=np.float64)
     
-    # Copy sjk slice
+    # Copy sjk slice (C-order: sjk[k, j1, j2])
     sjj = np.zeros((jd - 2, jd - 2), dtype=np.float64)
     for i in range(jd - 2):
         for j in range(jd - 2):
-            sjj[i, j] = sjk[i, j, k - 1]  # sjk(:,:,k) in Fortran -> sjk[:,:,k-1] in 0-indexed
+            sjj[i, j] = sjk[k - 1, i, j]
     
-    # Initialize u array for boundary conditions
-    u = np.zeros((jd, kmax), dtype=np.float64)
+    # Initialize u array for boundary conditions (C-order: [k, j])
+    u = np.zeros((kmax, jd), dtype=np.float64)
     
     # Fortran: do jj = jb+2, (nd-1)
-    for jj in range(jb + 2, nd):  # jb+2 to nd-1 inclusive in Fortran 1-indexed
-        j = jj - jb  # Fortran: j = jj - jb
+    for jj in range(jb + 2, nd):
+        j = jj - jb
         phi0 = float(jj - 1) * dp
         phip = (float(jj) - 0.5) * dp
         phim = (float(jj) - 1.5) * dp
@@ -75,7 +81,7 @@ def _matrix_b4_inversion_core(
         
         fact = 4.0 * om * om * h * a * a * sin0 * dp * dp / (dz * dz * rr * cos0)
         amp = np.exp(-zp / h) * np.exp(rkappa * zp / h) / statp
-        amp = amp * fact * np.exp(z[k - 1] / h)  # z(k) in Fortran -> z[k-1]
+        amp = amp * fact * np.exp(z[k - 1] / h)
         amm = np.exp(-zm / h) * np.exp(rkappa * zm / h) / statm
         amm = amm * fact * np.exp(z[k - 1] / h)
         
@@ -85,19 +91,18 @@ def _matrix_b4_inversion_core(
         cjk = amp
         djk = amm
         ejk = ajk + bjk + cjk + djk
-        fjk = -0.5 * a * dp * (qref[jj, k - 1] - qref[jj - 2, k - 1])  # qref(jj+1,k) - qref(jj-1,k)
+        fjk = -0.5 * a * dp * (qref[k - 1, jj] - qref[k - 1, jj - 2])  # C-order: qref[k, j]
         
         # North-south boundary conditions
-        u[jd - 1, k - 1] = 0.0  # u(jd, k) = 0
+        u[k - 1, jd - 1] = 0.0
         phi0_bc = dp * float(jb)
-        u[0, k - 1] = ckref[jb, k - 1] / (2.0 * pi * a) - om * a * np.cos(phi0_bc)  # u(1,k), ckref(jb+1,k)
+        u[k - 1, 0] = ckref[k - 1, jb] / (2.0 * pi * a) - om * a * np.cos(phi0_bc)
         
-        # rj(j-1) in Fortran -> rj[j-2] in 0-indexed
         rj[j - 2] = fjk
         if j == 2:
-            rj[j - 2] = fjk - bjk * u[0, k - 1]
+            rj[j - 2] = fjk - bjk * u[k - 1, 0]
         if j == jd - 1:
-            rj[j - 2] = fjk - ajk * u[jd - 1, k - 1]
+            rj[j - 2] = fjk - ajk * u[k - 1, jd - 1]
         
         # Specify Ck & Dk (Eqs. 18-19)
         cjj[j - 2, j - 2] = cjk
@@ -157,11 +162,11 @@ def matrix_b4_inversion(
     statn : np.ndarray
         Static stability, shape (kmax,).
     qref : np.ndarray
-        Reference QGPV, shape (nd, kmax).
+        Reference QGPV, shape (kmax, nd).
     ckref : np.ndarray
-        Reference Kelvin circulation, shape (nd, kmax).
+        Reference Kelvin circulation, shape (kmax, nd).
     sjk : np.ndarray
-        S matrix from previous iteration, shape (jd-2, jd-2, kmax-1).
+        S matrix from previous iteration, shape (kmax-1, jd-2, jd-2).
     a : float
         Earth radius.
     om : float
@@ -192,11 +197,10 @@ def matrix_b4_inversion(
     ckref = np.ascontiguousarray(ckref, dtype=np.float64)
     sjk = np.ascontiguousarray(sjk, dtype=np.float64)
     
-    nd, kmax = qref.shape
+    kmax, nd = qref.shape
     
     return _matrix_b4_inversion_core(
         int(k), int(jmax), int(kmax), int(nd), int(jb), int(jd),
         z, statn, qref, ckref, sjk,
         float(a), float(om), float(dz), float(h), float(rr), float(cp)
     )
-

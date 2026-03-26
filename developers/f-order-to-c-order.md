@@ -118,9 +118,10 @@ This document outlines the plan to refactor all Numba modules and related code f
 #### 2.1 `DerivedQuantityStorage` base class
 **Changes needed:**
 - [ ] Update `pydim` and `fdim` to be identical (no conversion needed)
+- [ ] Update `swapaxis_1` and `swapaxis_2` (may no longer be needed)
+**Skip the following changes as user will do that by hand:**
 - [ ] Simplify or remove `fortran_to_python()` method (becomes identity or removed)
 - [ ] Simplify or remove `python_to_fortran()` method
-- [ ] Update `swapaxis_1` and `swapaxis_2` (may no longer be needed)
 
 #### 2.2 `InterpolatedFieldsStorage`
 **Current:**
