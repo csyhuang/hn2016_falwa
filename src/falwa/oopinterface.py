@@ -188,54 +188,68 @@ class QGFieldBase(ABC):
 
     def _initialize_storage(self):
         """
-        Create storage instances to store output variables
+        Create storage instances to store output variables.
+        
+        All arrays use C-order indexing:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D lat-height arrays: [k, j]
+        - 2D lon-lat arrays: [j, i]
+        
+        Since Phase 1 & 2 converted all Numba modules and storage to C-order,
+        pydim and fdim are now identical (no conversion needed).
         """
         # === qgpv, u, v, avort, theta encapsulated in InterpolatedFieldsStorage ===
+        # C-order 3D: (kmax, nlat, nlon)
         self._interpolated_field_storage = InterpolatedFieldsStorage(
             pydim=(self.kmax, self._nlat_analysis, self.nlon),
-            fdim=(self.nlon, self._nlat_analysis, self.kmax),
+            fdim=(self.kmax, self._nlat_analysis, self.nlon),
             swapaxis_1=0,
-            swapaxis_2=2,
+            swapaxis_2=0,  # No swap needed
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
         # Global averaged quantities (TODO: encapsulate them later)
+        # 1D: (kmax,)
         self._domain_average_storage = DomainAverageStorage(
             pydim=self.kmax,
             fdim=self.kmax,
             swapaxis_1=0,
-            swapaxis_2=2,
+            swapaxis_2=0,
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # Reference states
+        # C-order 2D lat-height: (kmax, nlat)
         lat_dim = self.equator_idx if self.northern_hemisphere_results_only else self._nlat_analysis
         self._reference_states_storage = ReferenceStatesStorage(
             pydim=(self.kmax, lat_dim),
-            fdim=(lat_dim, self.kmax),
+            fdim=(self.kmax, lat_dim),
             swapaxis_1=0,
-            swapaxis_2=1,
+            swapaxis_2=0,  # No swap needed
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # LWA storage (3D)
+        # C-order 3D: (kmax, nlat, nlon)
         self._layerwise_flux_terms_storage = LayerwiseFluxTermsStorage(
             pydim=(self.kmax, lat_dim, self.nlon),
-            fdim=(self.nlon, lat_dim, self.kmax),
+            fdim=(self.kmax, lat_dim, self.nlon),
             swapaxis_1=0,
-            swapaxis_2=2,
+            swapaxis_2=0,  # No swap needed
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # barotropic flux term storage (2D)
+        # C-order 2D lon-lat: (nlat, nlon)
         self._barotropic_flux_terms_storage = BarotropicFluxTermsStorage(
             pydim=(lat_dim, self.nlon),
-            fdim=(self.nlon, lat_dim),
+            fdim=(lat_dim, self.nlon),
             swapaxis_1=0,
-            swapaxis_2=1,
+            swapaxis_2=0,  # No swap needed
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
         # output barotropic flux term storage (2D)
+        # C-order 2D lon-lat: (nlat, nlon)
         self._output_barotropic_flux_terms_storage = OutputBarotropicFluxTermsStorage(
             pydim=(lat_dim, self.nlon),
-            fdim=(self.nlon, lat_dim),
+            fdim=(lat_dim, self.nlon),
             swapaxis_1=0,
-            swapaxis_2=1,
+            swapaxis_2=0,  # No swap needed
             northern_hemisphere_results_only=self.northern_hemisphere_results_only)
 
     def _compute_static_stability_func(self):
@@ -402,7 +416,19 @@ class QGFieldBase(ABC):
         else:
             return variable
 
-    def _vertical_average(self, var_3d, lowest_layer_index=1, height_axis=-1):
+    def _vertical_average(self, var_3d, lowest_layer_index=1, height_axis=0):
+        """
+        Compute vertically weighted average of a 3D field.
+        
+        Parameters
+        ----------
+        var_3d : np.ndarray
+            3D array in C-order [k, j, i] where k is the height axis
+        lowest_layer_index : int
+            Index of the lowest layer to include in average
+        height_axis : int
+            Axis along which height varies. Default is 0 for C-order arrays.
+        """
         dc = self.dz / self.prefactor
 
         # Build dynamic slicer for var_3d
@@ -427,6 +453,15 @@ class QGFieldBase(ABC):
         """
 
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb):
+        """
+        Wrapper for computing LWA and barotropic flux terms.
+        
+        All arrays are in C-order:
+        - 3D input arrays (pv, uu, vv, pt, ncforce): [k, j, i]
+        - 2D input arrays (qref, uref, tref): [k, j]
+        - 2D output arrays: [j, i]
+        - 3D output arrays: [k, j, i]
+        """
         astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(  # Numba module
             pv=pv,
             uu=uu,
@@ -446,20 +481,23 @@ class QGFieldBase(ABC):
             rr=self.dry_gas_constant,
             cp=self.cp,
             prefac=self.prefactor)
-        jd = uref.shape[0]
-        astar1_baro = self._vertical_average(astar1, lowest_layer_index=1)
-        astar2_baro = self._vertical_average(astar2, lowest_layer_index=1)
+        jd = uref.shape[1]  # C-order: uref is [k, j], so j is axis 1
+        # Vertical averages: all arrays are C-order [k, j, i], height is axis 0
+        astar1_baro = self._vertical_average(astar1, lowest_layer_index=1, height_axis=0)
+        astar2_baro = self._vertical_average(astar2, lowest_layer_index=1, height_axis=0)
         astar_baro = astar1_baro + astar2_baro
-        ua1baro = self._vertical_average(ua1, lowest_layer_index=1)
-        u_baro = self._vertical_average(uu[:,-self.equator_idx:,:], lowest_layer_index=1)
-        ua2baro = self._vertical_average(ua2, lowest_layer_index=1)
-        ep1baro = self._vertical_average(ep1, lowest_layer_index=1)
-        ep2baro = self._vertical_average(ep2, lowest_layer_index=1)
-        ep3baro = self._vertical_average(ep3, lowest_layer_index=1)
-        ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1)
+        ua1baro = self._vertical_average(ua1, lowest_layer_index=1, height_axis=0)
+        # uu is [k, j, i], slice for NH: [:, -equator_idx:, :]
+        u_baro = self._vertical_average(uu[:, -self.equator_idx:, :], lowest_layer_index=1, height_axis=0)
+        ua2baro = self._vertical_average(ua2, lowest_layer_index=1, height_axis=0)
+        ep1baro = self._vertical_average(ep1, lowest_layer_index=1, height_axis=0)
+        ep2baro = self._vertical_average(ep2, lowest_layer_index=1, height_axis=0)
+        ep3baro = self._vertical_average(ep3, lowest_layer_index=1, height_axis=0)
+        ncforce_baro = self._vertical_average(ncforce3d, lowest_layer_index=1, height_axis=0)
 
+        # uref is [k, j] in C-order, vertical average along axis 0
         uref_baro = np.sum(
-            uref[-jd:, 1:] * np.exp(-self.height[np.newaxis, 1:] / self.scale_height) * self.dz / self.prefactor,axis=-1)
+            uref[:, -jd:][1:, :] * np.exp(-self.height[1:, np.newaxis] / self.scale_height) * self.dz / self.prefactor, axis=0)
 
         return astar_baro, u_baro, uref_baro, ua1baro, ua2baro, ep1baro, ep2baro, ep3baro, ep4, \
             astar1, astar2, astar1_baro, astar2_baro, ncforce_baro
@@ -517,9 +555,10 @@ class QGFieldBase(ABC):
             interpolated_u = self._vertical_interpolation(self.u_field, kind="linear", axis=0)
             interpolated_v = self._vertical_interpolation(self.v_field, kind="linear", axis=0)
             interpolated_theta = self._vertical_interpolation(self.theta_field, kind="linear", axis=0)
-        self._interpolated_field_storage.interpolated_u = np.swapaxes(interpolated_u, 0, 2)
-        self._interpolated_field_storage.interpolated_v = np.swapaxes(interpolated_v, 0, 2)
-        self._interpolated_field_storage.interpolated_theta = np.swapaxes(interpolated_theta, 0, 2)
+        # Store directly in C-order [k, j, i] - no axis swapping needed
+        self._interpolated_field_storage.interpolated_u = interpolated_u
+        self._interpolated_field_storage.interpolated_v = interpolated_v
+        self._interpolated_field_storage.interpolated_theta = interpolated_theta
 
         # Return a named tuple
         interpolated_fields_to_return: Type[namedtuple] = namedtuple(
@@ -638,6 +677,12 @@ class QGFieldBase(ABC):
         >>> lwa_baro = QGField.lwa_baro  # barotropic LWA
         >>> u_baro = QGField.u_baro    # barotropic U
         >>> lwa = QGField.lwa       # 3-D LWA
+        
+        Notes
+        -----
+        All arrays are in C-order:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D lat-height arrays: [k, j]
         """
 
         ylat_input = self._ylat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._ylat
@@ -645,6 +690,7 @@ class QGFieldBase(ABC):
             ylat=ylat_input, omega=self.omega, python_indexing=False)
 
         # === Compute barotropic flux terms (NHem) ===
+        # qref_correct_unit is [k, j], slice along j (axis 1) for NH
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
             self._barotropic_flux_terms_storage.u_baro_nhem, \
             astar1, \
@@ -652,7 +698,7 @@ class QGFieldBase(ABC):
             compute_lwa_only_nhn22(  # Numba module
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
-                qref=qref_correct_unit[-self.equator_idx:],
+                qref=qref_correct_unit[:, -self.equator_idx:],  # C-order [k, j]: slice j
                 jb=self._eq_boundary_index,
                 is_nhem=True,
                 a=self.planet_radius,
@@ -675,7 +721,7 @@ class QGFieldBase(ABC):
                 compute_lwa_only_nhn22(  # Numba module
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
-                    qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
+                    qref=-qref_correct_unit[:, (self.equator_idx-1)::-1],  # C-order [k, j]: flip j
                     jb=self.eq_boundary_index,
                     is_nhem=True,  # TODO: remove this logic branch
                     a=self.planet_radius,
@@ -720,9 +766,15 @@ class QGFieldBase(ABC):
 
         Args:
             ncforce(numpy.ndarray, optional): non-conservative forcing already interpolated on regular grid
-                of dimension (kmax, nlat, nlon)
+                of dimension (kmax, nlat, nlon) in C-order
 
         .. versionadded:: 0.7.0
+        
+        Notes
+        -----
+        All arrays are in C-order:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D lat-height arrays: [k, j]
         """
 
         # Turn qref back to correct unit
@@ -731,6 +783,8 @@ class QGFieldBase(ABC):
             self.omega, self.equator_idx, self.northern_hemisphere_results_only)
 
         # === Compute barotropic flux terms (NHem) ===
+        # qref_correct_unit is [k, j], slice along j (axis 1) for NH
+        # uref, ptref are [k, j], slice along j (axis 1) for NH
         self._barotropic_flux_terms_storage.lwa_baro_nhem, \
             self._barotropic_flux_terms_storage.u_baro_nhem, \
             urefbaro, \
@@ -752,9 +806,9 @@ class QGFieldBase(ABC):
                 pt=self._interpolated_field_storage.interpolated_theta,
                 ncforce=ncforce,
                 tn0=self._domain_average_storage.tn0,
-                qref=qref_correct_unit[-self.equator_idx:, :],
-                uref=self._reference_states_storage.uref[-self.jd:, :],
-                tref=self._reference_states_storage.ptref[-self.jd:, :],
+                qref=qref_correct_unit[:, -self.equator_idx:],  # C-order [k, j]: slice j
+                uref=self._reference_states_storage.uref[:, -self.jd:],  # C-order [k, j]: slice j
+                tref=self._reference_states_storage.ptref[:, -self.jd:],  # C-order [k, j]: slice j
                 jb=self.eq_boundary_index)
         self._layerwise_flux_terms_storage.lwa_nhem = np.abs(astar1 + astar2)
 
@@ -783,9 +837,9 @@ class QGFieldBase(ABC):
                     pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
                     ncforce=ncforce[:, ::-1, :],
                     tn0=self._domain_average_storage.ts0,
-                    qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
-                    uref=self._reference_states_storage.uref[(self.jd-1)::-1, :],
-                    tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
+                    qref=-qref_correct_unit[:, (self.equator_idx-1)::-1],  # C-order [k, j]: flip j
+                    uref=self._reference_states_storage.uref[:, (self.jd-1)::-1],  # C-order [k, j]: flip j
+                    tref=self._reference_states_storage.ptref[:, (self.jd-1)::-1],  # C-order [k, j]: flip j
                     jb=self.eq_boundary_index)
             self._barotropic_flux_terms_storage.ep2baro_shem = -ep2baro_shem
             self._barotropic_flux_terms_storage.ep3baro_shem = -ep3baro_shem
@@ -895,33 +949,37 @@ class QGFieldBase(ABC):
             raise ValueError("Reference states have not been computed yet.")
 
         # TODO: need a check for reference states computed. If not, throw an error.
+        # All arrays are now in C-order - no axis swapping needed
         if ncforce is None:
             print("line 748: ncforce is None")
-            ncforce = np.zeros((self.nlon, self._nlat_analysis, self.kmax))  # fortran indexing
+            ncforce = np.zeros((self.kmax, self._nlat_analysis, self.nlon))  # C-order [k, j, i]
         else:  # There is input
             print("line 751: ncforce has values")
-            ncforce = np.swapaxes(ncforce, 0, 2)  # Convert from python to fortran indexing
+            # Input ncforce should already be in C-order [k, j, i]
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
 
         self._compute_intermediate_barotropic_flux_terms(ncforce=ncforce)
 
         # === Compute named fluxes in NH18 ===
+        # All 2D barotropic arrays are now in C-order [j, i] where j=latitude, i=longitude
         clat = self._clat[-self.equator_idx:] if self.northern_hemisphere_results_only else self._clat
+        # ep2baro and ep3baro are already [j, i], no swap needed
         self._output_barotropic_flux_terms_storage.divergence_eddy_momentum_flux = \
-            np.swapaxes(
-                (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
-                (2 * self.planet_radius * self.dphi * clat), 0, 1)
+            (self._barotropic_flux_terms_storage.ep2baro - self._barotropic_flux_terms_storage.ep3baro) / \
+            (2 * self.planet_radius * self.dphi * clat[:, np.newaxis])
 
-        zonal_adv_flux_sum = np.swapaxes((
+        # ua1baro, ua2baro, ep1baro are already [j, i], no swap needed
+        zonal_adv_flux_sum = (
             self._barotropic_flux_terms_storage.ua1baro
             + self._barotropic_flux_terms_storage.ua2baro
-            + self._barotropic_flux_terms_storage.ep1baro), 0, 1)
+            + self._barotropic_flux_terms_storage.ep1baro)
         self._output_barotropic_flux_terms_storage.convergence_zonal_advective_flux = \
             zonal_convergence(
                 field=zonal_adv_flux_sum,
                 clat=clat,
                 dlambda=self.dlambda,
                 planet_radius=self.planet_radius)
+        # fortran_to_python is now identity for C-order
         self._output_barotropic_flux_terms_storage.adv_flux_f1 = \
             self._barotropic_flux_terms_storage.fortran_to_python(self._barotropic_flux_terms_storage.ua1baro)
         self._output_barotropic_flux_terms_storage.adv_flux_f2 = \
@@ -963,7 +1021,11 @@ class QGFieldBase(ABC):
 
     def _compute_flux_vector_phi_baro(self):
         """
-        Compute the meridional flux vector based on the field stored in fortran indexing.
+        Compute the meridional flux vector based on fields stored in C-order.
+        
+        All arrays are in C-order:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D arrays: [k, j] for lat-height, [j, i] for lat-lon
 
         Returns
         -------
@@ -972,14 +1034,18 @@ class QGFieldBase(ABC):
         The barotropic component of the meridional flux vector in Lee & Nakamura (2024, eq. 7).
         """
         if self._northern_hemisphere_results_only:
-            slicer = [slice(None)] * 3  # Creates [slice(None), slice(None), slice(None)] i.e., [:, :, :]
+            # C-order [k, j, i]: slice latitude (axis 1)
+            slicer = [slice(None)] * 3  # Creates [:, :, :]
             slicer[1] = slice(self.equator_idx-1, self._nlat_analysis)
         else:
             slicer = [slice(None)] * 3
 
-        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[np.newaxis, :, :])
+        # interpolated_u, interpolated_v are [k, j, i]
+        # uref is [k, j], needs broadcasting to [k, j, 1] for 3D subtraction
+        flux_vector_phi_baro_3d = -(((self._interpolated_field_storage.interpolated_u[tuple(slicer)] - self._reference_states_storage.uref[:, :, np.newaxis])
              * self._interpolated_field_storage.interpolated_v[tuple(slicer)]) * self._clat[np.newaxis, slicer[1], np.newaxis])
-        return self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=-1).T
+        # Vertical average along axis 0 (height), result is [j, i] - no transpose needed
+        return self._vertical_average(flux_vector_phi_baro_3d, lowest_layer_index=1, height_axis=0)
 
 
     def compute_ncforce_from_heating_rate(self, heating_rate):
@@ -1028,20 +1094,29 @@ class QGFieldBase(ABC):
         Returns
         -------
         None. Internally initialized self._layerwise_flux_terms_storage.stretch_term.
+        
+        Notes
+        -----
+        All arrays are in C-order:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D lat-height arrays: [k, j]
         """
         # TODO: verify cosine weighting
         if self.northern_hemisphere_results_only:
-            # ptref is NH-only (equator_idx, kmax) but interpolated fields are
-            # full-globe (nlon, nlat_analysis, kmax). Pad ptref to full-globe so
+            # ptref is NH-only (kmax, equator_idx) in C-order but interpolated fields are
+            # full-globe (kmax, nlat_analysis, nlon). Pad ptref to full-globe so
             # shapes broadcast; SH values are irrelevant (discarded below).
-            ptref_full = np.zeros((self._nlat_analysis, self.kmax))
-            ptref_full[-self.equator_idx:, :] = self._reference_states_storage.ptref
+            ptref_full = np.zeros((self.kmax, self._nlat_analysis))
+            ptref_full[:, -self.equator_idx:] = self._reference_states_storage.ptref
         else:
             ptref_full = self._reference_states_storage.ptref
 
+        # interpolated_v, interpolated_theta are [k, j, i]
+        # ptref_full is [k, j], needs broadcasting to [k, j, 1]
         v_e_theta_e_clat = self._interpolated_field_storage.interpolated_v[:, :, :] * (
                 self._interpolated_field_storage.interpolated_theta[:, :, :]
-                - ptref_full[np.newaxis, :, :]) * self._clat[np.newaxis, :, np.newaxis]
+                - ptref_full[:, :, np.newaxis]) * self._clat[np.newaxis, :, np.newaxis]
+        # v_e_theta_e_clat is already in C-order [k, j, i], fortran_to_python is identity
         inner_ep4 = z_derivative_of_prod(
             stat_n=stat_n,
             stat_s=stat_s,
@@ -1054,7 +1129,8 @@ class QGFieldBase(ABC):
                 self.height[:, np.newaxis] / self.scale_height))
         # Note that there is a minus sign below in order to have consistent sign with ep4 that is
         # the (positive) low-level meridional heat flux
-        full_result = -np.swapaxes(inner_ep4, 0, 2)
+        # inner_ep4 is already [k, j, i] from z_derivative_of_prod, no swap needed
+        full_result = -inner_ep4
         if self.northern_hemisphere_results_only:
             self._layerwise_flux_terms_storage.stretch_term_nhem = full_result[:, -self.equator_idx:, :]
         else:
@@ -1066,22 +1142,28 @@ class QGFieldBase(ABC):
 
         Parameters
         ----------
-        ncforce : np.ndarray of dimension (kmax, nlat, nlon) which is output from self.compute_ncforce_from_heating_rate
+        ncforce : np.ndarray of dimension (kmax, nlat, nlon) in C-order, 
+            which is output from self.compute_ncforce_from_heating_rate
+            
+        Notes
+        -----
+        All arrays are in C-order:
+        - 3D arrays: [k, j, i] where k=height, j=latitude, i=longitude
+        - 2D lat-height arrays: [k, j]
         """
         # Turn qref back to correct unit
         ylat_input, qref_correct_unit = self._prepare_coordinates_and_ref_states(
             self._ylat, self._interpolated_field_storage, self._reference_states_storage,
             self.omega, self.equator_idx, self.northern_hemisphere_results_only)
 
-        # *** The chunk below has duplication. TODO: think of ways to refactor ***
+        # All arrays are now in C-order - no axis swapping needed
         if ncforce is None:
-            ncforce = np.zeros((self.nlon, self.nlat, self.kmax))  # fortran indexing
-        else:  # There is input
-            ncforce = np.swapaxes(ncforce, 0, 2)
+            ncforce = np.zeros((self.kmax, self.nlat, self.nlon))  # C-order [k, j, i]
+        else:  # There is input - should already be in C-order [k, j, i]
             assert ncforce.shape == self._interpolated_field_storage.interpolated_theta.shape
-        # *** The chunk above has duplication. ***
 
         # Northern hemisphere
+        # qref_correct_unit, uref, ptref are [k, j], slice along j (axis 1)
         self._layerwise_flux_terms_storage.astar1_nhem, \
             self._layerwise_flux_terms_storage.astar2_nhem, \
             self._layerwise_flux_terms_storage.ncforce_nhem, \
@@ -1098,9 +1180,9 @@ class QGFieldBase(ABC):
             pt=self._interpolated_field_storage.interpolated_theta,
             ncforce=ncforce,
             tn0=tn0,
-            qref=qref_correct_unit[-self.equator_idx:, :],
-            uref=self._reference_states_storage.uref[-self.jd:, :],
-            tref=self._reference_states_storage.ptref[-self.jd:, :],
+            qref=qref_correct_unit[:, -self.equator_idx:],  # C-order [k, j]: slice j
+            uref=self._reference_states_storage.uref[:, -self.jd:],  # C-order [k, j]: slice j
+            tref=self._reference_states_storage.ptref[:, -self.jd:],  # C-order [k, j]: slice j
             jb=jb,
             is_nhem=True,
             a=self.planet_radius,
@@ -1131,9 +1213,9 @@ class QGFieldBase(ABC):
                 pt=self._interpolated_field_storage.interpolated_theta[:, ::-1, :],
                 ncforce=ncforce[:, ::-1, :],
                 tn0=ts0,
-                qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
-                uref=self._reference_states_storage.uref[(self.jd-1)::-1, :],
-                tref=self._reference_states_storage.ptref[(self.jd-1)::-1, :],
+                qref=-qref_correct_unit[:, (self.equator_idx-1)::-1],  # C-order [k, j]: flip j
+                uref=self._reference_states_storage.uref[:, (self.jd-1)::-1],  # C-order [k, j]: flip j
+                tref=self._reference_states_storage.ptref[:, (self.jd-1)::-1],  # C-order [k, j]: flip j
                 jb=jb,
                 is_nhem=True,  # TODO: remove this logic branch
                 a=self.planet_radius,
@@ -1632,26 +1714,29 @@ class QGFieldNH18(QGFieldBase):
 
     def _compute_reference_state_wrapper(self, qgpv, u, theta):
         """
-        Private function to call the Numba module compute_reference_states that returns variable of
-        dimension [nlat, kmax]. Swapping of axes is needed for other computation.
+        Private function to call the Numba module compute_reference_states.
+        
+        All arrays are in C-order:
+        - Input 3D arrays: [k, j, i]
+        - Output 2D arrays: [k, j] (kmax, nlat)
 
         Parameters
         ----------
-            qgpv(numpy.ndarray): QGPV
+            qgpv(numpy.ndarray): QGPV of dimension [kmax, nlat, nlon]
 
-            u(numpy.ndarray): 3D zonal wind
+            u(numpy.ndarray): 3D zonal wind of dimension [kmax, nlat, nlon]
 
-            theta(numpy.ndarray): 3D potential temperature
+            theta(numpy.ndarray): 3D potential temperature of dimension [kmax, nlat, nlon]
 
             num_of_iter(int): number of iteration when solving the eliptic equation
 
         Returns
         -------
-            Qref(numpy.ndarray): Reference state of QGPV of dimension [nlat, kmax]
+            Qref(numpy.ndarray): Reference state of QGPV of dimension [kmax, nlat]
 
-            Uref(numpy.ndarray): Reference state of zonal wind of dimension [nlat, kmax]
+            Uref(numpy.ndarray): Reference state of zonal wind of dimension [kmax, nlat]
 
-            PTref(numpy.ndarray): Reference state of potential temperature of dimension [nlat, kmax]
+            PTref(numpy.ndarray): Reference state of potential temperature of dimension [kmax, nlat]
         """
         return compute_reference_states(  # Numba module
             pv=qgpv,

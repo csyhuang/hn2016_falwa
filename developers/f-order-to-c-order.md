@@ -121,7 +121,7 @@ This document outlines the plan to refactor all Numba modules and related code f
 - [ ] Update `swapaxis_1` and `swapaxis_2` (may no longer be needed)
 **Skip the following changes as user will do that by hand:**
 - [ ] Simplify or remove `fortran_to_python()` method (becomes identity or removed)
-- [ ] Simplify or remove `python_to_fortran()` method
+- [ ] Simplify or remove `python_to_fortran()` methoda
 
 #### 2.2 `InterpolatedFieldsStorage`
 **Current:**
@@ -162,57 +162,69 @@ This document outlines the plan to refactor all Numba modules and related code f
 - [ ] Update `ndims_fill` tuples for new axis positions
 - [ ] Update slicing logic for latitude dimension
 
-### 3. OOP Interface (`src/falwa/oopinterface.py`)
+### 3. OOP Interface (`src/falwa/oopinterface.py`) ✅ COMPLETED
 
-#### 3.1 `_initialize_storage()` method
-**Changes needed:**
-- [ ] Update all `pydim` and `fdim` arguments to use C-order
-- [ ] Remove or update `swapaxis_1` and `swapaxis_2` parameters
+#### 3.1 `_initialize_storage()` method ✅
+**Changes made:**
+- [x] Updated all `pydim` and `fdim` arguments to use C-order (now identical)
+- [x] Set `swapaxis_1=0, swapaxis_2=0` for all storage classes (no swap needed)
 
-#### 3.2 `interpolate_fields()` method
-**Changes needed:**
-- [ ] Remove `np.swapaxes(interpolated_u, 0, 2)` calls
-- [ ] Store interpolated fields directly without axis swapping
+#### 3.2 `interpolate_fields()` method ✅
+**Changes made:**
+- [x] Removed `np.swapaxes(interpolated_u, 0, 2)` calls
+- [x] Store interpolated fields directly without axis swapping
 
-#### 3.3 `_compute_qgpv()` implementations
-**Changes needed:**
-- [ ] Remove axis swapping before/after Numba calls
-- [ ] Update array slicing for hemispheric operations
+#### 3.3 `_compute_qgpv()` implementations ✅
+**Changes made:**
+- [x] No axis swapping needed - Numba modules already return C-order arrays
 
-#### 3.4 `_compute_reference_states()` implementations
-**Changes needed:**
-- [ ] Remove axis swapping
-- [ ] Update all array slicing
+#### 3.4 `_compute_reference_states()` implementations ✅
+**Changes made:**
+- [x] Updated docstring to reflect C-order output dimensions `[kmax, nlat]`
 
-#### 3.5 `compute_lwa_only()` method
-**Changes needed:**
-- [ ] Remove axis swapping in function calls
-- [ ] Update hemispheric slicing: `[:, ::-1, :]` → `[:, ::-1, :]` (latitude axis position may change)
+#### 3.5 `compute_lwa_only()` method ✅
+**Changes made:**
+- [x] Updated qref slicing from `qref[-equator_idx:, :]` to `qref[:, -equator_idx:]` for C-order `[k, j]`
+- [x] Updated hemispheric flip slicing for C-order
 
-#### 3.6 `_compute_lwa_and_barotropic_fluxes_wrapper()` method
-**Changes needed:**
-- [ ] Remove axis swapping
-- [ ] Update `_vertical_average()` calls with correct axis parameter
+#### 3.6 `_compute_lwa_and_barotropic_fluxes_wrapper()` method ✅
+**Changes made:**
+- [x] Updated `uref.shape[0]` to `uref.shape[1]` for C-order `[k, j]`
+- [x] Updated vertical averaging calls with `height_axis=0`
+- [x] Updated uref_baro calculation for C-order broadcasting
 
-#### 3.7 `_compute_intermediate_barotropic_flux_terms()` method
-**Changes needed:**
-- [ ] Update all slicing operations
-- [ ] Remove axis swapping
+#### 3.7 `_compute_intermediate_barotropic_flux_terms()` method ✅
+**Changes made:**
+- [x] Updated qref slicing from `qref[-equator_idx:, :]` to `qref[:, -equator_idx:]`
+- [x] Updated uref and tref slicing from `[j, :]` to `[:, j]` indexing
 
-#### 3.8 `compute_lwa_and_barotropic_fluxes()` method
-**Changes needed:**
-- [ ] Remove `np.swapaxes()` calls
-- [ ] Update `fortran_to_python()` calls (may become identity)
+#### 3.8 `compute_lwa_and_barotropic_fluxes()` method ✅
+**Changes made:**
+- [x] Removed `np.swapaxes()` calls for ncforce initialization
+- [x] Updated ncforce array initialization to C-order `(kmax, nlat, nlon)`
+- [x] Removed axis swapping for divergence_eddy_momentum_flux calculation
+- [x] Updated clat broadcasting to use `clat[:, np.newaxis]` for 2D arrays
 
-#### 3.9 `_vertical_average()` method
-**Changes needed:**
-- [ ] Update default `height_axis` parameter (from -1 to 0)
-- [ ] Verify slicing logic
+#### 3.9 `_vertical_average()` method ✅
+**Changes made:**
+- [x] Updated default `height_axis` parameter from -1 to 0
 
-#### 3.10 Property accessors
-**Changes needed:**
-- [ ] Review all property methods that return arrays
-- [ ] Ensure returned shapes match docstrings
+#### 3.10 `_compute_flux_vector_phi_baro()` method ✅
+**Changes made:**
+- [x] Updated uref broadcasting from `[np.newaxis, :, :]` to `[:, :, np.newaxis]` for C-order
+- [x] Removed `.T` transpose from return statement
+
+#### 3.11 `_compute_stretch_term()` method ✅
+**Changes made:**
+- [x] Updated ptref_full shape from `(nlat, kmax)` to `(kmax, nlat)` for C-order
+- [x] Updated ptref broadcasting from `[np.newaxis, :, :]` to `[:, :, np.newaxis]`
+- [x] Removed `np.swapaxes(inner_ep4, 0, 2)` from result
+
+#### 3.12 `_compute_layerwise_lwa_fluxes_wrapper()` method ✅
+**Changes made:**
+- [x] Updated ncforce initialization to C-order `(kmax, nlat, nlon)`
+- [x] Removed axis swapping for ncforce
+- [x] Updated qref, uref, tref slicing for C-order `[k, j]`
 
 ### 4. Utilities (`src/falwa/utilities.py`)
 
@@ -247,10 +259,22 @@ This document outlines the plan to refactor all Numba modules and related code f
 2. Update dimension parameters
 3. Simplify/remove axis swapping methods
 
-### Phase 3: OOP Interface Updates
-1. Update `_initialize_storage()` first
-2. Update each computational method
-3. Remove all `np.swapaxes()` calls
+### Phase 3: OOP Interface Updates ✅ COMPLETED
+1. ✅ Update `_initialize_storage()` first - set pydim=fdim for all storage classes
+2. ✅ Update each computational method - removed axis swapping
+3. ✅ Remove all `np.swapaxes()` calls
+
+**Changes made in Phase 3:**
+- `_initialize_storage()`: Updated all storage classes to use identical `pydim` and `fdim` in C-order
+- `_vertical_average()`: Changed default `height_axis` from -1 to 0 for C-order arrays
+- `interpolate_fields()`: Removed `np.swapaxes()` calls, arrays stored directly in C-order
+- `_compute_lwa_and_barotropic_fluxes_wrapper()`: Updated slicing for C-order 2D arrays `[k, j]`
+- `_compute_intermediate_barotropic_flux_terms()`: Updated reference state slicing from `[j, :]` to `[:, j]`
+- `compute_lwa_only()`: Updated qref slicing for C-order
+- `compute_lwa_and_barotropic_fluxes()`: Removed axis swapping, arrays already in C-order
+- `_compute_flux_vector_phi_baro()`: Updated broadcasting for C-order arrays
+- `_compute_stretch_term()`: Updated ptref_full shape and removed axis swapping
+- `_compute_layerwise_lwa_fluxes_wrapper()`: Removed axis swapping, updated slicing
 
 ### Phase 4: Testing and Validation
 1. Run all existing tests
@@ -347,7 +371,7 @@ After refactoring, arrays will naturally be C-contiguous, improving Numba perfor
 - [ ] `data_storage.py` - all storage classes
 
 ### OOP Interface (1 file)
-- [ ] `oopinterface.py` - all methods
+- [x] `oopinterface.py` - all methods
 
 ### Tests
 - [ ] Unit tests
