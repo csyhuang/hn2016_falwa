@@ -19,6 +19,8 @@ py.install_sources(
     'falwa/numba_modules/matrix_b4_inversion.py',
     'falwa/numba_modules/matrix_after_inversion.py',
     'falwa/numba_modules/upward_sweep.py',
+    'falwa/numba_modules/compute_flux_dirinv.py',
+    'falwa/numba_modules/compute_lwa_only_nhn22.py',
     preserve_path: true
 )
 

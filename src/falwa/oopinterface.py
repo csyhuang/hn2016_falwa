@@ -16,12 +16,10 @@ from falwa.constant import P_GROUND, SCALE_HEIGHT, CP, DRY_GAS_CONSTANT, EARTH_R
 from falwa.data_storage import InterpolatedFieldsStorage, DomainAverageStorage, ReferenceStatesStorage, \
     LayerwiseFluxTermsStorage, BarotropicFluxTermsStorage, OutputBarotropicFluxTermsStorage
 
-# *** Import Numba modules (replacing F2PY modules) ***
+# *** Import Numba modules (replacing all F2PY modules) ***
 from falwa.numba_modules import compute_qgpv, compute_qgpv_direct_inv, compute_reference_states, \
-    compute_qref_and_fawa_first, matrix_b4_inversion, matrix_after_inversion, upward_sweep
-
-# *** Import remaining f2py modules ***
-from falwa import compute_flux_dirinv_nshem, compute_lwa_only_nhn22
+    compute_qref_and_fawa_first, matrix_b4_inversion, matrix_after_inversion, upward_sweep, \
+    compute_flux_dirinv_nshem, compute_lwa_only_nhn22
 from collections import namedtuple
 
 
@@ -429,7 +427,7 @@ class QGFieldBase(ABC):
         """
 
     def _compute_lwa_and_barotropic_fluxes_wrapper(self, pv, uu, vv, pt, ncforce, tn0, qref, uref, tref, jb):
-        astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(
+        astar1, astar2, ncforce3d, ua1, ua2, ep1, ep2, ep3, ep4 = compute_flux_dirinv_nshem(  # Numba module
             pv=pv,
             uu=uu,
             vv=vv,
@@ -651,7 +649,7 @@ class QGFieldBase(ABC):
             self._barotropic_flux_terms_storage.u_baro_nhem, \
             astar1, \
             astar2 = \
-            compute_lwa_only_nhn22(
+            compute_lwa_only_nhn22(  # Numba module
                 pv=self._interpolated_field_storage.qgpv,
                 uu=self._interpolated_field_storage.interpolated_u,
                 qref=qref_correct_unit[-self.equator_idx:],
@@ -674,7 +672,7 @@ class QGFieldBase(ABC):
                 self._barotropic_flux_terms_storage.u_baro_shem, \
                 astar1, \
                 astar2 = \
-                compute_lwa_only_nhn22(
+                compute_lwa_only_nhn22(  # Numba module
                     pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                     uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                     qref=-qref_correct_unit[(self.equator_idx-1)::-1, :],
@@ -1093,7 +1091,7 @@ class QGFieldBase(ABC):
             self._layerwise_flux_terms_storage.ep2_nhem, \
             self._layerwise_flux_terms_storage.ep3_nhem, \
             self._barotropic_flux_terms_storage.ep4_nhem \
-            = compute_flux_dirinv_nshem(
+            = compute_flux_dirinv_nshem(  # Numba module
             pv=self._interpolated_field_storage.qgpv,
             uu=self._interpolated_field_storage.interpolated_u,
             vv=self._interpolated_field_storage.interpolated_v,
@@ -1126,7 +1124,7 @@ class QGFieldBase(ABC):
                 ep3_shem, \
                 ep2_shem, \
                 self._barotropic_flux_terms_storage.ep4_shem  \
-                = compute_flux_dirinv_nshem(
+                = compute_flux_dirinv_nshem(  # Numba module
                 pv=-self._interpolated_field_storage.qgpv[:, ::-1, :],
                 uu=self._interpolated_field_storage.interpolated_u[:, ::-1, :],
                 vv=-self._interpolated_field_storage.interpolated_v[:, ::-1, :],
@@ -1911,11 +1909,14 @@ class QGFieldNHN22(QGFieldBase):
 
         .. versionadded:: 0.6.0
         """
-        ans = compute_flux_dirinv_nshem(
+        # Create zero ncforce array for this deprecated function
+        ncforce = np.zeros_like(self._interpolated_field_storage.qgpv)
+        ans = compute_flux_dirinv_nshem(  # Numba module
             pv=self._interpolated_field_storage.qgpv,
             uu=self._interpolated_field_storage.interpolated_u,
             vv=self._interpolated_field_storage.interpolated_v,
             pt=self._interpolated_field_storage.interpolated_theta,
+            ncforce=ncforce,
             tn0=self._domain_average_storage.tn0,
             qref=qref,
             uref=uref,
