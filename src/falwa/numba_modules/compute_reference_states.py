@@ -7,6 +7,9 @@ subroutine `compute_reference_states` for computing reference states
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
@@ -18,11 +21,19 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit
+from numba import njit, float64, int64
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(NbTuple((f8_2d, f8_2d, f8_2d))(f8_3d, f8_3d, f8_3d, i8, i8, i8, i8), cache=True)
 def _compute_zonal_means(
     pv: np.ndarray,
     uu: np.ndarray,
@@ -34,7 +45,7 @@ def _compute_zonal_means(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute zonal-mean fields for the northern hemisphere.
-    
+
     Parameters
     ----------
     pv : np.ndarray
@@ -51,7 +62,7 @@ def _compute_zonal_means(
         Number of vertical levels
     jd : int
         Latitude index for equatorward boundary
-        
+
     Returns
     -------
     qbar : np.ndarray
@@ -64,7 +75,7 @@ def _compute_zonal_means(
     qbar = np.zeros((kmax, jd), dtype=np.float64)
     tbar = np.zeros((kmax, jd), dtype=np.float64)
     ubar = np.zeros((kmax, jd), dtype=np.float64)
-    
+
     for j in range(jd, nlat + 1):  # Fortran: j = jd, nlat
         j_out = j - (jd - 1) - 1  # Convert to 0-indexed output
         for k in range(kmax):
@@ -72,7 +83,7 @@ def _compute_zonal_means(
                 qbar[k, j_out] += pv[k, j - 1, i] / float(nlon)
                 tbar[k, j_out] += pt[k, j - 1, i] / float(nlon)
                 ubar[k, j_out] += uu[k, j - 1, i] / float(nlon)
-    
+
     return qbar, tbar, ubar
 
 

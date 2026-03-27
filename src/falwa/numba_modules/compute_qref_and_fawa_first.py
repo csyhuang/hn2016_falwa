@@ -7,6 +7,9 @@ zonal-mean fields, and FAWA (Finite-Amplitude Wave Activity).
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
@@ -19,11 +22,19 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit
+from numba import njit, float64, int64
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(NbTuple((f8_2d, f8_2d, f8_2d))(f8_3d, f8_3d, f8_3d, i8, i8, i8, i8), cache=True)
 def _compute_zonal_means(
     pv: np.ndarray,
     uu: np.ndarray,
@@ -78,7 +89,7 @@ def _compute_zonal_means(
     return qbar, tbar, ubar
 
 
-@njit(cache=True)
+@njit(NbTuple((f8_1d, f8_1d))(f8_2d, i8, i8, i8, i8, f8, f8, f8, f8_1d), cache=True)
 def _area_analysis_qref(
     pv2: np.ndarray,
     imax: int,
@@ -184,7 +195,7 @@ def _area_analysis_qref(
     return qref_k, cref_k
 
 
-@njit(cache=True)
+@njit(f8_1d(f8_2d, i8, i8, i8, i8, f8, f8, f8, f8_1d), cache=True)
 def _area_analysis_ckref(
     vort2: np.ndarray,
     imax: int,
@@ -284,7 +295,7 @@ def _area_analysis_ckref(
     return ckref_k
 
 
-@njit(cache=True)
+@njit(f8_2d(f8_2d, i8, i8, f8, f8), cache=True)
 def _compute_cbar(
     qbar: np.ndarray,
     nd: int,
@@ -313,7 +324,7 @@ def _compute_cbar(
     return cbar
 
 
-@njit(cache=True)
+@njit(f8_2d(f8_2d, i8, i8, f8), cache=True)
 def _normalize_qref_by_sine(
     qref: np.ndarray,
     nd: int,
@@ -342,7 +353,7 @@ def _normalize_qref_by_sine(
     return qref
 
 
-@njit(cache=True)
+@njit(f8_2d(f8_2d, f8_2d, i8, i8, f8), cache=True)
 def _compute_fawa(
     cref: np.ndarray,
     cbar: np.ndarray,
@@ -370,7 +381,7 @@ def _compute_fawa(
     return fawa
 
 
-@njit(cache=True)
+@njit(NbTuple((f8_2d, f8_3d))(f8_2d, i8, i8, i8, i8, f8_1d, f8, f8, f8, f8, f8, f8, f8), cache=True)
 def _compute_tjk_sjk(
     tbar: np.ndarray,
     jb: int,
@@ -416,7 +427,7 @@ def _compute_tjk_sjk(
     return tjk, sjk
 
 
-@njit(cache=True)
+@njit(NbTuple((f8_2d, f8_2d, f8_2d, f8_2d, f8_2d, f8_2d, f8_3d))(f8_3d, f8_3d, f8_3d, f8_3d, f8_1d, i8, i8, i8, i8, i8, i8, i8, f8, f8, f8, f8, f8, f8, f8, f8), cache=True)
 def _compute_qref_and_fawa_first_core(
     pv: np.ndarray,
     uu: np.ndarray,

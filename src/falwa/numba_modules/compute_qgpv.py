@@ -7,6 +7,9 @@ and absolute vorticity.
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
@@ -20,11 +23,19 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit, prange
+from numba import njit, float64, int64
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(f8_3d(f8_3d, f8_3d, i8, i8, i8, f8, f8, f8, f8), cache=True)
 def _compute_absolute_vorticity(
     ut: np.ndarray,
     vt: np.ndarray,
@@ -119,7 +130,7 @@ def _compute_absolute_vorticity(
     return avort
 
 
-@njit(cache=True)
+@njit(f8_2d(f8_3d, i8, i8, i8), cache=True)
 def _compute_zonal_mean_vorticity(
     avort: np.ndarray,
     nlon: int,
@@ -155,7 +166,7 @@ def _compute_zonal_mean_vorticity(
     return zmav
 
 
-@njit(cache=True)
+@njit(f8_3d(f8_3d, f8_3d, f8_2d, f8_1d, f8_1d, f8_1d, i8, i8, i8, f8, f8, f8), cache=True)
 def _compute_interior_pv(
     avort: np.ndarray,
     theta: np.ndarray,
@@ -229,7 +240,7 @@ def _compute_interior_pv(
     return pv
 
 
-@njit(cache=True)
+@njit(NbTuple((f8_3d, f8_3d))(f8_3d, f8_3d, f8_3d, f8_1d, f8_1d, f8_1d, f8, f8, f8, f8, f8, f8), cache=True)
 def _compute_qgpv_core(
     ut: np.ndarray,
     vt: np.ndarray,

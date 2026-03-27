@@ -7,6 +7,9 @@ vorticity and absolute vorticity with hemisphere-dependent reference states.
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 This implementation is equivalent to the Fortran subroutine in
@@ -24,11 +27,19 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit
+from numba import njit, float64, int64
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(f8_3d(f8_3d, f8_3d, i8, i8, i8, f8, f8, f8, f8), cache=True)
 def _compute_absolute_vorticity_direct_inv(
     uq: np.ndarray,
     vq: np.ndarray,
@@ -118,7 +129,7 @@ def _compute_absolute_vorticity_direct_inv(
     return avort
 
 
-@njit(cache=True)
+@njit(f8_2d(f8_3d, i8, i8, i8), cache=True)
 def _compute_zonal_mean_vorticity(
     avort: np.ndarray,
     nlon: int,
@@ -154,7 +165,7 @@ def _compute_zonal_mean_vorticity(
     return zmav
 
 
-@njit(cache=True)
+@njit(f8_3d(f8_3d, f8_3d, f8_1d, f8_1d, f8_1d, f8_1d, f8_1d, i8, i8, i8, i8, f8, f8, f8), cache=True)
 def _compute_interior_pv_direct_inv(
     avort: np.ndarray,
     tq: np.ndarray,
@@ -243,7 +254,7 @@ def _compute_interior_pv_direct_inv(
     return pv
 
 
-@njit(cache=True)
+@njit(NbTuple((f8_3d, f8_3d))(f8_3d, f8_3d, f8_3d, f8_1d, f8_1d, f8_1d, f8_1d, f8_1d, i8, f8, f8, f8, f8, f8, f8), cache=True)
 def _compute_qgpv_direct_inv_core(
     uq: np.ndarray,
     vq: np.ndarray,
@@ -386,7 +397,7 @@ def compute_qgpv_direct_inv(
         Dry gas constant in J/(kg·K) (typically 287). Note: This parameter
         is present for API compatibility but is not used in the calculation.
     cp : float
-        Specific heat at constant pressure in J/(kg·K) (typically 1004).
+        Specific heat in J/(kg·K) (typically 1004).
         Note: This parameter is present for API compatibility but is not
         used in the calculation.
         

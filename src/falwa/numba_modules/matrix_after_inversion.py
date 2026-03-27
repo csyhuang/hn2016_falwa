@@ -7,6 +7,9 @@ in the direct solver algorithm.
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 Arrays use C-order indexing:
@@ -15,11 +18,21 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit
+from numba import njit, float64, int64
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(NbTuple((f8_3d, f8_2d))(
+    i8, i8, i8,
+    f8_2d, f8_2d, f8_2d, f8_1d, f8_3d, f8_2d), cache=True)
 def _matrix_after_inversion_core(
     k: int,
     kmax: int,

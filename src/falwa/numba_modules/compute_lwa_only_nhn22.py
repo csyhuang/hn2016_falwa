@@ -7,6 +7,9 @@ for the NHN22 algorithm.
 
 .. versionadded:: 2.4.0
 
+.. versionchanged:: 2.4.0
+   Added explicit type signatures for eager compilation at import time.
+
 Notes
 -----
 Arrays use C-order indexing:
@@ -16,11 +19,23 @@ Arrays use C-order indexing:
 """
 
 import numpy as np
-from numba import njit
+from numba import njit, float64, int64, boolean
+from numba.core.types import Tuple as NbTuple
 from typing import Tuple
 
+# Type aliases for readability
+f8 = float64
+i8 = int64
+b1 = boolean
+f8_1d = float64[:]
+f8_2d = float64[:, :]
+f8_3d = float64[:, :, :]
 
-@njit(cache=True)
+
+@njit(NbTuple((f8_2d, f8_2d, f8_3d, f8_3d))(
+    f8_3d, f8_3d, f8_2d,
+    i8, i8, i8, i8, i8, b1,
+    f8, f8, f8, f8, f8, f8, f8), cache=True)
 def _compute_lwa_only_nhn22_core(
     pv: np.ndarray,
     uu: np.ndarray,
