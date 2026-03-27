@@ -7,8 +7,9 @@ Run this after modifying Numba-decorated functions to force recompilation.
 Usage:
     python scripts/clear_numba_cache.py
 """
-from typing import Optional
+import os
 import shutil
+from typing import Optional
 from pathlib import Path
 
 
@@ -47,5 +48,5 @@ def clear_numba_cache(base_dir: Optional[str]=None):
 
 if __name__ == "__main__":
     clear_numba_cache(
-        base_dir="/Users/clarehuang/Library/CloudStorage/Dropbox/GitHub/hn2016_falwa/")
+        base_dir=f"{os.environ['HOME']}/Library/CloudStorage/Dropbox/GitHub/hn2016_falwa/")
 
